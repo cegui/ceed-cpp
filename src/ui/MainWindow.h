@@ -21,6 +21,8 @@ public:
 private slots:
     void on_actionQuit_triggered();
 
+    void on_actionStatusbar_toggled(bool arg1);
+
 private:
 
     Ui::MainWindow* ui;

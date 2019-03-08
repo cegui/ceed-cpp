@@ -10,6 +10,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     projectManager = new ProjectManager();
     addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, projectManager);
+
+    //actionStatusbar->setChecked(statusBar()->isVisible());
 }
 
 MainWindow::~MainWindow()
@@ -21,4 +23,9 @@ MainWindow::~MainWindow()
 void MainWindow::on_actionQuit_triggered()
 {
     QApplication::quit();
+}
+
+void MainWindow::on_actionStatusbar_toggled(bool isChecked)
+{
+    statusBar()->setVisible(isChecked);
 }

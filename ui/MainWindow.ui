@@ -125,31 +125,82 @@
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
-   <widget class="QMenu" name="menu">
+   <widget class="QMenu" name="menu_Help">
     <property name="title">
-     <string>?</string>
+     <string>Help</string>
     </property>
-    <addaction name="actionAbout"/>
-    <addaction name="actionLicense"/>
+    <addaction name="actionQuickstart_Guide"/>
+    <addaction name="actionUser_Manual"/>
+    <addaction name="actionWiki_Page"/>
+    <addaction name="separator"/>
+    <addaction name="actionSend_Feedback"/>
+    <addaction name="actionReport_Bug"/>
+    <addaction name="actionCEGUI_Debug_Info"/>
+    <addaction name="separator"/>
     <addaction name="actionQt"/>
+    <addaction name="actionLicense"/>
+    <addaction name="separator"/>
+    <addaction name="actionAbout"/>
    </widget>
    <widget class="QMenu" name="menu_Edit">
     <property name="title">
      <string>&amp;Edit</string>
     </property>
+    <addaction name="actionUndo"/>
+    <addaction name="actionRedo"/>
+    <addaction name="actionRevert"/>
+    <addaction name="separator"/>
+    <addaction name="actionCut"/>
+    <addaction name="actionCopy"/>
+    <addaction name="actionPaste"/>
+    <addaction name="actionDelete"/>
+    <addaction name="separator"/>
+    <addaction name="actionPreferences"/>
    </widget>
    <widget class="QMenu" name="menu_View">
     <property name="title">
      <string>&amp;View</string>
     </property>
+    <addaction name="action_Docks_Toolbars"/>
+    <addaction name="actionStatusbar"/>
+    <addaction name="separator"/>
+    <addaction name="actionZoom_In"/>
+    <addaction name="actionZoom_Out"/>
+    <addaction name="actionNormal_size"/>
+    <addaction name="separator"/>
+    <addaction name="actionFull_Screen"/>
+   </widget>
+   <widget class="QMenu" name="menuProject">
+    <property name="title">
+     <string>Project</string>
+    </property>
+    <addaction name="actionReload_Resources"/>
+    <addaction name="separator"/>
+    <addaction name="actionSettings"/>
+   </widget>
+   <widget class="QMenu" name="menuTabs">
+    <property name="title">
+     <string>Tabs</string>
+    </property>
+    <addaction name="actionPrevious_Tab"/>
+    <addaction name="actionNext_Tab"/>
+    <addaction name="separator"/>
+    <addaction name="actionCloseOtherTabs"/>
+    <addaction name="actionCloseAllTabs"/>
    </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_Edit"/>
    <addaction name="menu_View"/>
-   <addaction name="menu"/>
+   <addaction name="menuProject"/>
+   <addaction name="menuTabs"/>
+   <addaction name="menu_Help"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionAbout">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/help_about.png</normaloff>../data/icons/actions/help_about.png</iconset>
+   </property>
    <property name="text">
     <string>About</string>
    </property>
@@ -165,7 +216,7 @@
      <normaloff>../data/icons/actions/close_other_tabs.png</normaloff>../data/icons/actions/close_other_tabs.png</iconset>
    </property>
    <property name="text">
-    <string>Close other tabs</string>
+    <string>Close Other</string>
    </property>
   </action>
   <action name="actionCloseAllTabs">
@@ -174,12 +225,12 @@
      <normaloff>../data/icons/actions/close_all_tabs.png</normaloff>../data/icons/actions/close_all_tabs.png</iconset>
    </property>
    <property name="text">
-    <string>Close all tabs</string>
+    <string>Close All</string>
    </property>
   </action>
   <action name="actionQt">
    <property name="text">
-    <string>Qt</string>
+    <string>About Qt</string>
    </property>
   </action>
   <action name="actionNewLayout">
@@ -203,21 +254,37 @@
    </property>
   </action>
   <action name="actionOpenFile">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/open_file.png</normaloff>../data/icons/actions/open_file.png</iconset>
+   </property>
    <property name="text">
-    <string>Open file</string>
+    <string>Open File</string>
    </property>
   </action>
   <action name="actionOpenProject">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/open_project.png</normaloff>../data/icons/actions/open_project.png</iconset>
+   </property>
    <property name="text">
-    <string>Open project</string>
+    <string>Open Project</string>
    </property>
   </action>
   <action name="actionCloseProject">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/close_project.png</normaloff>../data/icons/actions/close_project.png</iconset>
+   </property>
    <property name="text">
-    <string>Close project</string>
+    <string>Close Project</string>
    </property>
   </action>
   <action name="actionQuit">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/quit.png</normaloff>../data/icons/actions/quit.png</iconset>
+   </property>
    <property name="text">
     <string>Quit</string>
    </property>
@@ -228,37 +295,253 @@
      <normaloff>../data/icons/actions/close_tab.png</normaloff>../data/icons/actions/close_tab.png</iconset>
    </property>
    <property name="text">
-    <string>Close this tab</string>
+    <string>Close</string>
    </property>
   </action>
   <action name="actionSave">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/save.png</normaloff>../data/icons/actions/save.png</iconset>
+   </property>
    <property name="text">
     <string>Save</string>
    </property>
   </action>
   <action name="actionSave_as">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/save_as.png</normaloff>../data/icons/actions/save_as.png</iconset>
+   </property>
    <property name="text">
-    <string>Save as...</string>
+    <string>Save As...</string>
    </property>
   </action>
   <action name="actionSave_all">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/save_all.png</normaloff>../data/icons/actions/save_all.png</iconset>
+   </property>
    <property name="text">
-    <string>Save all</string>
+    <string>Save All</string>
    </property>
   </action>
   <action name="actionSave_project">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/save_project.png</normaloff>../data/icons/actions/save_project.png</iconset>
+   </property>
    <property name="text">
-    <string>Save project</string>
+    <string>Save Project</string>
    </property>
   </action>
   <action name="actionRecent_files">
    <property name="text">
-    <string>Recent files</string>
+    <string>Recent Files</string>
    </property>
   </action>
   <action name="actionRecent_projects">
    <property name="text">
-    <string>Recent projects</string>
+    <string>Recent Projects</string>
+   </property>
+  </action>
+  <action name="action_Docks_Toolbars">
+   <property name="text">
+    <string>&amp;Docks &amp;&amp; Toolbars</string>
+   </property>
+  </action>
+  <action name="actionStatusbar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Statusbar</string>
+   </property>
+  </action>
+  <action name="actionZoom_In">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/zoom_in.png</normaloff>../data/icons/actions/zoom_in.png</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom In</string>
+   </property>
+  </action>
+  <action name="actionZoom_Out">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/zoom_out.png</normaloff>../data/icons/actions/zoom_out.png</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom Out</string>
+   </property>
+  </action>
+  <action name="actionNormal_size">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/zoom_original.png</normaloff>../data/icons/actions/zoom_original.png</iconset>
+   </property>
+   <property name="text">
+    <string>Normal Size</string>
+   </property>
+  </action>
+  <action name="actionFull_Screen">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/view_fullscreen.png</normaloff>../data/icons/actions/view_fullscreen.png</iconset>
+   </property>
+   <property name="text">
+    <string>Full Screen</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/undo.png</normaloff>../data/icons/actions/undo.png</iconset>
+   </property>
+   <property name="text">
+    <string>Undo</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/redo.png</normaloff>../data/icons/actions/redo.png</iconset>
+   </property>
+   <property name="text">
+    <string>Redo</string>
+   </property>
+  </action>
+  <action name="actionRevert">
+   <property name="text">
+    <string>Revert</string>
+   </property>
+  </action>
+  <action name="actionCut">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/cut.png</normaloff>../data/icons/actions/cut.png</iconset>
+   </property>
+   <property name="text">
+    <string>Cut</string>
+   </property>
+  </action>
+  <action name="actionCopy">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/copy.png</normaloff>../data/icons/actions/copy.png</iconset>
+   </property>
+   <property name="text">
+    <string>Copy</string>
+   </property>
+  </action>
+  <action name="actionPaste">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/paste.png</normaloff>../data/icons/actions/paste.png</iconset>
+   </property>
+   <property name="text">
+    <string>Paste</string>
+   </property>
+  </action>
+  <action name="actionDelete">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/delete.png</normaloff>../data/icons/actions/delete.png</iconset>
+   </property>
+   <property name="text">
+    <string>Delete</string>
+   </property>
+  </action>
+  <action name="actionPreferences">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/application_settings.png</normaloff>../data/icons/actions/application_settings.png</iconset>
+   </property>
+   <property name="text">
+    <string>Preferences</string>
+   </property>
+  </action>
+  <action name="actionPrevious_Tab">
+   <property name="text">
+    <string>Previous Tab</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+PgUp</string>
+   </property>
+  </action>
+  <action name="actionNext_Tab">
+   <property name="text">
+    <string>Next Tab</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+PgDown</string>
+   </property>
+  </action>
+  <action name="actionReload_Resources">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/project_management/reload_resources.png</normaloff>../data/icons/project_management/reload_resources.png</iconset>
+   </property>
+   <property name="text">
+    <string>Reload Resources</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/project_settings.png</normaloff>../data/icons/actions/project_settings.png</iconset>
+   </property>
+   <property name="text">
+    <string>Settings</string>
+   </property>
+  </action>
+  <action name="actionQuickstart_Guide">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/help_quickstart.png</normaloff>../data/icons/actions/help_quickstart.png</iconset>
+   </property>
+   <property name="text">
+    <string>Quickstart Guide</string>
+   </property>
+  </action>
+  <action name="actionUser_Manual">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/help_user_manual.png</normaloff>../data/icons/actions/help_user_manual.png</iconset>
+   </property>
+   <property name="text">
+    <string>User Manual</string>
+   </property>
+  </action>
+  <action name="actionWiki_Page">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/help_wiki_page.png</normaloff>../data/icons/actions/help_wiki_page.png</iconset>
+   </property>
+   <property name="text">
+    <string>Wiki Page</string>
+   </property>
+  </action>
+  <action name="actionSend_Feedback">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/help_feedback.png</normaloff>../data/icons/actions/help_feedback.png</iconset>
+   </property>
+   <property name="text">
+    <string>Send Feedback</string>
+   </property>
+  </action>
+  <action name="actionReport_Bug">
+   <property name="text">
+    <string>Report Bug</string>
+   </property>
+  </action>
+  <action name="actionCEGUI_Debug_Info">
+   <property name="text">
+    <string>CEGUI Debug Info</string>
    </property>
   </action>
  </widget>
