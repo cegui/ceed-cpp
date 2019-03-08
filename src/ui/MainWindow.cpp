@@ -17,3 +17,8 @@ MainWindow::~MainWindow()
     delete projectManager;
     delete ui;
 }
+
+void MainWindow::on_actionQuit_triggered()
+{
+    QApplication::quit();
+}

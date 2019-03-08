@@ -30,7 +30,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>icons/ceed.png</normaloff>icons/ceed.png</iconset>
+    <normaloff>../data/icons/ceed.png</normaloff>../data/icons/ceed.png</iconset>
   </property>
   <property name="windowOpacity">
    <double>1.000000000000000</double>
@@ -91,9 +91,62 @@
      <x>0</x>
      <y>0</y>
      <width>813</width>
-     <height>25</height>
+     <height>26</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menu_File">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <widget class="QMenu" name="menu_New">
+     <property name="title">
+      <string>&amp;New</string>
+     </property>
+     <addaction name="actionNewLayout"/>
+     <addaction name="actionNewImageset"/>
+     <addaction name="actionNewOtherFile"/>
+     <addaction name="separator"/>
+     <addaction name="actionNewProject"/>
+    </widget>
+    <addaction name="menu_New"/>
+    <addaction name="actionOpenFile"/>
+    <addaction name="actionOpenProject"/>
+    <addaction name="separator"/>
+    <addaction name="actionCloseTab"/>
+    <addaction name="actionCloseProject"/>
+    <addaction name="separator"/>
+    <addaction name="actionSave"/>
+    <addaction name="actionSave_as"/>
+    <addaction name="actionSave_all"/>
+    <addaction name="actionSave_project"/>
+    <addaction name="separator"/>
+    <addaction name="actionRecent_files"/>
+    <addaction name="actionRecent_projects"/>
+    <addaction name="separator"/>
+    <addaction name="actionQuit"/>
+   </widget>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>?</string>
+    </property>
+    <addaction name="actionAbout"/>
+    <addaction name="actionLicense"/>
+    <addaction name="actionQt"/>
+   </widget>
+   <widget class="QMenu" name="menu_Edit">
+    <property name="title">
+     <string>&amp;Edit</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menu_View">
+    <property name="title">
+     <string>&amp;View</string>
+    </property>
+   </widget>
+   <addaction name="menu_File"/>
+   <addaction name="menu_Edit"/>
+   <addaction name="menu_View"/>
+   <addaction name="menu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionAbout">
@@ -106,19 +159,10 @@
     <string>License</string>
    </property>
   </action>
-  <action name="actionCloseTab">
-   <property name="icon">
-    <iconset>
-     <normaloff>icons/actions/close_tab.png</normaloff>icons/actions/close_tab.png</iconset>
-   </property>
-   <property name="text">
-    <string>Close this tab</string>
-   </property>
-  </action>
   <action name="actionCloseOtherTabs">
    <property name="icon">
     <iconset>
-     <normaloff>icons/actions/close_other_tabs.png</normaloff>icons/actions/close_other_tabs.png</iconset>
+     <normaloff>../data/icons/actions/close_other_tabs.png</normaloff>../data/icons/actions/close_other_tabs.png</iconset>
    </property>
    <property name="text">
     <string>Close other tabs</string>
@@ -127,7 +171,7 @@
   <action name="actionCloseAllTabs">
    <property name="icon">
     <iconset>
-     <normaloff>icons/actions/close_all_tabs.png</normaloff>icons/actions/close_all_tabs.png</iconset>
+     <normaloff>../data/icons/actions/close_all_tabs.png</normaloff>../data/icons/actions/close_all_tabs.png</iconset>
    </property>
    <property name="text">
     <string>Close all tabs</string>
@@ -136,6 +180,85 @@
   <action name="actionQt">
    <property name="text">
     <string>Qt</string>
+   </property>
+  </action>
+  <action name="actionNewLayout">
+   <property name="text">
+    <string>Layout</string>
+   </property>
+  </action>
+  <action name="actionNewImageset">
+   <property name="text">
+    <string>Imageset</string>
+   </property>
+  </action>
+  <action name="actionNewOtherFile">
+   <property name="text">
+    <string>Other file</string>
+   </property>
+  </action>
+  <action name="actionNewProject">
+   <property name="text">
+    <string>Project</string>
+   </property>
+  </action>
+  <action name="actionOpenFile">
+   <property name="text">
+    <string>Open file</string>
+   </property>
+  </action>
+  <action name="actionOpenProject">
+   <property name="text">
+    <string>Open project</string>
+   </property>
+  </action>
+  <action name="actionCloseProject">
+   <property name="text">
+    <string>Close project</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionCloseTab">
+   <property name="icon">
+    <iconset>
+     <normaloff>../data/icons/actions/close_tab.png</normaloff>../data/icons/actions/close_tab.png</iconset>
+   </property>
+   <property name="text">
+    <string>Close this tab</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionSave_as">
+   <property name="text">
+    <string>Save as...</string>
+   </property>
+  </action>
+  <action name="actionSave_all">
+   <property name="text">
+    <string>Save all</string>
+   </property>
+  </action>
+  <action name="actionSave_project">
+   <property name="text">
+    <string>Save project</string>
+   </property>
+  </action>
+  <action name="actionRecent_files">
+   <property name="text">
+    <string>Recent files</string>
+   </property>
+  </action>
+  <action name="actionRecent_projects">
+   <property name="text">
+    <string>Recent projects</string>
    </property>
   </action>
  </widget>
