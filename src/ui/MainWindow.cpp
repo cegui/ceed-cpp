@@ -7,7 +7,7 @@
 #include "qmessagebox.h"
 #include "qdesktopservices.h"
 #include "qtabbar.h"
-#include "qopenglframebufferobject.h"
+//#include "qopenglframebufferobject.h"
 #include "src/proj/CEGUIProjectManager.h"
 
 MainWindow::MainWindow(QWidget *parent) :

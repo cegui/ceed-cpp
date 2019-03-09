@@ -30,16 +30,21 @@ SOURCES += \
     src/main.cpp \
     src/ui/MainWindow.cpp \
     src/ui/ProjectManager.cpp \
-    src/proj/CEGUIProjectManager.cpp
+    src/proj/CEGUIProjectManager.cpp \
+    src/ui/CEGUIWidget.cpp \
+    src/ui/CEGUIGraphicsView.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
     src/ui/MainWindow.h \
-    src/proj/CEGUIProjectManager.h
+    src/proj/CEGUIProjectManager.h \
+    src/ui/CEGUIWidget.h \
+    src/ui/CEGUIGraphicsView.h
 
 FORMS += \
     ui/MainWindow.ui \
-    ui/ProjectManager.ui
+    ui/ProjectManager.ui \
+    ui/CEGUIWidget.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
