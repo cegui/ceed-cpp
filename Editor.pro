@@ -29,11 +29,13 @@ CONFIG += c++11
 SOURCES += \
     src/main.cpp \
     src/ui/MainWindow.cpp \
-    src/ui/ProjectManager.cpp
+    src/ui/ProjectManager.cpp \
+    src/proj/CEGUIProjectManager.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
-    src/ui/MainWindow.h
+    src/ui/MainWindow.h \
+    src/proj/CEGUIProjectManager.h
 
 FORMS += \
     ui/MainWindow.ui \
