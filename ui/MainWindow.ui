@@ -129,13 +129,13 @@
     <property name="title">
      <string>Help</string>
     </property>
-    <addaction name="actionQuickstart_Guide"/>
-    <addaction name="actionUser_Manual"/>
-    <addaction name="actionWiki_Page"/>
+    <addaction name="actionQuickstartGuide"/>
+    <addaction name="actionUserManual"/>
+    <addaction name="actionWikiPage"/>
     <addaction name="separator"/>
-    <addaction name="actionSend_Feedback"/>
-    <addaction name="actionReport_Bug"/>
-    <addaction name="actionCEGUI_Debug_Info"/>
+    <addaction name="actionSendFeedback"/>
+    <addaction name="actionReportBug"/>
+    <addaction name="actionCEGUIDebugInfo"/>
     <addaction name="separator"/>
     <addaction name="actionQt"/>
     <addaction name="actionLicense"/>
@@ -501,7 +501,7 @@
     <string>Settings</string>
    </property>
   </action>
-  <action name="actionQuickstart_Guide">
+  <action name="actionQuickstartGuide">
    <property name="icon">
     <iconset>
      <normaloff>../data/icons/actions/help_quickstart.png</normaloff>../data/icons/actions/help_quickstart.png</iconset>
@@ -510,7 +510,7 @@
     <string>Quickstart Guide</string>
    </property>
   </action>
-  <action name="actionUser_Manual">
+  <action name="actionUserManual">
    <property name="icon">
     <iconset>
      <normaloff>../data/icons/actions/help_user_manual.png</normaloff>../data/icons/actions/help_user_manual.png</iconset>
@@ -519,7 +519,7 @@
     <string>User Manual</string>
    </property>
   </action>
-  <action name="actionWiki_Page">
+  <action name="actionWikiPage">
    <property name="icon">
     <iconset>
      <normaloff>../data/icons/actions/help_wiki_page.png</normaloff>../data/icons/actions/help_wiki_page.png</iconset>
@@ -528,7 +528,7 @@
     <string>Wiki Page</string>
    </property>
   </action>
-  <action name="actionSend_Feedback">
+  <action name="actionSendFeedback">
    <property name="icon">
     <iconset>
      <normaloff>../data/icons/actions/help_feedback.png</normaloff>../data/icons/actions/help_feedback.png</iconset>
@@ -537,12 +537,12 @@
     <string>Send Feedback</string>
    </property>
   </action>
-  <action name="actionReport_Bug">
+  <action name="actionReportBug">
    <property name="text">
     <string>Report Bug</string>
    </property>
   </action>
-  <action name="actionCEGUI_Debug_Info">
+  <action name="actionCEGUIDebugInfo">
    <property name="text">
     <string>CEGUI Debug Info</string>
    </property>

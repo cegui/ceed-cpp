@@ -27,6 +27,24 @@ private slots:
 
     void on_actionFullScreen_triggered();
 
+    void on_actionQuickstartGuide_triggered();
+
+    void on_actionUserManual_triggered();
+
+    void on_actionWikiPage_triggered();
+
+    void on_actionSendFeedback_triggered();
+
+    void on_actionReportBug_triggered();
+
+    void on_actionCEGUIDebugInfo_triggered();
+
+    void on_tabs_currentChanged(int index);
+
+    void on_tabs_tabCloseRequested(int index);
+
+    void slot_tabBarCustomContextMenuRequested(const QPoint& pos);
+
 private:
 
     void setupToolbars();
