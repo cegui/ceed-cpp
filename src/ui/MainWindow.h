@@ -25,13 +25,18 @@ private slots:
 
     void on_actionOpenProject_triggered();
 
+    void on_actionFullScreen_triggered();
+
 private:
 
     void setupToolbars();
     QToolBar* createToolbar(const QString& name);
 
+    void updateUIOnProjectChanged();
+
     Ui::MainWindow* ui;
     ProjectManager* projectManager = nullptr;
+    bool wasMaximizedBeforeFullscreen = false;
 };
 
 #endif // MAINWINDOW_H

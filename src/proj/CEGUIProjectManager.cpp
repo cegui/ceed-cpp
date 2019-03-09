@@ -7,6 +7,9 @@ CEGUIProjectManager::CEGUIProjectManager()
 
 void CEGUIProjectManager::loadProject(const QString& fileName)
 {
+    assert(loadedProjectFileName.isEmpty());
+    if (!loadedProjectFileName.isEmpty()) return;
+
     loadedProjectFileName = fileName;
 }
 

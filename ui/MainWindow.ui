@@ -168,7 +168,7 @@
     <addaction name="actionZoom_Out"/>
     <addaction name="actionNormal_size"/>
     <addaction name="separator"/>
-    <addaction name="actionFull_Screen"/>
+    <addaction name="actionFullScreen"/>
    </widget>
    <widget class="QMenu" name="menuProject">
     <property name="title">
@@ -387,13 +387,16 @@
     <string>Normal Size</string>
    </property>
   </action>
-  <action name="actionFull_Screen">
+  <action name="actionFullScreen">
    <property name="icon">
     <iconset>
      <normaloff>../data/icons/actions/view_fullscreen.png</normaloff>../data/icons/actions/view_fullscreen.png</iconset>
    </property>
    <property name="text">
     <string>Full Screen</string>
+   </property>
+   <property name="shortcut">
+    <string>F11</string>
    </property>
   </action>
   <action name="actionUndo">

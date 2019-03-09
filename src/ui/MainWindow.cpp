@@ -68,6 +68,29 @@ QToolBar* MainWindow::createToolbar(const QString& name)
     return toolbar;
 }
 
+void MainWindow::updateUIOnProjectChanged()
+{
+    //bool isProjectLoaded = CEGUIProjectManager::Instance().isProjectLoaded();
+
+    /*
+        # view the newly opened project in the project manager
+        self.projectManager.setProject(self.project)
+        # and set the filesystem browser path to the base folder of the project
+        # TODO: Maybe this could be configurable?
+        projectBaseDirectory = self.project.getAbsolutePathOf("")
+        if os.path.isdir(projectBaseDirectory):
+            self.fileSystemBrowser.setDirectory(projectBaseDirectory)
+
+        self.recentlyUsedProjects.addRecentlyUsed(self.project.projectFilePath)
+
+        # and enable respective actions
+        self.saveProjectAction.setEnabled(True)
+        self.closeProjectAction.setEnabled(True)
+        self.projectSettingsAction.setEnabled(True)
+        self.projectReloadResourcesAction.setEnabled(True)
+    */
+}
+
 void MainWindow::on_actionOpenProject_triggered()
 {
     if (CEGUIProjectManager::Instance().isProjectLoaded())
@@ -91,5 +114,24 @@ void MainWindow::on_actionOpenProject_triggered()
                                                 "Project files (*.project)");
 
     if (!fileName.isEmpty())
+    {
         CEGUIProjectManager::Instance().loadProject(fileName);
+        updateUIOnProjectChanged();
+    }
+}
+
+void MainWindow::on_actionFullScreen_triggered()
+{
+    if (isFullScreen())
+    {
+        if (wasMaximizedBeforeFullscreen)
+            showMaximized();
+        else
+            showNormal();
+    }
+    else
+    {
+        wasMaximizedBeforeFullscreen = isMaximized();
+        showFullScreen();
+    }
 }
