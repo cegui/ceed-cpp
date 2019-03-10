@@ -12,10 +12,18 @@ public:
     ~CEGUIGraphicsView();
 
     void injectInput(bool inject);
+    void updateSelfAndScene();
+
+    virtual void drawBackground(QPainter* painter, const QRectF& rect) override;
 
 private:
 
     bool _injectInput = false;
+
+    // if true, we render always (possibly capped to some FPS) - suitable for live preview
+    // if false, we render only when update() is called - suitable for visual editing
+    bool continuousRendering = true;
+    size_t continuousRenderingTargetFPS = 60;
 };
 
 #endif // CEGUIGRAPHICSVIEW_H
