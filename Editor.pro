@@ -32,14 +32,16 @@ SOURCES += \
     src/ui/ProjectManager.cpp \
     src/proj/CEGUIProjectManager.cpp \
     src/ui/CEGUIWidget.cpp \
-    src/ui/CEGUIGraphicsView.cpp
+    src/ui/CEGUIGraphicsView.cpp \
+    src/ui/CEGUIGraphicsScene.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
     src/ui/MainWindow.h \
     src/proj/CEGUIProjectManager.h \
     src/ui/CEGUIWidget.h \
-    src/ui/CEGUIGraphicsView.h
+    src/ui/CEGUIGraphicsView.h \
+    src/ui/CEGUIGraphicsScene.h
 
 FORMS += \
     ui/MainWindow.ui \

@@ -1,4 +1,5 @@
 #include "src/ui/CEGUIGraphicsView.h"
+#include "src/ui/CEGUIGraphicsScene.h"
 #include "qopenglwidget.h"
 #include "qtimer.h"
 
@@ -35,7 +36,9 @@ void CEGUIGraphicsView::injectInput(bool inject)
 
 void CEGUIGraphicsView::updateSelfAndScene()
 {
-    //
+    update();
+    if (scene())
+        scene()->update();
 }
 
 void CEGUIGraphicsView::drawBackground(QPainter *painter, const QRectF &rect)
@@ -50,10 +53,20 @@ void CEGUIGraphicsView::drawBackground(QPainter *painter, const QRectF &rect)
         }
         else
         {
-            // * 1000 because QTimer thinks in milliseconds
-            float lastDelta = 0.f; //scene() ? scene()->lastDelta : 0.f;
-            QTimer::singleShot(std::max(0.f, ((1.0f / continuousRenderingTargetFPS) - lastDelta) * 1000.f),
-                                     this, SLOT(updateSelfAndScene));
+            const CEGUIGraphicsScene* pScene = static_cast<const CEGUIGraphicsScene*>(scene());
+            const float lastDelta = pScene ? static_cast<float>(pScene->getLastDelta()) : 0.f;
+            const float frameTime = 1.0f / static_cast<float>(continuousRenderingTargetFPS);
+
+            if (frameTime > lastDelta)
+            {
+                // * 1000 because QTimer thinks in milliseconds
+                QTimer::singleShot(static_cast<int>(frameTime - lastDelta) * 1000,
+                                         this, SLOT(updateSelfAndScene));
+            }
+            else
+            {
+                updateSelfAndScene();
+            }
         }
     }
     else
