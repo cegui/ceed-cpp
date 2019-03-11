@@ -15,6 +15,7 @@ CEGUIGraphicsScene::CEGUIGraphicsScene()
     self.checkerFirstColour = settings.getEntry("cegui/background/first_colour")
     self.checkerSecondColour = settings.getEntry("cegui/background/second_colour")
 */
+    checkerboardBrush = getCheckerboardBrush(checkerWidth, checkerHeight, checkerFirstColour, checkerSecondColour);
 }
 
 void CEGUIGraphicsScene::setCEGUIDisplaySize(float width, float height, bool lazyUpdate)
@@ -22,20 +23,26 @@ void CEGUIGraphicsScene::setCEGUIDisplaySize(float width, float height, bool laz
     contextWidth = width;
     contextHeight = height;
 
-    setSceneRect(QRectF(-padding, -padding, width + 2.f * padding, height + 2.f * padding));
+    qreal qPadding = static_cast<qreal>(padding);
+    qreal qWidth = static_cast<qreal>(width);
+    qreal qHeight = static_cast<qreal>(height);
+    setSceneRect(QRectF(-qPadding, -qPadding, qWidth + 2.0 * qPadding, qHeight + 2.0 * qPadding));
 
+    /*
     if (!lazyUpdate)
-        //PyCEGUI.System.getSingleton().notifyDisplaySizeChanged(self.ceguiDisplaySize)
-        ;
+        PyCEGUI.System.getSingleton().notifyDisplaySizeChanged(self.ceguiDisplaySize);
 
-    // self.fbo = None
+    self.fbo = None
+    */
 }
 
 // We override this and draw CEGUI instead of the whole background.
 // This method uses a FBO to implement zooming, scrolling around, etc...
 // FBOs are therefore required by CEED and it won't run without a GPU that supports them.
-void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF& rect)
+void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
 {
+    //???!!!use rect arg?!
+
     // Be robust, this is usually caused by recursive repainting
     if (!painter->paintEngine())
     {
@@ -49,8 +56,7 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF& rect)
     if (painterType != QPaintEngine::OpenGL && painterType != QPaintEngine::OpenGL2)
     {
         qWarning("cegui.GraphicsScene: drawBackground needs a "
-                 "QGLWidget to be set as viewport on the "
-                 "graphics view");
+                 "QOpenGLWidget to be set as a viewport on the graphics view");
         return;
     }
 
@@ -64,13 +70,8 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF& rect)
     system.getDefaultGUIContext().injectTimePulse(self.lastDelta)
 */
     painter->setPen(Qt::transparent);
-    //painter->setBrush(
-    //painter->drawRect(0, 0, self.ceguiDisplaySize.d_width, self.ceguiDisplaySize.d_height);
-/*
-    painter.setBrush(qtwidgets.getCheckerboardBrush(self.checkerWidth.value, self.checkerHeight.value,
-                                                    self.checkerFirstColour.value, self.checkerSecondColour.value))
-    painter.drawRect(0, 0, self.ceguiDisplaySize.d_width, self.ceguiDisplaySize.d_height)
-*/
+    painter->setBrush(checkerboardBrush);
+    painter->drawRect(0, 0, static_cast<int>(contextWidth), static_cast<int>(contextHeight));
 
     painter->beginNativePainting();
 
@@ -153,4 +154,29 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF& rect)
 */
 
     painter->endNativePainting();
+}
+
+// Small helper function that generates a brush usually seen in graphics editing tools. The checkerboard brush
+// that draws background seen when edited images are transparent.
+QBrush CEGUIGraphicsScene::getCheckerboardBrush(int halfWidth, int halfHeight, QColor firstColour, QColor secondColour)
+{
+    // Disallow too large half sizes to prevent crashes in QPainter and slowness in general
+    halfWidth = std::min(halfWidth, 256);
+    halfHeight = std::min(halfHeight, 256);
+
+    QBrush ret;
+    QPixmap texture(2 * halfWidth, 2 * halfHeight);
+
+    // Render checker
+    {
+        QPainter painter(&texture);
+        painter.fillRect(0, 0, halfWidth, halfHeight, firstColour);
+        painter.fillRect(halfWidth, halfHeight, halfWidth, halfHeight, firstColour);
+        painter.fillRect(halfWidth, 0, halfWidth, halfHeight, secondColour);
+        painter.fillRect(0, halfHeight, halfWidth, halfHeight, secondColour);
+    }
+
+    ret.setTexture(texture);
+
+    return ret;
 }

@@ -21,12 +21,21 @@ public:
 
 protected:
 
+    // TODO: move from here to utility functions!
+    QBrush getCheckerboardBrush(int halfWidth = 5, int halfHeight = 5, QColor firstColour = Qt::darkGray, QColor secondColour = Qt::gray);
+
     time_t lastDelta = 0;
     time_t timeOfLastRender;
 
     float padding = 100.f;
     float contextWidth = 0.f;
     float contextHeight = 0.f;
+
+    QBrush checkerboardBrush;
+    QColor checkerFirstColour = Qt::darkGray;
+    QColor checkerSecondColour = Qt::gray;
+    int checkerWidth = 5;
+    int checkerHeight = 5;
 };
 
 #endif // CEGUIGRAPHICSSCENE_H
