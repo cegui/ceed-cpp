@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui xml
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -33,7 +33,8 @@ SOURCES += \
     src/proj/CEGUIProjectManager.cpp \
     src/ui/CEGUIWidget.cpp \
     src/ui/CEGUIGraphicsView.cpp \
-    src/ui/CEGUIGraphicsScene.cpp
+    src/ui/CEGUIGraphicsScene.cpp \
+    src/proj/CEGUIProject.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -41,7 +42,8 @@ HEADERS += \
     src/proj/CEGUIProjectManager.h \
     src/ui/CEGUIWidget.h \
     src/ui/CEGUIGraphicsView.h \
-    src/ui/CEGUIGraphicsScene.h
+    src/ui/CEGUIGraphicsScene.h \
+    src/proj/CEGUIProject.h
 
 FORMS += \
     ui/MainWindow.ui \

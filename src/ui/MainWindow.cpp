@@ -82,6 +82,7 @@ MainWindow::MainWindow(QWidget *parent) :
     auto tabs = centralWidget()->findChild<QTabWidget*>("tabs");
     tabs->tabBar()->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(tabs->tabBar(), SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(slot_tabBarCustomContextMenuRequested(QPoint)));
+
     /*
         # stores all active tab editors
         self.tabEditors = []

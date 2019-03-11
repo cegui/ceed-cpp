@@ -3,6 +3,8 @@
 
 #include <QDockWidget>
 
+// TODO: rename to ProjectWindow / ProjectBrowser / SolutionBrowser / SolutionExplorer!
+
 namespace Ui {
 class ProjectManager;
 }
