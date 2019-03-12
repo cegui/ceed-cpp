@@ -118,41 +118,6 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::on_actionQuit_triggered()
-{
-    /*
-        """Safely quits the editor, prompting user to save changes to files and the project."""
-
-        self.saveSettings()
-
-        # we remember last tab we closed to check whether user pressed Cancel in any of the dialogs
-        lastTab = None
-        while len(self.tabEditors) > 0:
-            currentTab = self.tabs.widget(0)
-            if currentTab == lastTab:
-                # user pressed cancel on one of the tab editor 'save without changes' dialog,
-                # cancel the whole quit operation!
-                return False
-            lastTab = currentTab
-
-            self.slot_tabCloseRequested(0)
-
-        # Close project after all tabs have been closed, there may be tabs requiring a project opened!
-        if self.project is not None:
-            # if the slot returned False, user pressed Cancel
-            if not self.slot_closeProject():
-                # in case user pressed cancel the entire quitting processed has to be terminated
-                return False
-    */
-
-    QApplication::quit();
-}
-
-void MainWindow::on_actionStatusbar_toggled(bool isChecked)
-{
-    statusBar()->setVisible(isChecked);
-}
-
 void MainWindow::setupToolbars()
 {
     // Here until I manage to create menu toolbutton in Qt Creator
@@ -160,7 +125,7 @@ void MainWindow::setupToolbars()
     QToolButton* newMenuBtn = new QToolButton(this);
     newMenuBtn->setText("New");
     newMenuBtn->setToolTip("New file");
-    newMenuBtn->setIcon(QIcon("../data/icons/actions/new_file.png"));
+    newMenuBtn->setIcon(QIcon(":/icons/actions/new_file.png"));
     newMenuBtn->setPopupMode(QToolButton::InstantPopup);
     newMenuBtn->setMenu(menuBar()->findChild<QMenu*>("menu_New"));
     toolbar->addWidget(newMenuBtn);
@@ -205,6 +170,41 @@ void MainWindow::updateUIOnProjectChanged()
         self.projectSettingsAction.setEnabled(True)
         self.projectReloadResourcesAction.setEnabled(True)
     */
+}
+
+void MainWindow::on_actionQuit_triggered()
+{
+    /*
+        """Safely quits the editor, prompting user to save changes to files and the project."""
+
+        self.saveSettings()
+
+        # we remember last tab we closed to check whether user pressed Cancel in any of the dialogs
+        lastTab = None
+        while len(self.tabEditors) > 0:
+            currentTab = self.tabs.widget(0)
+            if currentTab == lastTab:
+                # user pressed cancel on one of the tab editor 'save without changes' dialog,
+                # cancel the whole quit operation!
+                return False
+            lastTab = currentTab
+
+            self.slot_tabCloseRequested(0)
+
+        # Close project after all tabs have been closed, there may be tabs requiring a project opened!
+        if self.project is not None:
+            # if the slot returned False, user pressed Cancel
+            if not self.slot_closeProject():
+                # in case user pressed cancel the entire quitting processed has to be terminated
+                return False
+    */
+
+    QApplication::quit();
+}
+
+void MainWindow::on_actionStatusbar_toggled(bool isChecked)
+{
+    statusBar()->setVisible(isChecked);
 }
 
 void MainWindow::on_actionOpenProject_triggered()

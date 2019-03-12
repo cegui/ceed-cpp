@@ -1,0 +1,42 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/actions/application_settings.png</file>
+        <file>icons/actions/close_all_tabs.png</file>
+        <file>icons/actions/close_other_tabs.png</file>
+        <file>icons/actions/close_project.png</file>
+        <file>icons/actions/close_tab.png</file>
+        <file>icons/actions/copy.png</file>
+        <file>icons/actions/cut.png</file>
+        <file>icons/actions/delete.png</file>
+        <file>icons/actions/filesystem_active_file_directory.png</file>
+        <file>icons/actions/filesystem_home_directory.png</file>
+        <file>icons/actions/filesystem_parent_directory.png</file>
+        <file>icons/actions/filesystem_project_directory.png</file>
+        <file>icons/actions/help_about.png</file>
+        <file>icons/actions/help_feedback.png</file>
+        <file>icons/actions/help_quickstart.png</file>
+        <file>icons/actions/help_user_manual.png</file>
+        <file>icons/actions/help_wiki_page.png</file>
+        <file>icons/actions/new_file.png</file>
+        <file>icons/actions/new_project.png</file>
+        <file>icons/actions/open_file.png</file>
+        <file>icons/actions/open_project.png</file>
+        <file>icons/actions/paste.png</file>
+        <file>icons/actions/project_settings.png</file>
+        <file>icons/actions/quit.png</file>
+        <file>icons/actions/recent_projects.png</file>
+        <file>icons/actions/redo.png</file>
+        <file>icons/actions/save.png</file>
+        <file>icons/actions/save_all.png</file>
+        <file>icons/actions/save_as.png</file>
+        <file>icons/actions/save_project.png</file>
+        <file>icons/actions/undo.png</file>
+        <file>icons/actions/view_fullscreen.png</file>
+        <file>icons/actions/zoom_in.png</file>
+        <file>icons/actions/zoom_original.png</file>
+        <file>icons/actions/zoom_out.png</file>
+        <file>icons/cegui/debug_info.png</file>
+        <file>icons/project_management/reload_resources.png</file>
+        <file>icons/ceed.png</file>
+    </qresource>
+</RCC>
