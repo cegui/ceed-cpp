@@ -17,6 +17,10 @@ public:
     explicit ProjectManager(QWidget *parent = nullptr);
     ~ProjectManager();
 
+signals:
+
+    void itemOpenRequested(const QString& name);
+
 private:
     Ui::ProjectManager *ui;
 };
