@@ -6,8 +6,6 @@
 
 // Incapsulates a single CEGUI (CEED) project info and methods to work with it
 
-class CEGUIProjectItem;
-
 class CEGUIProject : public QStandardItemModel
 {
 public:
@@ -43,8 +41,6 @@ private:
     QString schemesPath;
     QString layoutsPath;
     QString xmlSchemasPath;
-
-    CEGUIProjectItem* itemPrototype = nullptr;
 
     bool changed = true; // A new project is not saved yet
 };

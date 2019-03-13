@@ -26,6 +26,7 @@ public:
     };
 
     CEGUIProjectItem(CEGUIProject* project);
+    virtual ~CEGUIProjectItem() override;
 
     // Qt docs say we have to overload type() and return something > QStandardItem.UserType
     virtual int type() const { return QStandardItem::UserType + 1; }

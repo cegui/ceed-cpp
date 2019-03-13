@@ -21,8 +21,8 @@ CEGUIProject::CEGUIProject()
 {
     setHorizontalHeaderLabels({ "Name" });
 
-    itemPrototype = new CEGUIProjectItem(this);
-    setItemPrototype(itemPrototype);
+    // NB: we must not delete it, Qt does this for us
+    setItemPrototype(new CEGUIProjectItem(this));
 /*
     pmappings = set(["mappings/Base.pmappings"])
     self.propertyMap = propertymapping.PropertyMap.fromFiles([os.path.abspath(path) for path in pmappings])
@@ -31,8 +31,6 @@ CEGUIProject::CEGUIProject()
 
 CEGUIProject::~CEGUIProject()
 {
-    if (itemPrototype)
-        delete itemPrototype;
 }
 
 Qt::DropActions CEGUIProject::supportedDragActions() const
@@ -217,7 +215,7 @@ bool CEGUIProject::referencesFilePath(const QString& filePath) const
 {
     for (int i = 0; i < rowCount(); ++i)
     {
-        auto itemPtr = item(i);
+        auto itemPtr = static_cast<CEGUIProjectItem*>(item(i));
         if (itemPtr->referencesFilePath(filePath))
             return true;
     }

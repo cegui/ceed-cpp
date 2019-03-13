@@ -19,6 +19,10 @@ CEGUIProjectItem::CEGUIProjectItem(CEGUIProject* project)
     project->setModified();
 }
 
+CEGUIProjectItem::~CEGUIProjectItem()
+{
+}
+
 QStandardItem* CEGUIProjectItem::clone() const
 {
     CEGUIProjectItem* ret = new CEGUIProjectItem(_project);
