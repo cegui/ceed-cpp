@@ -73,13 +73,13 @@ bool CEGUIProject::loadFromFile(const QString& fileName)
     changed = false;
 
     //!!!TODO: scan & add files from project directories!
+    // New project created in an existing folder structure must auto-add files.
     auto xmlItem = xmlRoot.firstChildElement("Items").firstChildElement("Item");
     while (!xmlItem.isNull())
     {
-        /*
-        item = Item.loadFromElement(self, itemElement)
-        self.appendRow(item)
-        */
+        CEGUIProjectItem* itemPtr = new CEGUIProjectItem(this);
+        itemPtr->loadFromElement(xmlItem);
+        appendRow(itemPtr);
 
         xmlItem = xmlItem.nextSiblingElement("Item");
     }
@@ -100,6 +100,9 @@ bool CEGUIProject::save(const QString& fileName)
     else path = fileName;
 
     QDomDocument doc;
+
+    // Write header
+
     auto xmlRoot = doc.documentElement();
     xmlRoot.setTagName("Project");
     xmlRoot.setAttribute("version", "CEED Project 1");
@@ -114,15 +117,21 @@ bool CEGUIProject::save(const QString& fileName)
     xmlRoot.setAttribute("xmlSchemasPath", QDir::cleanPath(xmlSchemasPath));
     //???animations?
 
+    // Write project item tree
+
     QDomElement xmlItems = doc.createElement("Items");
-/*
-    i = 0
-    while i < self.rowCount():
-        items.append(self.item(i).saveToElement())
-        i = i + 1
-*/
+
+    for (int i = 0; i < rowCount(); ++i)
+    {
+        QDomElement xmlChild = doc.createElement("Item");
+        auto itemPtr = static_cast<CEGUIProjectItem*>(item(i));
+        if (itemPtr && itemPtr->saveToElement(xmlChild))
+            xmlItems.appendChild(xmlChild);
+    }
 
     xmlRoot.appendChild(xmlItems);
+
+    // Save to file
 
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))

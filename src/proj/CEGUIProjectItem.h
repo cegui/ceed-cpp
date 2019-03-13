@@ -2,6 +2,7 @@
 #define CEGUIPROJECTITEM_H
 
 #include "qstandarditemmodel.h"
+#include "qdom.h"
 
 // One item in the project. This is usually a file or a folder.
 
@@ -29,6 +30,9 @@ public:
     // Qt docs say we have to overload type() and return something > QStandardItem.UserType
     virtual int type() const { return QStandardItem::UserType + 1; }
     virtual QStandardItem* clone() const;
+
+    void loadFromElement(const QDomElement& xml);
+    bool saveToElement(QDomElement& xml);
 
     void setType(Type type);
     void setPath(const QString& path);

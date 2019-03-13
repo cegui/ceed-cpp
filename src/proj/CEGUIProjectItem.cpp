@@ -2,6 +2,17 @@
 #include "src/proj/CEGUIProject.h"
 #include "qdir.h"
 
+/*
+    itemType = property(lambda self: self.data(QtCore.Qt.UserRole + 1),
+                        lambda self, value: self.setItemType(value))
+
+    label = property(lambda self: self.text(),
+                     lambda self, value: self.setText(value))
+
+    icon = property(lambda self: self.icon(),
+                    lambda self, value: self.setIcon(QtGui.QIcon(value)))
+*/
+
 CEGUIProjectItem::CEGUIProjectItem(CEGUIProject* project)
     : _project(project)
 {
@@ -17,6 +28,67 @@ QStandardItem* CEGUIProjectItem::clone() const
         ret->_path = _path;
 
     return ret;
+}
+
+void CEGUIProjectItem::loadFromElement(const QDomElement& xml)
+{
+    assert(_project);
+
+    QString typeString = xml.attribute("type");
+    if (typeString == "file")
+    {
+        _type = Type::File;
+        _path = QDir::cleanPath(xml.attribute("path"));
+    }
+    else if (typeString == "folder")
+    {
+        _type = Type::Folder;
+        _path = xml.attribute("name");
+
+        auto xmlItem = xml.firstChildElement("Item");
+        while (!xmlItem.isNull())
+        {
+            CEGUIProjectItem* itemPtr = new CEGUIProjectItem(_project);
+            itemPtr->loadFromElement(xmlItem);
+            appendRow(itemPtr);
+
+            xmlItem = xmlItem.nextSiblingElement("Item");
+        }
+    }
+    else
+    {
+        // TODO: error "Unknown item type '%s'"
+        assert(false);
+    }
+}
+
+bool CEGUIProjectItem::saveToElement(QDomElement& xml)
+{
+    xml.setTagName("Item");
+
+    if (_type == Type::File)
+    {
+        xml.setAttribute("type", "file");
+        xml.setAttribute("path", QDir::cleanPath(_path));
+        return true;
+    }
+    else if (_type == Type::Folder)
+    {
+        xml.setAttribute("type", "folder");
+        xml.setAttribute("name", _path);
+
+        for (int i = 0; i < rowCount(); ++i)
+        {
+            QDomElement xmlChild = xml.ownerDocument().createElement("Item");
+            auto itemPtr = static_cast<CEGUIProjectItem*>(child(i));
+            if (itemPtr && itemPtr->saveToElement(xmlChild))
+                xml.appendChild(xmlChild);
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 void CEGUIProjectItem::setType(CEGUIProjectItem::Type type)
