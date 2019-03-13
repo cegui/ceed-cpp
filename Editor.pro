@@ -34,7 +34,8 @@ SOURCES += \
     src/ui/CEGUIWidget.cpp \
     src/ui/CEGUIGraphicsView.cpp \
     src/ui/CEGUIGraphicsScene.cpp \
-    src/proj/CEGUIProject.cpp
+    src/proj/CEGUIProject.cpp \
+    src/proj/CEGUIProjectItem.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -43,7 +44,8 @@ HEADERS += \
     src/ui/CEGUIWidget.h \
     src/ui/CEGUIGraphicsView.h \
     src/ui/CEGUIGraphicsScene.h \
-    src/proj/CEGUIProject.h
+    src/proj/CEGUIProject.h \
+    src/proj/CEGUIProjectItem.h
 
 FORMS += \
     ui/MainWindow.ui \

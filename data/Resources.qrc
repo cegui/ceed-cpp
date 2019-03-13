@@ -38,5 +38,18 @@
         <file>icons/cegui/debug_info.png</file>
         <file>icons/project_management/reload_resources.png</file>
         <file>icons/ceed.png</file>
+        <file>icons/project_items/animation.png</file>
+        <file>icons/project_items/bitmap.png</file>
+        <file>icons/project_items/folder.png</file>
+        <file>icons/project_items/font.png</file>
+        <file>icons/project_items/imageset.png</file>
+        <file>icons/project_items/layout.png</file>
+        <file>icons/project_items/looknfeel.png</file>
+        <file>icons/project_items/lua_script.png</file>
+        <file>icons/project_items/python_script.png</file>
+        <file>icons/project_items/scheme.png</file>
+        <file>icons/project_items/text.png</file>
+        <file>icons/project_items/unknown.png</file>
+        <file>icons/project_items/xml.png</file>
     </qresource>
 </RCC>

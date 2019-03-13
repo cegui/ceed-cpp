@@ -18,8 +18,6 @@ void CEGUIProjectManager::loadProject(const QString& fileName)
     assert(loadedProjectFileName.isEmpty());
     if (!loadedProjectFileName.isEmpty()) return;
 
-    loadedProjectFileName = fileName;
-
     CEGUIProject proj;
     proj.loadFromFile(fileName);
     // load xml file
@@ -33,9 +31,20 @@ void CEGUIProjectManager::loadProject(const QString& fileName)
 
             self.project = None
             return
+    */
 
-        self.performProjectDirectoriesSanityCheck()
+    if (!proj.checkAllDirectories())
+    {
+        /*
+        if (indicateErrorsWithDialogs)
+            QtGui.QMessageBox.warning(self, "At least one of project's resource directories is invalid",
+            "Project's resource directory paths didn't pass the sanity check, please check projects settings.
+            "Details of this error: %s");
+        */
+        return;
+    }
 
+    /*
         if openSettings:
             self.slot_projectSettings()
 
@@ -44,6 +53,8 @@ void CEGUIProjectManager::loadProject(const QString& fileName)
     */
 
     //!!!see updateUIOnProjectChanged for UI changes!
+
+    loadedProjectFileName = fileName;
 }
 
 void CEGUIProjectManager::unloadProject()

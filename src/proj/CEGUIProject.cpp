@@ -1,4 +1,5 @@
 #include "src/proj/CEGUIProject.h"
+#include "src/proj/CEGUIProjectItem.h"
 #include "qfile.h"
 #include "qdir.h"
 #include "qdom.h"
@@ -18,15 +19,25 @@ CEGUIProject::CEGUIProject()
     , layoutsPath("./layouts")
     , xmlSchemasPath("./xml_schemas")
 {
-/*
-    self.setHorizontalHeaderLabels(["Name"])
-    self.setSupportedDragActions(QtCore.Qt.MoveAction)
-    self.prototype = Item(self)
-    self.setItemPrototype(self.prototype)
+    setHorizontalHeaderLabels({ "Name" });
 
+    itemPrototype = new CEGUIProjectItem(this);
+    setItemPrototype(itemPrototype);
+/*
     pmappings = set(["mappings/Base.pmappings"])
     self.propertyMap = propertymapping.PropertyMap.fromFiles([os.path.abspath(path) for path in pmappings])
 */
+}
+
+CEGUIProject::~CEGUIProject()
+{
+    if (itemPrototype)
+        delete itemPrototype;
+}
+
+Qt::DropActions CEGUIProject::supportedDragActions() const
+{
+    return Qt::MoveAction;
 }
 
 // Loads XML project file from given path (preferably absolute path)
@@ -130,6 +141,30 @@ void CEGUIProject::unload()
     //
 }
 
+// Performs base directory and resource directories sanity check, raises IOError in case of a failure
+bool CEGUIProject::checkAllDirectories() const
+{
+    // Check the base directory
+    if (!QFileInfo(getAbsolutePathOf("")).isDir())
+    {
+        // raise IOError("Base directory '%s' isn't a directory or isn't accessible." % (self.getAbsolutePathOf("")))
+        return false;
+    }
+
+    const QString categories[] = { "imagesets", "fonts", "looknfeels", "schemes", "layouts", "xml_schemas" };
+    for (const auto& resourceCategory : categories)
+    {
+        QString directoryPath = getResourceFilePath("", resourceCategory);
+        if (!QFileInfo(directoryPath).isDir())
+        {
+            // raise IOError("Resource directory '%s' for resources of type '%s' isn't a directory or isn't accessible" % (directoryPath, resourceCategory))
+            return false;
+        }
+    }
+
+    return true;
+}
+
 // Converts project relative paths to absolute paths
 QString CEGUIProject::getAbsolutePathOf(const QString& relPath) const
 {
@@ -137,56 +172,46 @@ QString CEGUIProject::getAbsolutePathOf(const QString& relPath) const
     return QDir::cleanPath(absBaseDir.absoluteFilePath(relPath));
 }
 
-/*
-    def getRelativePathOf(self, path):
-        return os.path.normpath(os.path.relpath(path, os.path.join(os.path.abspath(os.path.dirname(self.projectFilePath)), self.baseDirectory)))
+QString CEGUIProject::getRelativePathOf(const QString& absPath) const
+{
+    QDir absBaseDir(QFileInfo(filePath).dir().absoluteFilePath(baseDirectory));
+    return QDir::cleanPath(absBaseDir.relativeFilePath(absPath));
+}
 
-    def getResourceFilePath(self, filename, resourceGroup):
-        # FIXME: The whole resource provider wrapping should be done proper, see http://www.cegui.org.uk/mantis/view.php?id=552
-        folder = ""
-        if resourceGroup == "imagesets":
-            folder = self.imagesetsPath
-        elif resourceGroup == "fonts":
-            folder = self.fontsPath
-        elif resourceGroup == "looknfeels":
-            folder = self.looknfeelsPath
-        elif resourceGroup == "schemes":
-            folder = self.schemesPath
-        elif resourceGroup == "layouts":
-            folder = self.layoutsPath
-        elif resourceGroup == "xml_schemas":
-            folder = self.xmlSchemasPath
-        else:
-            raise RuntimeError("Unknown resource group '%s'" % (resourceGroup))
+QString CEGUIProject::getResourceFilePath(const QString& fileName, const QString& resourceGroup) const
+{
+    // FIXME: The whole resource provider wrapping should be done proper, see http://www.cegui.org.uk/mantis/view.php?id=552
+    QString folder;
+    if (resourceGroup == "imagesets")
+        folder = imagesetsPath;
+    else if (resourceGroup == "fonts")
+        folder = fontsPath;
+    else if (resourceGroup == "looknfeels")
+        folder = looknfeelsPath;
+    else if (resourceGroup == "schemes")
+        folder = schemesPath;
+    else if (resourceGroup == "layouts")
+        folder = layoutsPath;
+    else if (resourceGroup == "xml_schemas")
+        folder = xmlSchemasPath;
+    else
+    {
+        //???throw?
+        return QString();
+    }
 
-        return self.getAbsolutePathOf(os.path.join(folder, filename))
+    return getAbsolutePathOf(QDir(folder).filePath(fileName));
+}
 
-    def checkAllDirectories(self):
-        """Performs base directory and resource directories sanity check,
-        raises IOError in case of a failure
-        """
+// Checks whether given absolute path is referenced by any File item in the project
+bool CEGUIProject::referencesFilePath(const QString& filePath) const
+{
+    for (int i = 0; i < rowCount(); ++i)
+    {
+        auto itemPtr = item(i);
+        if (itemPtr->referencesFilePath(filePath))
+            return true;
+    }
 
-        # check the base directory
-        if not os.path.isdir(self.getAbsolutePathOf("")):
-            raise IOError("Base directory '%s' isn't a directory or isn't accessible." % (self.getAbsolutePathOf("")))
-
-        for resourceCategory in ["imagesets", "fonts", "looknfeels", "schemes", "layouts", "xml_schemas"]:
-            directoryPath = self.getResourceFilePath("", resourceCategory)
-            if not os.path.isdir(directoryPath):
-                raise IOError("Resource directory '%s' for resources of type '%s' isn't a directory or isn't accessible" % (directoryPath, resourceCategory))
-
-    def referencesFilePath(self, filePath):
-        """Checks whether given absolute path is referenced by any File item
-        in the project"""
-
-        i = 0
-        while i < self.rowCount():
-            item = self.item(i)
-
-            if item.referencesFilePath(filePath):
-                return True
-
-            i += 1
-
-        return False
-*/
+    return false;
+}
