@@ -35,7 +35,13 @@ SOURCES += \
     src/ui/CEGUIGraphicsView.cpp \
     src/ui/CEGUIGraphicsScene.cpp \
     src/proj/CEGUIProject.cpp \
-    src/proj/CEGUIProjectItem.cpp
+    src/proj/CEGUIProjectItem.cpp \
+    src/ui/NewProjectDialog.cpp \
+    src/ui/ProjectSettingsDialog.cpp \
+    src/ui/FileSystemBrowser.cpp \
+    src/ui/widgets/FileLineEdit.cpp \
+    src/ui/LicenseDialog.cpp \
+    src/ui/AboutDialog.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -45,12 +51,24 @@ HEADERS += \
     src/ui/CEGUIGraphicsView.h \
     src/ui/CEGUIGraphicsScene.h \
     src/proj/CEGUIProject.h \
-    src/proj/CEGUIProjectItem.h
+    src/proj/CEGUIProjectItem.h \
+    src/ui/NewProjectDialog.h \
+    src/ui/ProjectSettingsDialog.h \
+    src/ui/FileSystemBrowser.h \
+    src/ui/widgets/FileLineEdit.h \
+    src/ui/LicenseDialog.h \
+    src/ui/AboutDialog.h
 
 FORMS += \
     ui/MainWindow.ui \
     ui/ProjectManager.ui \
-    ui/CEGUIWidget.ui
+    ui/CEGUIWidget.ui \
+    ui/NewProjectDialog.ui \
+    ui/ProjectSettingsDialog.ui \
+    ui/FileSystemBrowser.ui \
+    ui/widgets/FileLineEdit.ui \
+    ui/LicenseDialog.ui \
+    ui/AboutDialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
