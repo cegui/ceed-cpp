@@ -3,6 +3,9 @@
 
 #include <QDialog>
 
+// Shows GPLv3 and related info in the UI of the application as FSF recommends.
+// Almost all of it is in the .ui file, editable with QtDesigner
+
 namespace Ui {
 class LicenseDialog;
 }

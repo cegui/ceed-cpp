@@ -45,6 +45,10 @@ private slots:
 
     void slot_tabBarCustomContextMenuRequested(const QPoint& pos);
 
+    void on_actionAbout_triggered();
+
+    void on_actionLicense_triggered();
+
 private:
 
     void setupToolbars();

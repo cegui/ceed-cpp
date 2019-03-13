@@ -51,5 +51,6 @@
         <file>icons/project_items/text.png</file>
         <file>icons/project_items/unknown.png</file>
         <file>icons/project_items/xml.png</file>
+        <file>images/splashscreen.png</file>
     </qresource>
 </RCC>

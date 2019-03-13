@@ -9,6 +9,8 @@
 #include "qtabbar.h"
 //#include "qopenglframebufferobject.h"
 #include "src/proj/CEGUIProjectManager.h"
+#include "src/ui/AboutDialog.h"
+#include "src/ui/LicenseDialog.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -412,4 +414,16 @@ void MainWindow::slot_tabBarCustomContextMenuRequested(const QPoint& pos)
         menu.exec_(self.tabBar.mapToGlobal(point))
     */
     menu->exec(tabs->tabBar()->mapToGlobal(pos));
+}
+
+void MainWindow::on_actionAbout_triggered()
+{
+    AboutDialog dlg;
+    dlg.exec();
+}
+
+void MainWindow::on_actionLicense_triggered()
+{
+    LicenseDialog dlg;
+    dlg.exec();
 }
