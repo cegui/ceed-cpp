@@ -10,6 +10,10 @@ class CEGUIProject : public QStandardItemModel
 {
 public:
 
+    //!!!EditorEmbeddedCEGUIVersion must be a version string from the current CEGUI system!
+    static const QString EditorEmbeddedCEGUIVersion;
+    static const QStringList CEGUIVersions;
+
     CEGUIProject();
     virtual ~CEGUIProject() override;
 
@@ -29,7 +33,8 @@ public:
     QString getResourceFilePath(const QString& fileName, const QString& resourceGroup) const;
     bool referencesFilePath(const QString& filePath) const;
 
-private:
+//private:
+public: // For now, to avoid lots of boilerplate setters & getters
 
     QString defaultResolution;
     QString CEGUIVersion;
@@ -41,6 +46,8 @@ private:
     QString schemesPath;
     QString layoutsPath;
     QString xmlSchemasPath;
+
+private:
 
     bool changed = true; // A new project is not saved yet
 };

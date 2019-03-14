@@ -1,11 +1,53 @@
 #include "src/ui/ProjectSettingsDialog.h"
 #include "ui_ProjectSettingsDialog.h"
+#include "src/ui/widgets/FileLineEdit.h"
+#include "src/proj/CEGUIProject.h"
+#include "qdir.h"
+#include "qfileinfo.h"
 
-ProjectSettingsDialog::ProjectSettingsDialog(QWidget *parent) :
+ProjectSettingsDialog::ProjectSettingsDialog(CEGUIProject& project, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::ProjectSettingsDialog)
 {
     ui->setupUi(this);
+
+    CEGUIVersion = findChild<QComboBox*>("CEGUIVersion");
+    CEGUIVersion->addItems(CEGUIProject::CEGUIVersions);
+    CEGUIVersion->setEditText(project.CEGUIVersion);
+
+    CEGUIDefaultResolution = findChild<QComboBox*>("CEGUIDefaultResolution");
+    CEGUIDefaultResolution->setEditText(project.defaultResolution);
+
+    baseDirectory = findChild<FileLineEdit*>("baseDirectory");
+    baseDirectory->setMode(FileLineEdit::Mode::ExistingDirectory);
+    baseDirectory->setText(project.getAbsolutePathOf(""));
+
+    resourceDirectory = findChild<FileLineEdit*>("resourceDirectory");
+    resourceDirectory->setMode(FileLineEdit::Mode::ExistingDirectory);
+
+    imagesetsPath = findChild<FileLineEdit*>("imagesetsPath");
+    imagesetsPath->setMode(FileLineEdit::Mode::ExistingDirectory);
+    imagesetsPath->setText(project.getAbsolutePathOf(project.imagesetsPath));
+
+    fontsPath = findChild<FileLineEdit*>("fontsPath");
+    fontsPath->setMode(FileLineEdit::Mode::ExistingDirectory);
+    fontsPath->setText(project.getAbsolutePathOf(project.fontsPath));
+
+    looknfeelsPath = findChild<FileLineEdit*>("looknfeelsPath");
+    looknfeelsPath->setMode(FileLineEdit::Mode::ExistingDirectory);
+    looknfeelsPath->setText(project.getAbsolutePathOf(project.looknfeelsPath));
+
+    schemesPath = findChild<FileLineEdit*>("schemesPath");
+    schemesPath->setMode(FileLineEdit::Mode::ExistingDirectory);
+    schemesPath->setText(project.getAbsolutePathOf(project.schemesPath));
+
+    layoutsPath = findChild<FileLineEdit*>("layoutsPath");
+    layoutsPath->setMode(FileLineEdit::Mode::ExistingDirectory);
+    layoutsPath->setText(project.getAbsolutePathOf(project.layoutsPath));
+
+    xmlSchemasPath = findChild<FileLineEdit*>("xmlSchemasPath");
+    xmlSchemasPath->setMode(FileLineEdit::Mode::ExistingDirectory);
+    xmlSchemasPath->setText(project.getAbsolutePathOf(project.xmlSchemasPath));
 }
 
 ProjectSettingsDialog::~ProjectSettingsDialog()
@@ -13,79 +55,31 @@ ProjectSettingsDialog::~ProjectSettingsDialog()
     delete ui;
 }
 
-/*
-class ProjectSettingsDialog(QtGui.QDialog):
-    """Dialog able to change various project settings
-    """
+// Applies values from this dialog to given project
+void ProjectSettingsDialog::apply(CEGUIProject& project) const
+{
+    QDir absBaseDir(QDir::cleanPath(QDir(baseDirectory->text()).absolutePath()));
+    project.baseDirectory = QFileInfo(project.filePath).dir().relativeFilePath(absBaseDir.path());
 
-    def __init__(self, project):
-        super(ProjectSettingsDialog, self).__init__()
+    project.CEGUIVersion = CEGUIVersion->currentText();
+    project.defaultResolution = CEGUIDefaultResolution->currentText();
 
-        self.ui = ceed.ui.projectsettingsdialog.Ui_ProjectSettingsDialog()
-        self.ui.setupUi(self)
+    project.imagesetsPath = absBaseDir.relativeFilePath(imagesetsPath->text());
+    project.fontsPath = absBaseDir.relativeFilePath(fontsPath->text());
+    project.looknfeelsPath = absBaseDir.relativeFilePath(looknfeelsPath->text());
+    project.schemesPath = absBaseDir.relativeFilePath(schemesPath->text());
+    project.layoutsPath = absBaseDir.relativeFilePath(layoutsPath->text());
+    project.xmlSchemasPath = absBaseDir.relativeFilePath(xmlSchemasPath->text());
+}
 
-        self.baseDirectory = self.findChild(qtwidgets.FileLineEdit, "baseDirectory")
-        self.baseDirectory.mode = qtwidgets.FileLineEdit.ExistingDirectoryMode
+void ProjectSettingsDialog::on_resourceDirectoryApplyButton_pressed()
+{
+    QDir resourceDir(QDir::cleanPath(QDir(resourceDirectory->text()).absolutePath()));
 
-        self.CEGUIVersion = self.findChild(QtGui.QComboBox, "CEGUIVersion")
-        for version in compatibility.CEGUIVersions:
-            self.CEGUIVersion.addItem(version)
-
-        self.CEGUIVersion.setEditText(project.CEGUIVersion)
-
-        self.CEGUIDefaultResolution = self.findChild(QtGui.QComboBox, "CEGUIDefaultResolution")
-        self.CEGUIDefaultResolution.setEditText(project.CEGUIDefaultResolution)
-
-        self.resourceDirectory = self.findChild(qtwidgets.FileLineEdit, "resourceDirectory")
-        self.resourceDirectory.mode = qtwidgets.FileLineEdit.ExistingDirectoryMode
-        self.resourceDirectoryApplyButton = self.findChild(QtGui.QPushButton, "resourceDirectoryApplyButton")
-        self.resourceDirectoryApplyButton.pressed.connect(self.slot_applyResourceDirectory)
-
-        self.imagesetsPath = self.findChild(qtwidgets.FileLineEdit, "imagesetsPath")
-        self.imagesetsPath.mode = qtwidgets.FileLineEdit.ExistingDirectoryMode
-        self.fontsPath = self.findChild(qtwidgets.FileLineEdit, "fontsPath")
-        self.fontsPath.mode = qtwidgets.FileLineEdit.ExistingDirectoryMode
-        self.looknfeelsPath = self.findChild(qtwidgets.FileLineEdit, "looknfeelsPath")
-        self.looknfeelsPath.mode = qtwidgets.FileLineEdit.ExistingDirectoryMode
-        self.schemesPath = self.findChild(qtwidgets.FileLineEdit, "schemesPath")
-        self.schemesPath.mode = qtwidgets.FileLineEdit.ExistingDirectoryMode
-        self.layoutsPath = self.findChild(qtwidgets.FileLineEdit, "layoutsPath")
-        self.layoutsPath.mode = qtwidgets.FileLineEdit.ExistingDirectoryMode
-        self.xmlSchemasPath = self.findChild(qtwidgets.FileLineEdit, "xmlSchemasPath")
-        self.xmlSchemasPath.mode = qtwidgets.FileLineEdit.ExistingDirectoryMode
-
-        self.baseDirectory.setText(project.getAbsolutePathOf(""))
-        self.imagesetsPath.setText(project.getAbsolutePathOf(project.imagesetsPath))
-        self.fontsPath.setText(project.getAbsolutePathOf(project.fontsPath))
-        self.looknfeelsPath.setText(project.getAbsolutePathOf(project.looknfeelsPath))
-        self.schemesPath.setText(project.getAbsolutePathOf(project.schemesPath))
-        self.layoutsPath.setText(project.getAbsolutePathOf(project.layoutsPath))
-        self.xmlSchemasPath.setText(project.getAbsolutePathOf(project.xmlSchemasPath))
-
-    def apply(self, project):
-        """Applies values from this dialog to given project
-        """
-
-        absBaseDir = os.path.normpath(os.path.abspath(self.baseDirectory.text()))
-        project.baseDirectory = os.path.relpath(absBaseDir, os.path.dirname(project.projectFilePath))
-
-        project.CEGUIVersion = self.CEGUIVersion.currentText()
-        project.CEGUIDefaultResolution = self.CEGUIDefaultResolution.currentText()
-
-        project.imagesetsPath = os.path.relpath(self.imagesetsPath.text(), absBaseDir)
-        project.fontsPath = os.path.relpath(self.fontsPath.text(), absBaseDir)
-        project.looknfeelsPath = os.path.relpath(self.looknfeelsPath.text(), absBaseDir)
-        project.schemesPath = os.path.relpath(self.schemesPath.text(), absBaseDir)
-        project.layoutsPath = os.path.relpath(self.layoutsPath.text(), absBaseDir)
-        project.xmlSchemasPath = os.path.relpath(self.xmlSchemasPath.text(), absBaseDir)
-
-    def slot_applyResourceDirectory(self):
-        resourceDir = os.path.normpath(os.path.abspath(self.resourceDirectory.text()))
-
-        self.imagesetsPath.setText(os.path.join(resourceDir, "imagesets"))
-        self.fontsPath.setText(os.path.join(resourceDir, "fonts"))
-        self.looknfeelsPath.setText(os.path.join(resourceDir, "looknfeel"))
-        self.schemesPath.setText(os.path.join(resourceDir, "schemes"))
-        self.layoutsPath.setText(os.path.join(resourceDir, "layouts"))
-        self.xmlSchemasPath.setText(os.path.join(resourceDir, "xml_schemas"))
-*/
+    imagesetsPath->setText(resourceDir.filePath("imagesets"));
+    fontsPath->setText(resourceDir.filePath("fonts"));
+    looknfeelsPath->setText(resourceDir.filePath("looknfeel"));
+    schemesPath->setText(resourceDir.filePath("schemes"));
+    layoutsPath->setText(resourceDir.filePath("layouts"));
+    xmlSchemasPath->setText(resourceDir.filePath("xml_schemas"));
+}

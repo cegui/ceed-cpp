@@ -37,6 +37,7 @@ void NewProjectDialog::accept()
         return;
     }
 
+    //???create directory instead?
     QDir parentDir = QFileInfo(path).dir();
     if (!parentDir.exists())
     {

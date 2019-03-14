@@ -5,8 +5,8 @@
 #include "qdom.h"
 #include "qtextstream.h"
 
-//!!!EditorEmbeddedCEGUIVersion must be a version string from the current CEGUI system!
-static const QString EditorEmbeddedCEGUIVersion("1.0");
+const QString CEGUIProject::EditorEmbeddedCEGUIVersion("1.0");
+const QStringList CEGUIProject::CEGUIVersions = { "0.6", "0.7", "0.8" };
 
 CEGUIProject::CEGUIProject()
     : defaultResolution("1280x720") // 720p seems like a decent default nowadays, 16:9

@@ -7,6 +7,7 @@
 class CEGUIProjectManager
 {
 public:
+
     CEGUIProjectManager();
     CEGUIProjectManager(const CEGUIProjectManager&) = delete;
 
