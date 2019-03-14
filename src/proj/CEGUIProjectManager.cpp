@@ -6,6 +6,37 @@ CEGUIProjectManager::CEGUIProjectManager()
 
 }
 
+void CEGUIProjectManager::createProject()
+{
+/*
+    # creates the project using data from this dialog
+    def createProject(self):
+        ret = Project()
+        ret.projectFilePath = self.projectFilePath.text()
+
+        if not ret.projectFilePath.endswith(".project"):
+            # enforce the "project" extension
+            ret.projectFilePath += ".project"
+
+        if self.createResourceDirs.checkState() == QtCore.Qt.Checked:
+            try:
+                prefix = os.path.dirname(ret.projectFilePath)
+                dirs = ["fonts", "imagesets", "looknfeel", "schemes", "layouts", "xml_schemas"]
+
+                for dir_ in dirs:
+                    if not os.path.exists(os.path.join(prefix, dir_)):
+                        os.mkdir(os.path.join(prefix, dir_))
+
+            except OSError as e:
+                QtGui.QMessageBox.critical(self, "Cannot create resource \
+directories!", "There was a problem creating the resource \
+directories.  Do you have the proper permissions on the \
+parent directory? (exception info: %s)" % (e))
+
+        return ret
+*/
+}
+
 // Opens the project file given in 'path'. Assumes no project is opened at the point this is called.
 // Caller must test if a project is opened and close it accordingly (with a dialog
 // being shown if there are changes to it)

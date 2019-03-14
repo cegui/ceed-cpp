@@ -18,6 +18,7 @@ public:
         return mgr;
     }
 
+    void createProject();
     void loadProject(const QString& fileName);
     void unloadProject();
     bool isProjectLoaded() const { return !loadedProjectFileName.isEmpty(); }

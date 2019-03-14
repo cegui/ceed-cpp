@@ -13,7 +13,7 @@ class ProjectSettingsDialog : public QDialog
 
 public:
     explicit ProjectSettingsDialog(QWidget *parent = nullptr);
-    ~ProjectSettingsDialog();
+    virtual ~ProjectSettingsDialog() override;
 
 private:
     Ui::ProjectSettingsDialog *ui;
