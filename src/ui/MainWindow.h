@@ -9,6 +9,7 @@ class MainWindow;
 
 class ProjectManager;
 class FileSystemBrowser;
+class EditorBase;
 
 class MainWindow : public QMainWindow
 {
@@ -66,6 +67,9 @@ private:
 
     void updateUIOnProjectChanged();
     bool closeAllTabsRequiringProject();
+
+    bool activateEditorTabByFilePath(const QString& absolutePath);
+    EditorBase* createEditorForFile(const QString& absolutePath);
 
     Ui::MainWindow* ui;
     ProjectManager* projectManager = nullptr;

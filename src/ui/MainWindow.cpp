@@ -8,6 +8,7 @@
 #include "qtabbar.h"
 //#include "qopenglframebufferobject.h"
 #include "src/proj/CEGUIProjectManager.h"
+#include "src/editors/EditorBase.h"
 #include "src/ui/AboutDialog.h"
 #include "src/ui/LicenseDialog.h"
 #include "src/ui/NewProjectDialog.h"
@@ -51,7 +52,6 @@ MainWindow::MainWindow(QWidget *parent) :
         import ceed.editors.layout as layout_editor
         import ceed.editors.looknfeel as looknfeel_editor
         #import ceed.editors.property_mappings as property_mappings_editor
-        import ceed.editors.text as text_editor
 
         self.editorFactories = [
             animation_list_editor.AnimationListTabbedEditorFactory(),
@@ -526,14 +526,150 @@ void MainWindow::on_actionLicense_triggered()
 // it just makes the tab current.
 void MainWindow::openEditorTab(const QString& absolutePath)
 {
-/*
-    if self.activateEditorTabByFilePath(absolutePath):
-        return
+    if (activateEditorTabByFilePath(absolutePath)) return;
 
-    editor = self.createEditorForFile(absolutePath)
-    editor.makeCurrent()
-*/
+    EditorBase* editor = createEditorForFile(absolutePath);
+
+    auto tabs = centralWidget()->findChild<QTabWidget*>("tabs");
+    tabs->setCurrentWidget(editor->getWidget());
 }
+
+/*
+    def closeEditorTab(self, editor):
+        """Closes given editor tab.
+
+        note: Make sure you pass proper existing editor!
+        """
+
+        assert(editor in self.tabEditors)
+
+        editor.finalise()
+        editor.destroy()
+
+        self.tabEditors.remove(editor)
+*/
+
+// Activates (makes current) the tab for the path specified
+bool MainWindow::activateEditorTabByFilePath(const QString& absolutePath)
+{
+    QString path = QDir::cleanPath(absolutePath);
+    /*
+            for tabEditor in self.tabEditors:
+                if tabEditor.filePath == absolutePath:
+                    tabEditor.makeCurrent()
+                    return True
+    */
+    return false;
+}
+
+// Creates a new editor for file at given absolutePath. This always creates a new editor,
+// it is not advised to use this method directly, use openEditorTab instead.
+EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
+{
+    return nullptr;
+}
+/*
+        ret = None
+
+        projectRelativePath = "N/A"
+        try:
+            projectRelativePath = os.path.relpath(absolutePath, self.project.getAbsolutePathOf("")) if self.project else "<No project opened>"
+        except:
+            pass
+
+        if not os.path.exists(absolutePath):
+            ret = editors.MessageTabbedEditor(absolutePath,
+                   "Couldn't find '%s' (project relative path: '%s'), please check that that your project's "
+                   "base directory is set up correctly and that you hadn't deleted "
+                   "the file from your HDD. Consider removing the file from the project." % (absolutePath, projectRelativePath))
+        else:
+            possibleFactories = []
+
+            for factory in self.editorFactories:
+                if factory.canEditFile(absolutePath):
+                    possibleFactories.append(factory)
+
+            # at this point if possibleFactories is [], no registered tabbed editor factory wanted
+            # to accept the file, so we create MessageTabbedEditor that will simply
+            # tell the user that given file can't be edited
+            #
+            # IMO this is a reasonable compromise and plays well with the rest of
+            # the editor without introducing exceptions, etc...
+            if len(possibleFactories) == 0:
+                if absolutePath.endswith(".project"):
+                    # provide a more newbie-friendly message in case they are
+                    # trying to open a project file as if it were a file
+                    ret = editors.MessageTabbedEditor(absolutePath,
+                        "You are trying to open '%s' (project relative path: '%s') which "
+                        "seems to be a CEED project file. "
+                        "This simply is not how things are supposed to work, please use "
+                        "File -> Open Project to open your project file instead. "
+                        "(CEED enforces proper extensions)" % (absolutePath, projectRelativePath))
+
+                else:
+                    ret = editors.MessageTabbedEditor(absolutePath,
+                        "No included tabbed editor was able to accept '%s' "
+                        "(project relative path: '%s'), please check that it's a file CEED "
+                        "supports and that it has the correct extension "
+                        "(CEED enforces proper extensions)" % (absolutePath, projectRelativePath))
+
+            else:
+                # one or more factories wants to accept the file
+                factory = None
+
+                if len(possibleFactories) == 1:
+                    # it's decided, just one factory wants to accept the file
+                    factory = possibleFactories[0]
+
+                else:
+                    assert(len(possibleFactories) > 1)
+
+                    # more than 1 factory wants to accept the file, offer a dialog and let user choose
+                    dialog = editors.MultiplePossibleFactoriesDialog(possibleFactories)
+                    result = dialog.exec_()
+
+                    if result == QtGui.QDialog.Accepted:
+                        selection = dialog.factoryChoice.selectedItems()
+
+                        if len(selection) == 1:
+                            factory = selection[0].data(QtCore.Qt.UserRole)
+
+                if factory is None:
+                    ret = editors.MessageTabbedEditor(absolutePath,
+                       "You failed to choose an editor to open '%s' with (project relative path: '%s')." % (absolutePath, projectRelativePath))
+
+                else:
+                    ret = factory.create(absolutePath)
+
+        if self.project is None and ret.requiresProject:
+            # the old editor will be destroyed automatically by python GC
+            ret = editors.MessageTabbedEditor(absolutePath,
+                       "Opening this file requires you to have a project opened!")
+
+        try:
+            ret.initialise(self)
+
+            # add successfully opened file to the recent files list
+            self.recentlyUsedFiles.addRecentlyUsed(absolutePath)
+
+        except:
+            # it may have been partly constructed at this point
+            try:
+                # make sure the finalisation doesn't early out or fail assertion
+                ret.initialised = True
+
+                ret.finalise()
+                ret.destroy()
+
+            except:
+                # catch all exception the finalisation raises (we can't deal with them anyways)
+                pass
+
+            raise
+
+        self.tabEditors.append(ret)
+        return ret
+*/
 
 void MainWindow::on_actionOpenFile_triggered()
 {

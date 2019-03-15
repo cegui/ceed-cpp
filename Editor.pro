@@ -41,7 +41,9 @@ SOURCES += \
     src/ui/FileSystemBrowser.cpp \
     src/ui/widgets/FileLineEdit.cpp \
     src/ui/LicenseDialog.cpp \
-    src/ui/AboutDialog.cpp
+    src/ui/AboutDialog.cpp \
+    src/editors/EditorBase.cpp \
+    src/editors/TextEditor.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -57,7 +59,9 @@ HEADERS += \
     src/ui/FileSystemBrowser.h \
     src/ui/widgets/FileLineEdit.h \
     src/ui/LicenseDialog.h \
-    src/ui/AboutDialog.h
+    src/ui/AboutDialog.h \
+    src/editors/EditorBase.h \
+    src/editors/TextEditor.h
 
 FORMS += \
     ui/MainWindow.ui \
