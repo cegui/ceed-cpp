@@ -43,7 +43,8 @@ SOURCES += \
     src/ui/LicenseDialog.cpp \
     src/ui/AboutDialog.cpp \
     src/editors/EditorBase.cpp \
-    src/editors/TextEditor.cpp
+    src/editors/TextEditor.cpp \
+    src/editors/NoEditor.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -61,7 +62,8 @@ HEADERS += \
     src/ui/LicenseDialog.h \
     src/ui/AboutDialog.h \
     src/editors/EditorBase.h \
-    src/editors/TextEditor.h
+    src/editors/TextEditor.h \
+    src/editors/NoEditor.h
 
 FORMS += \
     ui/MainWindow.ui \

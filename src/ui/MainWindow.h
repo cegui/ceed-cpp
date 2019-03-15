@@ -9,7 +9,7 @@ class MainWindow;
 
 class ProjectManager;
 class FileSystemBrowser;
-class EditorBase;
+typedef std::unique_ptr<class EditorBase> EditorBasePtr;
 
 class MainWindow : public QMainWindow
 {
@@ -78,7 +78,7 @@ private:
     bool wasMaximizedBeforeFullscreen = false;
 
     QStringList editorFactoryFileFilters;
-    std::vector<EditorBase*> activeEditors;
+    std::vector<EditorBasePtr> activeEditors;
     EditorBase* currentEditor = nullptr;
 };
 

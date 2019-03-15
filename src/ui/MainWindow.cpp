@@ -8,7 +8,8 @@
 #include "qtabbar.h"
 //#include "qopenglframebufferobject.h"
 #include "src/proj/CEGUIProjectManager.h"
-#include "src/editors/EditorBase.h"
+#include "src/proj/CEGUIProject.h"
+#include "src/editors/NoEditor.h"
 #include "src/ui/AboutDialog.h"
 #include "src/ui/LicenseDialog.h"
 #include "src/ui/NewProjectDialog.h"
@@ -512,7 +513,10 @@ void MainWindow::openEditorTab(const QString& absolutePath)
 // Closes given editor tab.
 void MainWindow::closeEditorTab(EditorBase* editor)
 {
-    auto it = std::find(activeEditors.begin(), activeEditors.end(), editor);
+    auto it = std::find_if(activeEditors.begin(), activeEditors.end(), [editor](const EditorBasePtr& element)
+    {
+        return element.get() == editor;
+    });
     if (it == activeEditors.end()) return;
 
     /*
@@ -552,7 +556,7 @@ bool MainWindow::closeAllTabsRequiringProject()
 bool MainWindow::activateEditorTabByFilePath(const QString& absolutePath)
 {
     QString path = QDir::cleanPath(absolutePath);
-    for (EditorBase* editor : activeEditors)
+    for (auto&& editor : activeEditors)
     {
         if (editor->getFilePath() == absolutePath)
         {
@@ -568,57 +572,61 @@ bool MainWindow::activateEditorTabByFilePath(const QString& absolutePath)
 // it is not advised to use this method directly, use openEditorTab instead.
 EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
 {
-    EditorBase* ret = nullptr;
+    EditorBasePtr ret = nullptr;
 
-    return ret;
-}
-/*
-        ret = None
+    QString projectRelativePath;
+    if (CEGUIProjectManager::Instance().isProjectLoaded())
+        projectRelativePath = QDir(CEGUIProjectManager::Instance().getCurrentProject()->getAbsolutePathOf("")).relativeFilePath(absolutePath);
+    else
+        projectRelativePath = "<No project opened>";
 
-        projectRelativePath = "N/A"
-        try:
-            projectRelativePath = os.path.relpath(absolutePath, self.project.getAbsolutePathOf("")) if self.project else "<No project opened>"
-        except:
-            pass
+    if (!QFileInfo(absolutePath).exists())
+    {
+        ret.reset(new NoEditor(absolutePath,
+               tr("Couldn't find '%1' (project relative path: '%2'), please check that that your project's "
+               "base directory is set up correctly and that you hadn't deleted "
+               "the file from your HDD. Consider removing the file from the project.").arg(absolutePath).arg(projectRelativePath)));
+    }
+    else
+    {
+        std::vector<int> possibleFactories;
+        /*
+        for factory in self.editorFactories:
+            if factory.canEditFile(absolutePath):
+                possibleFactories.append(factory)
+        */
 
-        if not os.path.exists(absolutePath):
-            ret = editors.MessageTabbedEditor(absolutePath,
-                   "Couldn't find '%s' (project relative path: '%s'), please check that that your project's "
-                   "base directory is set up correctly and that you hadn't deleted "
-                   "the file from your HDD. Consider removing the file from the project." % (absolutePath, projectRelativePath))
-        else:
-            possibleFactories = []
-
-            for factory in self.editorFactories:
-                if factory.canEditFile(absolutePath):
-                    possibleFactories.append(factory)
-
-            # at this point if possibleFactories is [], no registered tabbed editor factory wanted
-            # to accept the file, so we create MessageTabbedEditor that will simply
-            # tell the user that given file can't be edited
-            #
-            # IMO this is a reasonable compromise and plays well with the rest of
-            # the editor without introducing exceptions, etc...
-            if len(possibleFactories) == 0:
-                if absolutePath.endswith(".project"):
-                    # provide a more newbie-friendly message in case they are
-                    # trying to open a project file as if it were a file
-                    ret = editors.MessageTabbedEditor(absolutePath,
-                        "You are trying to open '%s' (project relative path: '%s') which "
-                        "seems to be a CEED project file. "
-                        "This simply is not how things are supposed to work, please use "
-                        "File -> Open Project to open your project file instead. "
-                        "(CEED enforces proper extensions)" % (absolutePath, projectRelativePath))
-
-                else:
-                    ret = editors.MessageTabbedEditor(absolutePath,
-                        "No included tabbed editor was able to accept '%s' "
-                        "(project relative path: '%s'), please check that it's a file CEED "
-                        "supports and that it has the correct extension "
-                        "(CEED enforces proper extensions)" % (absolutePath, projectRelativePath))
-
-            else:
-                # one or more factories wants to accept the file
+        // At this point if possibleFactories is [], no registered tabbed editor factory wanted
+        // to accept the file, so we create MessageTabbedEditor that will simply
+        // tell the user that given file can't be edited
+        // IMO this is a reasonable compromise and plays well with the rest of
+        // the editor without introducing exceptions, etc...
+        if (possibleFactories.empty())
+        {
+            if (absolutePath.endsWith(".project"))
+            {
+                // Provide a more newbie-friendly message in case they are
+                // trying to open a project file as if it were a file
+                ret.reset(new NoEditor(absolutePath,
+                    tr("You are trying to open '%1' (project relative path: '%2') which "
+                    "seems to be a CEED project file. "
+                    "This simply is not how things are supposed to work, please use "
+                    "File -> Open Project to open your project file instead. "
+                    "(CEED enforces proper extensions)").arg(absolutePath).arg(projectRelativePath)));
+            }
+            else
+            {
+                ret.reset(new NoEditor(absolutePath,
+                    tr("No included tabbed editor was able to accept '%1' "
+                    "(project relative path: '%2'), please check that it's a file CEED "
+                    "supports and that it has the correct extension "
+                    "(CEED enforces proper extensions)").arg(absolutePath).arg(projectRelativePath)));
+            }
+        }
+        else
+        {
+            // One or more factories wants to accept the file
+            /*
                 factory = None
 
                 if len(possibleFactories) == 1:
@@ -644,36 +652,45 @@ EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
 
                 else:
                     ret = factory.create(absolutePath)
+            */
+        }
+    }
 
-        if self.project is None and ret.requiresProject:
-            # the old editor will be destroyed automatically by python GC
-            ret = editors.MessageTabbedEditor(absolutePath,
-                       "Opening this file requires you to have a project opened!")
+    assert(ret);
 
+    if (!CEGUIProjectManager::Instance().isProjectLoaded() && ret->requiresProject())
+    {
+        ret.reset(new NoEditor(absolutePath,
+            "Opening this file requires you to have a project opened!"));
+    }
+
+    /*
+    try:
+        ret.initialise(self)
+
+        # add successfully opened file to the recent files list
+        self.recentlyUsedFiles.addRecentlyUsed(absolutePath)
+
+    except:
+        # it may have been partly constructed at this point
         try:
-            ret.initialise(self)
+            # make sure the finalisation doesn't early out or fail assertion
+            ret.initialised = True
 
-            # add successfully opened file to the recent files list
-            self.recentlyUsedFiles.addRecentlyUsed(absolutePath)
+            ret.finalise()
+            ret.destroy()
 
         except:
-            # it may have been partly constructed at this point
-            try:
-                # make sure the finalisation doesn't early out or fail assertion
-                ret.initialised = True
+            # catch all exception the finalisation raises (we can't deal with them anyways)
+            pass
 
-                ret.finalise()
-                ret.destroy()
+        raise
+    */
 
-            except:
-                # catch all exception the finalisation raises (we can't deal with them anyways)
-                pass
+    activeEditors.push_back(std::move(ret));
 
-            raise
-
-        self.tabEditors.append(ret)
-        return ret
-*/
+    return activeEditors.back().get();
+}
 
 void MainWindow::on_actionOpenFile_triggered()
 {

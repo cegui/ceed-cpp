@@ -46,31 +46,33 @@ parent directory? (exception info: %s)" % (e))
 //               this is desirable when creating a new project
 void CEGUIProjectManager::loadProject(const QString& fileName)
 {
-    assert(loadedProjectFileName.isEmpty());
-    if (!loadedProjectFileName.isEmpty()) return;
+    if (isProjectLoaded())
+    {
+        // TODO: error message
+        assert(false);
+        return;
+    }
 
-    CEGUIProject proj;
-    proj.loadFromFile(fileName);
-    // load xml file
-    // create CEGUIProject from xml
-    /*
-        self.project = project.Project()
-        try:
-            self.project.load(path)
-        except IOError:
-            QtGui.QMessageBox.critical(self, "Error when opening project", "It seems project at path '%s' doesn't exist or you don't have rights to open it." % (path))
+    currentProject.reset(new CEGUIProject());
+    if (!currentProject->loadFromFile(fileName))
+    {
+        /*
+        QMessageBox::critical(this,
+                              "Error when opening project",
+                              tr("It seems project at path '%s' doesn't exist or you don't have rights to open it.").arg(fileName));
+        */
+        currentProject.reset();
+        return;
+    }
 
-            self.project = None
-            return
-    */
-
-    if (!proj.checkAllDirectories())
+    if (!currentProject->checkAllDirectories())
     {
         /*
         if (indicateErrorsWithDialogs)
-            QtGui.QMessageBox.warning(self, "At least one of project's resource directories is invalid",
-            "Project's resource directory paths didn't pass the sanity check, please check projects settings.
-            "Details of this error: %s");
+            QMessageBox::warning(self,
+                                 "At least one of project's resource directories is invalid",
+                                 "Project's resource directory paths didn't pass the sanity check, please check projects settings.
+                                 "Details of this error: %s");
         */
         return;
     }

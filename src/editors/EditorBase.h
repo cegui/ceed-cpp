@@ -8,6 +8,8 @@
 
 class QWidget;
 
+typedef std::unique_ptr<class EditorBase> EditorBasePtr;
+
 class EditorBase
 {
 public:
@@ -16,6 +18,8 @@ public:
     virtual ~EditorBase() {}
 
     virtual QWidget* getWidget() = 0;
+    virtual bool hasChanges() const { return false; }
+    virtual bool requiresProject() const { return false; }
 
     QString getFilePath() const { return filePath; }
 

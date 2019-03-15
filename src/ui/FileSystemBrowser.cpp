@@ -1,6 +1,7 @@
 #include "src/ui/FileSystemBrowser.h"
 #include "ui_FileSystemBrowser.h"
 #include "src/proj/CEGUIProjectManager.h"
+#include "src/proj/CEGUIProject.h"
 
 FileSystemBrowser::FileSystemBrowser(QWidget *parent) :
     QDockWidget(parent),
@@ -18,7 +19,7 @@ FileSystemBrowser::FileSystemBrowser(QWidget *parent) :
 
     // Set to project directory if project open, otherwise to user's home
     if (CEGUIProjectManager::Instance().isProjectLoaded())
-        setDirectory("" /*ceed.mainwindow.MainWindow.instance.project.getAbsolutePathOf("")*/);
+        setDirectory(CEGUIProjectManager::Instance().getCurrentProject()->getAbsolutePathOf(""));
     else
         setDirectory(QDir::homePath());
 }
@@ -81,7 +82,7 @@ void FileSystemBrowser::on_parentDirectoryButton_pressed()
 void FileSystemBrowser::on_projectDirectoryButton_pressed()
 {
     if (CEGUIProjectManager::Instance().isProjectLoaded())
-        setDirectory("" /*ceed.mainwindow.MainWindow.instance.project.getAbsolutePathOf("")*/);
+        setDirectory(CEGUIProjectManager::Instance().getCurrentProject()->getAbsolutePathOf(""));
 }
 
 void FileSystemBrowser::on_homeDirectoryButton_pressed()

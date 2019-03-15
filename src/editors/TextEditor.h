@@ -15,6 +15,7 @@ public:
     //virtual ~TextEditor() override {}
 
     virtual QWidget* getWidget() override { return &tabWidget; }
+    virtual bool hasChanges() const override;
 
 protected:
 
