@@ -7,10 +7,12 @@
 #include "qmessagebox.h"
 #include "qdesktopservices.h"
 #include "qtabbar.h"
-//#include "qopenglframebufferobject.h"
+#include "qopenglframebufferobject.h"
 #include "src/proj/CEGUIProjectManager.h"
 #include "src/ui/AboutDialog.h"
 #include "src/ui/LicenseDialog.h"
+#include "src/ui/NewProjectDialog.h"
+#include "src/ui/ProjectSettingsDialog.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -26,17 +28,17 @@ MainWindow::MainWindow(QWidget *parent) :
         self.recentlyUsedFiles = recentlyused.RecentlyUsedMenuEntry(self.app.qsettings, "Files")
     */
 
-    /*
     if (!QOpenGLFramebufferObject::hasOpenGLFramebufferObjects())
     {
+        /*
         ceed.messages.warning(self.app, self, "No FBO support!",
             "CEED uses OpenGL frame buffer objects for various tasks, "
             "most notably to support panning and zooming in the layout editor.\n\n"
             "FBO support was not detected on your system!\n\n"
             "The editor will run but you may experience rendering artifacts.",
             "no_fbo_support")
+        */
     }
-    */
 
     /*
         import ceed.editors.animation_list as animation_list_editor
@@ -174,6 +176,34 @@ void MainWindow::updateUIOnProjectChanged()
     */
 }
 
+bool MainWindow::closeAllTabsRequiringProject()
+{
+/*
+        """Attempts to close all tabs that require a project opened.
+
+        This is usually done when project settings are altered and CEGUI instance has to be reloaded
+        or when project is being closed and we can no longer rely on resource availability.
+        """
+
+        i = 0
+        while i < self.tabs.count():
+            tabbedEditor = self.tabs.widget(i).tabbedEditor
+
+            if tabbedEditor.requiresProject:
+                if not self.slot_tabCloseRequested(i):
+                    # if the method returns False user pressed Cancel so in that case
+                    # we cancel the entire operation
+                    return False
+
+                continue
+
+            i += 1
+
+        return True
+*/
+    return false;
+}
+
 void MainWindow::on_actionQuit_triggered()
 {
     /*
@@ -204,9 +234,42 @@ void MainWindow::on_actionQuit_triggered()
     QApplication::quit();
 }
 
-void MainWindow::on_actionStatusbar_toggled(bool isChecked)
+void MainWindow::on_actionNewProject_triggered()
 {
-    statusBar()->setVisible(isChecked);
+    if (CEGUIProjectManager::Instance().isProjectLoaded())
+    {
+        // Another project is already opened!
+        auto result = QMessageBox::question(this,
+                              "Another project already opened!",
+                              "Before creating a new project, you must close the one currently opened. "
+                              "Do you want to close currently opened project? (all unsaved changes will be lost!)",
+                              QMessageBox::Yes | QMessageBox::Cancel,
+                              QMessageBox::Cancel);
+
+        if (result != QMessageBox::Yes) return;
+
+        // Don't close the project yet, close it after the user
+        // accepts the New Project dialog below because they may cancel
+    }
+
+    NewProjectDialog newProjectDialog;
+    if (newProjectDialog.exec() != QDialog::Accepted) return;
+
+    // The dialog was accepted, close any open project
+    CEGUIProjectManager::Instance().unloadProject();
+
+/*
+        //!!!get settings from newProjectDialog!
+        newProject = CEGUIProjectManager::Instance().createProject();
+        newProject.save()
+
+        # open the settings window after creation so that user can further customise their
+        # new project file
+        self.openProject(path = newProject.projectFilePath, openSettings = True)
+
+        # save the project with the settings that were potentially set in the project settings dialog
+        self.saveProject()
+*/
 }
 
 void MainWindow::on_actionOpenProject_triggered()
@@ -238,6 +301,29 @@ void MainWindow::on_actionOpenProject_triggered()
     }
 }
 
+void MainWindow::on_actionProjectSettings_triggered()
+{
+    // Since we are effectively unloading the project and potentially nuking resources of it
+    // we should definitely unload all tabs that rely on it to prevent segfaults and other
+    // nasty phenomena
+    if (!closeAllTabsRequiringProject())
+    {
+        QMessageBox::information(this,
+                                 "Project dependent tabs still open!",
+                                 "You can't alter project's settings while having tabs that "
+                                 "depend on the project and its resources opened!");
+        return;
+    }
+
+    //ProjectSettingsDialog dialog(CEGUIProjectManager::Instance().getCurrentProject());
+/*
+        if dialog.exec_() == QtGui.QDialog.Accepted:
+            dialog.apply(self.project)
+            self.performProjectDirectoriesSanityCheck()
+            self.syncProjectToCEGUIInstance()
+*/
+}
+
 void MainWindow::on_actionFullScreen_triggered()
 {
     if (isFullScreen())
@@ -252,6 +338,11 @@ void MainWindow::on_actionFullScreen_triggered()
         wasMaximizedBeforeFullscreen = isMaximized();
         showFullScreen();
     }
+}
+
+void MainWindow::on_actionStatusbar_toggled(bool isChecked)
+{
+    statusBar()->setVisible(isChecked);
 }
 
 void MainWindow::on_actionQuickstartGuide_triggered()

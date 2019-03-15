@@ -49,12 +49,17 @@ private slots:
 
     void on_actionLicense_triggered();
 
+    void on_actionProjectSettings_triggered();
+
+    void on_actionNewProject_triggered();
+
 private:
 
     void setupToolbars();
     QToolBar* createToolbar(const QString& name);
 
     void updateUIOnProjectChanged();
+    bool closeAllTabsRequiringProject();
 
     Ui::MainWindow* ui;
     ProjectManager* projectManager = nullptr;
