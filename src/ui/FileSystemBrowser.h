@@ -28,7 +28,6 @@ signals:
     void fileOpenRequested(const QString& absPath);
 
 private slots:
-    void on_view_clicked(const QModelIndex &index);
 
     void on_view_doubleClicked(const QModelIndex &index);
 

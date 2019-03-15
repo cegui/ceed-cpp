@@ -21,7 +21,16 @@
     <item alignment="Qt::AlignLeft">
      <widget class="QWidget" name="buttons" native="true">
       <layout class="QHBoxLayout" name="horizontalLayout">
-       <property name="margin">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
         <number>0</number>
        </property>
        <item>
@@ -33,8 +42,8 @@
           <string/>
          </property>
          <property name="icon">
-          <iconset>
-           <normaloff>icons/actions/filesystem_parent_directory.png</normaloff>icons/actions/filesystem_parent_directory.png</iconset>
+          <iconset resource="../data/Resources.qrc">
+           <normaloff>:/icons/actions/filesystem_parent_directory.png</normaloff>:/icons/actions/filesystem_parent_directory.png</iconset>
          </property>
          <property name="iconSize">
           <size>
@@ -56,8 +65,8 @@
           <string/>
          </property>
          <property name="icon">
-          <iconset>
-           <normaloff>icons/actions/filesystem_home_directory.png</normaloff>icons/actions/filesystem_home_directory.png</iconset>
+          <iconset resource="../data/Resources.qrc">
+           <normaloff>:/icons/actions/filesystem_home_directory.png</normaloff>:/icons/actions/filesystem_home_directory.png</iconset>
          </property>
          <property name="iconSize">
           <size>
@@ -82,8 +91,8 @@
           <string/>
          </property>
          <property name="icon">
-          <iconset>
-           <normaloff>icons/actions/filesystem_project_directory.png</normaloff>icons/actions/filesystem_project_directory.png</iconset>
+          <iconset resource="../data/Resources.qrc">
+           <normaloff>:/icons/actions/filesystem_project_directory.png</normaloff>:/icons/actions/filesystem_project_directory.png</iconset>
          </property>
          <property name="iconSize">
           <size>
@@ -108,8 +117,8 @@
           <string/>
          </property>
          <property name="icon">
-          <iconset>
-           <normaloff>icons/actions/filesystem_active_file_directory.png</normaloff>icons/actions/filesystem_active_file_directory.png</iconset>
+          <iconset resource="../data/Resources.qrc">
+           <normaloff>:/icons/actions/filesystem_active_file_directory.png</normaloff>:/icons/actions/filesystem_active_file_directory.png</iconset>
          </property>
          <property name="iconSize">
           <size>
@@ -163,6 +172,8 @@
   <tabstop>activeFileDirectoryButton</tabstop>
   <tabstop>pathBox</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="../data/Resources.qrc"/>
+ </resources>
  <connections/>
 </ui>
