@@ -46,7 +46,7 @@ private slots:
 
     void on_tabs_currentChanged(int index);
 
-    void on_tabs_tabCloseRequested(int index);
+    bool on_tabs_tabCloseRequested(int index);
 
     void slot_tabBarCustomContextMenuRequested(const QPoint& pos);
 
@@ -66,15 +66,20 @@ private:
     QToolBar* createToolbar(const QString& name);
 
     void updateUIOnProjectChanged();
-    bool closeAllTabsRequiringProject();
 
-    bool activateEditorTabByFilePath(const QString& absolutePath);
     EditorBase* createEditorForFile(const QString& absolutePath);
+    bool activateEditorTabByFilePath(const QString& absolutePath);
+    void closeEditorTab(EditorBase* editor);
+    bool closeAllTabsRequiringProject();
 
     Ui::MainWindow* ui;
     ProjectManager* projectManager = nullptr;
     FileSystemBrowser* fsBrowser = nullptr;
     bool wasMaximizedBeforeFullscreen = false;
+
+    QStringList editorFactoryFileFilters;
+    std::vector<EditorBase*> activeEditors;
+    EditorBase* currentEditor = nullptr;
 };
 
 #endif // MAINWINDOW_H

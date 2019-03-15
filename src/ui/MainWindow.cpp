@@ -43,16 +43,6 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
     /*
-        # stores all active tab editors
-        self.tabEditors = []
-
-        import ceed.editors.animation_list as animation_list_editor
-        import ceed.editors.bitmap as bitmap_editor
-        import ceed.editors.imageset as imageset_editor
-        import ceed.editors.layout as layout_editor
-        import ceed.editors.looknfeel as looknfeel_editor
-        #import ceed.editors.property_mappings as property_mappings_editor
-
         self.editorFactories = [
             animation_list_editor.AnimationListTabbedEditorFactory(),
             bitmap_editor.BitmapTabbedEditorFactory(),
@@ -174,34 +164,6 @@ void MainWindow::updateUIOnProjectChanged()
         self.projectSettingsAction.setEnabled(True)
         self.projectReloadResourcesAction.setEnabled(True)
     */
-}
-
-bool MainWindow::closeAllTabsRequiringProject()
-{
-/*
-        """Attempts to close all tabs that require a project opened.
-
-        This is usually done when project settings are altered and CEGUI instance has to be reloaded
-        or when project is being closed and we can no longer rely on resource availability.
-        """
-
-        i = 0
-        while i < self.tabs.count():
-            tabbedEditor = self.tabs.widget(i).tabbedEditor
-
-            if tabbedEditor.requiresProject:
-                if not self.slot_tabCloseRequested(i):
-                    # if the method returns False user pressed Cancel so in that case
-                    # we cancel the entire operation
-                    return False
-
-                continue
-
-            i += 1
-
-        return True
-*/
-    return false;
 }
 
 // Safely quits the editor, prompting user to save changes to files and the project.
@@ -380,54 +342,59 @@ void MainWindow::on_actionCEGUIDebugInfo_triggered()
 
 void MainWindow::on_tabs_currentChanged(int index)
 {
+    auto tabs = centralWidget()->findChild<QTabWidget*>("tabs");
+
+    // To fight flicker
+    tabs->setUpdatesEnabled(false);
+
+    auto widget = tabs->widget(index);
+    if (currentEditor)
+        //currentEditor->deactivate();
+        ;
+        /* Editor::deactivate():
+        self.active = False
+
+        if self.mainWindow.activeEditor == self:
+            self.mainWindow.activeEditor = None
+            edMenu = self.mainWindow.editorMenu
+            edMenu.clear()
+            edMenu.menuAction().setEnabled(False)
+            edMenu.menuAction().setVisible(False)
+        */
+
+    // It's the tabbed editor's responsibility to handle these, we disable them by default,
+    // also reset their texts in case the tabbed editor messed with them
     /*
-        # to fight flicker
-        self.tabs.setUpdatesEnabled(False)
-
-        # FIXME: workaround for PySide 1.0.6, I suspect this is a bug in PySide! http://bugs.pyside.org/show_bug.cgi?id=988
-        if index is None:
-            index = -1
-
-        elif isinstance(index, QtGui.QWidget):
-            for i in xrange(0, self.tabs.count()):
-                if index is self.tabs.widget(i):
-                    index = i
-                    break
-
-            assert(not isinstance(index, QtGui.QWidget))
-        # END OF FIXME
-
-        wdt = self.tabs.widget(index)
-
-        if self.activeEditor:
-            self.activeEditor.deactivate()
-
-        # it's the tabbed editor's responsibility to handle these,
-        # we disable them by default
         self.undoAction.setEnabled(False)
         self.redoAction.setEnabled(False)
-        # also reset their texts in case the tabbed editor messed with them
         self.undoAction.setText("Undo")
         self.redoAction.setText("Redo")
+
         # set undo stack to None as we have no idea whether the previous tab editor
         # set it to something else
         self.undoViewer.setUndoStack(None)
+    */
 
-        # we also clear the status bar
-        self.statusBar().clearMessage()
+    statusBar()->clearMessage();
 
-        if wdt:
-            self.revertAction.setEnabled(True)
+    if (widget)
+    {
+        /*
+        self.revertAction.setEnabled(True)
 
-            self.saveAction.setEnabled(True)
-            self.saveAsAction.setEnabled(True)
+        self.saveAction.setEnabled(True)
+        self.saveAsAction.setEnabled(True)
 
-            self.closeTabAction.setEnabled(True)
-            self.closeOtherTabsAction.setEnabled(True)
+        self.closeTabAction.setEnabled(True)
+        self.closeOtherTabsAction.setEnabled(True)
 
-            wdt.tabbedEditor.activate()
-        else:
-            # None is selected right now, lets disable appropriate actions
+        wdt.tabbedEditor.activate()
+        */
+    }
+    else
+    {
+        // None is selected right now, lets disable appropriate actions
+        /*
             self.revertAction.setEnabled(False)
 
             self.saveAction.setEnabled(False)
@@ -435,52 +402,59 @@ void MainWindow::on_tabs_currentChanged(int index)
 
             self.closeTabAction.setEnabled(False)
             self.closeOtherTabsAction.setEnabled(False)
+        */
+    }
 
-        self.tabs.setUpdatesEnabled(True)
-    */
+    tabs->setUpdatesEnabled(true);
 }
 
-void MainWindow::on_tabs_tabCloseRequested(int index)
+bool MainWindow::on_tabs_tabCloseRequested(int index)
 {
+    auto tabs = centralWidget()->findChild<QTabWidget*>("tabs");
+
+    auto widget = tabs->widget(index);
+    EditorBase* editor = nullptr; //!!!widget.tabbedEditor!
     /*
-        wdt = self.tabs.widget(index)
-        editor = wdt.tabbedEditor
+    editor = widget.tabbedEditor
 
-        if not editor.hasChanges():
-            # we can close immediately
-            self.closeEditorTab(editor)
-            return True
-
-        else:
-            # we have changes, lets ask the user whether we should dump them or save them
-            result = QtGui.QMessageBox.question(self,
-                                                "Unsaved changes!",
-                                                "There are unsaved changes in '%s'. "
-                                                "Do you want to save them? "
-                                                "(Pressing Discard will discard the changes!)" % (editor.filePath),
-                                                QtGui.QMessageBox.Save | QtGui.QMessageBox.Discard | QtGui.QMessageBox.Cancel,
-                                                QtGui.QMessageBox.Save)
-
-            if result == QtGui.QMessageBox.Save:
-                # lets save changes and then kill the editor (This is the default action)
-                # If there was an error saving the file, stop what we're doing
-                # and let the user fix the problem.
-                if not editor.save():
-                    return False
-
-                self.closeEditorTab(editor)
-                return True
-
-            elif result == QtGui.QMessageBox.Discard:
-                # changes will be discarded
-                # note: we don't have to call editor.discardChanges here
-
-                self.closeEditorTab(editor)
-                return True
-
-            # don't do anything if user selected 'Cancel'
-            return False
+    if not editor.hasChanges():
+        # we can close immediately
+        self.closeEditorTab(editor)
+        return True
     */
+
+    // We have changes, lets ask the user whether we should dump them or save them
+    auto result = QMessageBox::question(this,
+                                        "Unsaved changes!",
+                                        tr("There are unsaved changes in '%1'. "
+                                        "Do you want to save them? "
+                                        "(Pressing Discard will discard the changes!)").arg(editor->getFilePath()),
+                                        QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
+                                        QMessageBox::Save);
+
+    if (result == QMessageBox::Save)
+    {
+        // Let's save changes and then kill the editor (This is the default action)
+        // If there was an error saving the file, stop what we're doing
+        // and let the user fix the problem.
+        /*
+        if not editor.save():
+            return False
+        */
+
+        closeEditorTab(editor);
+        return true;
+    }
+    else if (result == QMessageBox::Discard)
+    {
+        // Changes will be discarded
+        // NB: we don't have to call editor.discardChanges here
+        closeEditorTab(editor);
+        return true;
+    }
+
+    // Don't do anything if user selected 'Cancel'
+    return false;
 }
 
 void MainWindow::slot_tabBarCustomContextMenuRequested(const QPoint& pos)
@@ -529,36 +503,64 @@ void MainWindow::openEditorTab(const QString& absolutePath)
     if (activateEditorTabByFilePath(absolutePath)) return;
 
     EditorBase* editor = createEditorForFile(absolutePath);
+    if (!editor) return;
 
     auto tabs = centralWidget()->findChild<QTabWidget*>("tabs");
     tabs->setCurrentWidget(editor->getWidget());
 }
 
+// Closes given editor tab.
+void MainWindow::closeEditorTab(EditorBase* editor)
+{
+    auto it = std::find(activeEditors.begin(), activeEditors.end(), editor);
+    if (it == activeEditors.end()) return;
+
+    /*
+    editor.finalise()
+    editor.destroy()
+    */
+
+    activeEditors.erase(it);
+}
+
+// Attempts to close all tabs that require a project opened.
+// This is usually done when project settings are altered and CEGUI instance has to be reloaded
+// or when project is being closed and we can no longer rely on resource availability.
+bool MainWindow::closeAllTabsRequiringProject()
+{
 /*
-    def closeEditorTab(self, editor):
-        """Closes given editor tab.
+        i = 0
+        while i < self.tabs.count():
+            tabbedEditor = self.tabs.widget(i).tabbedEditor
 
-        note: Make sure you pass proper existing editor!
-        """
+            if tabbedEditor.requiresProject:
+                if not self.slot_tabCloseRequested(i):
+                    # if the method returns False user pressed Cancel so in that case
+                    # we cancel the entire operation
+                    return False
 
-        assert(editor in self.tabEditors)
+                continue
 
-        editor.finalise()
-        editor.destroy()
+            i += 1
 
-        self.tabEditors.remove(editor)
+        return True
 */
+    return false;
+}
 
 // Activates (makes current) the tab for the path specified
 bool MainWindow::activateEditorTabByFilePath(const QString& absolutePath)
 {
     QString path = QDir::cleanPath(absolutePath);
-    /*
-            for tabEditor in self.tabEditors:
-                if tabEditor.filePath == absolutePath:
-                    tabEditor.makeCurrent()
-                    return True
-    */
+    for (EditorBase* editor : activeEditors)
+    {
+        if (editor->getFilePath() == absolutePath)
+        {
+            auto tabs = centralWidget()->findChild<QTabWidget*>("tabs");
+            tabs->setCurrentWidget(editor->getWidget());
+            return true;
+        }
+    }
     return false;
 }
 
@@ -566,7 +568,9 @@ bool MainWindow::activateEditorTabByFilePath(const QString& absolutePath)
 // it is not advised to use this method directly, use openEditorTab instead.
 EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
 {
-    return nullptr;
+    EditorBase* ret = nullptr;
+
+    return ret;
 }
 /*
         ret = None
@@ -673,5 +677,16 @@ EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
 
 void MainWindow::on_actionOpenFile_triggered()
 {
-    //
+    QString defaultDir;
+    if (CEGUIProjectManager::Instance().isProjectLoaded())
+        //defaultDir = self.project.getAbsolutePathOf("");
+        ;
+
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    "Open File",
+                                                    defaultDir,
+                                                    editorFactoryFileFilters.join(";;"),
+                                                    &editorFactoryFileFilters[0]);
+    if (!fileName.isEmpty())
+        openEditorTab(fileName);
 }
