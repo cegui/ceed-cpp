@@ -8,6 +8,7 @@ class MainWindow;
 }
 
 class ProjectManager;
+class FileSystemBrowser;
 
 class MainWindow : public QMainWindow
 {
@@ -19,6 +20,9 @@ public:
     ~MainWindow();
 
 private slots:
+
+    void openEditorTab(const QString& absolutePath);
+
     void on_actionQuit_triggered();
 
     void on_actionStatusbar_toggled(bool arg1);
@@ -53,6 +57,8 @@ private slots:
 
     void on_actionNewProject_triggered();
 
+    void on_actionOpenFile_triggered();
+
 private:
 
     void setupToolbars();
@@ -63,6 +69,7 @@ private:
 
     Ui::MainWindow* ui;
     ProjectManager* projectManager = nullptr;
+    FileSystemBrowser* fsBrowser = nullptr;
     bool wasMaximizedBeforeFullscreen = false;
 };
 

@@ -1,18 +1,19 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
-#include "ProjectManager.h"
 #include "qtoolbar.h"
 #include "qtoolbutton.h"
 #include "qfiledialog.h"
 #include "qmessagebox.h"
 #include "qdesktopservices.h"
 #include "qtabbar.h"
-#include "qopenglframebufferobject.h"
+//#include "qopenglframebufferobject.h"
 #include "src/proj/CEGUIProjectManager.h"
 #include "src/ui/AboutDialog.h"
 #include "src/ui/LicenseDialog.h"
 #include "src/ui/NewProjectDialog.h"
 #include "src/ui/ProjectSettingsDialog.h"
+#include "src/ui/ProjectManager.h"
+#include "src/ui/FileSystemBrowser.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -28,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
         self.recentlyUsedFiles = recentlyused.RecentlyUsedMenuEntry(self.app.qsettings, "Files")
     */
 
-    if (!QOpenGLFramebufferObject::hasOpenGLFramebufferObjects())
+    //if (!QOpenGLFramebufferObject::hasOpenGLFramebufferObjects())
     {
         /*
         ceed.messages.warning(self.app, self, "No FBO support!",
@@ -41,6 +42,9 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
     /*
+        # stores all active tab editors
+        self.tabEditors = []
+
         import ceed.editors.animation_list as animation_list_editor
         import ceed.editors.bitmap as bitmap_editor
         import ceed.editors.imageset as imageset_editor
@@ -87,21 +91,17 @@ MainWindow::MainWindow(QWidget *parent) :
     tabs->tabBar()->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(tabs->tabBar(), SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(slot_tabBarCustomContextMenuRequested(QPoint)));
 
-    /*
-        # stores all active tab editors
-        self.tabEditors = []
-    */
-
     projectManager = new ProjectManager();
-    //projectManager.fileOpenRequested.connect(self.slot_openFile)
+    //projectManager->setVisible(false);
+    connect(projectManager, &ProjectManager::itemOpenRequested, this, &MainWindow::openEditorTab);
     addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, projectManager);
 
-    /*
-        self.fileSystemBrowser = filesystembrowser.FileSystemBrowser()
-        self.fileSystemBrowser.setVisible(False)
-        self.fileSystemBrowser.fileOpenRequested.connect(self.slot_openFile)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.fileSystemBrowser)
+    fsBrowser = new FileSystemBrowser();
+    //fsBrowser->setVisible(false);
+    connect(fsBrowser, &FileSystemBrowser::fileOpenRequested, this, &MainWindow::openEditorTab);
+    addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, fsBrowser);
 
+    /*
         self.undoViewer = commands.UndoViewer()
         self.undoViewer.setVisible(False)
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.undoViewer)
@@ -204,11 +204,10 @@ bool MainWindow::closeAllTabsRequiringProject()
     return false;
 }
 
+// Safely quits the editor, prompting user to save changes to files and the project.
 void MainWindow::on_actionQuit_triggered()
 {
     /*
-        """Safely quits the editor, prompting user to save changes to files and the project."""
-
         self.saveSettings()
 
         # we remember last tab we closed to check whether user pressed Cancel in any of the dialogs
@@ -222,14 +221,18 @@ void MainWindow::on_actionQuit_triggered()
             lastTab = currentTab
 
             self.slot_tabCloseRequested(0)
-
-        # Close project after all tabs have been closed, there may be tabs requiring a project opened!
-        if self.project is not None:
-            # if the slot returned False, user pressed Cancel
-            if not self.slot_closeProject():
-                # in case user pressed cancel the entire quitting processed has to be terminated
-                return False
     */
+
+    // Close project after all tabs have been closed, there may be tabs requiring a project opened!
+    if (CEGUIProjectManager::Instance().isProjectLoaded())
+    {
+        // If the slot returned False, user pressed Cancel
+        /*
+                if not self.slot_closeProject():
+                    # in case user pressed cancel the entire quitting processed has to be terminated
+                    return False
+        */
+    }
 
     QApplication::quit();
 }
@@ -517,4 +520,22 @@ void MainWindow::on_actionLicense_triggered()
 {
     LicenseDialog dlg;
     dlg.exec();
+}
+
+// Opens editor tab. Creates new editor if such file wasn't opened yet and if it was opened,
+// it just makes the tab current.
+void MainWindow::openEditorTab(const QString& absolutePath)
+{
+/*
+    if self.activateEditorTabByFilePath(absolutePath):
+        return
+
+    editor = self.createEditorForFile(absolutePath)
+    editor.makeCurrent()
+*/
+}
+
+void MainWindow::on_actionOpenFile_triggered()
+{
+    //
 }
