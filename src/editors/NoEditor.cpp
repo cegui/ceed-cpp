@@ -2,7 +2,7 @@
 #include "qlabel.h"
 
 NoEditor::NoEditor(const QString& filePath, const QString& message)
-    : EditorBase(/*nullptr, filePath*/)
+    : EditorBase(/*nullptr,*/ filePath)
 {
     auto label = new QLabel(message);
     label->setWordWrap(true);

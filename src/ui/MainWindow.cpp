@@ -414,15 +414,23 @@ bool MainWindow::on_tabs_tabCloseRequested(int index)
     auto tabs = centralWidget()->findChild<QTabWidget*>("tabs");
 
     auto widget = tabs->widget(index);
-    EditorBase* editor = nullptr; //!!!widget.tabbedEditor!
-    /*
-    editor = widget.tabbedEditor
 
-    if not editor.hasChanges():
-        # we can close immediately
-        self.closeEditorTab(editor)
-        return True
-    */
+    // We search the editor for the current tab by its widget
+    auto it = std::find_if(activeEditors.begin(), activeEditors.end(), [widget](const EditorBasePtr& element)
+    {
+        return element->getWidget() == widget;
+    });
+
+    // If it is not an editor tab, close it
+    if (it == activeEditors.end()) return true;
+
+    EditorBase* editor = (*it).get();
+    if (!editor->hasChanges())
+    {
+        // We can close immediately
+        closeEditorTab(editor);
+        return true;
+    }
 
     // We have changes, lets ask the user whether we should dump them or save them
     auto result = QMessageBox::question(this,
@@ -664,28 +672,11 @@ EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
             "Opening this file requires you to have a project opened!"));
     }
 
-    /*
-    try:
-        ret.initialise(self)
+    // Will cleanup itself inside if something went wrong
+    ret->initialize(/*this*/);
 
-        # add successfully opened file to the recent files list
-        self.recentlyUsedFiles.addRecentlyUsed(absolutePath)
-
-    except:
-        # it may have been partly constructed at this point
-        try:
-            # make sure the finalisation doesn't early out or fail assertion
-            ret.initialised = True
-
-            ret.finalise()
-            ret.destroy()
-
-        except:
-            # catch all exception the finalisation raises (we can't deal with them anyways)
-            pass
-
-        raise
-    */
+    auto tabs = centralWidget()->findChild<QTabWidget*>("tabs");
+    tabs->addTab(ret->getWidget(), ret->getLabelText());
 
     activeEditors.push_back(std::move(ret));
 
@@ -696,8 +687,7 @@ void MainWindow::on_actionOpenFile_triggered()
 {
     QString defaultDir;
     if (CEGUIProjectManager::Instance().isProjectLoaded())
-        //defaultDir = self.project.getAbsolutePathOf("");
-        ;
+        defaultDir = CEGUIProjectManager::Instance().getCurrentProject()->getAbsolutePathOf("");
 
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     "Open File",

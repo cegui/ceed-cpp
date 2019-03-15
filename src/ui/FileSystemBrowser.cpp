@@ -11,7 +11,8 @@ FileSystemBrowser::FileSystemBrowser(QWidget *parent) :
 
     //???
     // CEED comment (Qt 4.8): causes way too many problems
-    model.setReadOnly(false);
+    //model.setReadOnly(false);
+    model.setReadOnly(true);
 
     auto view = findChild<QListView*>("view");
     view->setModel(&model);

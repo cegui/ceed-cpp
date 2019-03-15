@@ -14,18 +14,29 @@ class EditorBase
 {
 public:
 
-    EditorBase();
+    EditorBase(/*compatibilityManager, */ const QString& filePath);
     virtual ~EditorBase() {}
+
+    void initialize(/*mainWindow*/);
+    void finalize();
+    void reloadData();
+    void destroy();
+
+    bool save() { return saveAs(_filePath); }
+    bool saveAs(const QString& targetPath, bool updateCurrentPath = true);
 
     virtual QWidget* getWidget() = 0;
     virtual bool hasChanges() const { return false; }
     virtual bool requiresProject() const { return false; }
 
-    QString getFilePath() const { return filePath; }
+    QString getFilePath() const { return _filePath; }
+    QString getLabelText() const { return _labelText; }
 
 protected:
 
-    QString filePath;
+    QString _filePath;
+    QString _labelText;
+    bool _initialized = false;
 };
 
 #endif // EDITORBASE_H

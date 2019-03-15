@@ -11,7 +11,7 @@ class TextEditor : public EditorBase
 {
 public:
 
-    TextEditor();
+    TextEditor(const QString& filePath);
     //virtual ~TextEditor() override {}
 
     virtual QWidget* getWidget() override { return &tabWidget; }
