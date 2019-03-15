@@ -17,8 +17,8 @@ public:
     EditorBase(/*compatibilityManager, */ const QString& filePath);
     virtual ~EditorBase() {}
 
-    void initialize(/*mainWindow*/);
-    void finalize();
+    virtual void initialize(/*mainWindow*/);
+    virtual void finalize();
     void reloadData();
     void destroy();
 
@@ -30,13 +30,27 @@ public:
     virtual bool requiresProject() const { return false; }
 
     QString getFilePath() const { return _filePath; }
-    QString getLabelText() const { return _labelText; }
+    QString getLabelText() const { return _labelText + (hasChanges() ? " *" : ""); }
 
 protected:
 
     QString _filePath;
     QString _labelText;
     bool _initialized = false;
+};
+
+typedef std::unique_ptr<class EditorFactoryBase> EditorFactoryBasePtr;
+
+class EditorFactoryBase
+{
+public:
+
+    virtual ~EditorFactoryBase() {}
+
+    virtual QString getFileTypesDescription() const = 0;
+    virtual QStringList getFileExtensions() const = 0;
+    virtual bool canEditFile(const QString& filePath) const = 0;
+    virtual EditorBasePtr create(const QString& filePath) const = 0;
 };
 
 #endif // EDITORBASE_H

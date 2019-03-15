@@ -10,6 +10,7 @@
 #include "src/proj/CEGUIProjectManager.h"
 #include "src/proj/CEGUIProject.h"
 #include "src/editors/NoEditor.h"
+#include "src/editors/TextEditor.h"
 #include "src/ui/AboutDialog.h"
 #include "src/ui/LicenseDialog.h"
 #include "src/ui/NewProjectDialog.h"
@@ -43,6 +44,7 @@ MainWindow::MainWindow(QWidget *parent) :
         */
     }
 
+    editorFactories.push_back(std::make_unique<TextEditorFactory>());
     /*
         self.editorFactories = [
             animation_list_editor.AnimationListTabbedEditorFactory(),
@@ -53,6 +55,14 @@ MainWindow::MainWindow(QWidget *parent) :
             #property_mappings_editor.PropertyMappingsTabbedEditorFactory(),
             text_editor.TextTabbedEditorFactory()
         ]
+    */
+
+    for (const auto& factory : editorFactories)
+    {
+        //editorFactoryFileFilters.append((factory->getFileTypesDescription() + " (%1)").arg(factory->getf)));
+    }
+
+    /*
         # File dialog filters, keep indices in sync with the list above
         self.editorFactoryFileFilters = [
             "Animation files (%s)" % ("*." + " *.".join(self.editorFactories[0].getFileExtensions())),
@@ -67,7 +77,6 @@ MainWindow::MainWindow(QWidget *parent) :
             allExt.extend(factory.getFileExtensions())
         self.editorFactoryFileFilters.insert(0, "All known files (*." + " *.".join(allExt) + ")")
         self.editorFactoryFileFilters.insert(1, "All files (*)")
-
     */
 
     ui->setupUi(this);

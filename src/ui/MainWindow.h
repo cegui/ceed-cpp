@@ -10,6 +10,7 @@ class MainWindow;
 class ProjectManager;
 class FileSystemBrowser;
 typedef std::unique_ptr<class EditorBase> EditorBasePtr;
+typedef std::unique_ptr<class EditorFactoryBase> EditorFactoryBasePtr;
 
 class MainWindow : public QMainWindow
 {
@@ -77,6 +78,7 @@ private:
     FileSystemBrowser* fsBrowser = nullptr;
     bool wasMaximizedBeforeFullscreen = false;
 
+    std::vector<EditorFactoryBasePtr> editorFactories;
     QStringList editorFactoryFileFilters;
     std::vector<EditorBasePtr> activeEditors;
     EditorBase* currentEditor = nullptr;
