@@ -1,4 +1,6 @@
 #include "src/ui/CEGUIGraphicsScene.h"
+#include "src/util/Settings.h"
+#include "src/Application.h"
 #include "qpainter.h"
 #include "qpaintengine.h"
 
@@ -9,12 +11,13 @@ CEGUIGraphicsScene::CEGUIGraphicsScene()
 /*
     self.ceguiInstance = ceguiInstance
     self.fbo = None
-
-    self.checkerWidth = settings.getEntry("cegui/background/checker_width")
-    self.checkerHeight = settings.getEntry("cegui/background/checker_height")
-    self.checkerFirstColour = settings.getEntry("cegui/background/first_colour")
-    self.checkerSecondColour = settings.getEntry("cegui/background/second_colour")
 */
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    checkerWidth = settings->getEntryValue("cegui/background/checker_width").toInt();
+    checkerHeight = settings->getEntryValue("cegui/background/checker_height").toInt();
+    checkerFirstColour = settings->getEntryValue("cegui/background/first_colour").value<QColor>();
+    checkerSecondColour = settings->getEntryValue("cegui/background/second_colour").value<QColor>();
+
     checkerboardBrush = getCheckerboardBrush(checkerWidth, checkerHeight, checkerFirstColour, checkerSecondColour);
 }
 

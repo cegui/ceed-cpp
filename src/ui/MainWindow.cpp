@@ -7,6 +7,9 @@
 #include "qdesktopservices.h"
 #include "qtabbar.h"
 //#include "qopenglframebufferobject.h"
+#include "src/Application.h"
+#include "src/util/Settings.h"
+#include "src/util/SettingsEntry.h"
 #include "src/proj/CEGUIProjectManager.h"
 #include "src/proj/CEGUIProject.h"
 #include "src/editors/NoEditor.h"
@@ -131,19 +134,22 @@ void MainWindow::setupToolbars()
 
 QToolBar* MainWindow::createToolbar(const QString& name)
 {
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    auto tbIconSizeEntry = settings->getEntry("global/ui/toolbar_icon_size");
+    assert(tbIconSizeEntry);
+
     QToolBar* toolbar = addToolBar(name);
-    /*
-            tb.setObjectName("%s toolbar" % (name))
-            tbIconSizeEntry = self.app.settings.getEntry("global/ui/toolbar_icon_size")
+    toolbar->setObjectName(name + " toolbar");
 
-            def updateToolbarIconSize(toolbar, size):
-                if size < 16:
-                    size = 16
-                toolbar.setIconSize(QtCore.QSize(size, size))
+    const int iconSize = std::max(16, tbIconSizeEntry->value().toInt());
+    toolbar->setIconSize(QSize(iconSize, iconSize));
 
-            updateToolbarIconSize(tb, tbIconSizeEntry.value)
-            tbIconSizeEntry.subscribe(lambda value: updateToolbarIconSize(tb, value))
-    */
+    connect(tbIconSizeEntry, &SettingsEntry::valueChanged, [toolbar](const QVariant& newValue)
+    {
+        const int iconSize = std::max(16, newValue.toInt());
+        toolbar->setIconSize(QSize(iconSize, iconSize));
+    });
+
     return toolbar;
 }
 
