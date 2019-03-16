@@ -46,38 +46,28 @@ MainWindow::MainWindow(QWidget *parent) :
 
     editorFactories.push_back(std::make_unique<TextEditorFactory>());
     /*
-        self.editorFactories = [
-            animation_list_editor.AnimationListTabbedEditorFactory(),
-            bitmap_editor.BitmapTabbedEditorFactory(),
-            imageset_editor.ImagesetTabbedEditorFactory(),
-            layout_editor.LayoutTabbedEditorFactory(),
-            looknfeel_editor.LookNFeelTabbedEditorFactory(),
-            #property_mappings_editor.PropertyMappingsTabbedEditorFactory(),
-            text_editor.TextTabbedEditorFactory()
-        ]
+        animation_list_editor.AnimationListTabbedEditorFactory(),           // Animation files
+        bitmap_editor.BitmapTabbedEditorFactory(),                          // Bitmap files
+        imageset_editor.ImagesetTabbedEditorFactory(),                      // Imageset files
+        layout_editor.LayoutTabbedEditorFactory(),                          // Layout files
+        looknfeel_editor.LookNFeelTabbedEditorFactory(),                    //
+        #property_mappings_editor.PropertyMappingsTabbedEditorFactory(),    // Property Mapping files
     */
 
+    // Register file types from factories as filters
+    QStringList allExt;
     for (const auto& factory : editorFactories)
     {
-        //editorFactoryFileFilters.append((factory->getFileTypesDescription() + " (%1)").arg(factory->getf)));
+        QStringList ext = factory->getFileExtensions();
+        QString filter = factory->getFileTypesDescription() + " (%1)";
+        filter.arg(" *." + ext.join(" *."));
+        editorFactoryFileFilters.append(filter);
+
+        allExt.append(ext);
     }
 
-    /*
-        # File dialog filters, keep indices in sync with the list above
-        self.editorFactoryFileFilters = [
-            "Animation files (%s)" % ("*." + " *.".join(self.editorFactories[0].getFileExtensions())),
-            "Bitmap files (%s)" % ("*." + " *.".join(self.editorFactories[1].getFileExtensions())),
-            "Imageset files (%s)" % ("*." + " *.".join(self.editorFactories[2].getFileExtensions())),
-            "Layout files (%s)" % ("*." + " *.".join(self.editorFactories[3].getFileExtensions())),
-            #"Property Mapping files (%s)" % ("*." + " *.".join(self.editorFactories[4].getFileExtensions())),
-            "Text files (%s)" % ("*." + " *.".join(self.editorFactories[4].getFileExtensions()))
-        ]
-        allExt = []
-        for factory in self.editorFactories:
-            allExt.extend(factory.getFileExtensions())
-        self.editorFactoryFileFilters.insert(0, "All known files (*." + " *.".join(allExt) + ")")
-        self.editorFactoryFileFilters.insert(1, "All files (*)")
-    */
+    editorFactoryFileFilters.insert(0, "All known files (*." + allExt.join(" *.") + ")");
+    editorFactoryFileFilters.insert(1, "All files (*)");
 
     ui->setupUi(this);
 
@@ -606,12 +596,12 @@ EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
     }
     else
     {
-        std::vector<int> possibleFactories;
-        /*
-        for factory in self.editorFactories:
-            if factory.canEditFile(absolutePath):
-                possibleFactories.append(factory)
-        */
+        std::vector<EditorFactoryBase*> possibleFactories;
+        for (auto& factory : editorFactories)
+        {
+            if (factory->canEditFile(absolutePath))
+                possibleFactories.push_back(factory.get());
+        }
 
         // At this point if possibleFactories is [], no registered tabbed editor factory wanted
         // to accept the file, so we create MessageTabbedEditor that will simply
@@ -643,37 +633,38 @@ EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
         else
         {
             // One or more factories wants to accept the file
-            /*
-                factory = None
+            EditorFactoryBase* factory = nullptr;
+            if (possibleFactories.size() == 1)
+            {
+                // It's decided, just one factory wants to accept the file
+                factory = possibleFactories[0];
+            }
+            else
+            {
+                // More than 1 factory wants to accept the file, offer a dialog and let user choose
+                /*
+                dialog = editors.MultiplePossibleFactoriesDialog(possibleFactories)
+                result = dialog.exec_()
 
-                if len(possibleFactories) == 1:
-                    # it's decided, just one factory wants to accept the file
-                    factory = possibleFactories[0]
+                if result == QtGui.QDialog.Accepted:
+                    selection = dialog.factoryChoice.selectedItems()
 
-                else:
-                    assert(len(possibleFactories) > 1)
+                    if len(selection) == 1:
+                        factory = selection[0].data(QtCore.Qt.UserRole)
+                */
+            }
 
-                    # more than 1 factory wants to accept the file, offer a dialog and let user choose
-                    dialog = editors.MultiplePossibleFactoriesDialog(possibleFactories)
-                    result = dialog.exec_()
-
-                    if result == QtGui.QDialog.Accepted:
-                        selection = dialog.factoryChoice.selectedItems()
-
-                        if len(selection) == 1:
-                            factory = selection[0].data(QtCore.Qt.UserRole)
-
-                if factory is None:
-                    ret = editors.MessageTabbedEditor(absolutePath,
-                       "You failed to choose an editor to open '%s' with (project relative path: '%s')." % (absolutePath, projectRelativePath))
-
-                else:
-                    ret = factory.create(absolutePath)
-            */
+            if (factory)
+                ret = factory->create(absolutePath);
+            else
+                ret.reset(new NoEditor(absolutePath,
+                                       tr("You failed to choose an editor to open '%s' with (project relative path: '%s')."
+                                          ).arg(absolutePath).arg(projectRelativePath)));
         }
     }
 
     assert(ret);
+    if (!ret) return nullptr;
 
     if (!CEGUIProjectManager::Instance().isProjectLoaded() && ret->requiresProject())
     {

@@ -16,13 +16,14 @@ void TextEditor::initialize()
     {
         QFile file(_filePath);
         if (file.open(QIODevice::ReadOnly | QIODevice::Text))
-        {
             textDocument->setPlainText(file.readAll());
-            return;
-        }
     }
 
-    tabWidget.setDocument(textDocument);
+    QFont font("Courier New", 10);
+    font.setStyleHint(QFont::Monospace);
+    textDocument->setDefaultFont(font);
+
+    widget.setDocument(textDocument);
 
     textDocument->setModified(false);
     textDocument->setUndoRedoEnabled(true);
@@ -81,7 +82,7 @@ QString TextEditorFactory::getFileTypesDescription() const
 
 QStringList TextEditorFactory::getFileExtensions() const
 {
-    return { "py", "lua", "txt", "xml",
+    return { "py", "lua", "txt", "xml", "ini",
         // FIXME: these are temporary until the appropriate editor is implemented
         "scheme", "font" };
 }
