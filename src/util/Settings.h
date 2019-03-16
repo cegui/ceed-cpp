@@ -19,6 +19,7 @@ public:
     SettingsCategory* createCategory(const QString& name, const QString& label);
     SettingsCategory* getCategory(const QString& name) const;
     SettingsEntry* getEntry(const QString& path) const;
+    SettingsEntry* getEntry(QStringList pathSplitted) const;
 
     QString getPath() const { return "settings"; }
     QSettings* getQSettings() const { return _qsettings; }

@@ -1,8 +1,20 @@
 #include "src/util/SettingsSection.h"
+#include "src/util/SettingsEntry.h"
 
 SettingsSection::SettingsSection()
 {
 
+}
+
+SettingsEntry* SettingsSection::getEntry(const QString& name) const
+{
+    auto it = std::find_if(entries.begin(), entries.end(), [&name](const SettingsEntryPtr& ent)
+    {
+        return ent->getName() == name;
+    });
+
+    assert(it != entries.end());
+    return (it != entries.end()) ? it->get() : nullptr;
 }
 
 /*
@@ -35,13 +47,6 @@ SettingsSection::SettingsSection()
         self.entries.append(entry)
 
         return entry
-
-    def getEntry(self, name):
-        for entry in self.entries:
-            if entry.name == name:
-                return entry
-
-        raise RuntimeError("Entry of name '" + name + "' not found inside section '" + self.name + "' (path: '" + self.getPath() + "').")
 
     # - Reserved for possible future use.
     def markAsChanged(self):

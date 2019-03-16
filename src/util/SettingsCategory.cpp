@@ -1,10 +1,35 @@
 #include "src/util/SettingsCategory.h"
+#include "qstringlist.h"
+#include "src/util/SettingsSection.h"
 
 SettingsCategory::SettingsCategory(Settings& settings, const QString& name, const QString& label)
     : _settings(settings)
-    ,_name(name);
+    ,_name(name)
 {
 
+}
+
+SettingsSection* SettingsCategory::getSection(const QString& name) const
+{
+    auto it = std::find_if(sections.begin(), sections.end(), [&name](const SettingsSectionPtr& sec)
+    {
+        return sec->getName() == name;
+    });
+
+    assert(it != sections.end());
+    return (it != sections.end()) ? it->get() : nullptr;
+}
+
+SettingsEntry* SettingsCategory::getEntry(const QString& path) const
+{
+    return getEntry(path.split("/"));
+}
+
+SettingsEntry* SettingsCategory::getEntry(const QStringList& pathSplitted) const
+{
+    if (pathSplitted.size() < 2) return nullptr;
+    auto section = getSection(pathSplitted[0]);
+    return section ? section->getEntry(pathSplitted[1]) : nullptr;
 }
 
 /*
@@ -37,13 +62,6 @@ SettingsCategory::SettingsCategory(Settings& settings, const QString& name, cons
 
         return section
 
-    def getSection(self, name):
-        for section in self.sections:
-            if section.name == name:
-                return section
-
-        raise RuntimeError("Section '" + name + "' not found in category '" + self.name + "' of this settings")
-
     def createEntry(self, **kwargs):
         if self.getSection("") is None:
             section = self.createSection(name = "")
@@ -51,14 +69,6 @@ SettingsCategory::SettingsCategory(Settings& settings, const QString& name, cons
 
         section = self.getSection("")
         return section.createEntry(**kwargs)
-
-    def getEntry(self, path):
-        # FIXME: Needs better error handling
-        splitted = path.split("/", 1)
-        assert(len(splitted) == 2)
-
-        section = self.getSection(splitted[0])
-        return section.getEntry(splitted[1])
 
     def markAsChanged(self):
         if not self.label.startswith("* "):

@@ -1,8 +1,9 @@
 #include "src/util/Settings.h"
 #include "src/util/SettingsCategory.h"
+#include "qstringlist.h"
 
 Settings::Settings(QSettings* qsettings)
-    : _qsettings(qsettings)
+    : _qsettings(qsettings) //???here or in app as back-end? access from entries through a singleton?
 {
 /*
 self.changesRequireRestart = False //???hack flag?
@@ -29,14 +30,15 @@ SettingsCategory* Settings::getCategory(const QString& name) const
 
 SettingsEntry* Settings::getEntry(const QString& path) const
 {
-/*
-    # FIXME: Needs better error handling
-    splitted = path.split("/", 1)
-    assert(len(splitted) == 2)
+    return getEntry(path.split("/"));
+}
 
-    category = self.getCategory(splitted[0])
-    return category.getEntry(splitted[1])
-*/
+SettingsEntry* Settings::getEntry(QStringList pathSplitted) const
+{
+    if (pathSplitted.size() < 2) return nullptr;
+    auto category = getCategory(pathSplitted[0]);
+    pathSplitted.pop_front();
+    return category ? category->getEntry(pathSplitted) : nullptr;
 }
 
 /*
