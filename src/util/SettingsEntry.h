@@ -9,16 +9,21 @@
 // - editedValue represents the value user directly edits
 // (it is applied - value = editedValue - when user applies the settings)
 
+class SettingsSection;
+
 class SettingsEntry
 {
 public:
 
-    SettingsEntry();
+    SettingsEntry(SettingsSection& section, const QString& name);
+    ~SettingsEntry();
 
     const QString& getName() const { return _name; }
+    QString getPath() const;
 
 protected:
 
+    SettingsSection& _section;
     QString _name;
 };
 

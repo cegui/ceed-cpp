@@ -15,17 +15,21 @@ class SettingsCategory
 public:
 
     SettingsCategory(Settings& settings, const QString& name, const QString& label);
+    ~SettingsCategory();
 
     SettingsSection* getSection(const QString& name) const;
     SettingsEntry* getEntry(const QString& path) const;
     SettingsEntry* getEntry(const QStringList& pathSplitted) const;
 
     const QString& getName() const { return _name; }
+    QString getPath() const;
+    Settings& getSettings() const { return _settings; }
 
 protected:
 
     Settings& _settings;
     QString _name;
+    QString _label;
     std::vector<SettingsSectionPtr> sections;
 };
 

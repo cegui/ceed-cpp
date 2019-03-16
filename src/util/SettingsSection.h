@@ -6,22 +6,26 @@
 
 // Groups entries, is usually represented by a group box in the interface
 
+class SettingsCategory;
 typedef std::unique_ptr<class SettingsEntry> SettingsEntryPtr;
 
 class SettingsSection
 {
 public:
 
-    SettingsSection();
+    SettingsSection(SettingsCategory& category, const QString& name);
+    ~SettingsSection();
 
     SettingsEntry* getEntry(const QString& name) const;
 
     const QString& getName() const { return _name; }
+    QString getPath() const;
 
 protected:
 
-    std::vector<SettingsEntryPtr> entries;
+    SettingsCategory& _category;
     QString _name;
+    std::vector<SettingsEntryPtr> entries;
 };
 
 #endif // SETTINGSSECTION_H

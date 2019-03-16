@@ -15,6 +15,7 @@ class Settings
 public:
 
     Settings(QSettings* qsettings);
+    ~Settings();
 
     SettingsCategory* createCategory(const QString& name, const QString& label);
     SettingsCategory* getCategory(const QString& name) const;

@@ -10,6 +10,10 @@ self.changesRequireRestart = False //???hack flag?
 */
 }
 
+Settings::~Settings()
+{
+}
+
 SettingsCategory* Settings::createCategory(const QString& name, const QString& label)
 {
     SettingsCategory* category = new SettingsCategory(*this, name, label);

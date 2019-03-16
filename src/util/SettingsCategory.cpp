@@ -1,12 +1,18 @@
 #include "src/util/SettingsCategory.h"
-#include "qstringlist.h"
 #include "src/util/SettingsSection.h"
+#include "src/util/Settings.h"
+#include "qstringlist.h"
 
+// also there was "sortingWeight = 0"
 SettingsCategory::SettingsCategory(Settings& settings, const QString& name, const QString& label)
     : _settings(settings)
     ,_name(name)
 {
+    _label = label.isEmpty() ? name : label;
+}
 
+SettingsCategory::~SettingsCategory()
+{
 }
 
 SettingsSection* SettingsCategory::getSection(const QString& name) const
@@ -32,30 +38,12 @@ SettingsEntry* SettingsCategory::getEntry(const QStringList& pathSplitted) const
     return section ? section->getEntry(pathSplitted[1]) : nullptr;
 }
 
+QString SettingsCategory::getPath() const
+{
+    return _settings.getPath() + "/" + _name;
+}
+
 /*
-    def __init__(self, settings, name, label = None, sortingWeight = 0):
-        self.settings = settings
-
-        if label is None:
-            label = name
-
-        self.label = label
-        self.sortingWeight = sortingWeight
-
-        self.sections = []
-
-    def getPath(self):
-        """Retrieves a unique path in the qsettings tree, this can be used by persistence providers for example
-        """
-
-        return "%s/%s" % (self.settings.getPath(), self.name)
-
-    def getPersistenceProvider(self):
-        return self.settings.getPersistenceProvider()
-
-    def getSettings(self):
-        return self.settings
-
     def createSection(self, **kwargs):
         section = Section(category = self, **kwargs)
         self.sections.append(section)

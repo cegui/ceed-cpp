@@ -1,8 +1,21 @@
 #include "src/util/SettingsEntry.h"
+#include "src/util/SettingsSection.h"
 
-SettingsEntry::SettingsEntry()
+SettingsEntry::SettingsEntry(SettingsSection& section, const QString& name)
+    : _section(section)
+    , _name(name)
 {
 
+}
+
+SettingsEntry::~SettingsEntry()
+{
+}
+
+// Retrieves a unique path in the qsettings tree, this can be used by persistence providers for example
+QString SettingsEntry::getPath() const
+{
+    return _section.getPath() + "/" + _name;
 }
 
 /*
@@ -12,12 +25,10 @@ SettingsEntry::SettingsEntry()
                            fget = lambda entry: entry._editedValue)
 
     def __init__(self, section, name, type_, defaultValue, label = None, help_ = "", widgetHint = "string", sortingWeight = 0, changeRequiresRestart = False, optionList = None):
-        self.section = section
 
         if label is None:
             label = name
 
-        self.name = name
         self.type = type_
 
         defaultValue = self.sanitizeValue(defaultValue)
@@ -37,18 +48,6 @@ SettingsEntry::SettingsEntry()
         self.optionList = optionList
 
         self.subscribers = []
-
-    def getPath(self):
-        """Retrieves a unique path in the qsettings tree, this can be used by persistence providers for example
-        """
-
-        return "%s/%s" % (self.section.getPath(), self.name)
-
-    def getPersistenceProvider(self):
-        return self.section.getPersistenceProvider()
-
-    def getSettings(self):
-        return self.section.getSettings()
 
     def sanitizeValue(self, value):
         if not isinstance(value, self.type):
