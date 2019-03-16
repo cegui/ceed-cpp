@@ -1,9 +1,13 @@
 #include "src/ui/dialogs/SettingsDialog.h"
+#include "src/Application.h"
+#include "src/util/Settings.h"
+#include "src/util/SettingsCategory.h"
 #include "qboxlayout.h"
 #include "qlabel.h"
 #include "qtabwidget.h"
 #include "qdialogbuttonbox.h"
 #include "qabstractbutton.h"
+#include "qmessagebox.h"
 
 SettingsDialog::SettingsDialog(QWidget *parent) :
     QDialog(parent)
@@ -26,17 +30,19 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     label->setWordWrap(true);
     layout->addWidget(label);
 
-    auto tabs = new QTabWidget();
+    tabs = new QTabWidget();
     tabs->setTabPosition(QTabWidget::North);
     layout->addWidget(tabs);
 
     setLayout(layout);
-/*
-    # for each category, add a tab
-    addTab = self.tabs.addTab
-    for category in self.settings.categories:
-        addTab(interface_types.InterfaceCategory(category, self.tabs), category.label)
-*/
+
+    // Add a tab for each settings category
+    const auto& categories = qobject_cast<Application*>(qApp)->getSettings()->getCategories();
+    for (auto&& category : categories)
+    {
+        //interface_types.InterfaceCategory(category, self.tabs)
+        //tabs->addTab(, category->getLabel());
+    }
 
     // Apply, cancel etc...
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Apply | QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
@@ -44,78 +50,70 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     layout->addWidget(buttonBox);
 }
 
-/*
-    def checkIfRestartRequired(self):
-        if self.settings.changesRequireRestart:
-            # Restart required
-            self.needRestart = QtGui.QMessageBox()
-            self.needRestart.setWindowTitle("CEED")
-            self.needRestart.setIcon(QtGui.QMessageBox.Warning)
-            self.needRestart.setText("Restart is required for the changes to take effect.")
-            self.needRestart.exec_()
-
-            # FIXME: Kill the app; then restart it.
-            #
-            # - This may or may not be the way to get rid of this, but for the
-            #   moment we use it as a "the user has been notified they must restart
-            #   the application" flag.
-            self.settings.changesRequireRestart = False
-        return
-*/
-
 void SettingsDialog::onButtonBoxClicked(QAbstractButton* button)
 {
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+
     switch (buttonBox->buttonRole(button))
     {
         //???enable this button only if changes exist?
         case QDialogButtonBox::ApplyRole:
         {
-            /*
-            self.settings.applyChanges()
-
-            # Check if restart required
-            self.checkIfRestartRequired()
-            */
+            settings->applyChanges();
+            checkIfRestartRequired();
             break;
         }
         case QDialogButtonBox::AcceptRole:
         {
-            /*
-            self.settings.applyChanges()
-            */
+            settings->applyChanges();
             accept();
-
-            // Check if restart required
-            /*
-            self.checkIfRestartRequired()
-            */
+            checkIfRestartRequired();
             break;
         }
         case QDialogButtonBox::RejectRole:
         {
-            /*
-            self.settings.discardChanges()
-            */
+            settings->discardChanges();
             reject();
 
             // Reset any entries with changes to their stored value
             /*
-            for tabIndex in xrange(self.tabs.count()):
-                self.tabs.widget(tabIndex).discardChanges()
+            for (int i = 0; i < tabs->count(); ++i)
+                tabs->widget(i)->discardChanges();
             */
+
             break;
         }
-        default: return;
+        default: return; // Unknown button must not be processed
     }
 
     // - Regardless of the action above, all categories are now unchanged.
     /*
-        for (tabIndex in xrange(self.tabs.count()))
-            self.tabs.widget(tabIndex).markAsUnchanged()
+        for (int i = 0; i < tabs->count(); ++i)
+            tabs->widget(i)->markAsUnchanged()
     */
 
     // FIXME: That is not entirely true; using the 'X' to close the Settings
     // dialog is not handled here; although, this "bug as a feature" allows
     // Settings to be modified, closed, and it will remember (but not apply)
     // the previous changes.
+}
+
+void SettingsDialog::checkIfRestartRequired()
+{
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    if (!settings->changesRequireRestart())
+        return;
+
+    QMessageBox mbox;
+    mbox.setWindowTitle("CEED");
+    mbox.setIcon(QMessageBox::Warning);
+    mbox.setText("Restart is required for the changes to take effect.");
+    mbox.exec();
+
+    // FIXME: Kill the app; then restart it.
+    //
+    // - This may or may not be the way to get rid of this, but for the
+    //   moment we use it as a "the user has been notified they must restart
+    //   the application" flag.
+    settings->markRequiresRestart(false);
 }

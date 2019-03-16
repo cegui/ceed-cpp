@@ -1,7 +1,7 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#include "qstring.h"
+#include "qvariant.h"
 #include "vector"
 
 // Application global settings system
@@ -21,9 +21,11 @@ public:
     SettingsCategory* getCategory(const QString& name) const;
     SettingsEntry* getEntry(const QString& path) const;
     SettingsEntry* getEntry(QStringList pathSplitted) const;
+    QVariant getEntryValue(const QString& path, const QVariant& defaultValue = QVariant()) const;
 
     QString getPath() const { return "settings"; }
     QSettings* getQSettings() const { return _qsettings; }
+    const std::vector<SettingsCategoryPtr>& getCategories() const { return categories; }
 
     void applyChanges();
     void discardChanges();
@@ -32,7 +34,8 @@ public:
 
     void sort(bool deep = true);
 
-    void markRequiresRestart() { _changesRequireRestart = true; }
+    void markRequiresRestart(bool requires = true) { _changesRequireRestart = requires; }
+    bool changesRequireRestart() const { return _changesRequireRestart; }
 
 protected:
 

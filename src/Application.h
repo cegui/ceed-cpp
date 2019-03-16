@@ -16,12 +16,14 @@ public:
 
     Application(int& argc, char** argv, bool debug = false);
 
-    MainWindow* getMainWindow() { return &mainWindow; }
+    MainWindow* getMainWindow() { return mainWindow; }
     Settings* getSettings() const { return settings; }
 
 private:
 
-    MainWindow mainWindow;
+    void createSettingsEntries();
+
+    MainWindow* mainWindow = nullptr;
     Settings* settings = nullptr;
 };
 

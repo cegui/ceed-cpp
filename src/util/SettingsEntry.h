@@ -25,6 +25,7 @@ public:
     const QString& getName() const { return _name; }
     QString getLabel() const { return (_changed ? "* " : "") + _label; }
     QString getPath() const;
+    SettingsSection& getSection() const { return _section; }
     int getSortingWeight() const { return _sortingWeight; }
 
     void setValue(const QVariant& val, bool storeImmediately = true);

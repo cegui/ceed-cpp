@@ -21,6 +21,12 @@ SettingsSection::~SettingsSection()
 // copy them here and keep them in sync. Let it be compact and readable.
 SettingsEntry* SettingsSection::addEntry(SettingsEntryPtr&& entry)
 {
+    if (!entry || &entry->getSection() != this)
+    {
+        assert(false && "SettingsSection::addEntry() > invalid entry");
+        return nullptr;
+    }
+
     entries.push_back(std::move(entry));
     return entries.back().get();
 }

@@ -5,6 +5,7 @@
 
 class QAbstractButton;
 class QDialogButtonBox;
+class QTabWidget;
 
 class SettingsDialog : public QDialog
 {
@@ -20,7 +21,10 @@ private slots:
 
 private:
 
+    void checkIfRestartRequired();
+
     QDialogButtonBox* buttonBox = nullptr;
+    QTabWidget* tabs = nullptr;
 };
 
 #endif // SETTINGSDIALOG_H

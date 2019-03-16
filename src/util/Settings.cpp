@@ -1,5 +1,6 @@
 #include "src/util/Settings.h"
 #include "src/util/SettingsCategory.h"
+#include "src/util/SettingsEntry.h"
 #include "qstringlist.h"
 
 Settings::Settings(QSettings* qsettings)
@@ -40,6 +41,13 @@ SettingsEntry* Settings::getEntry(QStringList pathSplitted) const
     auto category = getCategory(pathSplitted[0]);
     pathSplitted.pop_front();
     return category ? category->getEntry(pathSplitted) : nullptr;
+}
+
+// Robust setting value obtaining method
+QVariant Settings::getEntryValue(const QString& path, const QVariant& defaultValue) const
+{
+    SettingsEntry* entry = getEntry(path);
+    return entry ? entry->value() : defaultValue;
 }
 
 void Settings::applyChanges()
