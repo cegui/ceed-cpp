@@ -2,9 +2,12 @@
 #define EDITORBASE_H
 
 #include "qstring.h"
+#include "qvariant.h"
 
 // This is the base class for a class that takes a file and allows manipulation
 // with it. It occupies exactly 1 tab space.
+
+//!!!TODO: signals dataChanged, commandsUpdateRequested!
 
 class QWidget;
 
@@ -24,6 +27,19 @@ public:
 
     bool save() { return saveAs(_filePath); }
     bool saveAs(const QString& targetPath, bool updateCurrentPath = true);
+
+    // Application commands implementation
+    virtual bool copy() { return false; }
+    virtual bool cut() { return false; }
+    virtual bool paste() { return false; }
+    virtual bool deleteSelected() { return false; }
+    virtual void undo() {}
+    virtual void redo() {}
+    virtual void revert();
+    virtual void zoomIn() {}
+    virtual void zoomOut() {}
+    virtual void zoomReset() {}
+    //virtual void zoomFit() {}
 
     virtual QWidget* getWidget() = 0;
     virtual bool hasChanges() const { return false; }
@@ -52,5 +68,8 @@ public:
     virtual bool canEditFile(const QString& filePath) const = 0;
     virtual EditorBasePtr create(const QString& filePath) const = 0;
 };
+
+// For MultiplePossibleFactoriesDialog only
+Q_DECLARE_METATYPE(EditorFactoryBase*);
 
 #endif // EDITORBASE_H

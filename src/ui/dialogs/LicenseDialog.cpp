@@ -1,4 +1,4 @@
-#include "src/ui/LicenseDialog.h"
+#include "src/ui/dialogs/LicenseDialog.h"
 #include "ui_LicenseDialog.h"
 
 LicenseDialog::LicenseDialog(QWidget *parent) :

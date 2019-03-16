@@ -11,10 +11,11 @@
 #include "src/proj/CEGUIProject.h"
 #include "src/editors/NoEditor.h"
 #include "src/editors/TextEditor.h"
-#include "src/ui/AboutDialog.h"
-#include "src/ui/LicenseDialog.h"
-#include "src/ui/NewProjectDialog.h"
-#include "src/ui/ProjectSettingsDialog.h"
+#include "src/ui/dialogs/AboutDialog.h"
+#include "src/ui/dialogs/LicenseDialog.h"
+#include "src/ui/dialogs//NewProjectDialog.h"
+#include "src/ui/dialogs/ProjectSettingsDialog.h"
+#include "src/ui/dialogs/MultiplePossibleFactoriesDialog.h"
 #include "src/ui/ProjectManager.h"
 #include "src/ui/FileSystemBrowser.h"
 
@@ -642,16 +643,9 @@ EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
             else
             {
                 // More than 1 factory wants to accept the file, offer a dialog and let user choose
-                /*
-                dialog = editors.MultiplePossibleFactoriesDialog(possibleFactories)
-                result = dialog.exec_()
-
-                if result == QtGui.QDialog.Accepted:
-                    selection = dialog.factoryChoice.selectedItems()
-
-                    if len(selection) == 1:
-                        factory = selection[0].data(QtCore.Qt.UserRole)
-                */
+                MultiplePossibleFactoriesDialog dialog(possibleFactories, this);
+                if (dialog.exec() == QDialog::Accepted)
+                    factory = dialog.getSelectedFactory();
             }
 
             if (factory)

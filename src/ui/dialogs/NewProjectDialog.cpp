@@ -1,4 +1,4 @@
-#include "src\ui\NewProjectDialog.h"
+#include "src/ui/dialogs/NewProjectDialog.h"
 #include "ui_NewProjectDialog.h"
 #include "qmessagebox.h"
 #include "qcheckbox.h"

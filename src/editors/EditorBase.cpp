@@ -14,7 +14,6 @@ EditorBase::EditorBase(/*compatibilityManager, */ const QString& filePath)
         self.desiredSavingDataType = "" if self.compatibilityManager is None else self.compatibilityManager.EditorNativeType
         self.nativeData = None
 
-        self.initialised = False
         self.active = False
 
         self.mainWindow = None
@@ -121,27 +120,17 @@ void EditorBase::initialize(/*mainWindow*/)
 */
 }
 
+// Cleans up after itself this is usually called when you want the tab closed
 void EditorBase::finalize()
 {
-/*
-        """Cleans up after itself
-        this is usually called when you want the tab closed
-        """
-
-        assert(self.initialised)
-        assert(self.tabWidget)
-
-        self.initialised = False
-*/
+    assert(_initialized);
+    _initialized = false;
 }
 
+// Reinitialises this tabbed editor, effectivelly reloading the file off the hard drive again
 void EditorBase::reloadData()
 {
 /*
-        """Reinitialises this tabbed editor, effectivelly reloading the file
-        off the hard drive again
-        """
-
         wasCurrent = self.mainWindow.activeEditor is self
 
         mainWindow = self.mainWindow
@@ -153,13 +142,11 @@ void EditorBase::reloadData()
 */
 }
 
+// Removes itself from the tab list and irrevocably destroys data associated with itself
+//!!!FIXME: completely UI method, move to main window!
 void EditorBase::destroy()
 {
 /*
-        """Removes itself from the tab list and irrevocably destroys
-        data associated with itself
-        """
-
         i = 0
         wdt = self.mainWindow.tabs.widget(i)
         tabRemoved = False
@@ -218,4 +205,13 @@ bool EditorBase::saveAs(const QString& targetPath, bool updateCurrentPath)
         self.addFileMonitor(self.filePath)
 */
     return true;
+}
+
+// Causes the tabbed editor to discard all it's progress
+void EditorBase::revert()
+{
+    if (!hasChanges()) return;
+
+    // The default but kind of wasteful implementation
+    reloadData();
 }

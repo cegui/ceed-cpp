@@ -1,4 +1,4 @@
-#include "src/ui/ProjectSettingsDialog.h"
+#include "src/ui/dialogs/ProjectSettingsDialog.h"
 #include "ui_ProjectSettingsDialog.h"
 #include "src/ui/widgets/FileLineEdit.h"
 #include "src/proj/CEGUIProject.h"

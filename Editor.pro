@@ -36,15 +36,16 @@ SOURCES += \
     src/ui/CEGUIGraphicsScene.cpp \
     src/proj/CEGUIProject.cpp \
     src/proj/CEGUIProjectItem.cpp \
-    src/ui/NewProjectDialog.cpp \
-    src/ui/ProjectSettingsDialog.cpp \
+    src/ui/dialogs/NewProjectDialog.cpp \
+    src/ui/dialogs/ProjectSettingsDialog.cpp \
     src/ui/FileSystemBrowser.cpp \
     src/ui/widgets/FileLineEdit.cpp \
-    src/ui/LicenseDialog.cpp \
-    src/ui/AboutDialog.cpp \
+    src/ui/dialogs/LicenseDialog.cpp \
+    src/ui/dialogs/AboutDialog.cpp \
     src/editors/EditorBase.cpp \
     src/editors/TextEditor.cpp \
-    src/editors/NoEditor.cpp
+    src/editors/NoEditor.cpp \
+    src/ui/dialogs/MultiplePossibleFactoriesDialog.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -55,26 +56,28 @@ HEADERS += \
     src/ui/CEGUIGraphicsScene.h \
     src/proj/CEGUIProject.h \
     src/proj/CEGUIProjectItem.h \
-    src/ui/NewProjectDialog.h \
-    src/ui/ProjectSettingsDialog.h \
+    src/ui/dialogs/NewProjectDialog.h \
+    src/ui/dialogs/ProjectSettingsDialog.h \
     src/ui/FileSystemBrowser.h \
     src/ui/widgets/FileLineEdit.h \
-    src/ui/LicenseDialog.h \
-    src/ui/AboutDialog.h \
+    src/ui/dialogs/LicenseDialog.h \
+    src/ui/dialogs/AboutDialog.h \
     src/editors/EditorBase.h \
     src/editors/TextEditor.h \
-    src/editors/NoEditor.h
+    src/editors/NoEditor.h \
+    src/ui/dialogs/MultiplePossibleFactoriesDialog.h
 
 FORMS += \
     ui/MainWindow.ui \
     ui/ProjectManager.ui \
     ui/CEGUIWidget.ui \
-    ui/NewProjectDialog.ui \
-    ui/ProjectSettingsDialog.ui \
+    ui/dialogs/NewProjectDialog.ui \
+    ui/dialogs/ProjectSettingsDialog.ui \
     ui/FileSystemBrowser.ui \
     ui/widgets/FileLineEdit.ui \
-    ui/LicenseDialog.ui \
-    ui/AboutDialog.ui
+    ui/dialogs/LicenseDialog.ui \
+    ui/dialogs/AboutDialog.ui \
+    ui/dialogs/MultiplePossibleFactoriesDialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
