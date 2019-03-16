@@ -1,5 +1,7 @@
 #include "src/Application.h"
 #include "qsplashscreen.h"
+#include "qsettings.h"
+#include "src/util/Settings.h"
 
 Application::Application(int& argc, char** argv, bool debug)
     : QApplication(argc, argv)
@@ -13,11 +15,12 @@ Application::Application(int& argc, char** argv, bool debug)
         logging.basicConfig()
 
         if debug:
-            # set debug logging
             logging.getLogger().setLevel(logging.DEBUG)
+*/
 
-        self.qsettings = QSettings("CEGUI", "CEED")
-        self.settings = ceed.settings.Settings(self.qsettings)
+    QSettings* qsettings = new QSettings("CEGUI", "CEED", this);
+    settings = new Settings(qsettings);
+/*
         # download all values from the persistence store
         self.settings.download()
 

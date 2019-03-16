@@ -48,7 +48,11 @@ SOURCES += \
     src/ui/dialogs/MultiplePossibleFactoriesDialog.cpp \
     src/Application.cpp \
     src/util/RecentlyUsed.cpp \
-    src/ui/dialogs/SettingsDialog.cpp
+    src/ui/dialogs/SettingsDialog.cpp \
+    src/util/Settings.cpp \
+    src/util/SettingsCategory.cpp \
+    src/util/SettingsSection.cpp \
+    src/util/SettingsEntry.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -71,7 +75,11 @@ HEADERS += \
     src/ui/dialogs/MultiplePossibleFactoriesDialog.h \
     src/Application.h \
     src/util/RecentlyUsed.h \
-    src/ui/dialogs/SettingsDialog.h
+    src/ui/dialogs/SettingsDialog.h \
+    src/util/Settings.h \
+    src/util/SettingsCategory.h \
+    src/util/SettingsSection.h \
+    src/util/SettingsEntry.h
 
 FORMS += \
     ui/MainWindow.ui \

@@ -3,6 +3,7 @@
 #include "qlabel.h"
 #include "qtabwidget.h"
 #include "qdialogbuttonbox.h"
+#include "qabstractbutton.h"
 
 SettingsDialog::SettingsDialog(QWidget *parent) :
     QDialog(parent)
@@ -10,21 +11,18 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
 /*
     self.settings = settings
 
-    self.setWindowTitle(self.settings.label)
-*/
-
-    setWindowModality(Qt::ApplicationModal);
-
-/*
     # sort everything so that it comes at the right spot when iterating
     self.settings.sort()
 */
 
+    setWindowTitle("CEGUI Unified Editor settings");
+    setWindowModality(Qt::ApplicationModal);
+
     // The basic UI
     auto layout = new QVBoxLayout();
 
-    /*self.settings.help*/
-    auto label = new QLabel();
+    auto label = new QLabel("Provides all persistent settings of CEGUI Unified Editor (CEED),"
+                            " everything is divided into categories (see the tab buttons).");
     label->setWordWrap(true);
     layout->addWidget(label);
 
@@ -44,16 +42,26 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Apply | QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttonBox, &QDialogButtonBox::clicked, this, &SettingsDialog::onButtonBoxClicked);
     layout->addWidget(buttonBox);
+}
 
 /*
-    # Restart required
-    self.needRestart = QtGui.QMessageBox()
-    self.needRestart.setWindowTitle("CEED")
-    self.needRestart.setIcon(QtGui.QMessageBox.Warning)
-    self.needRestart.setText("Restart is required for the changes to "
-                             "take effect.")
+    def checkIfRestartRequired(self):
+        if self.settings.changesRequireRestart:
+            # Restart required
+            self.needRestart = QtGui.QMessageBox()
+            self.needRestart.setWindowTitle("CEED")
+            self.needRestart.setIcon(QtGui.QMessageBox.Warning)
+            self.needRestart.setText("Restart is required for the changes to take effect.")
+            self.needRestart.exec_()
+
+            # FIXME: Kill the app; then restart it.
+            #
+            # - This may or may not be the way to get rid of this, but for the
+            #   moment we use it as a "the user has been notified they must restart
+            #   the application" flag.
+            self.settings.changesRequireRestart = False
+        return
 */
-}
 
 void SettingsDialog::onButtonBoxClicked(QAbstractButton* button)
 {
@@ -66,7 +74,7 @@ void SettingsDialog::onButtonBoxClicked(QAbstractButton* button)
             self.settings.applyChanges()
 
             # Check if restart required
-            self.restartRequired()
+            self.checkIfRestartRequired()
             */
             break;
         }
@@ -79,7 +87,7 @@ void SettingsDialog::onButtonBoxClicked(QAbstractButton* button)
 
             // Check if restart required
             /*
-            self.restartRequired()
+            self.checkIfRestartRequired()
             */
             break;
         }

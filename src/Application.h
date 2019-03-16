@@ -6,6 +6,8 @@
 
 // The central application class
 
+class Settings;
+
 class Application : public QApplication
 {
 public:
@@ -17,6 +19,7 @@ public:
 private:
 
     MainWindow mainWindow;
+    Settings* settings = nullptr;
 };
 
 #endif // APPLICATION_H
