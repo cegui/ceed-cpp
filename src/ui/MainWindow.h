@@ -45,12 +45,6 @@ private slots:
 
     void on_actionCEGUIDebugInfo_triggered();
 
-    void on_tabs_currentChanged(int index);
-
-    bool on_tabs_tabCloseRequested(int index);
-
-    void slot_tabBarCustomContextMenuRequested(const QPoint& pos);
-
     void on_actionAbout_triggered();
 
     void on_actionLicense_triggered();
@@ -60,6 +54,14 @@ private slots:
     void on_actionNewProject_triggered();
 
     void on_actionOpenFile_triggered();
+
+    void slot_tabBarCustomContextMenuRequested(const QPoint& pos);
+
+    void on_tabs_currentChanged(int index);
+
+    bool on_tabs_tabCloseRequested(int index);
+
+    void on_actionCloseTab_triggered();
 
 private:
 
@@ -72,8 +74,11 @@ private:
     bool activateEditorTabByFilePath(const QString& absolutePath);
     void closeEditorTab(EditorBase* editor);
     bool closeAllTabsRequiringProject();
+    EditorBase* getEditorForTab(int index) const;
+    EditorBase* getEditorForTab(QWidget* tabWidget) const;
 
     Ui::MainWindow* ui;
+    QTabWidget* tabs = nullptr;
     ProjectManager* projectManager = nullptr;
     FileSystemBrowser* fsBrowser = nullptr;
     bool wasMaximizedBeforeFullscreen = false;

@@ -127,6 +127,56 @@ void EditorBase::finalize()
     _initialized = false;
 }
 
+// The tab gets "on stage", it's been clicked on and is now the only active tab.
+// There can be either 0 tabs active (blank screen) or exactly 1 tab active.
+//???to MainWindow???
+void EditorBase::activate()
+{
+/*
+        currentActive = self.mainWindow.activeEditor
+
+        # no need to deactivate and then activate again
+        if currentActive == self:
+            return
+
+        if currentActive is not None:
+            currentActive.deactivate()
+
+        self.active = True
+
+        self.mainWindow.activeEditor = self
+        self.mainWindow.undoViewer.setUndoStack(self.getUndoStack())
+
+        # If the file was changed by an external program, ask the user to reload
+        # the changes
+        if self.fileMonitor is not None and self.fileChangedByExternalProgram:
+            self.askForFileReload()
+
+        edMenu = self.mainWindow.editorMenu
+        edMenu.clear()
+        visible, enabled = self.rebuildEditorMenu(edMenu)
+        edMenu.menuAction().setVisible(visible)
+        edMenu.menuAction().setEnabled(enabled)
+*/
+}
+
+// The tab gets "off stage", user switched to another tab. This is also called
+// when user closes the tab (deactivate and then finalise is called).
+//???to MainWindow???
+void EditorBase::deactivate()
+{
+/*
+        self.active = False
+
+        if self.mainWindow.activeEditor == self:
+            self.mainWindow.activeEditor = None
+            edMenu = self.mainWindow.editorMenu
+            edMenu.clear()
+            edMenu.menuAction().setEnabled(False)
+            edMenu.menuAction().setVisible(False)
+*/
+}
+
 // Reinitialises this tabbed editor, effectivelly reloading the file off the hard drive again
 void EditorBase::reloadData()
 {

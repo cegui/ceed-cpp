@@ -78,7 +78,7 @@ MainWindow::MainWindow(QWidget *parent) :
         self.ceguiContainerWidget = cegui_container.ContainerWidget(self.ceguiInstance, self)
     */
 
-    auto tabs = centralWidget()->findChild<QTabWidget*>("tabs");
+    tabs = centralWidget()->findChild<QTabWidget*>("tabs");
     tabs->tabBar()->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(tabs->tabBar(), SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(slot_tabBarCustomContextMenuRequested(QPoint)));
 
@@ -341,27 +341,53 @@ void MainWindow::on_actionCEGUIDebugInfo_triggered()
     //self.ceguiContainerWidget.debugInfo.show()
 }
 
+void MainWindow::on_actionAbout_triggered()
+{
+    AboutDialog dlg;
+    dlg.exec();
+}
+
+void MainWindow::on_actionLicense_triggered()
+{
+    LicenseDialog dlg;
+    dlg.exec();
+}
+
+void MainWindow::slot_tabBarCustomContextMenuRequested(const QPoint& pos)
+{
+    auto tabIdx = tabs->tabBar()->tabAt(pos);
+    tabs->setCurrentIndex(tabIdx);
+
+    QMenu* menu = new QMenu(this);
+    /*
+        menu.addAction(self.closeTabAction)
+    */
+    menu->addSeparator();
+    /*
+        menu.addAction(self.closeOtherTabsAction)
+        menu.addAction(self.closeAllTabsAction)
+    */
+
+    if (tabIdx >= 0)
+    {
+        //auto tabWidget = tabs->widget(tabIdx);
+        menu->addSeparator();
+        QAction* dataTypeAction = new QAction("Data type: " /*+ (tabWidget.getDesiredSavingDataType())*/, this);
+        dataTypeAction->setToolTip("Displays which data type this file will be saved to (the desired saving data type).");
+        menu->addAction(dataTypeAction);
+    }
+
+    menu->exec(tabs->tabBar()->mapToGlobal(pos));
+}
+
 void MainWindow::on_tabs_currentChanged(int index)
 {
-    auto tabs = centralWidget()->findChild<QTabWidget*>("tabs");
-
     // To fight flicker
     tabs->setUpdatesEnabled(false);
 
     auto widget = tabs->widget(index);
     if (currentEditor)
-        //currentEditor->deactivate();
-        ;
-        /* Editor::deactivate():
-        self.active = False
-
-        if self.mainWindow.activeEditor == self:
-            self.mainWindow.activeEditor = None
-            edMenu = self.mainWindow.editorMenu
-            edMenu.clear()
-            edMenu.menuAction().setEnabled(False)
-            edMenu.menuAction().setVisible(False)
-        */
+        currentEditor->deactivate();
 
     // It's the tabbed editor's responsibility to handle these, we disable them by default,
     // also reset their texts in case the tabbed editor messed with them
@@ -411,20 +437,11 @@ void MainWindow::on_tabs_currentChanged(int index)
 
 bool MainWindow::on_tabs_tabCloseRequested(int index)
 {
-    auto tabs = centralWidget()->findChild<QTabWidget*>("tabs");
-
-    auto widget = tabs->widget(index);
-
-    // We search the editor for the current tab by its widget
-    auto it = std::find_if(activeEditors.begin(), activeEditors.end(), [widget](const EditorBasePtr& element)
-    {
-        return element->getWidget() == widget;
-    });
+    EditorBase* editor = getEditorForTab(index);
 
     // If it is not an editor tab, close it
-    if (it == activeEditors.end()) return true;
+    if (!editor) return true;
 
-    EditorBase* editor = (*it).get();
     if (!editor->hasChanges())
     {
         // We can close immediately
@@ -446,10 +463,8 @@ bool MainWindow::on_tabs_tabCloseRequested(int index)
         // Let's save changes and then kill the editor (This is the default action)
         // If there was an error saving the file, stop what we're doing
         // and let the user fix the problem.
-        /*
-        if not editor.save():
-            return False
-        */
+        if (!editor->save())
+            return false;
 
         closeEditorTab(editor);
         return true;
@@ -466,43 +481,9 @@ bool MainWindow::on_tabs_tabCloseRequested(int index)
     return false;
 }
 
-void MainWindow::slot_tabBarCustomContextMenuRequested(const QPoint& pos)
+void MainWindow::on_actionCloseTab_triggered()
 {
-    auto tabs = centralWidget()->findChild<QTabWidget*>("tabs");
-    auto tabIdx = tabs->tabBar()->tabAt(pos);
-    tabs->setCurrentIndex(tabIdx);
-
-    QMenu* menu = new QMenu(this);
-    /*
-        menu.addAction(self.closeTabAction)
-    */
-    menu->addSeparator();
-    /*
-        menu.addAction(self.closeOtherTabsAction)
-        menu.addAction(self.closeAllTabsAction)
-
-        if atIndex != -1:
-            tab = self.tabs.widget(atIndex)
-            menu.addSeparator()
-            dataTypeAction = QtGui.QAction("Data type: %s" % (tab.getDesiredSavingDataType()), self)
-            dataTypeAction.setToolTip("Displays which data type this file will be saved to (the desired saving data type).")
-            menu.addAction(dataTypeAction)
-
-        menu.exec_(self.tabBar.mapToGlobal(point))
-    */
-    menu->exec(tabs->tabBar()->mapToGlobal(pos));
-}
-
-void MainWindow::on_actionAbout_triggered()
-{
-    AboutDialog dlg;
-    dlg.exec();
-}
-
-void MainWindow::on_actionLicense_triggered()
-{
-    LicenseDialog dlg;
-    dlg.exec();
+    on_tabs_tabCloseRequested(tabs->currentIndex());
 }
 
 // Opens editor tab. Creates new editor if such file wasn't opened yet and if it was opened,
@@ -514,7 +495,6 @@ void MainWindow::openEditorTab(const QString& absolutePath)
     EditorBase* editor = createEditorForFile(absolutePath);
     if (!editor) return;
 
-    auto tabs = centralWidget()->findChild<QTabWidget*>("tabs");
     tabs->setCurrentWidget(editor->getWidget());
 }
 
@@ -527,10 +507,8 @@ void MainWindow::closeEditorTab(EditorBase* editor)
     });
     if (it == activeEditors.end()) return;
 
-    /*
-    editor.finalise()
-    editor.destroy()
-    */
+    editor->finalize();
+    editor->destroy();
 
     activeEditors.erase(it);
 }
@@ -540,24 +518,39 @@ void MainWindow::closeEditorTab(EditorBase* editor)
 // or when project is being closed and we can no longer rely on resource availability.
 bool MainWindow::closeAllTabsRequiringProject()
 {
-/*
-        i = 0
-        while i < self.tabs.count():
-            tabbedEditor = self.tabs.widget(i).tabbedEditor
+    int i = 0;
+    while (i < tabs->count())
+    {
+        auto editor = getEditorForTab(i);
+        if (editor->requiresProject())
+        {
+            // If the method returns False user pressed Cancel so in that case
+            // we cancel the entire operation
+            if (!on_tabs_tabCloseRequested(i)) return false;
 
-            if tabbedEditor.requiresProject:
-                if not self.slot_tabCloseRequested(i):
-                    # if the method returns False user pressed Cancel so in that case
-                    # we cancel the entire operation
-                    return False
+            continue;
+        }
 
-                continue
+        ++i;
+    }
 
-            i += 1
+    return true;
+}
 
-        return True
-*/
-    return false;
+EditorBase* MainWindow::getEditorForTab(int index) const
+{
+    return getEditorForTab(tabs->widget(index));
+}
+
+EditorBase* MainWindow::getEditorForTab(QWidget* tabWidget) const
+{
+    if (!tabWidget) return nullptr;
+
+    auto it = std::find_if(activeEditors.begin(), activeEditors.end(), [tabWidget](const EditorBasePtr& element)
+    {
+        return element->getWidget() == tabWidget;
+    });
+    return (it == activeEditors.end()) ? nullptr : it->get();
 }
 
 // Activates (makes current) the tab for the path specified
@@ -568,7 +561,6 @@ bool MainWindow::activateEditorTabByFilePath(const QString& absolutePath)
     {
         if (editor->getFilePath() == absolutePath)
         {
-            auto tabs = centralWidget()->findChild<QTabWidget*>("tabs");
             tabs->setCurrentWidget(editor->getWidget());
             return true;
         }
@@ -669,7 +661,6 @@ EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
     // Will cleanup itself inside if something went wrong
     ret->initialize(/*this*/);
 
-    auto tabs = centralWidget()->findChild<QTabWidget*>("tabs");
     tabs->addTab(ret->getWidget(), ret->getLabelText());
 
     activeEditors.push_back(std::move(ret));

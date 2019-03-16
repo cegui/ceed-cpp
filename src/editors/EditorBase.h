@@ -22,6 +22,8 @@ public:
 
     virtual void initialize(/*mainWindow*/);
     virtual void finalize();
+    virtual void activate();
+    virtual void deactivate();
     void reloadData();
     void destroy();
 
