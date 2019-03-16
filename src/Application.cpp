@@ -4,6 +4,11 @@
 Application::Application(int& argc, char** argv, bool debug)
     : QApplication(argc, argv)
 {
+    setOrganizationName("CEGUI");
+    setOrganizationDomain("cegui.org.uk");
+    setApplicationName("CEED - CEGUI editor");
+    setApplicationVersion("0.0.0-master"); // TODO: move to file?
+
 /*
         logging.basicConfig()
 
@@ -26,23 +31,13 @@ Application::Application(int& argc, char** argv, bool debug)
         splash = new QSplashScreen(QPixmap(":/images/splashscreen.png"));
         splash->setWindowModality(Qt::ApplicationModal);
         splash->setWindowFlags(Qt::SplashScreen | Qt::WindowStaysOnTopHint);
-
-        /*
-        splash->showMessage("version: " + (version.CEED), Qt::AlignTop | Qt::AlignRight, Qt::GlobalColor::white);
-        */
+        splash->showMessage("version: " + applicationVersion(), Qt::AlignTop | Qt::AlignRight, Qt::GlobalColor::white);
 
         splash->show();
 
         // This ensures that the splash screen is shown on all platforms
         processEvents();
     }
-
-    setOrganizationName("CEGUI");
-    setOrganizationDomain("cegui.org.uk");
-    setApplicationName("CEED - CEGUI editor");
-    /*
-        self.setApplicationVersion(version.CEED)
-    */
 
     mainWindow.show();
     mainWindow.raise();

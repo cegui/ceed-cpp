@@ -9,6 +9,7 @@ class MainWindow;
 
 class ProjectManager;
 class FileSystemBrowser;
+class SettingsDialog;
 typedef std::unique_ptr<class EditorBase> EditorBasePtr;
 typedef std::unique_ptr<class EditorFactoryBase> EditorFactoryBasePtr;
 
@@ -49,6 +50,8 @@ private slots:
 
     void on_actionLicense_triggered();
 
+    void on_actionPreferences_triggered();
+
     void on_actionProjectSettings_triggered();
 
     void on_actionNewProject_triggered();
@@ -81,6 +84,8 @@ private:
     QTabWidget* tabs = nullptr;
     ProjectManager* projectManager = nullptr;
     FileSystemBrowser* fsBrowser = nullptr;
+    SettingsDialog* settingsDialog = nullptr;
+
     bool wasMaximizedBeforeFullscreen = false;
 
     std::vector<EditorFactoryBasePtr> editorFactories;

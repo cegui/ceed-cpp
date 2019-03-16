@@ -46,7 +46,9 @@ SOURCES += \
     src/editors/TextEditor.cpp \
     src/editors/NoEditor.cpp \
     src/ui/dialogs/MultiplePossibleFactoriesDialog.cpp \
-    src/Application.cpp
+    src/Application.cpp \
+    src/util/RecentlyUsed.cpp \
+    src/ui/dialogs/SettingsDialog.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -67,7 +69,9 @@ HEADERS += \
     src/editors/TextEditor.h \
     src/editors/NoEditor.h \
     src/ui/dialogs/MultiplePossibleFactoriesDialog.h \
-    src/Application.h
+    src/Application.h \
+    src/util/RecentlyUsed.h \
+    src/ui/dialogs/SettingsDialog.h
 
 FORMS += \
     ui/MainWindow.ui \

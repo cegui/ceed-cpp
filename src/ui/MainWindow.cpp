@@ -16,6 +16,7 @@
 #include "src/ui/dialogs//NewProjectDialog.h"
 #include "src/ui/dialogs/ProjectSettingsDialog.h"
 #include "src/ui/dialogs/MultiplePossibleFactoriesDialog.h"
+#include "src/ui/dialogs/SettingsDialog.h"
 #include "src/ui/ProjectManager.h"
 #include "src/ui/FileSystemBrowser.h"
 
@@ -23,12 +24,14 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    // We have to construct ActionManager before settings interface (as it alters the settings declaration)!
     /*
-        # we have to construct ActionManager before settings interface (as it alters the settings declaration)!
         self.actionManager = action.ActionManager(self, self.app.settings)
+    */
 
-        self.settingsInterface = settings.interface.QtSettingsInterface(self.app.settings)
+    settingsDialog = new SettingsDialog(this /*self.app.settings*/);
 
+    /*
         self.recentlyUsedProjects = recentlyused.RecentlyUsedMenuEntry(self.app.qsettings, "Projects")
         self.recentlyUsedFiles = recentlyused.RecentlyUsedMenuEntry(self.app.qsettings, "Files")
     */
@@ -351,6 +354,11 @@ void MainWindow::on_actionLicense_triggered()
 {
     LicenseDialog dlg;
     dlg.exec();
+}
+
+void MainWindow::on_actionPreferences_triggered()
+{
+    settingsDialog->show();
 }
 
 void MainWindow::slot_tabBarCustomContextMenuRequested(const QPoint& pos)
