@@ -19,13 +19,14 @@ public:
 
     SettingsCategory* createCategory(const QString& name, const QString& label);
     SettingsCategory* getCategory(const QString& name) const;
+    const std::vector<SettingsCategoryPtr>& getCategories() const { return categories; }
+
     SettingsEntry* getEntry(const QString& path) const;
     SettingsEntry* getEntry(QStringList pathSplitted) const;
     QVariant getEntryValue(const QString& path, const QVariant& defaultValue = QVariant()) const;
 
     QString getPath() const { return "settings"; }
     QSettings* getQSettings() const { return _qsettings; }
-    const std::vector<SettingsCategoryPtr>& getCategories() const { return categories; }
 
     void applyChanges();
     void discardChanges();

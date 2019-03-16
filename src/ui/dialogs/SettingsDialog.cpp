@@ -2,6 +2,7 @@
 #include "src/Application.h"
 #include "src/util/Settings.h"
 #include "src/util/SettingsCategory.h"
+#include "src/ui/SettingEntryEditors.h"
 #include "qboxlayout.h"
 #include "qlabel.h"
 #include "qtabwidget.h"
@@ -40,8 +41,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     const auto& categories = qobject_cast<Application*>(qApp)->getSettings()->getCategories();
     for (auto&& category : categories)
     {
-        //interface_types.InterfaceCategory(category, self.tabs)
-        //tabs->addTab(, category->getLabel());
+        tabs->addTab(new SettingCategoryWidget(*category, tabs), category->getLabel());
     }
 
     // Apply, cancel etc...

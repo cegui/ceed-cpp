@@ -18,8 +18,10 @@ public:
 
     SettingsEntry* addEntry(SettingsEntryPtr&& entry);
     SettingsEntry* getEntry(const QString& name) const;
+    const std::vector<SettingsEntryPtr>& getEntries() const { return entries; }
 
     const QString& getName() const { return _name; }
+    QString getLabel() const { return /*(_changed ? "* " : "") +*/ _label; }
     QString getPath() const;
     SettingsCategory& getCategory() const { return _category; }
     int getSortingWeight() const { return _sortingWeight; }

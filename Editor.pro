@@ -52,7 +52,8 @@ SOURCES += \
     src/util/Settings.cpp \
     src/util/SettingsCategory.cpp \
     src/util/SettingsSection.cpp \
-    src/util/SettingsEntry.cpp
+    src/util/SettingsEntry.cpp \
+    src/ui/SettingEntryEditors.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -79,7 +80,8 @@ HEADERS += \
     src/util/Settings.h \
     src/util/SettingsCategory.h \
     src/util/SettingsSection.h \
-    src/util/SettingsEntry.h
+    src/util/SettingsEntry.h \
+    src/ui/SettingEntryEditors.h
 
 FORMS += \
     ui/MainWindow.ui \

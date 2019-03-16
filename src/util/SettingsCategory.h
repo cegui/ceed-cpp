@@ -19,6 +19,8 @@ public:
 
     SettingsSection* createSection(const QString& name, const QString& label, int sortingWeight = 0);
     SettingsSection* getSection(const QString& name) const;
+    const std::vector<SettingsSectionPtr>& getSections() const { return sections; }
+
     SettingsEntry* addEntry(SettingsEntryPtr&& entry);
     SettingsEntry* getEntry(const QString& path) const;
     SettingsEntry* getEntry(const QStringList& pathSplitted) const;
