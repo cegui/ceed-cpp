@@ -61,7 +61,7 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         QStringList ext = factory->getFileExtensions();
         QString filter = factory->getFileTypesDescription() + " (%1)";
-        filter.arg(" *." + ext.join(" *."));
+        filter = filter.arg("*." + ext.join(" *."));
         editorFactoryFileFilters.append(filter);
 
         allExt.append(ext);
