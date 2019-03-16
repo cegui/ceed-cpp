@@ -11,17 +11,21 @@
 
 class SettingsSection;
 
-class SettingsEntry
+class SettingsEntry : public QObject
 {
+    Q_OBJECT
+
 public:
 
     SettingsEntry(SettingsSection& section, const QString& name, const QVariant& defaultValue, const QString& label = QString(),
-                  const QString& help = QString(), const QString& widgetHint = "string", bool changeRequiresRestart = false);
-    ~SettingsEntry();
+                  const QString& help = QString(), const QString& widgetHint = "string", bool changeRequiresRestart = false,
+                  int sortingWeight = 0);
+    virtual ~SettingsEntry() override;
 
     const QString& getName() const { return _name; }
     QString getLabel() const { return (_changed ? "* " : "") + _label; }
     QString getPath() const;
+    int getSortingWeight() const { return _sortingWeight; }
 
     void setValue(const QVariant& val, bool storeImmediately = true);
     void setEditedValue(const QVariant& val);
@@ -51,6 +55,7 @@ protected:
     QVariant _editedValue;
     QVariant _defaultValue;
 
+    int _sortingWeight = 0;
     bool _changeRequiresRestart = false;
     bool _changed = false;
 };

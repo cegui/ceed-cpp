@@ -2,11 +2,11 @@
 #include "src/util/SettingsSection.h"
 #include "src/util/SettingsCategory.h"
 #include "src/util/Settings.h"
-//#include "src/Application.h" // an alternative way to obtain QSettings
+//#include "src/Application.h" // an alternative way to obtain QSettings without category pointer
 #include "qsettings.h"
 
 SettingsEntry::SettingsEntry(SettingsSection& section, const QString& name, const QVariant& defaultValue, const QString& label,
-                             const QString& help, const QString& widgetHint, bool changeRequiresRestart)
+                             const QString& help, const QString& widgetHint, bool changeRequiresRestart, int sortingWeight)
     : _section(section)
     , _name(name)
     , _label(label.isEmpty() ? name : label)
@@ -15,11 +15,11 @@ SettingsEntry::SettingsEntry(SettingsSection& section, const QString& name, cons
     , _value(defaultValue)
     , _editedValue(defaultValue)
     , _defaultValue(defaultValue)
+    , _sortingWeight(sortingWeight)
     , _changeRequiresRestart(changeRequiresRestart)
 {
     /*
-        def __init__(sortingWeight = 0, changeRequiresRestart = False, optionList = None):
-            self.sortingWeight = sortingWeight
+        def __init__(optionList = None):
             self.optionList = optionList
     */
 }
@@ -55,6 +55,7 @@ void SettingsEntry::setValue(const QVariant& val, bool storeImmediately)
 
     if (storeImmediately) store();
 
+    //???FIXME: only if really changed?
     emit valueChanged(_value);
 }
 

@@ -31,32 +31,48 @@ void EditorBase::initialize(/*mainWindow*/)
 {
     assert(!_initialized);
 /*
-        self.mainWindow = mainWindow
-        self.tabWidget.tabbedEditor = self
+    self.mainWindow = mainWindow
+    self.tabWidget.tabbedEditor = self
 
-        if self.compatibilityManager is not None:
-            rawData = codecs.open(self.filePath, mode = "r", encoding = "utf-8").read()
-            rawDataType = ""
+    if self.compatibilityManager is not None:
+        rawData = codecs.open(self.filePath, mode = "r", encoding = "utf-8").read()
+        rawDataType = ""
 
-            if rawData == "":
-                # it's an empty new file, the derived classes deal with this separately
-                self.nativeData = rawData
+        if rawData == "":
+            # it's an empty new file, the derived classes deal with this separately
+            self.nativeData = rawData
 
-                if mainWindow.project is None:
-                    self.desiredSavingDataType = self.compatibilityManager.EditorNativeType
-                else:
-                    self.desiredSavingDataType = self.compatibilityManager.getSuitableDataTypeForCEGUIVersion(mainWindow.project.CEGUIVersion)
-
+            if mainWindow.project is None:
+                self.desiredSavingDataType = self.compatibilityManager.EditorNativeType
             else:
-                try:
-                    rawDataType = self.compatibilityManager.guessType(rawData, self.filePath)
+                self.desiredSavingDataType = self.compatibilityManager.getSuitableDataTypeForCEGUIVersion(mainWindow.project.CEGUIVersion)
 
-                    # A file exists and the editor has it open, so watch it for
-                    # external changes.
-                    self.addFileMonitor(self.filePath)
+        else:
+            try:
+                rawDataType = self.compatibilityManager.guessType(rawData, self.filePath)
 
-                except compatibility.NoPossibleTypesError:
-                    dialog = NoTypeDetectedDialog(self.compatibilityManager)
+                # A file exists and the editor has it open, so watch it for
+                # external changes.
+                self.addFileMonitor(self.filePath)
+
+            except compatibility.NoPossibleTypesError:
+                dialog = NoTypeDetectedDialog(self.compatibilityManager)
+                result = dialog.exec_()
+
+                rawDataType = self.compatibilityManager.EditorNativeType
+                self.nativeData = ""
+
+                if result == QtGui.QDialog.Accepted:
+                    selection = dialog.typeChoice.selectedItems()
+
+                    if len(selection) == 1:
+                        rawDataType = selection[0].text()
+                        self.nativeData = None
+
+            except compatibility.MultiplePossibleTypesError as e:
+                # if no project is opened or if the opened file was detected as something not suitable for the target CEGUI version of the project
+                if (mainWindow.project is None) or (self.compatibilityManager.getSuitableDataTypeForCEGUIVersion(mainWindow.project.CEGUIVersion) not in e.possibleTypes):
+                    dialog = MultipleTypesDetectedDialog(self.compatibilityManager, e.possibleTypes)
                     result = dialog.exec_()
 
                     rawDataType = self.compatibilityManager.EditorNativeType
@@ -69,55 +85,38 @@ void EditorBase::initialize(/*mainWindow*/)
                             rawDataType = selection[0].text()
                             self.nativeData = None
 
-                except compatibility.MultiplePossibleTypesError as e:
-                    # if no project is opened or if the opened file was detected as something not suitable for the target CEGUI version of the project
-                    if (mainWindow.project is None) or (self.compatibilityManager.getSuitableDataTypeForCEGUIVersion(mainWindow.project.CEGUIVersion) not in e.possibleTypes):
-                        dialog = MultipleTypesDetectedDialog(self.compatibilityManager, e.possibleTypes)
-                        result = dialog.exec_()
+                else:
+                    rawDataType = self.compatibilityManager.getSuitableDataTypeForCEGUIVersion(mainWindow.project.CEGUIVersion)
+                    self.nativeData = None
 
-                        rawDataType = self.compatibilityManager.EditorNativeType
-                        self.nativeData = ""
+            # by default, save in the same format as we opened in
+            self.desiredSavingDataType = rawDataType
 
-                        if result == QtGui.QDialog.Accepted:
-                            selection = dialog.typeChoice.selectedItems()
+            if mainWindow.project is not None:
+                projectCompatibleDataType = self.compatibilityManager.CEGUIVersionTypes[mainWindow.project.CEGUIVersion]
 
-                            if len(selection) == 1:
-                                rawDataType = selection[0].text()
-                                self.nativeData = None
+                if projectCompatibleDataType != rawDataType:
+                    if QtGui.QMessageBox.question(mainWindow,
+                                                  "Convert to format suitable for opened project?",
+                                                  "File you are opening isn't suitable for the project that is opened at the moment.\n"
+                                                  "Do you want to convert it to a suitable format upon saving?\n"
+                                                  "(from '%s' to '%s')\n"
+                                                  "Data COULD be lost, make a backup!)" % (rawDataType, projectCompatibleDataType),
+                                                  QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No) == QtGui.QMessageBox.Yes:
+                        self.desiredSavingDataType = projectCompatibleDataType
 
-                    else:
-                        rawDataType = self.compatibilityManager.getSuitableDataTypeForCEGUIVersion(mainWindow.project.CEGUIVersion)
-                        self.nativeData = None
+            # if nativeData is "" at this point, data type was not successful and user didn't select
+            # any data type as well so we will just use given file as an empty file
 
-                # by default, save in the same format as we opened in
-                self.desiredSavingDataType = rawDataType
+            if self.nativeData != "":
+                try:
+                    self.nativeData = self.compatibilityManager.transform(rawDataType, self.compatibilityManager.EditorNativeType, rawData)
 
-                if mainWindow.project is not None:
-                    projectCompatibleDataType = self.compatibilityManager.CEGUIVersionTypes[mainWindow.project.CEGUIVersion]
-
-                    if projectCompatibleDataType != rawDataType:
-                        if QtGui.QMessageBox.question(mainWindow,
-                                                      "Convert to format suitable for opened project?",
-                                                      "File you are opening isn't suitable for the project that is opened at the moment.\n"
-                                                      "Do you want to convert it to a suitable format upon saving?\n"
-                                                      "(from '%s' to '%s')\n"
-                                                      "Data COULD be lost, make a backup!)" % (rawDataType, projectCompatibleDataType),
-                                                      QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No) == QtGui.QMessageBox.Yes:
-                            self.desiredSavingDataType = projectCompatibleDataType
-
-                # if nativeData is "" at this point, data type was not successful and user didn't select
-                # any data type as well so we will just use given file as an empty file
-
-                if self.nativeData != "":
-                    try:
-                        self.nativeData = self.compatibilityManager.transform(rawDataType, self.compatibilityManager.EditorNativeType, rawData)
-
-                    except compatibility.LayerNotFoundError:
-                        # TODO: Dialog, can't convert
-                        self.nativeData = ""
-
-        self.initialised = True
+                except compatibility.LayerNotFoundError:
+                    # TODO: Dialog, can't convert
+                    self.nativeData = ""
 */
+    _initialized = true;
 }
 
 // Cleans up after itself this is usually called when you want the tab closed

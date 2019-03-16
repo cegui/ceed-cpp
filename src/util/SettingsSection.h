@@ -22,6 +22,13 @@ public:
     QString getPath() const;
     SettingsCategory& getCategory() const { return _category; }
 
+    void applyChanges();
+    void discardChanges();
+    void load();
+    void store();
+
+    void sort();
+
 protected:
 
     SettingsCategory& _category;

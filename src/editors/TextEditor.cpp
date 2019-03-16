@@ -37,6 +37,8 @@ void TextEditor::initialize()
 
 void TextEditor::finalize()
 {
+    widget.setDocument(nullptr);
+
     if (textDocument)
     {
         delete textDocument;
@@ -82,7 +84,7 @@ QString TextEditorFactory::getFileTypesDescription() const
 
 QStringList TextEditorFactory::getFileExtensions() const
 {
-    return { "py", "lua", "txt", "xml", "ini",
+    return { "py", "lua", "txt", "xml", "ini", "log",
         // FIXME: these are temporary until the appropriate editor is implemented
         "scheme", "font" };
 }

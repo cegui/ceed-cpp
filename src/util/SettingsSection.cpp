@@ -31,31 +31,43 @@ QString SettingsSection::getPath() const
     return _category.getPath() + "/" + _name;
 }
 
+void SettingsSection::applyChanges()
+{
+    for (auto&& entry : entries)
+        entry->applyChanges();
+}
+
+void SettingsSection::discardChanges()
+{
+    for (auto&& entry : entries)
+        entry->discardChanges();
+}
+
+void SettingsSection::load()
+{
+    for (auto&& entry : entries)
+        entry->load();
+}
+
+void SettingsSection::store()
+{
+    for (auto&& entry : entries)
+        entry->store();
+}
+
+void SettingsSection::sort()
+{
+    std::sort(entries.begin(), entries.end(), [](const SettingsEntryPtr& a, const SettingsEntryPtr& b)
+    {
+        //return a->getName() < b->getName();
+        return a->getSortingWeight() < b->getSortingWeight();
+    });
+}
+
 /*
     def createEntry(self, **kwargs):
         entry = Entry(section = self, **kwargs)
         self.entries.append(entry)
 
         return entry
-
-    def applyChanges(self):
-        for entry in self.entries:
-            entry.applyChanges()
-
-    def discardChanges(self):
-        for entry in self.entries:
-            entry.discardChanges()
-
-    def upload(self):
-        for entry in self.entries:
-            entry.upload()
-
-    def download(self):
-        for entry in self.entries:
-            entry.download()
-
-    def sort(self):
-        # FIXME: This is obviously not the fastest approach
-        self.entries = sorted(self.entries, key = lambda entry: entry.name)
-        self.entries = sorted(self.entries, key = lambda entry: entry.sortingWeight)
 */
