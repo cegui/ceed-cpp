@@ -21,7 +21,10 @@ public:
     SettingsEntry* getEntry(const QString& path) const;
     SettingsEntry* getEntry(const QStringList& pathSplitted) const;
 
+    void setModified(bool modified) { _changed = modified; }
+
     const QString& getName() const { return _name; }
+    QString getLabel() const { return (_changed ? "* " : "") + _label; }
     QString getPath() const;
     Settings& getSettings() const { return _settings; }
 
@@ -31,6 +34,7 @@ protected:
     QString _name;
     QString _label;
     std::vector<SettingsSectionPtr> sections;
+    bool _changed = false;
 };
 
 #endif // SETTINGSCATEGORY_H

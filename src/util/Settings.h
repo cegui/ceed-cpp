@@ -25,10 +25,13 @@ public:
     QString getPath() const { return "settings"; }
     QSettings* getQSettings() const { return _qsettings; }
 
+    void markRequiresRestart() { _changesRequireRestart = true; }
+
 protected:
 
     QSettings* _qsettings = nullptr;
     std::vector<SettingsCategoryPtr> categories;
+    bool _changesRequireRestart = false;
 };
 
 #endif // SETTINGS_H

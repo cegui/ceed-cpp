@@ -5,9 +5,6 @@
 Settings::Settings(QSettings* qsettings)
     : _qsettings(qsettings) //???here or in app as back-end? access from entries through a singleton?
 {
-/*
-self.changesRequireRestart = False //???hack flag?
-*/
 }
 
 Settings::~Settings()
@@ -46,9 +43,6 @@ SettingsEntry* Settings::getEntry(QStringList pathSplitted) const
 }
 
 /*
-    def markRequiresRestart(self):
-        self.changesRequireRestart = True
-
     def applyChanges(self):
         for category in self.categories:
             category.applyChanges()
@@ -75,11 +69,4 @@ SettingsEntry* Settings::getEntry(QStringList pathSplitted) const
         if recursive:
             for category in self.categories:
                 category.sort()
-*/
-/*
-    def upload(self, entry, value):
-        self.qsettings.setValue(entry.getPath(), value)
-
-    def download(self, entry):
-        return self.qsettings.value(entry.getPath())
 */

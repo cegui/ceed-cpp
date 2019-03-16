@@ -15,6 +15,7 @@ public:
     Application(int& argc, char** argv, bool debug = false);
 
     MainWindow* getMainWindow() { return &mainWindow; }
+    Settings* getSettings() const { return settings; }
 
 private:
 

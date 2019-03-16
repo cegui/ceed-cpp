@@ -2,9 +2,11 @@
 #include "src/util/SettingsCategory.h"
 #include "src/util/SettingsEntry.h"
 
-SettingsSection::SettingsSection(SettingsCategory& category, const QString& name)
+// also there was "sortingWeight = 0"
+SettingsSection::SettingsSection(SettingsCategory& category, const QString& name, const QString& label)
     : _category(category)
     , _name(name)
+    , _label(label.isEmpty() ? name : label)
 {
 
 }
@@ -30,30 +32,11 @@ QString SettingsSection::getPath() const
 }
 
 /*
-    def __init__(self, category, name, label = None, sortingWeight = 0):
-        self.category = category
-
-        if label is None:
-            label = name
-
-        self.name = name
-        self.label = label
-        self.sortingWeight = sortingWeight
-
-        self.entries = []
-
     def createEntry(self, **kwargs):
         entry = Entry(section = self, **kwargs)
         self.entries.append(entry)
 
         return entry
-
-    # - Reserved for possible future use.
-    def markAsChanged(self):
-        pass
-
-    def markAsUnchanged(self):
-        pass
 
     def applyChanges(self):
         for entry in self.entries:

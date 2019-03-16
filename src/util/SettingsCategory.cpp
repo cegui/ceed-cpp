@@ -7,8 +7,8 @@
 SettingsCategory::SettingsCategory(Settings& settings, const QString& name, const QString& label)
     : _settings(settings)
     ,_name(name)
+    , _label(label.isEmpty() ? name : label)
 {
-    _label = label.isEmpty() ? name : label;
 }
 
 SettingsCategory::~SettingsCategory()
@@ -57,14 +57,6 @@ QString SettingsCategory::getPath() const
 
         section = self.getSection("")
         return section.createEntry(**kwargs)
-
-    def markAsChanged(self):
-        if not self.label.startswith("* "):
-            self.label = " ".join(["*", self.label])
-
-    def markAsUnchanged(self):
-        if self.label.startswith("* "):
-            self.label = self.label[2:]
 
     def applyChanges(self):
         for section in self.sections:
