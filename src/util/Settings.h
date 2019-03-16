@@ -25,6 +25,13 @@ public:
     QString getPath() const { return "settings"; }
     QSettings* getQSettings() const { return _qsettings; }
 
+    void applyChanges();
+    void discardChanges();
+    void load();
+    void store();
+
+    void sort(bool deep = true);
+
     void markRequiresRestart() { _changesRequireRestart = true; }
 
 protected:

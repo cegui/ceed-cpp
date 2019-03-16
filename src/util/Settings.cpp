@@ -42,31 +42,43 @@ SettingsEntry* Settings::getEntry(QStringList pathSplitted) const
     return category ? category->getEntry(pathSplitted) : nullptr;
 }
 
-/*
-    def applyChanges(self):
-        for category in self.categories:
-            category.applyChanges()
+void Settings::applyChanges()
+{
+    for (auto&& category : categories)
+        category->applyChanges();
+}
 
-    def discardChanges(self):
-        for category in self.categories:
-            category.discardChanges()
+void Settings::discardChanges()
+{
+    for (auto&& category : categories)
+        category->discardChanges();
+}
 
-    def upload(self):
-        for category in self.categories:
-            category.upload()
+void Settings::load()
+{
+    for (auto&& category : categories)
+        category->load();
 
-    def download(self):
-        for category in self.categories:
-            category.download()
+    _changesRequireRestart = false;
+}
 
-        self.changesRequireRestart = False
+void Settings::store()
+{
+    for (auto&& category : categories)
+        category->store();
+}
 
-    def sort(self, recursive = True):
-        # FIXME: This is obviously not the fastest approach
-        self.categories = sorted(self.categories, key = lambda category: category.name)
-        self.categories = sorted(self.categories, key = lambda category: category.sortingWeight)
+void Settings::sort(bool deep)
+{
+    std::sort(categories.begin(), categories.end(), [](const SettingsCategoryPtr& a, const SettingsCategoryPtr& b)
+    {
+        //return a->getName() < b->getName();
+        return a->getSortingWeight() < b->getSortingWeight();
+    });
 
-        if recursive:
-            for category in self.categories:
-                category.sort()
-*/
+    if (deep)
+    {
+        for (auto&& category : categories)
+            category->sort();
+    }
+}

@@ -3,16 +3,26 @@
 #include "src/util/SettingsEntry.h"
 
 // also there was "sortingWeight = 0"
-SettingsSection::SettingsSection(SettingsCategory& category, const QString& name, const QString& label)
+SettingsSection::SettingsSection(SettingsCategory& category, const QString& name, const QString& label, int sortingWeight)
     : _category(category)
     , _name(name)
     , _label(label.isEmpty() ? name : label)
+    , _sortingWeight(sortingWeight)
 {
 
 }
 
 SettingsSection::~SettingsSection()
 {
+}
+
+// It was createEntry(), and probably that was better from the OOP point,
+// but SettingsEntry has so many constructor args that I don't want to
+// copy them here and keep them in sync. Let it be compact and readable.
+SettingsEntry* SettingsSection::addEntry(SettingsEntryPtr&& entry)
+{
+    entries.push_back(std::move(entry));
+    return entries.back().get();
 }
 
 SettingsEntry* SettingsSection::getEntry(const QString& name) const
@@ -63,11 +73,3 @@ void SettingsSection::sort()
         return a->getSortingWeight() < b->getSortingWeight();
     });
 }
-
-/*
-    def createEntry(self, **kwargs):
-        entry = Entry(section = self, **kwargs)
-        self.entries.append(entry)
-
-        return entry
-*/

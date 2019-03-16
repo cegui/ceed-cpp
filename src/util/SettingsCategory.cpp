@@ -3,16 +3,24 @@
 #include "src/util/Settings.h"
 #include "qstringlist.h"
 
-// also there was "sortingWeight = 0"
-SettingsCategory::SettingsCategory(Settings& settings, const QString& name, const QString& label)
+// also there was "sortingWeight = 0" but it wasn't used
+SettingsCategory::SettingsCategory(Settings& settings, const QString& name, const QString& label, int sortingWeight)
     : _settings(settings)
     ,_name(name)
     , _label(label.isEmpty() ? name : label)
+    , _sortingWeight(sortingWeight)
 {
 }
 
 SettingsCategory::~SettingsCategory()
 {
+}
+
+SettingsSection* SettingsCategory::createSection(const QString& name, const QString& label, int sortingWeight)
+{
+    SettingsSection* section = new SettingsSection(*this, name, label, sortingWeight);
+    sections.push_back(SettingsSectionPtr(section));
+    return section;
 }
 
 SettingsSection* SettingsCategory::getSection(const QString& name) const
@@ -24,6 +32,18 @@ SettingsSection* SettingsCategory::getSection(const QString& name) const
 
     assert(it != sections.end());
     return (it != sections.end()) ? it->get() : nullptr;
+}
+
+// It was createEntry(), and probably that was better from the OOP point,
+// but SettingsEntry has so many constructor args that I don't want to
+// copy them here and keep them in sync. Let it be compact and readable.
+SettingsEntry* SettingsCategory::addEntry(SettingsEntryPtr&& entry)
+{
+    auto section = getSection("");
+    if (!section)
+        section = createSection("", "", -1);
+
+    return section->addEntry(std::move(entry));
 }
 
 SettingsEntry* SettingsCategory::getEntry(const QString& path) const
@@ -43,41 +63,44 @@ QString SettingsCategory::getPath() const
     return _settings.getPath() + "/" + _name;
 }
 
-/*
-    def createSection(self, **kwargs):
-        section = Section(category = self, **kwargs)
-        self.sections.append(section)
+void SettingsCategory::applyChanges()
+{
+    for (auto&& section : sections)
+        section->applyChanges();
+}
 
-        return section
+void SettingsCategory::discardChanges()
+{
+    for (auto&& section : sections)
+        section->discardChanges();
+}
 
-    def createEntry(self, **kwargs):
-        if self.getSection("") is None:
-            section = self.createSection(name = "")
-            section.sortingWeight = -1
+void SettingsCategory::load()
+{
+    for (auto&& section : sections)
+        section->load();
+}
 
-        section = self.getSection("")
-        return section.createEntry(**kwargs)
+void SettingsCategory::store()
+{
+    for (auto&& section : sections)
+        section->store();
+}
 
-    def applyChanges(self):
-        for section in self.sections:
-            section.applyChanges()
+void SettingsCategory::sort(bool deep)
+{
+    std::sort(sections.begin(), sections.end(), [](const SettingsSectionPtr& a, const SettingsSectionPtr& b)
+    {
+        // Weight, then name
+        if (a->getSortingWeight() != b->getSortingWeight())
+            return a->getSortingWeight() < b->getSortingWeight();
+        else
+            return a->getName() < b->getName();
+    });
 
-    def discardChanges(self):
-        for section in self.sections:
-            section.discardChanges()
-
-    def upload(self):
-        for section in self.sections:
-            section.upload()
-
-    def download(self):
-        for section in self.sections:
-            section.download()
-
-    def sort(self, recursive = True):
-        self.sections = sorted(self.sections, key = lambda section: (section.sortingWeight, section.name))
-
-        if recursive:
-            for section in self.sections:
-                section.sort()
-*/
+    if (deep)
+    {
+        for (auto&& section : sections)
+            section->sort();
+    }
+}
