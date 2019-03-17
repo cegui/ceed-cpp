@@ -25,6 +25,13 @@ SettingEntryEditorBase::SettingEntryEditorBase(SettingsEntry& entry, QWidget* pa
 {
 }
 
+void SettingEntryEditorBase::discardChanges()
+{
+    /*
+        self.entry.hasChanges = False
+    */
+}
+
 void SettingEntryEditorBase::addResetButton()
 {
     auto btn = new QPushButton();
@@ -37,14 +44,15 @@ void SettingEntryEditorBase::addResetButton()
     connect(btn, &QPushButton::clicked, this, &SettingEntryEditorBase::resetToDefaultValue);
 }
 
+void SettingEntryEditorBase::updateUIOnChange()
+{
+    SettingSectionWidget* parentWidget = static_cast<SettingSectionWidget*>(parent());
+    parentWidget->onChange(*this);
+    auto label = static_cast<QLabel*>(static_cast<QFormLayout*>(parentWidget->layout())->labelForField(this));
+    label->setText(_entry.getLabel());
+}
+
 /*
-    def discardChanges(self):
-        self.entry.hasChanges = False
-
-    def onChange(self, _):
-        self.markAsChanged()
-        self.parent.onChange(self)
-
     def markAsChanged(self):
         self.entry.markAsChanged()
 
@@ -57,7 +65,7 @@ void SettingEntryEditorBase::addResetButton()
 SettingEntryEditorString::SettingEntryEditorString(SettingsEntry& entry, QWidget* parent)
     : SettingEntryEditorBase(entry, parent)
 {
-    auto entryWidget = new QLineEdit();
+    entryWidget = new QLineEdit();
     entryWidget->setText(entry.value().toString());
     entryWidget->setToolTip(entry.getHelp());
     addWidget(entryWidget, 1);
@@ -66,29 +74,25 @@ SettingEntryEditorString::SettingEntryEditorString(SettingsEntry& entry, QWidget
     connect(entryWidget, &QLineEdit::textEdited, this, &SettingEntryEditorString::onChange);
 }
 
+void SettingEntryEditorString::discardChanges()
+{
+    entryWidget->setText(_entry.value().toString());
+    SettingEntryEditorBase::discardChanges();
+}
+
 void SettingEntryEditorString::onChange(const QString& text)
 {
     _entry.setEditedValue(text);
-
-    /*
-    super(InterfaceEntryString, self).onChange(text)
-    */
-
-    /*
-        # FIXME: This should be rolled into the InterfaceEntry types.
-        parent.layout.labelForField(entry).setText(entry.entry.label)
-    */
-    SettingSectionWidget* parentWidget = qobject_cast<SettingSectionWidget*>(parent());
-    parentWidget->onChange(_entry);
-    //parentWidget->layout()->labe
+    updateUIOnChange();
 }
 
 /*
-    def discardChanges(self):
-        self.entryWidget.setText(str(self.entry.value))
-        super(InterfaceEntryString, self).discardChanges()
+    def resetToDefaultValue(self):
+        defValue = self.entry.defaultValue
+        if self.entry.editedValue != defValue:
+            self.onChange(defValue)
+            self.entryWidget.setText(str(defValue))
 */
-
 //---------------------------------------------------------------------
 
 SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* parent)
@@ -98,9 +102,6 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
     setTitle(section.getLabel());
 
     auto layout = new QFormLayout();
-/*
-    self.modifiedEntries = []
-*/
 
     for (auto&& entry : section.getEntries())
     {
@@ -108,13 +109,13 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
         label->setMinimumWidth(200);
         label->setWordWrap(true);
 
-        if (entry->getWidgetHint() == "string")
+        //if (entry->getWidgetHint() == "string")
             layout->addRow(label, new SettingEntryEditorString(*entry, this));
-        else
-        {
-            // TODO: error message with a widget hint
-            assert(false && "SettingSectionWidget::SettingSectionWidget() > unknown widget hint!");
-        }
+        //else
+        //{
+        //    // TODO: error message with a widget hint
+        //    assert(false && "SettingSectionWidget::SettingSectionWidget() > unknown widget hint!");
+        //}
         /*
     elif entry.widgetHint == "int":
         return InterfaceEntryInt(entry, parent)
@@ -136,21 +137,21 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
     setLayout(layout);
 }
 
-void SettingSectionWidget::onChange(SettingsEntry& entry)
+void SettingSectionWidget::discardChanges()
+{
+    for (auto&& entry : modifiedEntries)
+        entry->discardChanges();
+}
+
+void SettingSectionWidget::onChange(SettingEntryEditorBase& entry)
 {
     modifiedEntries.push_back(&entry);
 
-    SettingCategoryWidget* parentWidget = qobject_cast<SettingCategoryWidget*>(parent());
-    parentWidget->onChange(_section);
+    SettingCategoryWidget* parentWidget = static_cast<SettingCategoryWidget*>(parent());
+    parentWidget->onChange(*this);
 }
 
 /*
-class InterfaceSection(QtGui.QGroupBox):
-
-    def discardChanges(self):
-        for entry in self.modifiedEntries:
-            entry.discardChanges()
-
     def markAsUnchanged(self):
         self.section.markAsUnchanged()
         labelForField = self.layout.labelForField
@@ -179,13 +180,16 @@ SettingCategoryWidget::SettingCategoryWidget(SettingsCategory& category, QWidget
     setWidgetResizable(true);
 }
 
-void SettingCategoryWidget::onChange(SettingsSection& section)
+void SettingCategoryWidget::discardChanges()
+{
+    for (auto&& section : modifiedSections)
+        section->discardChanges();
+}
+
+void SettingCategoryWidget::onChange(SettingSectionWidget& section)
 {
     modifiedSections.push_back(&section);
-
-    //!!!updateUI(bool deep)!
-    QTabWidget* tabs = qobject_cast<QTabWidget*>(parent());
-    tabs->setTabText(tabs->indexOf(this), _category.getLabel());
+    updateUIOnChange(false);
 }
 
 bool SettingCategoryWidget::eventFilter(QObject* watched, QEvent* event)
@@ -200,11 +204,13 @@ bool SettingCategoryWidget::eventFilter(QObject* watched, QEvent* event)
     }
     return QScrollArea::eventFilter(watched, event);
 }
-/*
-    def discardChanges(self):
-        for section in self.modifiedSections:
-            section.discardChanges()
 
+void SettingCategoryWidget::updateUIOnChange(bool deep)
+{
+    QTabWidget* tabs = qobject_cast<QTabWidget*>(parent());
+    tabs->setTabText(tabs->indexOf(this), _category.getLabel());
+}
+/*
     def markAsUnchanged(self):
         parent = self.parent
         self.category.markAsUnchanged()
