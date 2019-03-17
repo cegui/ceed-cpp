@@ -104,3 +104,10 @@ void SettingsCategory::sort(bool deep)
             section->sort();
     }
 }
+
+bool SettingsCategory::isModified() const
+{
+    for (auto&& section : sections)
+        if (section->isModified()) return true;
+    return false;
+}

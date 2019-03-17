@@ -25,13 +25,13 @@ public:
     SettingsEntry* getEntry(const QString& path) const;
     SettingsEntry* getEntry(const QStringList& pathSplitted) const;
 
-    void setModified(bool modified) { _changed = modified; }
-
     const QString& getName() const { return _name; }
-    QString getLabel() const { return (_changed ? "* " : "") + _label; }
+    QString getLabel() const { return (isModified() ? "* " : "") + _label; }
     QString getPath() const;
     Settings& getSettings() const { return _settings; }
     int getSortingWeight() const { return _sortingWeight; }
+
+    bool isModified() const;
 
     void applyChanges();
     void discardChanges();
@@ -48,8 +48,6 @@ protected:
     int _sortingWeight = 0;
 
     std::vector<SettingsSectionPtr> sections;
-
-    bool _changed = false;
 };
 
 #endif // SETTINGSCATEGORY_H

@@ -21,10 +21,12 @@ public:
     const std::vector<SettingsEntryPtr>& getEntries() const { return entries; }
 
     const QString& getName() const { return _name; }
-    QString getLabel() const { return /*(_changed ? "* " : "") +*/ _label; }
+    QString getLabel() const { return (isModified() ? "* " : "") + _label; }
     QString getPath() const;
     SettingsCategory& getCategory() const { return _category; }
     int getSortingWeight() const { return _sortingWeight; }
+
+    bool isModified() const;
 
     void applyChanges();
     void discardChanges();

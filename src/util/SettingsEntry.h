@@ -25,6 +25,8 @@ public:
     const QString& getName() const { return _name; }
     QString getLabel() const { return (_changed ? "* " : "") + _label; }
     QString getPath() const;
+    QString getHelp() const { return _help; }
+    QString getWidgetHint() const { return _widgetHint; }
     SettingsSection& getSection() const { return _section; }
     int getSortingWeight() const { return _sortingWeight; }
 
@@ -32,6 +34,7 @@ public:
     void setEditedValue(const QVariant& val);
     QVariant& value() { return _value; }
     QVariant& editedValue() { return _editedValue; }
+    bool isModified() const { return _changed; } //???_editedValue != _value instead?
 
     void applyChanges();
     void discardChanges();

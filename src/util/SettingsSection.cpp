@@ -79,3 +79,10 @@ void SettingsSection::sort()
         return a->getSortingWeight() < b->getSortingWeight();
     });
 }
+
+bool SettingsSection::isModified() const
+{
+    for (auto&& entry : entries)
+        if (entry->isModified()) return true;
+    return false;
+}
