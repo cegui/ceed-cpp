@@ -97,13 +97,12 @@ public:
     SettingSectionWidget(SettingsSection& section, QWidget* parent = nullptr);
 
     void updateValuesInUI();
-    void onChange(SettingEntryEditorBase& entry);
+    void onChange();
     void updateUIOnChange(bool deep);
 
 protected:
 
     SettingsSection& _section;
-    std::set<SettingEntryEditorBase*> modifiedEntries;
 };
 
 //---------------------------------------------------------------------
@@ -115,7 +114,7 @@ public:
     SettingCategoryWidget(SettingsCategory& category, QWidget* parent = nullptr);
 
     void updateValuesInUI();
-    void onChange(SettingSectionWidget& section);
+    void onChange();
     void updateUIOnChange(bool deep);
 
 protected:
@@ -123,7 +122,6 @@ protected:
     virtual bool eventFilter(QObject* watched, QEvent* event) override;
 
     SettingsCategory& _category;
-    std::set<SettingSectionWidget*> modifiedSections;
 };
 
 #endif // SETTINGENTRYEDITORS_H

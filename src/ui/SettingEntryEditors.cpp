@@ -41,7 +41,7 @@ void SettingEntryEditorBase::updateUIOnChange()
 {
     // QFormLayout -> QGroupBox(SettingSectionWidget)
     SettingSectionWidget* parentWidget = static_cast<SettingSectionWidget*>(parent()->parent());
-    parentWidget->onChange(*this);
+    parentWidget->onChange();
     auto label = static_cast<QLabel*>(static_cast<QFormLayout*>(parentWidget->layout())->labelForField(this));
     label->setText(_entry.getLabel());
 }
@@ -212,18 +212,20 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
 }
 
 void SettingSectionWidget::updateValuesInUI()
-{
-    for (auto&& entry : modifiedEntries)
-        entry->updateValueInUI();
+{    
+    for (int i = 0; i < layout()->count(); ++i)
+    {
+        auto childLayout = layout()->itemAt(i)->layout();
+        if (childLayout)
+            static_cast<SettingEntryEditorBase*>(childLayout)->updateValueInUI();
+    }
 }
 
-void SettingSectionWidget::onChange(SettingEntryEditorBase& entry)
+void SettingSectionWidget::onChange()
 {
-    modifiedEntries.insert(&entry);
-
     // QVBoxLayout -> QWidget inner -> QScrollArea(SettingCategoryWidget)
     SettingCategoryWidget* parentWidget = static_cast<SettingCategoryWidget*>(parent()->parent()->parent());
-    parentWidget->onChange(*this);
+    parentWidget->onChange();
 }
 
 void SettingSectionWidget::updateUIOnChange(bool deep)
@@ -232,11 +234,12 @@ void SettingSectionWidget::updateUIOnChange(bool deep)
 
     if (!deep) return;
 
-    for (auto&& entry : modifiedEntries)
-        entry->updateUIOnChange();
-
-    //!!!was in markAsUnchanged!
-    modifiedEntries.clear();
+    for (int i = 0; i < layout()->count(); ++i)
+    {
+        auto childLayout = layout()->itemAt(i)->layout();
+        if (childLayout)
+            static_cast<SettingEntryEditorBase*>(childLayout)->updateUIOnChange();
+    }
 }
 
 //---------------------------------------------------------------------
@@ -259,13 +262,17 @@ SettingCategoryWidget::SettingCategoryWidget(SettingsCategory& category, QWidget
 
 void SettingCategoryWidget::updateValuesInUI()
 {
-    for (auto&& section : modifiedSections)
-        section->updateValuesInUI();
+   QVBoxLayout* myLayout = static_cast<QVBoxLayout*>(widget()->layout());
+   for (int i = 0; i < myLayout->count(); ++i)
+   {
+       auto childWidget = myLayout->itemAt(i)->widget();
+       if (childWidget)
+           static_cast<SettingSectionWidget*>(childWidget)->updateValuesInUI();
+   }
 }
 
-void SettingCategoryWidget::onChange(SettingSectionWidget& section)
+void SettingCategoryWidget::onChange()
 {
-    modifiedSections.insert(&section);
     updateUIOnChange(false);
 }
 
@@ -290,10 +297,11 @@ void SettingCategoryWidget::updateUIOnChange(bool deep)
 
     if (!deep) return;
 
-    for (auto&& section : modifiedSections)
-        section->updateUIOnChange(true);
-
-    //!!!was in markAsUnchanged!
-    //! //???really need to store modified sections etc? may scan all
-    modifiedSections.clear();
+    QVBoxLayout* myLayout = static_cast<QVBoxLayout*>(widget()->layout());
+    for (int i = 0; i < myLayout->count(); ++i)
+    {
+        auto childWidget = myLayout->itemAt(i)->widget();
+        if (childWidget)
+            static_cast<SettingSectionWidget*>(childWidget)->updateUIOnChange(true);
+    }
 }
