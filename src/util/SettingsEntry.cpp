@@ -47,6 +47,8 @@ bool SettingsEntry::sanitizeValue(QVariant& val) const
 
 void SettingsEntry::setValue(const QVariant& val, bool storeImmediately)
 {
+    const QVariant prevValue = _value;
+
     QVariant copy = val;
     if (!sanitizeValue(copy)) return;
 
@@ -55,8 +57,8 @@ void SettingsEntry::setValue(const QVariant& val, bool storeImmediately)
 
     if (storeImmediately) store();
 
-    //???FIXME: only if really changed?
-    emit valueChanged(_value);
+    if (prevValue != _value)
+        emit valueChanged(_value);
 }
 
 void SettingsEntry::setEditedValue(const QVariant& val)
@@ -64,7 +66,6 @@ void SettingsEntry::setEditedValue(const QVariant& val)
     QVariant copy = val;
     if (!sanitizeValue(copy)) return;
     _editedValue = copy;
-    _changed = true;
 }
 
 void SettingsEntry::applyChanges()
@@ -79,14 +80,6 @@ void SettingsEntry::applyChanges()
             _section.getCategory().getSettings().markRequiresRestart();
         }
     }
-}
-
-void SettingsEntry::discardChanges()
-{
-    setEditedValue(_value);
-
-    // Was set in setEditedValue() but we know there is no change now
-    _changed = false;
 }
 
 void SettingsEntry::load()
@@ -106,7 +99,6 @@ void SettingsEntry::load()
 */
 
     setValue(val, false);
-    _changed = false;
 }
 
 void SettingsEntry::store()
@@ -114,5 +106,4 @@ void SettingsEntry::store()
     //QSettings* qsettings = qobject_cast<Application*>(qApp)->getSettings().getQSettings();
     QSettings* qsettings = _section.getCategory().getSettings().getQSettings();
     qsettings->setValue(getPath(), _value);
-    _changed = false;
 }

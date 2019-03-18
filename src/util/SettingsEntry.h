@@ -23,7 +23,7 @@ public:
     virtual ~SettingsEntry() override;
 
     const QString& getName() const { return _name; }
-    QString getLabel() const { return (_changed ? "* " : "") + _label; }
+    QString getLabel() const { return (isModified() ? "* " : "") + _label; }
     QString getPath() const;
     QString getHelp() const { return _help; }
     QString getWidgetHint() const { return _widgetHint; }
@@ -35,10 +35,10 @@ public:
     QVariant& value() { return _value; }
     QVariant& editedValue() { return _editedValue; }
     const QVariant& defaultValue() const { return _defaultValue; }
-    bool isModified() const { return _changed; } //???_editedValue != _value instead?
+    bool isModified() const { return _editedValue != _value; }
 
     void applyChanges();
-    void discardChanges();
+    void discardChanges() { setEditedValue(_value); }
     void load();
     void store();
 
@@ -62,7 +62,6 @@ protected:
 
     int _sortingWeight = 0;
     bool _changeRequiresRestart = false;
-    bool _changed = false;
 };
 
 #endif // SETTINGSENTRY_H

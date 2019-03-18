@@ -73,6 +73,26 @@ private:
 
 //---------------------------------------------------------------------
 
+class SettingEntryEditorFloat : public SettingEntryEditorBase
+{
+public:
+
+    SettingEntryEditorFloat(SettingsEntry& entry, QWidget* parent = nullptr);
+
+    virtual void discardChangesInUI() override;
+
+private slots:
+
+    void onChange(const QString& text);
+    virtual void resetToDefaultValue() override;
+
+private:
+
+    QLineEdit* entryWidget = nullptr;
+};
+
+//---------------------------------------------------------------------
+
 class SettingSectionWidget : public QGroupBox
 {
 public:

@@ -9,6 +9,7 @@
 #include "qevent.h"
 #include "qscrollbar.h"
 #include "qtabwidget.h"
+#include "qvalidator.h"
 
 // Implementation notes
 // - The "change detection" scheme propagates upwards from the individual Entry
@@ -50,15 +51,18 @@ void SettingEntryEditorBase::updateUIOnChange()
 SettingEntryEditorString::SettingEntryEditorString(SettingsEntry& entry, QWidget* parent)
     : SettingEntryEditorBase(entry, parent)
 {
+    assert(entry.defaultValue().canConvert(QVariant::String));
+
     entryWidget = new QLineEdit();
-    entryWidget->setText(entry.value().toString());
     entryWidget->setToolTip(entry.getHelp());
+    entryWidget->setText(entry.value().toString());
     addWidget(entryWidget, 1);
     addResetButton();
 
     connect(entryWidget, &QLineEdit::textEdited, this, &SettingEntryEditorString::onChange);
 }
 
+//!!!just an inline shortcut to updateValueInUI(_entry.value())!
 void SettingEntryEditorString::discardChangesInUI()
 {
     entryWidget->setText(_entry.value().toString());
@@ -70,31 +74,36 @@ void SettingEntryEditorString::onChange(const QString& text)
     updateUIOnChange();
 }
 
+//!!!universal logic for all! Will require virtual updateValueInUI(QVariant value)!
 void SettingEntryEditorString::resetToDefaultValue()
 {
     if (_entry.editedValue() != _entry.defaultValue())
     {
-        onChange(_entry.defaultValue().toString());
+        _entry.setEditedValue(_entry.defaultValue());
+        updateUIOnChange();
         entryWidget->setText(_entry.defaultValue().toString());
     }
 }
 
 //---------------------------------------------------------------------
 
-//!!!exact duplicate of SettingEntryEditorString::SettingEntryEditorString()!
 SettingEntryEditorInt::SettingEntryEditorInt(SettingsEntry& entry, QWidget* parent)
     : SettingEntryEditorBase(entry, parent)
 {
+    assert(entry.defaultValue().canConvert(QVariant::Int));
+
     entryWidget = new QLineEdit();
-    entryWidget->setText(entry.value().toString());
     entryWidget->setToolTip(entry.getHelp());
+    entryWidget->setValidator(new QIntValidator(0, std::numeric_limits<int>().max(), this)); // TODO: limits from setting entry!
+    entryWidget->setText(entry.value().toString());
     addWidget(entryWidget, 1);
     addResetButton();
 
     connect(entryWidget, &QLineEdit::textEdited, this, &SettingEntryEditorInt::onChange);
 }
 
-//!!!exact duplicate of SettingEntryEditorString::discardChangesInUI()!
+//???rename to updateValueInUI?
+//and then updateUIOnChange -> updateModifiedMarkInUI?
 void SettingEntryEditorInt::discardChangesInUI()
 {
     entryWidget->setText(_entry.value().toString());
@@ -104,11 +113,8 @@ void SettingEntryEditorInt::onChange(const QString& text)
 {
     bool converted = false;
     const int val = text.toInt(&converted);
-    if (converted)
-        _entry.setEditedValue(val);
-    else
-        entryWidget->setText(text.chopped(1));
-
+    assert(converted);
+    _entry.setEditedValue(val);
     updateUIOnChange();
 }
 
@@ -116,7 +122,49 @@ void SettingEntryEditorInt::resetToDefaultValue()
 {
     if (_entry.editedValue() != _entry.defaultValue())
     {
-        onChange(_entry.defaultValue().toString());
+        _entry.setEditedValue(_entry.defaultValue());
+        updateUIOnChange();
+        entryWidget->setText(_entry.defaultValue().toString());
+    }
+}
+
+//---------------------------------------------------------------------
+
+SettingEntryEditorFloat::SettingEntryEditorFloat(SettingsEntry& entry, QWidget* parent)
+    : SettingEntryEditorBase(entry, parent)
+{
+    assert(entry.defaultValue().canConvert(QVariant::Double));
+
+    entryWidget = new QLineEdit();
+    entryWidget->setToolTip(entry.getHelp());
+    entryWidget->setValidator(new QDoubleValidator(this)); // TODO: limits from setting entry!
+    entryWidget->setText(entry.value().toString());
+    addWidget(entryWidget, 1);
+    addResetButton();
+
+    connect(entryWidget, &QLineEdit::textEdited, this, &SettingEntryEditorFloat::onChange);
+}
+
+void SettingEntryEditorFloat::discardChangesInUI()
+{
+    entryWidget->setText(_entry.value().toString());
+}
+
+void SettingEntryEditorFloat::onChange(const QString& text)
+{
+    bool converted = false;
+    const float val = text.toFloat(&converted);
+    assert(converted);
+    _entry.setEditedValue(val);
+    updateUIOnChange();
+}
+
+void SettingEntryEditorFloat::resetToDefaultValue()
+{
+    if (_entry.editedValue() != _entry.defaultValue())
+    {
+        _entry.setEditedValue(_entry.defaultValue());
+        updateUIOnChange();
         entryWidget->setText(_entry.defaultValue().toString());
     }
 }
@@ -140,16 +188,14 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
         label->setMinimumWidth(200);
         label->setWordWrap(true);
 
+        //???for empty hint check value type, option list etc?
+
         if (entry->getWidgetHint() == "int")
             layout->addRow(label, new SettingEntryEditorInt(*entry, this));
-        else
-        //if (entry->getWidgetHint() == "string")
+        else if (entry->getWidgetHint() == "string")
             layout->addRow(label, new SettingEntryEditorString(*entry, this));
-        //else
-        //{
-        //    // TODO: error message with a widget hint
-        //    assert(false && "SettingSectionWidget::SettingSectionWidget() > unknown widget hint!");
-        //}
+        else
+            layout->addRow(label, new QLabel("Unknown widget hint: " + entry->getWidgetHint()));
         /*
     elif entry.widgetHint == "float":
         return InterfaceEntryFloat(entry, parent)
