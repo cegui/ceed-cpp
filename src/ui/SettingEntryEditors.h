@@ -11,6 +11,7 @@ class SettingsSection;
 class SettingsCategory;
 class QLineEdit;
 class QCheckBox;
+class QComboBox;
 class ColourButton;
 class PenButton;
 class KeySequenceButton;
@@ -166,6 +167,25 @@ private slots:
 private:
 
     KeySequenceButton* entryWidget = nullptr;
+};
+
+//---------------------------------------------------------------------
+
+class SettingEntryEditorCombobox : public SettingEntryEditorBase
+{
+public:
+
+    SettingEntryEditorCombobox(SettingsEntry& entry);
+
+    virtual void updateValueInUI() override;
+
+private slots:
+
+    void onChange(int index);
+
+private:
+
+    QComboBox* entryWidget = nullptr;
 };
 
 //---------------------------------------------------------------------

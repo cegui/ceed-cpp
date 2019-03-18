@@ -6,7 +6,8 @@
 #include "qsettings.h"
 
 SettingsEntry::SettingsEntry(SettingsSection& section, const QString& name, const QVariant& defaultValue, const QString& label,
-                             const QString& help, const QString& widgetHint, bool changeRequiresRestart, int sortingWeight)
+                             const QString& help, const QString& widgetHint, bool changeRequiresRestart, int sortingWeight,
+                             SettingOptionList&& optionList)
     : _section(section)
     , _name(name)
     , _label(label.isEmpty() ? name : label)
@@ -15,13 +16,10 @@ SettingsEntry::SettingsEntry(SettingsSection& section, const QString& name, cons
     , _value(defaultValue)
     , _editedValue(defaultValue)
     , _defaultValue(defaultValue)
+    , _optionList(std::move(optionList))
     , _sortingWeight(sortingWeight)
     , _changeRequiresRestart(changeRequiresRestart)
 {
-    /*
-        def __init__(optionList = None):
-            self.optionList = optionList
-    */
 }
 
 SettingsEntry::~SettingsEntry()

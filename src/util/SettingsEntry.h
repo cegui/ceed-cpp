@@ -10,6 +10,7 @@
 // (it is applied - value = editedValue - when user applies the settings)
 
 class SettingsSection;
+typedef std::vector<std::pair<QVariant, QString>> SettingOptionList;
 
 class SettingsEntry : public QObject
 {
@@ -19,7 +20,7 @@ public:
 
     SettingsEntry(SettingsSection& section, const QString& name, const QVariant& defaultValue, const QString& label = QString(),
                   const QString& help = QString(), const QString& widgetHint = "string", bool changeRequiresRestart = false,
-                  int sortingWeight = 0);
+                  int sortingWeight = 0, SettingOptionList&& optionList = SettingOptionList());
     virtual ~SettingsEntry() override;
 
     const QString& getName() const { return _name; }
@@ -35,6 +36,7 @@ public:
     QVariant& value() { return _value; }
     QVariant& editedValue() { return _editedValue; }
     const QVariant& defaultValue() const { return _defaultValue; }
+    const SettingOptionList& getOptionList() const { return _optionList; }
     bool isModified() const { return _editedValue != _value; }
 
     void applyChanges();
@@ -59,6 +61,7 @@ protected:
     QVariant _value;
     QVariant _editedValue;
     QVariant _defaultValue;
+    SettingOptionList _optionList;
 
     int _sortingWeight = 0;
     bool _changeRequiresRestart = false;

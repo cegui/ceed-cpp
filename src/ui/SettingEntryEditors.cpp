@@ -14,6 +14,7 @@
 #include "qtabwidget.h"
 #include "qvalidator.h"
 #include "qcheckbox.h"
+#include "qcombobox.h"
 
 // Implementation notes
 // - The "change detection" scheme propagates upwards from the individual Entry
@@ -256,7 +257,7 @@ void SettingEntryEditorPen::onChange(const QPen& pen)
 
 //---------------------------------------------------------------------
 
-SettingEntryEditorKeySequence::SettingEntryEditorKeySequence(SettingsEntry &entry)
+SettingEntryEditorKeySequence::SettingEntryEditorKeySequence(SettingsEntry& entry)
     : SettingEntryEditorBase(entry)
 {
     assert(entry.defaultValue().canConvert(QVariant::KeySequence));
@@ -282,43 +283,44 @@ void SettingEntryEditorKeySequence::onChange(const QKeySequence& seq)
     updateUIOnChange();
 }
 
-/*
-class InterfaceEntryCombobox(InterfaceEntry):
-    def __init__(self, entry, parent):
-        super(InterfaceEntryCombobox, self).__init__(entry, parent)
-        self.entryWidget = QtGui.QComboBox()
-        # optionList should be a list of lists where the first item is the key (data) and the second is the label
-        for option in entry.optionList:
-            self.entryWidget.addItem(option[1], option[0])
-        self.setCurrentIndexByValue(entry.value)
-        self.entryWidget.setToolTip(entry.help)
-        self.entryWidget.currentIndexChanged.connect(self.onChange)
-        self._addBasicWidgets()
+//---------------------------------------------------------------------
 
-    def setCurrentIndexByValue(self, value):
-        index = self.entryWidget.findData(value)
-        if index != -1:
-            self.entryWidget.setCurrentIndex(index)
+SettingEntryEditorCombobox::SettingEntryEditorCombobox(SettingsEntry& entry)
+    : SettingEntryEditorBase(entry)
+{
+    assert(!entry.getOptionList().empty());
 
-    def discardChanges(self):
-        self.setCurrentIndexByValue(self.entry.value)
-        super(InterfaceEntryCombobox, self).discardChanges()
+    entryWidget = new QComboBox();
 
-    def resetToDefaultValue(self):
-        defValue = self.entry.defaultValue
-        if self.entry.editedValue != defValue:
-            self.onChange(defValue)
-            self.setCurrentIndexByValue(defValue)
+    for (auto&& option : entry.getOptionList())
+        entryWidget->addItem(option.second, option.first);
 
-    def onChange(self, index):
-        if index != -1:
-            self.entry.editedValue = self.entryWidget.itemData(index)
+    entryWidget->setToolTip(entry.getHelp());
+    addWidget(entryWidget, 1);
+    addResetButton();
 
-        super(InterfaceEntryCombobox, self).onChange(index)
-*/
+    updateValueInUI();
 
+    connect(entryWidget, qOverload<int>(&QComboBox::currentIndexChanged), this, &SettingEntryEditorCombobox::onChange);
+}
 
+void SettingEntryEditorCombobox::updateValueInUI()
+{
+    int index = entryWidget->findData(_entry.editedValue());
+    if (index >= 0)
+        entryWidget->setCurrentIndex(index);
+}
 
+void SettingEntryEditorCombobox::onChange(int index)
+{
+    if (index >= 0)
+    {
+        _entry.setEditedValue(entryWidget->itemData(index));
+        updateUIOnChange();
+    }
+}
+
+//---------------------------------------------------------------------
 
 SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* parent)
     : QGroupBox(parent)
@@ -350,12 +352,10 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
             newLayout->addRow(label, new SettingEntryEditorPen(*entry));
         else if (entry->getWidgetHint() == "keySequence")
             newLayout->addRow(label, new SettingEntryEditorKeySequence(*entry));
+        else if (entry->getWidgetHint() == "combobox")
+            newLayout->addRow(label, new SettingEntryEditorCombobox(*entry));
         else
             newLayout->addRow(label, new QLabel("Unknown widget hint: " + entry->getWidgetHint()));
-        /*
-    elif entry.widgetHint == "combobox":
-        return InterfaceEntryCombobox(entry, parent)
-        */
     }
 }
 

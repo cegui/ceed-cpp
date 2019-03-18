@@ -87,8 +87,7 @@ void Application::createSettingsEntries()
     auto secUI = catGlobal->createSection("ui", "User Interface");
     entry.reset(new SettingsEntry(*secUI, "toolbar_icon_size", 32, "Toolbar icon size",
                                   "Sets the size of the toolbar icons",
-                                  "combobox", false, 1));
-    //optionList = [ [32, "Normal"], [24, "Small"], [16, "Smaller"] ]
+                                  "combobox", false, 1, { {32, "Normal"}, {24, "Small"}, {16, "Smaller"} }));
     secUI->addEntry(std::move(entry));
 
     auto secCEGUIDebug = catGlobal->createSection("cegui_debug_info", "CEGUI debug info");
