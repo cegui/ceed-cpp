@@ -25,13 +25,6 @@ SettingEntryEditorBase::SettingEntryEditorBase(SettingsEntry& entry, QWidget* pa
 {
 }
 
-void SettingEntryEditorBase::discardChanges()
-{
-    /*
-        self.entry.hasChanges = False
-    */
-}
-
 void SettingEntryEditorBase::addResetButton()
 {
     auto btn = new QPushButton();
@@ -40,25 +33,17 @@ void SettingEntryEditorBase::addResetButton()
     btn->setToolTip("Reset this settings entry to the default value");
     addWidget(btn);
 
-    //connect(btn, SIGNAL(clicked()), this, SLOT(resetToDefaultValue()));
     connect(btn, &QPushButton::clicked, this, &SettingEntryEditorBase::resetToDefaultValue);
 }
 
 void SettingEntryEditorBase::updateUIOnChange()
 {
-    SettingSectionWidget* parentWidget = static_cast<SettingSectionWidget*>(parent());
+    // QFormLayout -> QGroupBox(SettingSectionWidget)
+    SettingSectionWidget* parentWidget = static_cast<SettingSectionWidget*>(parent()->parent());
     parentWidget->onChange(*this);
     auto label = static_cast<QLabel*>(static_cast<QFormLayout*>(parentWidget->layout())->labelForField(this));
     label->setText(_entry.getLabel());
 }
-
-/*
-    def markAsChanged(self):
-        self.entry.markAsChanged()
-
-    def markAsUnchanged(self):
-        self.entry.markAsUnchanged()
-*/
 
 //---------------------------------------------------------------------
 
@@ -74,10 +59,9 @@ SettingEntryEditorString::SettingEntryEditorString(SettingsEntry& entry, QWidget
     connect(entryWidget, &QLineEdit::textEdited, this, &SettingEntryEditorString::onChange);
 }
 
-void SettingEntryEditorString::discardChanges()
+void SettingEntryEditorString::discardChangesInUI()
 {
     entryWidget->setText(_entry.value().toString());
-    SettingEntryEditorBase::discardChanges();
 }
 
 void SettingEntryEditorString::onChange(const QString& text)
@@ -87,6 +71,48 @@ void SettingEntryEditorString::onChange(const QString& text)
 }
 
 void SettingEntryEditorString::resetToDefaultValue()
+{
+    if (_entry.editedValue() != _entry.defaultValue())
+    {
+        onChange(_entry.defaultValue().toString());
+        entryWidget->setText(_entry.defaultValue().toString());
+    }
+}
+
+//---------------------------------------------------------------------
+
+//!!!exact duplicate of SettingEntryEditorString::SettingEntryEditorString()!
+SettingEntryEditorInt::SettingEntryEditorInt(SettingsEntry& entry, QWidget* parent)
+    : SettingEntryEditorBase(entry, parent)
+{
+    entryWidget = new QLineEdit();
+    entryWidget->setText(entry.value().toString());
+    entryWidget->setToolTip(entry.getHelp());
+    addWidget(entryWidget, 1);
+    addResetButton();
+
+    connect(entryWidget, &QLineEdit::textEdited, this, &SettingEntryEditorInt::onChange);
+}
+
+//!!!exact duplicate of SettingEntryEditorString::discardChangesInUI()!
+void SettingEntryEditorInt::discardChangesInUI()
+{
+    entryWidget->setText(_entry.value().toString());
+}
+
+void SettingEntryEditorInt::onChange(const QString& text)
+{
+    bool converted = false;
+    const int val = text.toInt(&converted);
+    if (converted)
+        _entry.setEditedValue(val);
+    else
+        entryWidget->setText(text.chopped(1));
+
+    updateUIOnChange();
+}
+
+void SettingEntryEditorInt::resetToDefaultValue()
 {
     if (_entry.editedValue() != _entry.defaultValue())
     {
@@ -114,6 +140,9 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
         label->setMinimumWidth(200);
         label->setWordWrap(true);
 
+        if (entry->getWidgetHint() == "int")
+            layout->addRow(label, new SettingEntryEditorInt(*entry, this));
+        else
         //if (entry->getWidgetHint() == "string")
             layout->addRow(label, new SettingEntryEditorString(*entry, this));
         //else
@@ -122,8 +151,6 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
         //    assert(false && "SettingSectionWidget::SettingSectionWidget() > unknown widget hint!");
         //}
         /*
-    elif entry.widgetHint == "int":
-        return InterfaceEntryInt(entry, parent)
     elif entry.widgetHint == "float":
         return InterfaceEntryFloat(entry, parent)
     elif entry.widgetHint == "checkbox":
@@ -142,30 +169,33 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
     setLayout(layout);
 }
 
-void SettingSectionWidget::discardChanges()
+void SettingSectionWidget::discardChangesInUI()
 {
     for (auto&& entry : modifiedEntries)
-        entry->discardChanges();
+        entry->discardChangesInUI();
 }
 
 void SettingSectionWidget::onChange(SettingEntryEditorBase& entry)
 {
-    modifiedEntries.push_back(&entry);
+    modifiedEntries.insert(&entry);
 
-    SettingCategoryWidget* parentWidget = static_cast<SettingCategoryWidget*>(parent());
+    // QVBoxLayout -> QWidget inner -> QScrollArea(SettingCategoryWidget)
+    SettingCategoryWidget* parentWidget = static_cast<SettingCategoryWidget*>(parent()->parent()->parent());
     parentWidget->onChange(*this);
 }
 
-/*
-    def markAsUnchanged(self):
-        self.section.markAsUnchanged()
-        labelForField = self.layout.labelForField
-        for entry in self.modifiedEntries:
-            entry.markAsUnchanged()
-            # FIXME: This should be rolled into the InterfaceEntry types.
-            labelForField(entry).setText(entry.entry.label)
-        self.modifiedEntries = []
-*/
+void SettingSectionWidget::updateUIOnChange(bool deep)
+{
+    // Update 'modified' mark (has no one for now)
+
+    if (!deep) return;
+
+    for (auto&& entry : modifiedEntries)
+        entry->updateUIOnChange();
+
+    //!!!was in markAsUnchanged!
+    modifiedEntries.clear();
+}
 
 //---------------------------------------------------------------------
 
@@ -185,15 +215,15 @@ SettingCategoryWidget::SettingCategoryWidget(SettingsCategory& category, QWidget
     setWidgetResizable(true);
 }
 
-void SettingCategoryWidget::discardChanges()
+void SettingCategoryWidget::discardChangesInUI()
 {
     for (auto&& section : modifiedSections)
-        section->discardChanges();
+        section->discardChangesInUI();
 }
 
 void SettingCategoryWidget::onChange(SettingSectionWidget& section)
 {
-    modifiedSections.push_back(&section);
+    modifiedSections.insert(&section);
     updateUIOnChange(false);
 }
 
@@ -212,17 +242,16 @@ bool SettingCategoryWidget::eventFilter(QObject* watched, QEvent* event)
 
 void SettingCategoryWidget::updateUIOnChange(bool deep)
 {
-    QTabWidget* tabs = qobject_cast<QTabWidget*>(parent());
+    // Layout -> QTabWidget of the SettingsDialog
+    QTabWidget* tabs = qobject_cast<QTabWidget*>(parent()->parent());
     tabs->setTabText(tabs->indexOf(this), _category.getLabel());
+
+    if (!deep) return;
+
+    for (auto&& section : modifiedSections)
+        section->updateUIOnChange(true);
+
+    //!!!was in markAsUnchanged!
+    //! //???really need to store modified sections etc? may scan all
+    modifiedSections.clear();
 }
-/*
-    def markAsUnchanged(self):
-        parent = self.parent
-        self.category.markAsUnchanged()
-        parent.setTabText(parent.indexOf(self), self.category.label)
-
-        for section in self.modifiedSections:
-            section.markAsUnchanged()
-
-        self.modifiedSections = []
-*/

@@ -76,21 +76,23 @@ void SettingsDialog::onButtonBoxClicked(QAbstractButton* button)
             reject();
 
             // Reset any entries with changes to their stored value
-            /*
             for (int i = 0; i < tabs->count(); ++i)
-                tabs->widget(i)->discardChanges();
-            */
+            {
+                auto tab = static_cast<SettingCategoryWidget*>(tabs->widget(i));
+                tab->discardChangesInUI();
+            }
 
             break;
         }
         default: return; // Unknown button must not be processed
     }
 
-    // - Regardless of the action above, all categories are now unchanged.
-    /*
-        for (int i = 0; i < tabs->count(); ++i)
-            tabs->widget(i)->markAsUnchanged()
-    */
+    // Update modified marks (should be all unset now)
+    for (int i = 0; i < tabs->count(); ++i)
+    {
+        auto tab = static_cast<SettingCategoryWidget*>(tabs->widget(i));
+        tab->updateUIOnChange(true);
+    }
 
     // FIXME: That is not entirely true; using the 'X' to close the Settings
     // dialog is not handled here; although, this "bug as a feature" allows

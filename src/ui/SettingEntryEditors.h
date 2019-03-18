@@ -4,6 +4,7 @@
 #include "qboxlayout.h"
 #include "qgroupbox.h"
 #include "qscrollarea.h"
+#include <set>
 
 class SettingsEntry;
 class SettingsSection;
@@ -16,7 +17,8 @@ public:
 
     SettingEntryEditorBase(SettingsEntry& entry, QWidget* parent = nullptr);
 
-    virtual void discardChanges();
+    virtual void discardChangesInUI() = 0;
+    void updateUIOnChange();
 
 protected slots:
 
@@ -25,10 +27,11 @@ protected slots:
 protected:
 
     void addResetButton();
-    void updateUIOnChange();
 
     SettingsEntry& _entry;
 };
+
+//---------------------------------------------------------------------
 
 class SettingEntryEditorString : public SettingEntryEditorBase
 {
@@ -36,7 +39,7 @@ public:
 
     SettingEntryEditorString(SettingsEntry& entry, QWidget* parent = nullptr);
 
-    virtual void discardChanges() override;
+    virtual void discardChangesInUI() override;
 
 private slots:
 
@@ -48,20 +51,45 @@ private:
     QLineEdit* entryWidget = nullptr;
 };
 
+//---------------------------------------------------------------------
+
+class SettingEntryEditorInt : public SettingEntryEditorBase
+{
+public:
+
+    SettingEntryEditorInt(SettingsEntry& entry, QWidget* parent = nullptr);
+
+    virtual void discardChangesInUI() override;
+
+private slots:
+
+    void onChange(const QString& text);
+    virtual void resetToDefaultValue() override;
+
+private:
+
+    QLineEdit* entryWidget = nullptr;
+};
+
+//---------------------------------------------------------------------
+
 class SettingSectionWidget : public QGroupBox
 {
 public:
 
     SettingSectionWidget(SettingsSection& section, QWidget* parent = nullptr);
 
-    void discardChanges();
+    void discardChangesInUI();
     void onChange(SettingEntryEditorBase& entry);
+    void updateUIOnChange(bool deep);
 
 protected:
 
     SettingsSection& _section;
-    std::vector<SettingEntryEditorBase*> modifiedEntries;
+    std::set<SettingEntryEditorBase*> modifiedEntries;
 };
+
+//---------------------------------------------------------------------
 
 class SettingCategoryWidget : public QScrollArea
 {
@@ -69,16 +97,16 @@ public:
 
     SettingCategoryWidget(SettingsCategory& category, QWidget* parent = nullptr);
 
-    void discardChanges();
+    void discardChangesInUI();
     void onChange(SettingSectionWidget& section);
+    void updateUIOnChange(bool deep);
 
 protected:
 
     virtual bool eventFilter(QObject* watched, QEvent* event) override;
-    void updateUIOnChange(bool deep);
 
     SettingsCategory& _category;
-    std::vector<SettingSectionWidget*> modifiedSections;
+    std::set<SettingSectionWidget*> modifiedSections;
 };
 
 #endif // SETTINGENTRYEDITORS_H
