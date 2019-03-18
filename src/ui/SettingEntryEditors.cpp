@@ -86,13 +86,15 @@ void SettingEntryEditorString::onChange(const QString& text)
     updateUIOnChange();
 }
 
-/*
-    def resetToDefaultValue(self):
-        defValue = self.entry.defaultValue
-        if self.entry.editedValue != defValue:
-            self.onChange(defValue)
-            self.entryWidget.setText(str(defValue))
-*/
+void SettingEntryEditorString::resetToDefaultValue()
+{
+    if (_entry.editedValue() != _entry.defaultValue())
+    {
+        onChange(_entry.defaultValue().toString());
+        entryWidget->setText(_entry.defaultValue().toString());
+    }
+}
+
 //---------------------------------------------------------------------
 
 SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* parent)
@@ -101,7 +103,10 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
 {
     setTitle(section.getLabel());
 
-    auto layout = new QFormLayout();
+    // NB: 'this' as a parent is required as of Qt 5.12.1!
+    // Else layout will not show ALL except the first SettingEntryEditorString,
+    // and if QLabel below will have 'this' parent it will be rendered buggy.
+    auto layout = new QFormLayout(this);
 
     for (auto&& entry : section.getEntries())
     {

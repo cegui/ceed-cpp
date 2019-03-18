@@ -34,6 +34,7 @@ public:
     void setEditedValue(const QVariant& val);
     QVariant& value() { return _value; }
     QVariant& editedValue() { return _editedValue; }
+    const QVariant& defaultValue() const { return _defaultValue; }
     bool isModified() const { return _changed; } //???_editedValue != _value instead?
 
     void applyChanges();

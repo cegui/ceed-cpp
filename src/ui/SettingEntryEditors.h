@@ -41,6 +41,9 @@ public:
 private slots:
 
     void onChange(const QString& text);
+    virtual void resetToDefaultValue() override;
+
+private:
 
     QLineEdit* entryWidget = nullptr;
 };
