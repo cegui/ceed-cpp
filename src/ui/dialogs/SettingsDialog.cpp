@@ -13,13 +13,6 @@
 SettingsDialog::SettingsDialog(QWidget *parent) :
     QDialog(parent)
 {
-/*
-    self.settings = settings
-
-    # sort everything so that it comes at the right spot when iterating
-    self.settings.sort()
-*/
-
     setWindowTitle("CEGUI Unified Editor settings");
     setWindowModality(Qt::ApplicationModal);
 
@@ -37,8 +30,10 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
 
     setLayout(layout);
 
-    // Add a tab for each settings category
-    const auto& categories = qobject_cast<Application*>(qApp)->getSettings()->getCategories();
+    // Add a tab for each settings category, sorted
+    auto settings = qobject_cast<Application*>(qApp)->getSettings();
+    settings->sort();
+    const auto& categories = settings->getCategories();
     for (auto&& category : categories)
     {
         tabs->addTab(new SettingCategoryWidget(*category, tabs), category->getLabel());
@@ -79,7 +74,7 @@ void SettingsDialog::onButtonBoxClicked(QAbstractButton* button)
             for (int i = 0; i < tabs->count(); ++i)
             {
                 auto tab = static_cast<SettingCategoryWidget*>(tabs->widget(i));
-                tab->discardChangesInUI();
+                tab->updateValuesInUI();
             }
 
             break;

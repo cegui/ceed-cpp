@@ -46,6 +46,16 @@ void SettingEntryEditorBase::updateUIOnChange()
     label->setText(_entry.getLabel());
 }
 
+void SettingEntryEditorBase::resetToDefaultValue()
+{
+    if (_entry.editedValue() != _entry.defaultValue())
+    {
+        _entry.setEditedValue(_entry.defaultValue());
+        updateUIOnChange();
+        updateValueInUI();
+    }
+}
+
 //---------------------------------------------------------------------
 
 SettingEntryEditorString::SettingEntryEditorString(SettingsEntry& entry, QWidget* parent)
@@ -55,34 +65,23 @@ SettingEntryEditorString::SettingEntryEditorString(SettingsEntry& entry, QWidget
 
     entryWidget = new QLineEdit();
     entryWidget->setToolTip(entry.getHelp());
-    entryWidget->setText(entry.value().toString());
     addWidget(entryWidget, 1);
     addResetButton();
 
     connect(entryWidget, &QLineEdit::textEdited, this, &SettingEntryEditorString::onChange);
+
+    updateValueInUI();
 }
 
-//!!!just an inline shortcut to updateValueInUI(_entry.value())!
-void SettingEntryEditorString::discardChangesInUI()
+void SettingEntryEditorString::updateValueInUI()
 {
-    entryWidget->setText(_entry.value().toString());
+    entryWidget->setText(_entry.editedValue().toString());
 }
 
 void SettingEntryEditorString::onChange(const QString& text)
 {
     _entry.setEditedValue(text);
     updateUIOnChange();
-}
-
-//!!!universal logic for all! Will require virtual updateValueInUI(QVariant value)!
-void SettingEntryEditorString::resetToDefaultValue()
-{
-    if (_entry.editedValue() != _entry.defaultValue())
-    {
-        _entry.setEditedValue(_entry.defaultValue());
-        updateUIOnChange();
-        entryWidget->setText(_entry.defaultValue().toString());
-    }
 }
 
 //---------------------------------------------------------------------
@@ -95,37 +94,35 @@ SettingEntryEditorInt::SettingEntryEditorInt(SettingsEntry& entry, QWidget* pare
     entryWidget = new QLineEdit();
     entryWidget->setToolTip(entry.getHelp());
     entryWidget->setValidator(new QIntValidator(0, std::numeric_limits<int>().max(), this)); // TODO: limits from setting entry!
-    entryWidget->setText(entry.value().toString());
     addWidget(entryWidget, 1);
     addResetButton();
 
     connect(entryWidget, &QLineEdit::textEdited, this, &SettingEntryEditorInt::onChange);
+
+    updateValueInUI();
 }
 
-//???rename to updateValueInUI?
-//and then updateUIOnChange -> updateModifiedMarkInUI?
-void SettingEntryEditorInt::discardChangesInUI()
+void SettingEntryEditorInt::updateValueInUI()
 {
-    entryWidget->setText(_entry.value().toString());
+    entryWidget->setText(_entry.editedValue().toString());
 }
 
+//???catch only Enter / focus lost 'end editing'?
 void SettingEntryEditorInt::onChange(const QString& text)
 {
-    bool converted = false;
-    const int val = text.toInt(&converted);
-    assert(converted);
-    _entry.setEditedValue(val);
-    updateUIOnChange();
-}
-
-void SettingEntryEditorInt::resetToDefaultValue()
-{
-    if (_entry.editedValue() != _entry.defaultValue())
+    if (text.isEmpty())
     {
-        _entry.setEditedValue(_entry.defaultValue());
-        updateUIOnChange();
-        entryWidget->setText(_entry.defaultValue().toString());
+        _entry.setEditedValue(0);
+        //updateValueInUI();
     }
+    else
+    {
+        bool converted = false;
+        const int val = text.toInt(&converted);
+        assert(converted);
+        _entry.setEditedValue(val);
+    }
+    updateUIOnChange();
 }
 
 //---------------------------------------------------------------------
@@ -145,28 +142,27 @@ SettingEntryEditorFloat::SettingEntryEditorFloat(SettingsEntry& entry, QWidget* 
     connect(entryWidget, &QLineEdit::textEdited, this, &SettingEntryEditorFloat::onChange);
 }
 
-void SettingEntryEditorFloat::discardChangesInUI()
+void SettingEntryEditorFloat::updateValueInUI()
 {
-    entryWidget->setText(_entry.value().toString());
+    entryWidget->setText(_entry.editedValue().toString());
 }
 
+//???catch only Enter / focus lost 'end editing'?
 void SettingEntryEditorFloat::onChange(const QString& text)
 {
-    bool converted = false;
-    const float val = text.toFloat(&converted);
-    assert(converted);
-    _entry.setEditedValue(val);
-    updateUIOnChange();
-}
-
-void SettingEntryEditorFloat::resetToDefaultValue()
-{
-    if (_entry.editedValue() != _entry.defaultValue())
+    if (text.isEmpty())
     {
-        _entry.setEditedValue(_entry.defaultValue());
-        updateUIOnChange();
-        entryWidget->setText(_entry.defaultValue().toString());
+        _entry.setEditedValue(0.f);
+        //updateValueInUI();
     }
+    else
+    {
+        bool converted = false;
+        const float val = text.toFloat(&converted);
+        assert(converted);
+        _entry.setEditedValue(val);
+    }
+    updateUIOnChange();
 }
 
 //---------------------------------------------------------------------
@@ -215,10 +211,10 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
     setLayout(layout);
 }
 
-void SettingSectionWidget::discardChangesInUI()
+void SettingSectionWidget::updateValuesInUI()
 {
     for (auto&& entry : modifiedEntries)
-        entry->discardChangesInUI();
+        entry->updateValueInUI();
 }
 
 void SettingSectionWidget::onChange(SettingEntryEditorBase& entry)
@@ -261,10 +257,10 @@ SettingCategoryWidget::SettingCategoryWidget(SettingsCategory& category, QWidget
     setWidgetResizable(true);
 }
 
-void SettingCategoryWidget::discardChangesInUI()
+void SettingCategoryWidget::updateValuesInUI()
 {
     for (auto&& section : modifiedSections)
-        section->discardChangesInUI();
+        section->updateValuesInUI();
 }
 
 void SettingCategoryWidget::onChange(SettingSectionWidget& section)

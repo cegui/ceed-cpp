@@ -17,12 +17,12 @@ public:
 
     SettingEntryEditorBase(SettingsEntry& entry, QWidget* parent = nullptr);
 
-    virtual void discardChangesInUI() = 0;
+    virtual void updateValueInUI() = 0;
     void updateUIOnChange();
 
 protected slots:
 
-    virtual void resetToDefaultValue() = 0;
+    void resetToDefaultValue();
 
 protected:
 
@@ -39,12 +39,11 @@ public:
 
     SettingEntryEditorString(SettingsEntry& entry, QWidget* parent = nullptr);
 
-    virtual void discardChangesInUI() override;
+    virtual void updateValueInUI() override;
 
 private slots:
 
     void onChange(const QString& text);
-    virtual void resetToDefaultValue() override;
 
 private:
 
@@ -59,12 +58,11 @@ public:
 
     SettingEntryEditorInt(SettingsEntry& entry, QWidget* parent = nullptr);
 
-    virtual void discardChangesInUI() override;
+    virtual void updateValueInUI() override;
 
 private slots:
 
     void onChange(const QString& text);
-    virtual void resetToDefaultValue() override;
 
 private:
 
@@ -79,12 +77,11 @@ public:
 
     SettingEntryEditorFloat(SettingsEntry& entry, QWidget* parent = nullptr);
 
-    virtual void discardChangesInUI() override;
+    virtual void updateValueInUI() override;
 
 private slots:
 
     void onChange(const QString& text);
-    virtual void resetToDefaultValue() override;
 
 private:
 
@@ -99,7 +96,7 @@ public:
 
     SettingSectionWidget(SettingsSection& section, QWidget* parent = nullptr);
 
-    void discardChangesInUI();
+    void updateValuesInUI();
     void onChange(SettingEntryEditorBase& entry);
     void updateUIOnChange(bool deep);
 
@@ -117,7 +114,7 @@ public:
 
     SettingCategoryWidget(SettingsCategory& category, QWidget* parent = nullptr);
 
-    void discardChangesInUI();
+    void updateValuesInUI();
     void onChange(SettingSectionWidget& section);
     void updateUIOnChange(bool deep);
 
