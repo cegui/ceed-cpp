@@ -17,18 +17,18 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     setWindowModality(Qt::ApplicationModal);
 
     // The basic UI
-    auto layout = new QVBoxLayout();
+    auto newLayout = new QVBoxLayout();
 
     auto label = new QLabel("Provides all persistent settings of CEGUI Unified Editor (CEED),"
                             " everything is divided into categories (see the tab buttons).");
     label->setWordWrap(true);
-    layout->addWidget(label);
+    newLayout->addWidget(label);
 
     tabs = new QTabWidget();
     tabs->setTabPosition(QTabWidget::North);
-    layout->addWidget(tabs);
+    newLayout->addWidget(tabs);
 
-    setLayout(layout);
+    setLayout(newLayout);
 
     // Add a tab for each settings category, sorted
     auto settings = qobject_cast<Application*>(qApp)->getSettings();
@@ -42,7 +42,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     // Apply, cancel etc...
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Apply | QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(buttonBox, &QDialogButtonBox::clicked, this, &SettingsDialog::onButtonBoxClicked);
-    layout->addWidget(buttonBox);
+    newLayout->addWidget(buttonBox);
 }
 
 void SettingsDialog::onButtonBoxClicked(QAbstractButton* button)

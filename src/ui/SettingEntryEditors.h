@@ -15,7 +15,7 @@ class SettingEntryEditorBase : public QHBoxLayout
 {
 public:
 
-    SettingEntryEditorBase(SettingsEntry& entry, QWidget* parent = nullptr);
+    SettingEntryEditorBase(SettingsEntry& entry);
 
     virtual void updateValueInUI() = 0;
     void updateUIOnChange();
@@ -37,7 +37,7 @@ class SettingEntryEditorString : public SettingEntryEditorBase
 {
 public:
 
-    SettingEntryEditorString(SettingsEntry& entry, QWidget* parent = nullptr);
+    SettingEntryEditorString(SettingsEntry& entry);
 
     virtual void updateValueInUI() override;
 
@@ -56,7 +56,7 @@ class SettingEntryEditorInt : public SettingEntryEditorBase
 {
 public:
 
-    SettingEntryEditorInt(SettingsEntry& entry, QWidget* parent = nullptr);
+    SettingEntryEditorInt(SettingsEntry& entry);
 
     virtual void updateValueInUI() override;
 
@@ -75,7 +75,7 @@ class SettingEntryEditorFloat : public SettingEntryEditorBase
 {
 public:
 
-    SettingEntryEditorFloat(SettingsEntry& entry, QWidget* parent = nullptr);
+    SettingEntryEditorFloat(SettingsEntry& entry);
 
     virtual void updateValueInUI() override;
 

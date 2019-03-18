@@ -20,8 +20,8 @@
 //   used to notify the application when a change happens; and once changes are
 //   applied, it is convenient to use an iterate/apply mechanism.
 
-SettingEntryEditorBase::SettingEntryEditorBase(SettingsEntry& entry, QWidget* parent)
-    : QHBoxLayout(parent)
+SettingEntryEditorBase::SettingEntryEditorBase(SettingsEntry& entry)
+    : QHBoxLayout()
     , _entry(entry)
 {
 }
@@ -58,8 +58,8 @@ void SettingEntryEditorBase::resetToDefaultValue()
 
 //---------------------------------------------------------------------
 
-SettingEntryEditorString::SettingEntryEditorString(SettingsEntry& entry, QWidget* parent)
-    : SettingEntryEditorBase(entry, parent)
+SettingEntryEditorString::SettingEntryEditorString(SettingsEntry& entry)
+    : SettingEntryEditorBase(entry)
 {
     assert(entry.defaultValue().canConvert(QVariant::String));
 
@@ -86,8 +86,8 @@ void SettingEntryEditorString::onChange(const QString& text)
 
 //---------------------------------------------------------------------
 
-SettingEntryEditorInt::SettingEntryEditorInt(SettingsEntry& entry, QWidget* parent)
-    : SettingEntryEditorBase(entry, parent)
+SettingEntryEditorInt::SettingEntryEditorInt(SettingsEntry& entry)
+    : SettingEntryEditorBase(entry)
 {
     assert(entry.defaultValue().canConvert(QVariant::Int));
 
@@ -127,8 +127,8 @@ void SettingEntryEditorInt::onChange(const QString& text)
 
 //---------------------------------------------------------------------
 
-SettingEntryEditorFloat::SettingEntryEditorFloat(SettingsEntry& entry, QWidget* parent)
-    : SettingEntryEditorBase(entry, parent)
+SettingEntryEditorFloat::SettingEntryEditorFloat(SettingsEntry& entry)
+    : SettingEntryEditorBase(entry)
 {
     assert(entry.defaultValue().canConvert(QVariant::Double));
 
@@ -173,10 +173,7 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
 {
     setTitle(section.getLabel());
 
-    // NB: 'this' as a parent is required as of Qt 5.12.1!
-    // Else layout will not show ALL except the first SettingEntryEditorString,
-    // and if QLabel below will have 'this' parent it will be rendered buggy.
-    auto layout = new QFormLayout(this);
+    auto newLayout = new QFormLayout(this);
 
     for (auto&& entry : section.getEntries())
     {
@@ -187,11 +184,11 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
         //???for empty hint check value type, option list etc?
 
         if (entry->getWidgetHint() == "int")
-            layout->addRow(label, new SettingEntryEditorInt(*entry, this));
+            newLayout->addRow(label, new SettingEntryEditorInt(*entry));
         else if (entry->getWidgetHint() == "string")
-            layout->addRow(label, new SettingEntryEditorString(*entry, this));
+            newLayout->addRow(label, new SettingEntryEditorString(*entry));
         else
-            layout->addRow(label, new QLabel("Unknown widget hint: " + entry->getWidgetHint()));
+            newLayout->addRow(label, new QLabel("Unknown widget hint: " + entry->getWidgetHint()));
         /*
     elif entry.widgetHint == "float":
         return InterfaceEntryFloat(entry, parent)
@@ -207,8 +204,6 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
         return InterfaceEntryCombobox(entry, parent)
         */
     }
-
-    setLayout(layout);
 }
 
 void SettingSectionWidget::updateValuesInUI()
@@ -249,13 +244,13 @@ SettingCategoryWidget::SettingCategoryWidget(SettingsCategory& category, QWidget
     , _category(category)
 {
     auto inner = new QWidget();
-    auto layout = new QVBoxLayout();
+    auto newLayout = new QVBoxLayout();
 
     for (auto&& section : category.getSections())
-        layout->addWidget(new SettingSectionWidget(*section, this));
+        newLayout->addWidget(new SettingSectionWidget(*section, this));
 
-    layout->addStretch();
-    inner->setLayout(layout);
+    newLayout->addStretch();
+    inner->setLayout(newLayout);
     setWidget(inner);
     setWidgetResizable(true);
 }
