@@ -12,6 +12,7 @@ class SettingsCategory;
 class QLineEdit;
 class QCheckBox;
 class ColourButton;
+class PenButton;
 
 class SettingEntryEditorBase : public QHBoxLayout
 {
@@ -126,6 +127,25 @@ private slots:
 private:
 
     ColourButton* entryWidget = nullptr;
+};
+
+//---------------------------------------------------------------------
+
+class SettingEntryEditorPen : public SettingEntryEditorBase
+{
+public:
+
+    SettingEntryEditorPen(SettingsEntry& entry);
+
+    virtual void updateValueInUI() override;
+
+private slots:
+
+    void onChange(const QPen& pen);
+
+private:
+
+    PenButton* entryWidget = nullptr;
 };
 
 //---------------------------------------------------------------------

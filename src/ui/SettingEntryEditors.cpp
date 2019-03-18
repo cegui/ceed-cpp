@@ -3,6 +3,7 @@
 #include "src/util/SettingsSection.h"
 #include "src/util/SettingsCategory.h"
 #include "src/ui/widgets/ColourButton.h"
+#include "src/ui/widgets/PenButton.h"
 #include "qformlayout.h"
 #include "qlabel.h"
 #include "qlineedit.h"
@@ -224,30 +225,35 @@ void SettingEntryEditorColour::onChange(const QColor& colour)
     updateUIOnChange();
 }
 
+//---------------------------------------------------------------------
+
+SettingEntryEditorPen::SettingEntryEditorPen(SettingsEntry& entry)
+    : SettingEntryEditorBase(entry)
+{
+    assert(entry.defaultValue().canConvert(QVariant::Pen));
+
+    entryWidget = new PenButton();
+    entryWidget->setToolTip(entry.getHelp());
+    addWidget(entryWidget, 1);
+    addResetButton();
+
+    updateValueInUI();
+
+    connect(entryWidget, &PenButton::penChanged, this, &SettingEntryEditorPen::onChange);
+}
+
+void SettingEntryEditorPen::updateValueInUI()
+{
+    entryWidget->setPen(_entry.editedValue().value<QPen>());
+}
+
+void SettingEntryEditorPen::onChange(const QPen& pen)
+{
+    _entry.setEditedValue(pen);
+    updateUIOnChange();
+}
+
 /*
-class InterfaceEntryPen(InterfaceEntry):
-    def __init__(self, entry, parent):
-        super(InterfaceEntryPen, self).__init__(entry, parent)
-        self.entryWidget = qtwidgets.PenButton()
-        self.entryWidget.pen = entry.value
-        self.entryWidget.setToolTip(entry.help)
-        self.entryWidget.penChanged.connect(self.onChange)
-        self._addBasicWidgets()
-
-    def discardChanges(self):
-        self.entryWidget.setPen(self.entry.value)
-        super(InterfaceEntryPen, self).discardChanges()
-
-    def resetToDefaultValue(self):
-        defValue = self.entry.defaultValue
-        if self.entry.editedValue != defValue:
-            self.onChange(defValue)
-            self.entryWidget.pen = defValue
-
-    def onChange(self, pen):
-        self.entry.editedValue = pen
-        super(InterfaceEntryPen, self).onChange(pen)
-
 class InterfaceEntryKeySequence(InterfaceEntry):
     def __init__(self, entry, parent):
         super(InterfaceEntryKeySequence, self).__init__(entry, parent)
@@ -348,7 +354,7 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
 }
 
 void SettingSectionWidget::updateValuesInUI()
-{    
+{
     for (int i = 0; i < layout()->count(); ++i)
     {
         auto childLayout = layout()->itemAt(i)->layout();
