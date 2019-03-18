@@ -53,7 +53,8 @@ SOURCES += \
     src/util/SettingsCategory.cpp \
     src/util/SettingsSection.cpp \
     src/util/SettingsEntry.cpp \
-    src/ui/SettingEntryEditors.cpp
+    src/ui/SettingEntryEditors.cpp \
+    src/ui/widgets/ColourButton.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -81,7 +82,8 @@ HEADERS += \
     src/util/SettingsCategory.h \
     src/util/SettingsSection.h \
     src/util/SettingsEntry.h \
-    src/ui/SettingEntryEditors.h
+    src/ui/SettingEntryEditors.h \
+    src/ui/widgets/ColourButton.h
 
 FORMS += \
     ui/MainWindow.ui \

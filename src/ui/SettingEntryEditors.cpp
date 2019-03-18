@@ -2,6 +2,7 @@
 #include "src/util/SettingsEntry.h"
 #include "src/util/SettingsSection.h"
 #include "src/util/SettingsCategory.h"
+#include "src/ui/widgets/ColourButton.h"
 #include "qformlayout.h"
 #include "qlabel.h"
 #include "qlineedit.h"
@@ -10,6 +11,7 @@
 #include "qscrollbar.h"
 #include "qtabwidget.h"
 #include "qvalidator.h"
+#include "qcheckbox.h"
 
 // Implementation notes
 // - The "change detection" scheme propagates upwards from the individual Entry
@@ -68,9 +70,9 @@ SettingEntryEditorString::SettingEntryEditorString(SettingsEntry& entry)
     addWidget(entryWidget, 1);
     addResetButton();
 
-    connect(entryWidget, &QLineEdit::textEdited, this, &SettingEntryEditorString::onChange);
-
     updateValueInUI();
+
+    connect(entryWidget, &QLineEdit::textEdited, this, &SettingEntryEditorString::onChange);
 }
 
 void SettingEntryEditorString::updateValueInUI()
@@ -97,9 +99,9 @@ SettingEntryEditorInt::SettingEntryEditorInt(SettingsEntry& entry)
     addWidget(entryWidget, 1);
     addResetButton();
 
-    connect(entryWidget, &QLineEdit::textEdited, this, &SettingEntryEditorInt::onChange);
-
     updateValueInUI();
+
+    connect(entryWidget, &QLineEdit::textEdited, this, &SettingEntryEditorInt::onChange);
 }
 
 void SettingEntryEditorInt::updateValueInUI()
@@ -135,9 +137,10 @@ SettingEntryEditorFloat::SettingEntryEditorFloat(SettingsEntry& entry)
     entryWidget = new QLineEdit();
     entryWidget->setToolTip(entry.getHelp());
     entryWidget->setValidator(new QDoubleValidator(this)); // TODO: limits from setting entry!
-    entryWidget->setText(entry.value().toString());
     addWidget(entryWidget, 1);
     addResetButton();
+
+    updateValueInUI();
 
     connect(entryWidget, &QLineEdit::textEdited, this, &SettingEntryEditorFloat::onChange);
 }
@@ -167,6 +170,144 @@ void SettingEntryEditorFloat::onChange(const QString& text)
 
 //---------------------------------------------------------------------
 
+SettingEntryEditorCheckbox::SettingEntryEditorCheckbox(SettingsEntry& entry)
+    : SettingEntryEditorBase(entry)
+{
+    assert(entry.defaultValue().canConvert(QVariant::Bool));
+
+    entryWidget = new QCheckBox();
+    entryWidget->setToolTip(entry.getHelp());
+    addWidget(entryWidget, 1);
+    addResetButton();
+
+    updateValueInUI();
+
+    connect(entryWidget, &QCheckBox::stateChanged, this, &SettingEntryEditorCheckbox::onChange);
+}
+
+void SettingEntryEditorCheckbox::updateValueInUI()
+{
+    entryWidget->setChecked(_entry.editedValue().toBool());
+}
+
+void SettingEntryEditorCheckbox::onChange(bool state)
+{
+    _entry.setEditedValue(state);
+    updateUIOnChange();
+}
+
+//---------------------------------------------------------------------
+
+SettingEntryEditorColour::SettingEntryEditorColour(SettingsEntry& entry)
+    : SettingEntryEditorBase(entry)
+{
+    assert(entry.defaultValue().canConvert(QVariant::Color));
+
+    entryWidget = new ColourButton();
+    entryWidget->setToolTip(entry.getHelp());
+    addWidget(entryWidget, 1);
+    addResetButton();
+
+    updateValueInUI();
+
+    connect(entryWidget, &ColourButton::colourChanged, this, &SettingEntryEditorColour::onChange);
+}
+
+void SettingEntryEditorColour::updateValueInUI()
+{
+    entryWidget->setColour(_entry.editedValue().value<QColor>());
+}
+
+void SettingEntryEditorColour::onChange(const QColor& colour)
+{
+    _entry.setEditedValue(colour);
+    updateUIOnChange();
+}
+
+/*
+class InterfaceEntryPen(InterfaceEntry):
+    def __init__(self, entry, parent):
+        super(InterfaceEntryPen, self).__init__(entry, parent)
+        self.entryWidget = qtwidgets.PenButton()
+        self.entryWidget.pen = entry.value
+        self.entryWidget.setToolTip(entry.help)
+        self.entryWidget.penChanged.connect(self.onChange)
+        self._addBasicWidgets()
+
+    def discardChanges(self):
+        self.entryWidget.setPen(self.entry.value)
+        super(InterfaceEntryPen, self).discardChanges()
+
+    def resetToDefaultValue(self):
+        defValue = self.entry.defaultValue
+        if self.entry.editedValue != defValue:
+            self.onChange(defValue)
+            self.entryWidget.pen = defValue
+
+    def onChange(self, pen):
+        self.entry.editedValue = pen
+        super(InterfaceEntryPen, self).onChange(pen)
+
+class InterfaceEntryKeySequence(InterfaceEntry):
+    def __init__(self, entry, parent):
+        super(InterfaceEntryKeySequence, self).__init__(entry, parent)
+        self.entryWidget = qtwidgets.KeySequenceButton()
+        self.entryWidget.keySequence = entry.value
+        self.entryWidget.setToolTip(entry.help)
+        self.entryWidget.keySequenceChanged.connect(self.onChange)
+        self._addBasicWidgets()
+
+    def discardChanges(self):
+        self.entryWidget.setKeySequence(self.entry.value)
+        super(InterfaceEntryKeySequence, self).discardChanges()
+
+    def resetToDefaultValue(self):
+        defValue = self.entry.defaultValue
+        if self.entry.editedValue != defValue:
+            self.onChange(defValue)
+            self.entryWidget.keySequence = defValue
+
+    def onChange(self, keySequence):
+        self.entry.editedValue = keySequence
+        super(InterfaceEntryKeySequence, self).onChange(keySequence)
+
+class InterfaceEntryCombobox(InterfaceEntry):
+    def __init__(self, entry, parent):
+        super(InterfaceEntryCombobox, self).__init__(entry, parent)
+        self.entryWidget = QtGui.QComboBox()
+        # optionList should be a list of lists where the first item is the key (data) and the second is the label
+        for option in entry.optionList:
+            self.entryWidget.addItem(option[1], option[0])
+        self.setCurrentIndexByValue(entry.value)
+        self.entryWidget.setToolTip(entry.help)
+        self.entryWidget.currentIndexChanged.connect(self.onChange)
+        self._addBasicWidgets()
+
+    def setCurrentIndexByValue(self, value):
+        index = self.entryWidget.findData(value)
+        if index != -1:
+            self.entryWidget.setCurrentIndex(index)
+
+    def discardChanges(self):
+        self.setCurrentIndexByValue(self.entry.value)
+        super(InterfaceEntryCombobox, self).discardChanges()
+
+    def resetToDefaultValue(self):
+        defValue = self.entry.defaultValue
+        if self.entry.editedValue != defValue:
+            self.onChange(defValue)
+            self.setCurrentIndexByValue(defValue)
+
+    def onChange(self, index):
+        if index != -1:
+            self.entry.editedValue = self.entryWidget.itemData(index)
+
+        super(InterfaceEntryCombobox, self).onChange(index)
+*/
+
+
+
+
 SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* parent)
     : QGroupBox(parent)
     , _section(section)
@@ -183,19 +324,19 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
 
         //???for empty hint check value type, option list etc?
 
-        if (entry->getWidgetHint() == "int")
-            newLayout->addRow(label, new SettingEntryEditorInt(*entry));
-        else if (entry->getWidgetHint() == "string")
+        if (entry->getWidgetHint() == "string")
             newLayout->addRow(label, new SettingEntryEditorString(*entry));
+        else if (entry->getWidgetHint() == "int")
+            newLayout->addRow(label, new SettingEntryEditorInt(*entry));
+        else if (entry->getWidgetHint() == "float")
+            newLayout->addRow(label, new SettingEntryEditorFloat(*entry));
+        else if (entry->getWidgetHint() == "checkbox")
+            newLayout->addRow(label, new SettingEntryEditorCheckbox(*entry));
+        else if (entry->getWidgetHint() == "colour")
+            newLayout->addRow(label, new SettingEntryEditorColour(*entry));
         else
             newLayout->addRow(label, new QLabel("Unknown widget hint: " + entry->getWidgetHint()));
         /*
-    elif entry.widgetHint == "float":
-        return InterfaceEntryFloat(entry, parent)
-    elif entry.widgetHint == "checkbox":
-        return InterfaceEntryCheckbox(entry, parent)
-    elif entry.widgetHint == "colour":
-        return InterfaceEntryColour(entry, parent)
     elif entry.widgetHint == "pen":
         return InterfaceEntryPen(entry, parent)
     elif entry.widgetHint == "keySequence":

@@ -10,6 +10,8 @@ class SettingsEntry;
 class SettingsSection;
 class SettingsCategory;
 class QLineEdit;
+class QCheckBox;
+class ColourButton;
 
 class SettingEntryEditorBase : public QHBoxLayout
 {
@@ -86,6 +88,44 @@ private slots:
 private:
 
     QLineEdit* entryWidget = nullptr;
+};
+
+//---------------------------------------------------------------------
+
+class SettingEntryEditorCheckbox : public SettingEntryEditorBase
+{
+public:
+
+    SettingEntryEditorCheckbox(SettingsEntry& entry);
+
+    virtual void updateValueInUI() override;
+
+private slots:
+
+    void onChange(bool state);
+
+private:
+
+    QCheckBox* entryWidget = nullptr;
+};
+
+//---------------------------------------------------------------------
+
+class SettingEntryEditorColour : public SettingEntryEditorBase
+{
+public:
+
+    SettingEntryEditorColour(SettingsEntry& entry);
+
+    virtual void updateValueInUI() override;
+
+private slots:
+
+    void onChange(const QColor& colour);
+
+private:
+
+    ColourButton* entryWidget = nullptr;
 };
 
 //---------------------------------------------------------------------
