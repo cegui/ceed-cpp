@@ -13,6 +13,7 @@ class QLineEdit;
 class QCheckBox;
 class ColourButton;
 class PenButton;
+class KeySequenceButton;
 
 class SettingEntryEditorBase : public QHBoxLayout
 {
@@ -146,6 +147,25 @@ private slots:
 private:
 
     PenButton* entryWidget = nullptr;
+};
+
+//---------------------------------------------------------------------
+
+class SettingEntryEditorKeySequence : public SettingEntryEditorBase
+{
+public:
+
+    SettingEntryEditorKeySequence(SettingsEntry& entry);
+
+    virtual void updateValueInUI() override;
+
+private slots:
+
+    void onChange(const QKeySequence& seq);
+
+private:
+
+    KeySequenceButton* entryWidget = nullptr;
 };
 
 //---------------------------------------------------------------------

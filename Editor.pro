@@ -56,7 +56,9 @@ SOURCES += \
     src/ui/SettingEntryEditors.cpp \
     src/ui/widgets/ColourButton.cpp \
     src/ui/widgets/PenButton.cpp \
-    src/ui/dialogs/PenDialog.cpp
+    src/ui/dialogs/PenDialog.cpp \
+    src/ui/widgets/KeySequenceButton.cpp \
+    src/ui/dialogs/KeySequenceDialog.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -87,7 +89,9 @@ HEADERS += \
     src/ui/SettingEntryEditors.h \
     src/ui/widgets/ColourButton.h \
     src/ui/widgets/PenButton.h \
-    src/ui/dialogs/PenDialog.h
+    src/ui/dialogs/PenDialog.h \
+    src/ui/widgets/KeySequenceButton.h \
+    src/ui/dialogs/KeySequenceDialog.h
 
 FORMS += \
     ui/MainWindow.ui \
@@ -100,7 +104,8 @@ FORMS += \
     ui/dialogs/LicenseDialog.ui \
     ui/dialogs/AboutDialog.ui \
     ui/dialogs/MultiplePossibleFactoriesDialog.ui \
-    ui/dialogs/PenDialog.ui
+    ui/dialogs/PenDialog.ui \
+    ui/dialogs/KeySequenceDialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

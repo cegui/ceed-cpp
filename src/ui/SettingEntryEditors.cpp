@@ -4,6 +4,7 @@
 #include "src/util/SettingsCategory.h"
 #include "src/ui/widgets/ColourButton.h"
 #include "src/ui/widgets/PenButton.h"
+#include "src/ui/widgets/KeySequenceButton.h"
 #include "qformlayout.h"
 #include "qlabel.h"
 #include "qlineedit.h"
@@ -253,30 +254,35 @@ void SettingEntryEditorPen::onChange(const QPen& pen)
     updateUIOnChange();
 }
 
+//---------------------------------------------------------------------
+
+SettingEntryEditorKeySequence::SettingEntryEditorKeySequence(SettingsEntry &entry)
+    : SettingEntryEditorBase(entry)
+{
+    assert(entry.defaultValue().canConvert(QVariant::KeySequence));
+
+    entryWidget = new KeySequenceButton();
+    entryWidget->setToolTip(entry.getHelp());
+    addWidget(entryWidget, 1);
+    addResetButton();
+
+    updateValueInUI();
+
+    connect(entryWidget, &KeySequenceButton::keySequenceChanged, this, &SettingEntryEditorKeySequence::onChange);
+}
+
+void SettingEntryEditorKeySequence::updateValueInUI()
+{
+    entryWidget->setKeySequence(_entry.editedValue().value<QKeySequence>());
+}
+
+void SettingEntryEditorKeySequence::onChange(const QKeySequence& seq)
+{
+    _entry.setEditedValue(seq);
+    updateUIOnChange();
+}
+
 /*
-class InterfaceEntryKeySequence(InterfaceEntry):
-    def __init__(self, entry, parent):
-        super(InterfaceEntryKeySequence, self).__init__(entry, parent)
-        self.entryWidget = qtwidgets.KeySequenceButton()
-        self.entryWidget.keySequence = entry.value
-        self.entryWidget.setToolTip(entry.help)
-        self.entryWidget.keySequenceChanged.connect(self.onChange)
-        self._addBasicWidgets()
-
-    def discardChanges(self):
-        self.entryWidget.setKeySequence(self.entry.value)
-        super(InterfaceEntryKeySequence, self).discardChanges()
-
-    def resetToDefaultValue(self):
-        defValue = self.entry.defaultValue
-        if self.entry.editedValue != defValue:
-            self.onChange(defValue)
-            self.entryWidget.keySequence = defValue
-
-    def onChange(self, keySequence):
-        self.entry.editedValue = keySequence
-        super(InterfaceEntryKeySequence, self).onChange(keySequence)
-
 class InterfaceEntryCombobox(InterfaceEntry):
     def __init__(self, entry, parent):
         super(InterfaceEntryCombobox, self).__init__(entry, parent)
@@ -340,13 +346,13 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
             newLayout->addRow(label, new SettingEntryEditorCheckbox(*entry));
         else if (entry->getWidgetHint() == "colour")
             newLayout->addRow(label, new SettingEntryEditorColour(*entry));
+        else if (entry->getWidgetHint() == "pen")
+            newLayout->addRow(label, new SettingEntryEditorPen(*entry));
+        else if (entry->getWidgetHint() == "keySequence")
+            newLayout->addRow(label, new SettingEntryEditorKeySequence(*entry));
         else
             newLayout->addRow(label, new QLabel("Unknown widget hint: " + entry->getWidgetHint()));
         /*
-    elif entry.widgetHint == "pen":
-        return InterfaceEntryPen(entry, parent)
-    elif entry.widgetHint == "keySequence":
-        return InterfaceEntryKeySequence(entry, parent)
     elif entry.widgetHint == "combobox":
         return InterfaceEntryCombobox(entry, parent)
         */
