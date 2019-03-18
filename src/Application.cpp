@@ -118,12 +118,12 @@ void Application::createSettingsEntries()
                                   "int", false, 2));
     secBG->addEntry(std::move(entry));
 
-    entry.reset(new SettingsEntry(*secBG, "first_colour", QVariant::fromValue(Qt::darkGray), "First colour",
+    entry.reset(new SettingsEntry(*secBG, "first_colour", QVariant::fromValue(QColor(Qt::darkGray)), "First colour",
                                   "First of the alternating colours to use.",
                                   "colour", false, 3));
     secBG->addEntry(std::move(entry));
 
-    entry.reset(new SettingsEntry(*secBG, "second_colour", QVariant::fromValue(Qt::lightGray), "Second colour",
+    entry.reset(new SettingsEntry(*secBG, "second_colour", QVariant::fromValue(QColor(Qt::lightGray)), "Second colour",
                                   "Second of the alternating colours to use. (use the same as first to get a solid background)",
                                   "colour", false, 4));
     secBG->addEntry(std::move(entry));
