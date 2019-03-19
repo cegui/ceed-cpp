@@ -59,7 +59,8 @@ SOURCES += \
     src/ui/dialogs/PenDialog.cpp \
     src/ui/widgets/KeySequenceButton.cpp \
     src/ui/dialogs/KeySequenceDialog.cpp \
-    src/ui/UndoViewer.cpp
+    src/ui/UndoViewer.cpp \
+    src/util/DismissableMessage.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -93,7 +94,8 @@ HEADERS += \
     src/ui/dialogs/PenDialog.h \
     src/ui/widgets/KeySequenceButton.h \
     src/ui/dialogs/KeySequenceDialog.h \
-    src/ui/UndoViewer.h
+    src/ui/UndoViewer.h \
+    src/util/DismissableMessage.h
 
 FORMS += \
     ui/MainWindow.ui \

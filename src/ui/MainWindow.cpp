@@ -11,6 +11,7 @@
 #include "src/util/Settings.h"
 #include "src/util/SettingsEntry.h"
 #include "src/util/RecentlyUsed.h"
+#include "src/util/DismissableMessage.h"
 #include "src/proj/CEGUIProjectManager.h"
 #include "src/proj/CEGUIProject.h"
 #include "src/editors/NoEditor.h"
@@ -39,16 +40,16 @@ MainWindow::MainWindow(QWidget *parent) :
     recentlyUsedProjects = new RecentlyUsedMenuEntry("Projects", this);
     recentlyUsedFiles = new RecentlyUsedMenuEntry("Files", this);
 
+    // TODO: makethe check work! Now crashes inside. Must setup OpenGL first?
     //if (!QOpenGLFramebufferObject::hasOpenGLFramebufferObjects())
+    if (!ui) // to avoid 'code will never be executed' warning for now
     {
-        /*
-        ceed.messages.warning(self.app, self, "No FBO support!",
+        DismissableMessage::warning(this, "No FBO support!",
             "CEED uses OpenGL frame buffer objects for various tasks, "
             "most notably to support panning and zooming in the layout editor.\n\n"
             "FBO support was not detected on your system!\n\n"
             "The editor will run but you may experience rendering artifacts.",
-            "no_fbo_support")
-        */
+            "no_fbo_support");
     }
 
     editorFactories.push_back(std::make_unique<TextEditorFactory>());
