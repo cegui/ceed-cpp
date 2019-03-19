@@ -2,11 +2,13 @@
 #include "ui_MainWindow.h"
 #include "qtoolbar.h"
 #include "qtoolbutton.h"
+#include "qpushbutton.h"
 #include "qfiledialog.h"
 #include "qmessagebox.h"
 #include "qdesktopservices.h"
 #include "qtabbar.h"
 #include "qsettings.h"
+#include "qevent.h"
 //#include "qopenglframebufferobject.h"
 #include "src/Application.h"
 #include "src/util/Settings.h"
@@ -110,7 +112,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->actionStatusbar->setChecked(statusBar()->isVisible());
 
-    //setupActions()
     setupToolbars();
 
     // Setup dynamic menus
@@ -163,17 +164,16 @@ MainWindow::MainWindow(QWidget *parent) :
             action->setData(editor->getFilePath());
             ui->menuTabs->addAction(action);
 
-            connect(action, &QAction::triggered, [this]()
+            connect(action, &QAction::triggered, [this, action]()
             {
-                QAction* action = qobject_cast<QAction*>(sender());
-                if (action)
-                    activateEditorTabByFilePath(action->data().toString());
+                activateEditorTabByFilePath(action->data().toString());
             });
         }
     });
     connect(ui->menuTabs, &QMenu::aboutToHide, [this]()
     {
         int index = ui->menuTabs->actions().indexOf(tabsMenuSeparator);
+        assert(index >= 0);
         while (ui->menuTabs->actions().size() > index)
             ui->menuTabs->removeAction(ui->menuTabs->actions().back());
         tabsMenuSeparator = nullptr;
@@ -263,8 +263,16 @@ void MainWindow::updateUIOnProjectChanged()
     ui->actionReloadResources->setEnabled(isProjectLoaded);
 }
 
+void MainWindow::closeEvent(QCloseEvent* event)
+{
+    if (!on_actionQuit_triggered())
+        event->ignore();
+    else
+        event->accept();
+}
+
 // Safely quits the editor, prompting user to save changes to files and the project.
-void MainWindow::on_actionQuit_triggered()
+bool MainWindow::on_actionQuit_triggered()
 {
     // We remember last tab we closed to check whether user pressed Cancel in any of the dialogs
     QWidget* lastTab = nullptr;
@@ -275,7 +283,7 @@ void MainWindow::on_actionQuit_triggered()
         {
             // User pressed cancel on one of the tab editor 'save without changes' dialog,
             // cancel the whole quit operation!
-            return; // false
+            return false;
         }
 
         lastTab = currTab;
@@ -300,6 +308,8 @@ void MainWindow::on_actionQuit_triggered()
     }
 
     QApplication::quit();
+
+    return true;
 }
 
 void MainWindow::on_actionNewProject_triggered()
@@ -802,8 +812,9 @@ void MainWindow::openRecentProject(const QString& path)
         auto removeButton = msgBox.addButton("&Remove", QMessageBox::YesRole);
         msgBox.setDefaultButton(removeButton);
         msgBox.setIcon(QMessageBox::Question);
+        msgBox.exec();
 
-        if (msgBox.exec() == QMessageBox::Yes)
+        if (msgBox.clickedButton() == removeButton)
             recentlyUsedProjects->removeRecentlyUsed(path);
     }
 }
@@ -823,9 +834,9 @@ void MainWindow::openRecentFile(const QString& path)
         msgBox.addButton(QMessageBox::Cancel);
         auto removeButton = msgBox.addButton("&Remove", QMessageBox::YesRole);
         msgBox.setDefaultButton(removeButton);
-        msgBox.setIcon(QMessageBox::Question);
+        msgBox.exec();
 
-        if (msgBox.exec() == QMessageBox::Yes)
+        if (msgBox.clickedButton() == removeButton)
             recentlyUsedFiles->removeRecentlyUsed(path);
     }
 }

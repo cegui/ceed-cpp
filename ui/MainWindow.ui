@@ -141,7 +141,7 @@
    </widget>
    <widget class="QMenu" name="menu_Help">
     <property name="title">
-     <string>Help</string>
+     <string>&amp;Help</string>
     </property>
     <addaction name="actionQuickstartGuide"/>
     <addaction name="actionUserManual"/>
@@ -185,7 +185,7 @@
    </widget>
    <widget class="QMenu" name="menuProject">
     <property name="title">
-     <string>Project</string>
+     <string>&amp;Project</string>
     </property>
     <addaction name="actionReloadResources"/>
     <addaction name="separator"/>
@@ -193,7 +193,7 @@
    </widget>
    <widget class="QMenu" name="menuTabs">
     <property name="title">
-     <string>Tabs</string>
+     <string>&amp;Tabs</string>
     </property>
     <addaction name="actionPreviousTab"/>
     <addaction name="actionNextTab"/>
@@ -206,7 +206,7 @@
      <bool>false</bool>
     </property>
     <property name="title">
-     <string>Editor</string>
+     <string>Ed&amp;itor</string>
     </property>
    </widget>
    <addaction name="menu_File"/>

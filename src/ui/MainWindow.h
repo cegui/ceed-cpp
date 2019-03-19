@@ -32,7 +32,7 @@ private slots:
     void openRecentProject(const QString& path);
     void openRecentFile(const QString& path);
 
-    void on_actionQuit_triggered();
+    bool on_actionQuit_triggered();
 
     void on_actionStatusbar_toggled(bool arg1);
 
@@ -73,6 +73,8 @@ private slots:
     void on_actionCloseTab_triggered();
 
 private:
+
+    virtual void closeEvent(QCloseEvent* event) override;
 
     void setupToolbars();
     QToolBar* createToolbar(const QString& name);
