@@ -10,6 +10,7 @@ class MainWindow;
 class ProjectManager;
 class FileSystemBrowser;
 class SettingsDialog;
+class RecentlyUsedMenuEntry;
 typedef std::unique_ptr<class EditorBase> EditorBasePtr;
 typedef std::unique_ptr<class EditorFactoryBase> EditorFactoryBasePtr;
 
@@ -85,6 +86,8 @@ private:
     ProjectManager* projectManager = nullptr;
     FileSystemBrowser* fsBrowser = nullptr;
     SettingsDialog* settingsDialog = nullptr;
+    RecentlyUsedMenuEntry* recentlyUsedFiles = nullptr;
+    RecentlyUsedMenuEntry* recentlyUsedProjects = nullptr;
 
     bool wasMaximizedBeforeFullscreen = false;
 

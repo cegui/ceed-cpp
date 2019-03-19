@@ -10,6 +10,7 @@
 #include "src/Application.h"
 #include "src/util/Settings.h"
 #include "src/util/SettingsEntry.h"
+#include "src/util/RecentlyUsed.h"
 #include "src/proj/CEGUIProjectManager.h"
 #include "src/proj/CEGUIProject.h"
 #include "src/editors/NoEditor.h"
@@ -32,12 +33,10 @@ MainWindow::MainWindow(QWidget *parent) :
         self.actionManager = action.ActionManager(self, self.app.settings)
     */
 
-    settingsDialog = new SettingsDialog(this /*self.app.settings*/);
+    settingsDialog = new SettingsDialog(this);
 
-    /*
-        self.recentlyUsedProjects = recentlyused.RecentlyUsedMenuEntry(self.app.qsettings, "Projects")
-        self.recentlyUsedFiles = recentlyused.RecentlyUsedMenuEntry(self.app.qsettings, "Files")
-    */
+    recentlyUsedProjects = new RecentlyUsedMenuEntry("Projects", this);
+    recentlyUsedFiles = new RecentlyUsedMenuEntry("Files", this);
 
     //if (!QOpenGLFramebufferObject::hasOpenGLFramebufferObjects())
     {
@@ -155,19 +154,30 @@ QToolBar* MainWindow::createToolbar(const QString& name)
 
 void MainWindow::updateUIOnProjectChanged()
 {
-    //bool isProjectLoaded = CEGUIProjectManager::Instance().isProjectLoaded();
+    const bool isProjectLoaded = CEGUIProjectManager::Instance().isProjectLoaded();
 
     /*
         # view the newly opened project in the project manager
         self.projectManager.setProject(self.project)
-        # and set the filesystem browser path to the base folder of the project
-        # TODO: Maybe this could be configurable?
-        projectBaseDirectory = self.project.getAbsolutePathOf("")
-        if os.path.isdir(projectBaseDirectory):
-            self.fileSystemBrowser.setDirectory(projectBaseDirectory)
+    */
 
-        self.recentlyUsedProjects.addRecentlyUsed(self.project.projectFilePath)
+    if (isProjectLoaded)
+    {
+        auto project = CEGUIProjectManager::Instance().getCurrentProject();
+        recentlyUsedProjects->addRecentlyUsed(project->filePath);
 
+        // TODO: Maybe this could be configurable?
+        auto baseDir = project->getAbsolutePathOf("");
+        if (QFileInfo(baseDir).isDir())
+            fsBrowser->setDirectory(baseDir);
+    }
+    else
+    {
+        fsBrowser->setDirectory(QDir::homePath());
+    }
+
+    //!!! true -> isProjectLoaded!
+    /*
         # and enable respective actions
         self.saveProjectAction.setEnabled(True)
         self.closeProjectAction.setEnabled(True)
@@ -182,18 +192,24 @@ void MainWindow::on_actionQuit_triggered()
     /*
         self.saveSettings()
 
-        # we remember last tab we closed to check whether user pressed Cancel in any of the dialogs
-        lastTab = None
-        while len(self.tabEditors) > 0:
-            currentTab = self.tabs.widget(0)
-            if currentTab == lastTab:
-                # user pressed cancel on one of the tab editor 'save without changes' dialog,
-                # cancel the whole quit operation!
-                return False
-            lastTab = currentTab
-
-            self.slot_tabCloseRequested(0)
     */
+
+    // We remember last tab we closed to check whether user pressed Cancel in any of the dialogs
+    QWidget* lastTab = nullptr;
+    while (!activeEditors.empty())
+    {
+        QWidget* currTab = tabs->widget(0);
+        if (currTab == lastTab)
+        {
+            // User pressed cancel on one of the tab editor 'save without changes' dialog,
+            // cancel the whole quit operation!
+            return; // false
+        }
+
+        lastTab = currTab;
+
+        on_tabs_tabCloseRequested(0);
+    }
 
     // Close project after all tabs have been closed, there may be tabs requiring a project opened!
     if (CEGUIProjectManager::Instance().isProjectLoaded())
@@ -278,6 +294,8 @@ void MainWindow::on_actionOpenProject_triggered()
 
 void MainWindow::on_actionProjectSettings_triggered()
 {
+    if (!CEGUIProjectManager::Instance().isProjectLoaded()) return;
+
     // Since we are effectively unloading the project and potentially nuking resources of it
     // we should definitely unload all tabs that rely on it to prevent segfaults and other
     // nasty phenomena
@@ -290,13 +308,15 @@ void MainWindow::on_actionProjectSettings_triggered()
         return;
     }
 
-    //ProjectSettingsDialog dialog(CEGUIProjectManager::Instance().getCurrentProject());
-/*
-        if dialog.exec_() == QtGui.QDialog.Accepted:
-            dialog.apply(self.project)
+    ProjectSettingsDialog dialog(*CEGUIProjectManager::Instance().getCurrentProject(), this);
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        dialog.apply(*CEGUIProjectManager::Instance().getCurrentProject());
+        /*
             self.performProjectDirectoriesSanityCheck()
             self.syncProjectToCEGUIInstance()
-*/
+        */
+    }
 }
 
 void MainWindow::on_actionFullScreen_triggered()
