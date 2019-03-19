@@ -29,6 +29,8 @@ public:
 private slots:
 
     void openEditorTab(const QString& absolutePath);
+    void openRecentProject(const QString& path);
+    void openRecentFile(const QString& path);
 
     void on_actionQuit_triggered();
 
@@ -91,6 +93,8 @@ private:
     SettingsDialog* settingsDialog = nullptr;
     RecentlyUsedMenuEntry* recentlyUsedFiles = nullptr;
     RecentlyUsedMenuEntry* recentlyUsedProjects = nullptr;
+    QMenu* docsToolbarsMenu = nullptr;
+    QAction* tabsMenuSeparator = nullptr;
 
     bool wasMaximizedBeforeFullscreen = false;
 

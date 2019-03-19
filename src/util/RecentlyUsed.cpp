@@ -60,19 +60,12 @@ void RecentlyUsed::getRecentlyUsed(QStringList& outList) const
 RecentlyUsedMenuEntry::RecentlyUsedMenuEntry(const QString& sectionID, QObject* parent)
     : RecentlyUsed(sectionID, parent)
 {
-
 }
 
 void RecentlyUsedMenuEntry::setParentMenu(QMenu* menu)
 {
     if (_menu == menu) return;
-
     _menu = menu;
-/*
-        self.slot = slot
-        self.clearAction = clearAction
-        self.clearAction.triggered.connect(self.slot_clear)
-*/
     updateMenu();
 }
 
@@ -126,6 +119,7 @@ void RecentlyUsedMenuEntry::updateMenu()
         auto action = new QAction(text, _menu);
         action->setData(item);
         action->setVisible(true);
+        _menu->addAction(action);
         connect(action, &QAction::triggered, this, &RecentlyUsedMenuEntry::recentItemActionTriggered);
 
         ++i;
@@ -136,5 +130,6 @@ void RecentlyUsedMenuEntry::updateMenu()
     auto action = new QAction("Clear", _menu);
     action->setVisible(true);
     action->setEnabled(!items.empty());
+    _menu->addAction(action);
     connect(action, &QAction::triggered, this, &RecentlyUsedMenuEntry::clearRecentlyUsed);
 }

@@ -40,9 +40,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     settingsDialog = new SettingsDialog(this);
 
-    recentlyUsedProjects = new RecentlyUsedMenuEntry("Projects", this);
-    recentlyUsedFiles = new RecentlyUsedMenuEntry("Files", this);
-
     // TODO: make the check work! Now crashes inside. Must setup OpenGL first?
     //if (!QOpenGLFramebufferObject::hasOpenGLFramebufferObjects())
     if (!ui) // to avoid 'code will never be executed' warning for now
@@ -56,6 +53,7 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
     // Register factories
+
     editorFactories.push_back(std::make_unique<TextEditorFactory>());
     editorFactories.push_back(std::make_unique<BitmapEditorFactory>());
     /*
@@ -68,6 +66,7 @@ MainWindow::MainWindow(QWidget *parent) :
     */
 
     // Register file types from factories as filters
+
     QStringList allExt;
     for (const auto& factory : editorFactories)
     {
@@ -81,6 +80,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     editorFactoryFileFilters.insert(0, "All known files (*." + allExt.join(" *.") + ")");
     editorFactoryFileFilters.insert(1, "All files (*)");
+
+    // Setup UI
 
     ui->setupUi(this);
 
@@ -110,10 +111,76 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->actionStatusbar->setChecked(statusBar()->isVisible());
 
     //setupActions()
-    //setupMenus()
     setupToolbars();
 
+    // Setup dynamic menus
+
+    recentlyUsedProjects = new RecentlyUsedMenuEntry("Projects", this);
+    recentlyUsedProjects->setParentMenu(ui->menuRecentProjects);
+    connect(recentlyUsedProjects, &RecentlyUsed::triggered, this, &MainWindow::openRecentProject);
+    recentlyUsedFiles = new RecentlyUsedMenuEntry("Files", this);
+    recentlyUsedFiles->setParentMenu(ui->menuRecentFiles);
+    connect(recentlyUsedFiles, &RecentlyUsed::triggered, this, &MainWindow::openRecentFile);
+
+    connect(ui->menu_View, &QMenu::aboutToShow, [this]()
+    {
+        // Create default main window's popup with a list of all docks & toolbars
+        docsToolbarsMenu = QMainWindow::createPopupMenu();
+        docsToolbarsMenu->setTitle("&Docks && Toolbars");
+        ui->menu_View->insertMenu(ui->actionStatusbar, docsToolbarsMenu);
+    });
+    connect(ui->menu_View, &QMenu::aboutToHide, [this]()
+    {
+        ui->menu_View->removeAction(docsToolbarsMenu->menuAction());
+        docsToolbarsMenu = nullptr;
+    });
+
+    // Menu for the current editor
+    ui->menuEditor->setVisible(false);
+
+    connect(ui->menuTabs, &QMenu::aboutToShow, [this]()
+    {
+        tabsMenuSeparator = ui->menuTabs->addSeparator();
+
+        // The items are taken from the 'self.tabEditors' list which always has the order
+        // by which the files were opened (not the order of the tabs in the tab bar).
+        // This is a feature, maintains the same mnemonic even if a tab is moved.
+        int counter = 1;
+        for (auto&& editor : activeEditors)
+        {
+            QString name = editor->getFilePath();
+
+            // Trim if too long, for the first 10 tabs add mnemonic (1 to 9, then 0).
+            // TODO: the next few lines are basically the same as the code in recentlyused.
+            // Refactor so both places use the same (generic) code.
+            if (name.length() > 40)
+                name = "..." + name.right(37);
+            if (counter <= 10)
+                name = QString("&%1. %2").arg(counter % 10).arg(name);
+            ++counter;
+
+            QAction* action = new QAction(name, ui->menuTabs);
+            action->setData(editor->getFilePath());
+            ui->menuTabs->addAction(action);
+
+            connect(action, &QAction::triggered, [this]()
+            {
+                QAction* action = qobject_cast<QAction*>(sender());
+                if (action)
+                    activateEditorTabByFilePath(action->data().toString());
+            });
+        }
+    });
+    connect(ui->menuTabs, &QMenu::aboutToHide, [this]()
+    {
+        int index = ui->menuTabs->actions().indexOf(tabsMenuSeparator);
+        while (ui->menuTabs->actions().size() > index)
+            ui->menuTabs->removeAction(ui->menuTabs->actions().back());
+        tabsMenuSeparator = nullptr;
+    });
+
     // Restore geometry and state of this window from QSettings
+
     auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
     if (settings->contains("window-geometry"))
         restoreGeometry(settings->value("window-geometry").toByteArray());
@@ -128,15 +195,21 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupToolbars()
 {
-    // Here until I manage to create menu toolbutton in Qt Creator
-    QToolBar* toolbar = createToolbar("Standard");
+    // FIXME: here until I manage to create menu toolbutton in Qt Creator
+
+    QToolBar* toolbar = ui->toolBarStandard; // createToolbar("Standard");
     QToolButton* newMenuBtn = new QToolButton(this);
     newMenuBtn->setText("New");
     newMenuBtn->setToolTip("New file");
     newMenuBtn->setIcon(QIcon(":/icons/actions/new_file.png"));
     newMenuBtn->setPopupMode(QToolButton::InstantPopup);
     newMenuBtn->setMenu(ui->menu_New);
-    toolbar->addWidget(newMenuBtn);
+
+    QAction* before = toolbar->actions().empty() ? nullptr : toolbar->actions().front();
+    toolbar->insertWidget(before, newMenuBtn);
+
+    // The menubutton does not resize its icon correctly unless we tell it to do so
+    connect(toolbar, &QToolBar::iconSizeChanged, newMenuBtn, &QToolButton::setIconSize);
 }
 
 QToolBar* MainWindow::createToolbar(const QString& name)
@@ -704,4 +777,55 @@ void MainWindow::on_actionOpenFile_triggered()
                                                     &editorFactoryFileFilters[0]);
     if (!fileName.isEmpty())
         openEditorTab(fileName);
+}
+
+void MainWindow::openRecentProject(const QString& path)
+{
+    if (QFileInfo(path).exists())
+    {
+        /*
+                if self.project:
+                    # give user a chance to save changes if needed
+                    if not self.slot_closeProject():
+                        return
+
+                self.openProject(absolutePath)
+        */
+    }
+    else
+    {
+        QMessageBox msgBox(this);
+        msgBox.setText("Project \"" + path + "\" was not found.");
+        msgBox.setInformativeText("The project file does not exist; it may have been moved or deleted."
+                                  " Do you want to remove it from the recently used list?");
+        msgBox.addButton(QMessageBox::Cancel);
+        auto removeButton = msgBox.addButton("&Remove", QMessageBox::YesRole);
+        msgBox.setDefaultButton(removeButton);
+        msgBox.setIcon(QMessageBox::Question);
+
+        if (msgBox.exec() == QMessageBox::Yes)
+            recentlyUsedProjects->removeRecentlyUsed(path);
+    }
+}
+
+void MainWindow::openRecentFile(const QString& path)
+{
+    if (QFileInfo(path).exists())
+    {
+        openEditorTab(path);
+    }
+    else
+    {
+        QMessageBox msgBox(this);
+        msgBox.setText("File \"" + path + "\" was not found.");
+        msgBox.setInformativeText("The file does not exist; it may have been moved or deleted."
+                                  " Do you want to remove it from the recently used list?");
+        msgBox.addButton(QMessageBox::Cancel);
+        auto removeButton = msgBox.addButton("&Remove", QMessageBox::YesRole);
+        msgBox.setDefaultButton(removeButton);
+        msgBox.setIcon(QMessageBox::Question);
+
+        if (msgBox.exec() == QMessageBox::Yes)
+            recentlyUsedFiles->removeRecentlyUsed(path);
+    }
 }
