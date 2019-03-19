@@ -9,6 +9,7 @@ class MainWindow;
 
 class ProjectManager;
 class FileSystemBrowser;
+class UndoViewer;
 class SettingsDialog;
 class RecentlyUsedMenuEntry;
 typedef std::unique_ptr<class EditorBase> EditorBasePtr;
@@ -85,6 +86,7 @@ private:
     QTabWidget* tabs = nullptr;
     ProjectManager* projectManager = nullptr;
     FileSystemBrowser* fsBrowser = nullptr;
+    UndoViewer* undoViewer = nullptr;
     SettingsDialog* settingsDialog = nullptr;
     RecentlyUsedMenuEntry* recentlyUsedFiles = nullptr;
     RecentlyUsedMenuEntry* recentlyUsedProjects = nullptr;

@@ -58,7 +58,8 @@ SOURCES += \
     src/ui/widgets/PenButton.cpp \
     src/ui/dialogs/PenDialog.cpp \
     src/ui/widgets/KeySequenceButton.cpp \
-    src/ui/dialogs/KeySequenceDialog.cpp
+    src/ui/dialogs/KeySequenceDialog.cpp \
+    src/ui/UndoViewer.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -91,7 +92,8 @@ HEADERS += \
     src/ui/widgets/PenButton.h \
     src/ui/dialogs/PenDialog.h \
     src/ui/widgets/KeySequenceButton.h \
-    src/ui/dialogs/KeySequenceDialog.h
+    src/ui/dialogs/KeySequenceDialog.h \
+    src/ui/UndoViewer.h
 
 FORMS += \
     ui/MainWindow.ui \

@@ -53,5 +53,6 @@
         <file>icons/project_items/xml.png</file>
         <file>images/splashscreen.png</file>
         <file>icons/settings/reset_entry_to_default.png</file>
+        <file>icons/clean_undo_state.png</file>
     </qresource>
 </RCC>

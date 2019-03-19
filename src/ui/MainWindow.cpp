@@ -23,6 +23,7 @@
 #include "src/ui/dialogs/SettingsDialog.h"
 #include "src/ui/ProjectManager.h"
 #include "src/ui/FileSystemBrowser.h"
+#include "src/ui/UndoViewer.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -97,11 +98,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(fsBrowser, &FileSystemBrowser::fileOpenRequested, this, &MainWindow::openEditorTab);
     addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, fsBrowser);
 
-    /*
-        self.undoViewer = commands.UndoViewer()
-        self.undoViewer.setVisible(False)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.undoViewer)
-    */
+    undoViewer = new UndoViewer();
+    undoViewer->setVisible(false);
+    addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, undoViewer);
 
     //actionStatusbar->setChecked(statusBar()->isVisible());
 
@@ -430,11 +429,11 @@ void MainWindow::on_tabs_currentChanged(int index)
         self.redoAction.setEnabled(False)
         self.undoAction.setText("Undo")
         self.redoAction.setText("Redo")
-
-        # set undo stack to None as we have no idea whether the previous tab editor
-        # set it to something else
-        self.undoViewer.setUndoStack(None)
     */
+
+    // Set undo stack to None as we have no idea whether the previous tab editor
+    // set it to something else
+    undoViewer->setUndoStack(nullptr);
 
     statusBar()->clearMessage();
 
