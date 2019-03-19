@@ -767,11 +767,13 @@ EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
     // Will cleanup itself inside if something went wrong
     ret->initialize(/*this*/);
 
-    ui->tabs->addTab(ret->getWidget(), ret->getLabelText());
-
+    // Intentionally before addTab for getEditorForTab()
+    auto retPtr = ret.get();
     activeEditors.push_back(std::move(ret));
 
-    return activeEditors.back().get();
+    ui->tabs->addTab(retPtr->getWidget(), retPtr->getLabelText());
+
+    return retPtr;
 }
 
 void MainWindow::on_actionOpenFile_triggered()
@@ -839,4 +841,54 @@ void MainWindow::openRecentFile(const QString& path)
         if (msgBox.clickedButton() == removeButton)
             recentlyUsedFiles->removeRecentlyUsed(path);
     }
+}
+
+void MainWindow::on_actionZoomIn_triggered()
+{
+    if (currentEditor) currentEditor->zoomIn();
+}
+
+void MainWindow::on_actionZoomOut_triggered()
+{
+    if (currentEditor) currentEditor->zoomOut();
+}
+
+void MainWindow::on_actionZoomReset_triggered()
+{
+    if (currentEditor) currentEditor->zoomReset();
+}
+
+void MainWindow::on_actionUndo_triggered()
+{
+    if (currentEditor) currentEditor->undo();
+}
+
+void MainWindow::on_actionRedo_triggered()
+{
+    if (currentEditor) currentEditor->redo();
+}
+
+void MainWindow::on_actionRevert_triggered()
+{
+    if (currentEditor) currentEditor->revert();
+}
+
+void MainWindow::on_actionCut_triggered()
+{
+    if (currentEditor) currentEditor->cut();
+}
+
+void MainWindow::on_actionCopy_triggered()
+{
+    if (currentEditor) currentEditor->copy();
+}
+
+void MainWindow::on_actionPaste_triggered()
+{
+    if (currentEditor) currentEditor->paste();
+}
+
+void MainWindow::on_actionDelete_triggered()
+{
+    if (currentEditor) currentEditor->deleteSelected();
 }

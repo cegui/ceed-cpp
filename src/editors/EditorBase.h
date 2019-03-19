@@ -31,10 +31,10 @@ public:
     bool saveAs(const QString& targetPath, bool updateCurrentPath = true);
 
     // Application commands implementation
-    virtual bool copy() { return false; }
-    virtual bool cut() { return false; }
-    virtual bool paste() { return false; }
-    virtual bool deleteSelected() { return false; }
+    virtual void copy() {}
+    virtual void cut() {}
+    virtual void paste() {}
+    virtual void deleteSelected() {}
     virtual void undo() {}
     virtual void redo() {}
     virtual void revert();

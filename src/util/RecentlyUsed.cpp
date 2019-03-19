@@ -50,9 +50,6 @@ void RecentlyUsed::getRecentlyUsed(QStringList& outList) const
     if (!settings->contains(_sectionID)) return;
 
     outList = settings->value(_sectionID).toStringList();
-
-    //QString value = settings->value(_sectionID).toString();
-    // outList = value -> string list
 }
 
 //---------------------------------------------------------------------

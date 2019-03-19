@@ -17,13 +17,27 @@ public:
     virtual void initialize(/*mainWindow*/) override;
     virtual void finalize() override;
 
+    virtual void copy() override;
+    virtual void cut() override;
+    virtual void paste() override;
+    virtual void deleteSelected() override;
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual void zoomIn() override;
+    virtual void zoomOut() override;
+    virtual void zoomReset() override;
+    //virtual void zoomFit() {}
+
     virtual QWidget* getWidget() override { return &widget; }
     virtual bool hasChanges() const override;
 
 protected:
 
+    void updateFont();
+
     QTextEdit widget; //???if it is a pointer, should TextEditor/EditorBase be a QObject? or delete manually?
     QTextDocument* textDocument = nullptr;
+    int fontSize = 10;
 };
 
 class TextEditorFactory : public EditorFactoryBase

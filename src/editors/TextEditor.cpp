@@ -18,9 +18,7 @@ void TextEditor::initialize()
             textDocument->setPlainText(file.readAll());
     }
 
-    QFont font("Courier New", 10);
-    font.setStyleHint(QFont::Monospace);
-    textDocument->setDefaultFont(font);
+    updateFont();
 
     widget.setDocument(textDocument);
 
@@ -30,7 +28,6 @@ void TextEditor::initialize()
     /*
         self.textDocument.undoAvailable.connect(self.slot_undoAvailable)
         self.textDocument.redoAvailable.connect(self.slot_redoAvailable)
-        self.textDocument.contentsChanged.connect(self.slot_contentsChanged)
     */
 }
 
@@ -47,26 +44,81 @@ void TextEditor::finalize()
     EditorBase::finalize();
 }
 
+void TextEditor::copy()
+{
+    widget.copy();
+}
+
+void TextEditor::cut()
+{
+    widget.cut();
+}
+
+void TextEditor::paste()
+{
+    widget.paste();
+}
+
+void TextEditor::deleteSelected()
+{
+    widget.textCursor().removeSelectedText();
+}
+
+void TextEditor::undo()
+{
+    if (textDocument) textDocument->undo();
+}
+
+void TextEditor::redo()
+{
+    if (textDocument) textDocument->redo();
+}
+
+void TextEditor::zoomIn()
+{
+    if (fontSize < 80)
+    {
+        ++fontSize;
+        updateFont();
+    }
+}
+
+void TextEditor::zoomOut()
+{
+    if (fontSize > 5)
+    {
+        --fontSize;
+        updateFont();
+    }
+}
+
+void TextEditor::zoomReset()
+{
+    if (fontSize != 10)
+    {
+        fontSize = 10;
+        updateFont();
+    }
+}
+
 bool TextEditor::hasChanges() const
 {
     return textDocument && textDocument->isModified();
 }
 
+void TextEditor::updateFont()
+{
+    QFont font("Courier New", fontSize);
+    font.setStyleHint(QFont::Monospace);
+    textDocument->setDefaultFont(font);
+}
+
 /*
-def undo(self):
-    self.textDocument.undo()
-
-def redo(self):
-    self.textDocument.redo()
-
 def slot_undoAvailable(self, available):
     self.mainWindow.undoAction.setEnabled(available)
 
 def slot_redoAvailable(self, available):
     self.mainWindow.redoAction.setEnabled(available)
-
-def slot_contentsChanged(self):
-    self.markHasChanges(self.hasChanges())
 
 def saveAs(self, targetPath, updateCurrentPath = True):
     self.nativeData = self.textDocument.toPlainText()
@@ -83,7 +135,7 @@ QString TextEditorFactory::getFileTypesDescription() const
 
 QStringList TextEditorFactory::getFileExtensions() const
 {
-    return { "py", "lua", "txt", "xml", "ini", "log",
+    return { "py", "lua", "txt", "xml", "ini", "log", "hrd",
         // FIXME: these are temporary until the appropriate editor is implemented
         "scheme", "font" };
 }

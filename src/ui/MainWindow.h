@@ -72,6 +72,26 @@ private slots:
 
     void on_actionCloseTab_triggered();
 
+    void on_actionZoomIn_triggered();
+
+    void on_actionZoomOut_triggered();
+
+    void on_actionZoomReset_triggered();
+
+    void on_actionUndo_triggered();
+
+    void on_actionRedo_triggered();
+
+    void on_actionRevert_triggered();
+
+    void on_actionCut_triggered();
+
+    void on_actionCopy_triggered();
+
+    void on_actionPaste_triggered();
+
+    void on_actionDelete_triggered();
+
 private:
 
     virtual void closeEvent(QCloseEvent* event) override;
