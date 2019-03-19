@@ -60,7 +60,9 @@ SOURCES += \
     src/ui/widgets/KeySequenceButton.cpp \
     src/ui/dialogs/KeySequenceDialog.cpp \
     src/ui/UndoViewer.cpp \
-    src/util/DismissableMessage.cpp
+    src/util/DismissableMessage.cpp \
+    src/ui/widgets/BitmapEditorWidget.cpp \
+    src/editors/BitmapEditor.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -95,7 +97,9 @@ HEADERS += \
     src/ui/widgets/KeySequenceButton.h \
     src/ui/dialogs/KeySequenceDialog.h \
     src/ui/UndoViewer.h \
-    src/util/DismissableMessage.h
+    src/util/DismissableMessage.h \
+    src/ui/widgets/BitmapEditorWidget.h \
+    src/editors/BitmapEditor.h
 
 FORMS += \
     ui/MainWindow.ui \
@@ -109,7 +113,8 @@ FORMS += \
     ui/dialogs/AboutDialog.ui \
     ui/dialogs/MultiplePossibleFactoriesDialog.ui \
     ui/dialogs/PenDialog.ui \
-    ui/dialogs/KeySequenceDialog.ui
+    ui/dialogs/KeySequenceDialog.ui \
+    ui/widgets/BitmapEditorWidget.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

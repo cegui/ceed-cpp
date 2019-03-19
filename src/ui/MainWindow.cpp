@@ -6,6 +6,7 @@
 #include "qmessagebox.h"
 #include "qdesktopservices.h"
 #include "qtabbar.h"
+#include "qsettings.h"
 //#include "qopenglframebufferobject.h"
 #include "src/Application.h"
 #include "src/util/Settings.h"
@@ -16,6 +17,7 @@
 #include "src/proj/CEGUIProject.h"
 #include "src/editors/NoEditor.h"
 #include "src/editors/TextEditor.h"
+#include "src/editors/BitmapEditor.h"
 #include "src/ui/dialogs/AboutDialog.h"
 #include "src/ui/dialogs/LicenseDialog.h"
 #include "src/ui/dialogs//NewProjectDialog.h"
@@ -31,6 +33,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     // We have to construct ActionManager before settings interface (as it alters the settings declaration)!
+    //???is true for C++ version?
     /*
         self.actionManager = action.ActionManager(self, self.app.settings)
     */
@@ -40,7 +43,7 @@ MainWindow::MainWindow(QWidget *parent) :
     recentlyUsedProjects = new RecentlyUsedMenuEntry("Projects", this);
     recentlyUsedFiles = new RecentlyUsedMenuEntry("Files", this);
 
-    // TODO: makethe check work! Now crashes inside. Must setup OpenGL first?
+    // TODO: make the check work! Now crashes inside. Must setup OpenGL first?
     //if (!QOpenGLFramebufferObject::hasOpenGLFramebufferObjects())
     if (!ui) // to avoid 'code will never be executed' warning for now
     {
@@ -52,7 +55,9 @@ MainWindow::MainWindow(QWidget *parent) :
             "no_fbo_support");
     }
 
+    // Register factories
     editorFactories.push_back(std::make_unique<TextEditorFactory>());
+    editorFactories.push_back(std::make_unique<BitmapEditorFactory>());
     /*
         animation_list_editor.AnimationListTabbedEditorFactory(),           // Animation files
         bitmap_editor.BitmapTabbedEditorFactory(),                          // Bitmap files
@@ -85,36 +90,39 @@ MainWindow::MainWindow(QWidget *parent) :
         self.ceguiContainerWidget = cegui_container.ContainerWidget(self.ceguiInstance, self)
     */
 
-    tabs = centralWidget()->findChild<QTabWidget*>("tabs");
-    tabs->tabBar()->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(tabs->tabBar(), SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(slot_tabBarCustomContextMenuRequested(QPoint)));
+    ui->tabs->tabBar()->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->tabs->tabBar(), SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(slot_tabBarCustomContextMenuRequested(QPoint)));
 
-    projectManager = new ProjectManager();
+    projectManager = new ProjectManager(this);
     //projectManager->setVisible(false);
     connect(projectManager, &ProjectManager::itemOpenRequested, this, &MainWindow::openEditorTab);
     addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, projectManager);
 
-    fsBrowser = new FileSystemBrowser();
+    fsBrowser = new FileSystemBrowser(this);
     //fsBrowser->setVisible(false);
     connect(fsBrowser, &FileSystemBrowser::fileOpenRequested, this, &MainWindow::openEditorTab);
     addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, fsBrowser);
 
-    undoViewer = new UndoViewer();
+    undoViewer = new UndoViewer(this);
     undoViewer->setVisible(false);
     addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, undoViewer);
 
-    //actionStatusbar->setChecked(statusBar()->isVisible());
+    ui->actionStatusbar->setChecked(statusBar()->isVisible());
 
     //setupActions()
     //setupMenus()
     setupToolbars();
 
-    //restoreSettings()
+    // Restore geometry and state of this window from QSettings
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
+    if (settings->contains("window-geometry"))
+        restoreGeometry(settings->value("window-geometry").toByteArray());
+    if (settings->contains("window-state"))
+        restoreState(settings->value("window-state").toByteArray());
 }
 
 MainWindow::~MainWindow()
 {
-    delete projectManager;
     delete ui;
 }
 
@@ -127,7 +135,7 @@ void MainWindow::setupToolbars()
     newMenuBtn->setToolTip("New file");
     newMenuBtn->setIcon(QIcon(":/icons/actions/new_file.png"));
     newMenuBtn->setPopupMode(QToolButton::InstantPopup);
-    newMenuBtn->setMenu(menuBar()->findChild<QMenu*>("menu_New"));
+    newMenuBtn->setMenu(ui->menu_New);
     toolbar->addWidget(newMenuBtn);
 }
 
@@ -176,29 +184,20 @@ void MainWindow::updateUIOnProjectChanged()
         fsBrowser->setDirectory(QDir::homePath());
     }
 
-    //!!! true -> isProjectLoaded!
-    /*
-        # and enable respective actions
-        self.saveProjectAction.setEnabled(True)
-        self.closeProjectAction.setEnabled(True)
-        self.projectSettingsAction.setEnabled(True)
-        self.projectReloadResourcesAction.setEnabled(True)
-    */
+    ui->actionSaveProject->setEnabled(isProjectLoaded);
+    ui->actionCloseProject->setEnabled(isProjectLoaded);
+    ui->actionProjectSettings->setEnabled(isProjectLoaded);
+    ui->actionReloadResources->setEnabled(isProjectLoaded);
 }
 
 // Safely quits the editor, prompting user to save changes to files and the project.
 void MainWindow::on_actionQuit_triggered()
 {
-    /*
-        self.saveSettings()
-
-    */
-
     // We remember last tab we closed to check whether user pressed Cancel in any of the dialogs
     QWidget* lastTab = nullptr;
     while (!activeEditors.empty())
     {
-        QWidget* currTab = tabs->widget(0);
+        QWidget* currTab = ui->tabs->widget(0);
         if (currTab == lastTab)
         {
             // User pressed cancel on one of the tab editor 'save without changes' dialog,
@@ -211,14 +210,19 @@ void MainWindow::on_actionQuit_triggered()
         on_tabs_tabCloseRequested(0);
     }
 
+    // Save geometry and state of this window to QSettings
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
+    settings->setValue("window-geometry", saveGeometry());
+    settings->setValue("window-state", saveState());
+
     // Close project after all tabs have been closed, there may be tabs requiring a project opened!
     if (CEGUIProjectManager::Instance().isProjectLoaded())
     {
         // If the slot returned False, user pressed Cancel
         /*
-                if not self.slot_closeProject():
-                    # in case user pressed cancel the entire quitting processed has to be terminated
-                    return False
+            if not self.slot_closeProject():
+                # in case user pressed cancel the entire quitting processed has to be terminated
+                return False
         */
     }
 
@@ -389,18 +393,14 @@ void MainWindow::on_actionPreferences_triggered()
 
 void MainWindow::slot_tabBarCustomContextMenuRequested(const QPoint& pos)
 {
-    auto tabIdx = tabs->tabBar()->tabAt(pos);
-    tabs->setCurrentIndex(tabIdx);
+    auto tabIdx = ui->tabs->tabBar()->tabAt(pos);
+    ui->tabs->setCurrentIndex(tabIdx);
 
     QMenu* menu = new QMenu(this);
-    /*
-        menu.addAction(self.closeTabAction)
-    */
+    menu->addAction(ui->actionCloseTab);
     menu->addSeparator();
-    /*
-        menu.addAction(self.closeOtherTabsAction)
-        menu.addAction(self.closeAllTabsAction)
-    */
+    menu->addAction(ui->actionCloseOtherTabs);
+    menu->addAction(ui->actionCloseAllTabs);
 
     if (tabIdx >= 0)
     {
@@ -411,26 +411,24 @@ void MainWindow::slot_tabBarCustomContextMenuRequested(const QPoint& pos)
         menu->addAction(dataTypeAction);
     }
 
-    menu->exec(tabs->tabBar()->mapToGlobal(pos));
+    menu->exec(ui->tabs->tabBar()->mapToGlobal(pos));
 }
 
 void MainWindow::on_tabs_currentChanged(int index)
 {
     // To fight flicker
-    tabs->setUpdatesEnabled(false);
+    ui->tabs->setUpdatesEnabled(false);
 
-    auto widget = tabs->widget(index);
+    auto widget = ui->tabs->widget(index);
     if (currentEditor)
         currentEditor->deactivate();
 
     // It's the tabbed editor's responsibility to handle these, we disable them by default,
     // also reset their texts in case the tabbed editor messed with them
-    /*
-        self.undoAction.setEnabled(False)
-        self.redoAction.setEnabled(False)
-        self.undoAction.setText("Undo")
-        self.redoAction.setText("Redo")
-    */
+    ui->actionUndo->setEnabled(false);
+    ui->actionRedo->setEnabled(false);
+    ui->actionUndo->setText("Undo");
+    ui->actionRedo->setText("Redo");
 
     // Set undo stack to None as we have no idea whether the previous tab editor
     // set it to something else
@@ -438,35 +436,26 @@ void MainWindow::on_tabs_currentChanged(int index)
 
     statusBar()->clearMessage();
 
-    if (widget)
+    currentEditor = getEditorForTab(widget);
+
+    const bool hasEditor = (currentEditor != nullptr);
+    fsBrowser->activeFileDirectoryButton()->setEnabled(hasEditor);
+    ui->actionRevert->setEnabled(hasEditor);
+    ui->actionSave->setEnabled(hasEditor);
+    ui->actionSaveAs->setEnabled(hasEditor);
+    ui->actionCloseTab->setEnabled(hasEditor);
+    ui->actionCloseOtherTabs->setEnabled(hasEditor);
+
+    if (currentEditor)
     {
         /*
-        self.revertAction.setEnabled(True)
-
-        self.saveAction.setEnabled(True)
-        self.saveAsAction.setEnabled(True)
-
-        self.closeTabAction.setEnabled(True)
-        self.closeOtherTabsAction.setEnabled(True)
-
         wdt.tabbedEditor.activate()
-        */
-    }
-    else
-    {
-        // None is selected right now, lets disable appropriate actions
-        /*
-            self.revertAction.setEnabled(False)
 
-            self.saveAction.setEnabled(False)
-            self.saveAsAction.setEnabled(False)
-
-            self.closeTabAction.setEnabled(False)
-            self.closeOtherTabsAction.setEnabled(False)
+        undoViewer.setUndoStack(self.getUndoStack())
         */
     }
 
-    tabs->setUpdatesEnabled(true);
+    ui->tabs->setUpdatesEnabled(true);
 }
 
 bool MainWindow::on_tabs_tabCloseRequested(int index)
@@ -517,7 +506,7 @@ bool MainWindow::on_tabs_tabCloseRequested(int index)
 
 void MainWindow::on_actionCloseTab_triggered()
 {
-    on_tabs_tabCloseRequested(tabs->currentIndex());
+    on_tabs_tabCloseRequested(ui->tabs->currentIndex());
 }
 
 // Opens editor tab. Creates new editor if such file wasn't opened yet and if it was opened,
@@ -529,7 +518,7 @@ void MainWindow::openEditorTab(const QString& absolutePath)
     EditorBase* editor = createEditorForFile(absolutePath);
     if (!editor) return;
 
-    tabs->setCurrentWidget(editor->getWidget());
+    ui->tabs->setCurrentWidget(editor->getWidget());
 }
 
 // Closes given editor tab.
@@ -553,7 +542,7 @@ void MainWindow::closeEditorTab(EditorBase* editor)
 bool MainWindow::closeAllTabsRequiringProject()
 {
     int i = 0;
-    while (i < tabs->count())
+    while (i < ui->tabs->count())
     {
         auto editor = getEditorForTab(i);
         if (editor->requiresProject())
@@ -573,7 +562,7 @@ bool MainWindow::closeAllTabsRequiringProject()
 
 EditorBase* MainWindow::getEditorForTab(int index) const
 {
-    return getEditorForTab(tabs->widget(index));
+    return getEditorForTab(ui->tabs->widget(index));
 }
 
 EditorBase* MainWindow::getEditorForTab(QWidget* tabWidget) const
@@ -595,7 +584,7 @@ bool MainWindow::activateEditorTabByFilePath(const QString& absolutePath)
     {
         if (editor->getFilePath() == absolutePath)
         {
-            tabs->setCurrentWidget(editor->getWidget());
+            ui->tabs->setCurrentWidget(editor->getWidget());
             return true;
         }
     }
@@ -695,7 +684,7 @@ EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
     // Will cleanup itself inside if something went wrong
     ret->initialize(/*this*/);
 
-    tabs->addTab(ret->getWidget(), ret->getLabelText());
+    ui->tabs->addTab(ret->getWidget(), ret->getLabelText());
 
     activeEditors.push_back(std::move(ret));
 

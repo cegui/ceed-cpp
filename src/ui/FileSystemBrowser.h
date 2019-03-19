@@ -12,6 +12,8 @@ namespace Ui {
 class FileSystemBrowser;
 }
 
+class QToolButton;
+
 class FileSystemBrowser : public QDockWidget
 {
     Q_OBJECT
@@ -22,6 +24,8 @@ public:
     ~FileSystemBrowser();
 
     void setDirectory(const QString& dir);
+
+    QToolButton* activeFileDirectoryButton() const;
 
 signals:
 

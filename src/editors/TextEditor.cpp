@@ -1,6 +1,5 @@
 #include "src/editors/TextEditor.h"
 #include "qfile.h"
-#include "qfileinfo.h"
 
 TextEditor::TextEditor(const QString& filePath)
     : EditorBase(/*nullptr,*/ filePath)
@@ -87,11 +86,6 @@ QStringList TextEditorFactory::getFileExtensions() const
     return { "py", "lua", "txt", "xml", "ini", "log",
         // FIXME: these are temporary until the appropriate editor is implemented
         "scheme", "font" };
-}
-
-bool TextEditorFactory::canEditFile(const QString& filePath) const
-{
-    return getFileExtensions().contains(QFileInfo(filePath).completeSuffix());
 }
 
 EditorBasePtr TextEditorFactory::create(const QString& filePath) const

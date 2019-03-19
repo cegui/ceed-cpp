@@ -67,7 +67,7 @@ public:
 
     virtual QString getFileTypesDescription() const = 0;
     virtual QStringList getFileExtensions() const = 0;
-    virtual bool canEditFile(const QString& filePath) const = 0;
+    virtual bool canEditFile(const QString& filePath) const;
     virtual EditorBasePtr create(const QString& filePath) const = 0;
 };
 

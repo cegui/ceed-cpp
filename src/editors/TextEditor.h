@@ -32,7 +32,6 @@ public:
 
     virtual QString getFileTypesDescription() const override;
     virtual QStringList getFileExtensions() const override;
-    virtual bool canEditFile(const QString& filePath) const override;
     virtual EditorBasePtr create(const QString& filePath) const override;
 };
 

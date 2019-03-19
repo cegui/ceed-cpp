@@ -63,6 +63,11 @@ void FileSystemBrowser::setDirectory(const QString& dir)
     pathBox->blockSignals(false);
 }
 
+QToolButton* FileSystemBrowser::activeFileDirectoryButton() const
+{
+    return ui->activeFileDirectoryButton;
+}
+
 // Slot that gets triggered whenever user double clicks anything in the filesystem view
 void FileSystemBrowser::on_view_doubleClicked(const QModelIndex& index)
 {

@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 
+// The central window of the application
+
 namespace Ui {
 class MainWindow;
 }
@@ -83,7 +85,6 @@ private:
     EditorBase* getEditorForTab(QWidget* tabWidget) const;
 
     Ui::MainWindow* ui;
-    QTabWidget* tabs = nullptr;
     ProjectManager* projectManager = nullptr;
     FileSystemBrowser* fsBrowser = nullptr;
     UndoViewer* undoViewer = nullptr;

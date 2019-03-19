@@ -264,3 +264,10 @@ void EditorBase::revert()
     // The default but kind of wasteful implementation
     reloadData();
 }
+
+//---------------------------------------------------------------------
+
+bool EditorFactoryBase::canEditFile(const QString &filePath) const
+{
+    return getFileExtensions().contains(QFileInfo(filePath).completeSuffix());
+}
