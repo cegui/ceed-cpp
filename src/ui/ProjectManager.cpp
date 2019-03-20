@@ -156,165 +156,187 @@ void ProjectManager::on_actionExistingFiles_triggered()
 {
     // TODO: name clashes, duplicates
 
-/*
-        files, _ = QtGui.QFileDialog.getOpenFileNames(self,
-                                                           "Select one or more files to add to the project",
-                                                           self.project.getAbsolutePathOf(""))
-        selectedIndices = self.view.selectedIndexes()
+    auto files = QFileDialog::getOpenFileNames(this, "Select one or more files to add to the project",
+                                               _project->getAbsolutePathOf(""));
 
-        # lets see if file user wants added isn't already there
-        previousResponse = None
-        for file_ in files:
-            if self.view.model().referencesFilePath(file_):
-                # file is already in the project
-                response = None
+    auto parentIndex = ui->view->selectionModel()->currentIndex();
+    CEGUIProjectItem* parentItem = nullptr;
+    if ((parentIndex.isValid() && CEGUIProjectItem::isFolder(parentIndex)))
+    {
+        parentItem = static_cast<CEGUIProjectItem*>(_project->itemFromIndex(parentIndex));
+        assert(parentItem);
+    }
 
-                if previousResponse == QtGui.QMessageBox.YesToAll:
-                    response = QtGui.QMessageBox.YesToAll
-                elif previousResponse == QtGui.QMessageBox.NoToAll:
-                    response = QtGui.QMessageBox.NoToAll
-                else:
-                    response = QtGui.QMessageBox.question(self, "File is already in the project!",
-                            "File '%s' that you are trying to add is already referenced in the "
-                            "project.\n\n"
-                            "Do you want to add it as a duplicate?" % (file_),
-                            QtGui.QMessageBox.Yes | QtGui.QMessageBox.No |
-                            QtGui.QMessageBox.YesToAll | QtGui.QMessageBox.NoToAll,
-                            QtGui.QMessageBox.Yes)
+    // Lets see if file user wants added isn't already there
+    QMessageBox::StandardButton previousResponse = QMessageBox::StandardButton::Default;
+    for (const auto& file : files)
+    {
+        if (_project->referencesFilePath(file))
+        {
+            // File is already in the project
 
-                    previousResponse = response
+            QMessageBox::StandardButton response;
+            if (previousResponse == QMessageBox::YesToAll)
+                response = QMessageBox::YesToAll;
+            else if (previousResponse == QMessageBox::NoToAll)
+                continue;
+            else
+            {
+                response = QMessageBox::question(this, "File is already in the project!",
+                        QString("File '%1' that you are trying to add is already referenced in the "
+                        "project.\n\nDo you want to add it as a duplicate?").arg(file),
+                        QMessageBox::Yes | QMessageBox::No | QMessageBox::YesToAll | QMessageBox::NoToAll,
+                        QMessageBox::Yes);
 
-                if response in [QtGui.QMessageBox.No, QtGui.QMessageBox.NoToAll]:
-                    continue
+                previousResponse = response;
+            }
 
-            item = Item(self.project)
-            item.itemType = Item.File
-            item.path = self.project.getRelativePathOf(file_)
+            if (response == QMessageBox::No || response == QMessageBox::NoToAll)
+                continue;
+        }
 
-            if len(selectedIndices) == 0:
-                self.project.appendRow(item)
+        auto item = new CEGUIProjectItem(_project);
+        item->setType(CEGUIProjectItem::Type::File);
+        item->setPath(_project->getRelativePathOf(file));
 
-            else:
-                assert(len(selectedIndices) == 1)
-
-                parent = self.getItemFromModelIndex(selectedIndices[0])
-                assert(parent.itemType == Item.Folder)
-
-                parent.appendRow(item)
-*/
+        if (parentItem)
+            parentItem->appendRow(item);
+        else
+            _project->appendRow(item);
+    }
 }
 
 void ProjectManager::on_actionRename_triggered()
 {
+    // TODO: Name clashes!
 
+    auto index = ui->view->selectionModel()->currentIndex();
+    if (!index.isValid()) return;
+
+    CEGUIProjectItem* item = static_cast<CEGUIProjectItem*>(_project->itemFromIndex(index));
+    assert(item);
+    switch (item->getType())
+    {
+        case CEGUIProjectItem::Type::File:
+        {
+            QString filePath = item->getPath();
+            QFileInfo fileInfo(filePath);
+            const QString baseName = fileInfo.baseName();
+            bool ok = false;
+            auto text = QInputDialog::getText(this,
+                                              "Rename file (renames the file on the disk!)",
+                                              "New name",
+                                              QLineEdit::Normal,
+                                              baseName,
+                                              &ok);
+
+            if (!ok || text == baseName) return;
+
+            // Legit change
+            const QString newPath = fileInfo.dir().filePath(text);
+            if (!QFile::rename(_project->getAbsolutePathOf(filePath), _project->getAbsolutePathOf(newPath)))
+            {
+                QMessageBox::question(this, "Can't rename!",
+                                      tr("Renaming file '%1' to '%2' failed").arg(filePath, newPath),
+                                      QMessageBox::Ok);
+                return;
+            }
+
+            item->setPath(newPath);
+
+            break;
+        }
+        case CEGUIProjectItem::Type::Folder:
+        {
+            QString name = item->getPath();
+            bool ok = false;
+            auto text = QInputDialog::getText(this,
+                                              "Rename folder (only affects the project file)",
+                                              "New name",
+                                              QLineEdit::Normal,
+                                              name,
+                                              &ok);
+
+            if (!ok || text == name) return;
+
+            item->setPath(text);
+
+            break;
+        }
+    }
 }
 
 void ProjectManager::on_actionRemove_triggered()
 {
+    if (!isEnabled()) return;
 
+    auto selectedIndices = ui->view->selectionModel()->selectedIndexes();
+    if (selectedIndices.empty()) return;
+
+    QString removeSpec;
+    if (selectedIndices.size() == 1)
+    {
+        CEGUIProjectItem* item = static_cast<CEGUIProjectItem*>(_project->itemFromIndex(selectedIndices[0]));
+        removeSpec = "'" + item->text() + "'";
+    }
+    else
+    {
+        removeSpec = QString("%1 project items").arg(selectedIndices.size());
+    }
+
+    auto result = QMessageBox::question(this,
+                                        "Remove items?",
+                                        tr("Are you sure you want to remove %1 from the project? "
+                                        "This action can't be undone! "
+                                        "(Pressing Cancel will cancel the operation!)").arg(removeSpec),
+                                        QMessageBox::Yes | QMessageBox::Cancel,
+                                        QMessageBox::Cancel);
+
+    if (result != QMessageBox::Yes) return;
+
+    ui->view->setUpdatesEnabled(false);
+
+    // Sort by row descending
+    qSort(selectedIndices.begin(), selectedIndices.end(), [](const QModelIndex& a, const QModelIndex& b)
+    {
+        return a.row() > b.row();
+    });
+
+    int removeCount = 0;
+
+    // We have to remove files first because multi-selection could screw us otherwise
+    // (Parent also removes it's children)
+
+    // First remove files
+    for (auto& index : selectedIndices)
+    {
+        CEGUIProjectItem* item = static_cast<CEGUIProjectItem*>(_project->itemFromIndex(index));
+        if (item && item->getType() == CEGUIProjectItem::Type::File)
+        {
+            _project->removeRow(index.row(), index.parent());
+            ++removeCount;
+        }
+    }
+
+    // Then remove folders
+    for (auto& index : selectedIndices)
+    {
+        CEGUIProjectItem* item = static_cast<CEGUIProjectItem*>(_project->itemFromIndex(index));
+        if (item && item->getType() == CEGUIProjectItem::Type::Folder)
+        {
+            _project->removeRow(index.row(), index.parent());
+            ++removeCount;
+        }
+    }
+
+    if (selectedIndices.size() > removeCount)
+    {
+        /*
+        logging.error("%i selected project items are unknown and can't be deleted", len(selectedIndices))
+        */
+    }
+
+    if (removeCount) _project->setModified();
+
+    ui->view->setUpdatesEnabled(true);
 }
-
-/*
-    def slot_renameAction(self):
-        # TODO: Name clashes!
-
-        selectedIndices = self.view.selectedIndexes()
-        assert(len(selectedIndices) == 1)
-
-        item = self.getItemFromModelIndex(selectedIndices[0])
-        if item.itemType == Item.File:
-            text, ok = QtGui.QInputDialog.getText(self,
-                                                  "Rename file (renames the file on the disk!)",
-                                                  "New name",
-                                                  QtGui.QLineEdit.Normal,
-                                                  os.path.basename(item.path))
-
-            if ok and text != os.path.basename(item.path):
-                # legit change
-                newPath = os.path.join(os.path.dirname(item.path), text)
-
-                try:
-                    os.rename(self.project.getAbsolutePathOf(item.path), self.project.getAbsolutePathOf(newPath))
-                    item.path = newPath
-                    self.project.changed = True
-
-                except OSError:
-                    QtGui.QMessageBox.question(self,
-                                               "Can't rename!",
-                                               "Renaming file '%s' to '%s' failed. Exception details follow:\n%s" % (item.path, newPath, sys.exc_info()[1]),
-                                               QtGui.QMessageBox.Ok)
-
-        elif item.itemType == Item.Folder:
-            text, ok = QtGui.QInputDialog.getText(self,
-                                                  "Rename folder (only affects the project file)",
-                                                  "New name",
-                                                  QtGui.QLineEdit.Normal,
-                                                  item.name)
-
-            if ok and text != item.name:
-                item.name = text
-                self.project.changed = True
-
-    def slot_removeAction(self):
-        if not self.isEnabled():
-            return
-
-        selectedIndices = self.view.selectedIndexes()
-        # when this is called the selection must not be empty
-        assert(len(selectedIndices) > 0)
-
-        removeSpec = ""
-        if len(selectedIndices) == 1:
-            item = self.getItemFromModelIndex(selectedIndices[0])
-            removeSpec = "'%s'" % (item.label)
-        else:
-            removeSpec = "%i project items" % (len(selectedIndices))
-
-        # we have changes, lets ask the user whether we should dump them or save them
-        result = QtGui.QMessageBox.question(self,
-                                            "Remove items?",
-                                            "Are you sure you want to remove %s from the project? "
-                                            "This action can't be undone! "
-                                            "(Pressing Cancel will cancel the operation!)" % (removeSpec),
-                                            QtGui.QMessageBox.Yes | QtGui.QMessageBox.Cancel,
-                                            QtGui.QMessageBox.Cancel)
-
-        if result == QtGui.QMessageBox.Cancel:
-            # user chickened out ;-)
-            return
-
-        elif result == QtGui.QMessageBox.Yes:
-            selectedIndices = sorted(selectedIndices, key = lambda index: index.row(), reverse = True)
-            removeCount = 0
-
-            # we have to remove files first because multi-selection could screw us otherwise
-            # (Parent also removes it's children)
-
-            # first remove files
-            for index in selectedIndices:
-                item = self.getItemFromModelIndex(index)
-
-                if not item:
-                    continue
-
-                if (item.itemType == Item.File):
-                    index.model().removeRow(index.row(), index.parent())
-                    removeCount += 1
-
-            # then remove folders
-            for index in selectedIndices:
-                item = self.getItemFromModelIndex(index)
-
-                if not item:
-                    continue
-
-                if (item.itemType == Item.Folder):
-                    index.model().removeRow(index.row(), index.parent())
-                    removeCount += 1
-
-            if len(selectedIndices) - removeCount > 0:
-                logging.error("%i selected project items are unknown and can't be deleted", len(selectedIndices))
-
-            if removeCount > 0:
-                self.project.changed = True
-*/
