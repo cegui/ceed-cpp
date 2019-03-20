@@ -280,7 +280,7 @@ void MainWindow::updateProjectDependentUI(CEGUIProject* newProject)
     projectManager->setProject(newProject);
 
     if (isProjectLoaded)
-    {        
+    {
         recentlyUsedProjects->addRecentlyUsed(newProject->filePath);
 
         // TODO: Maybe this could be configurable?
@@ -962,7 +962,8 @@ void MainWindow::on_actionSaveAs_triggered()
 // Saves all opened tabbed editors and opened project (if any)
 void MainWindow::on_actionSaveAll_triggered()
 {
-    CEGUIProjectManager::Instance().saveProject();
+    auto project =  CEGUIProjectManager::Instance().getCurrentProject();
+    if (project) project->save();
 
     for (auto&& editor : activeEditors)
         editor->save();
@@ -970,7 +971,8 @@ void MainWindow::on_actionSaveAll_triggered()
 
 void MainWindow::on_actionSaveProject_triggered()
 {
-    CEGUIProjectManager::Instance().saveProject();
+    auto project =  CEGUIProjectManager::Instance().getCurrentProject();
+    if (project) project->save();
 }
 
 bool MainWindow::on_actionCloseProject_triggered()

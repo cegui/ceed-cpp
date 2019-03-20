@@ -6,7 +6,7 @@
 #include "qtextstream.h"
 
 const QString CEGUIProject::EditorEmbeddedCEGUIVersion("1.0");
-const QStringList CEGUIProject::CEGUIVersions = { "0.6", "0.7", "0.8" };
+const QStringList CEGUIProject::CEGUIVersions = { "0.6", "0.7", "0.8", "1.0" };
 
 CEGUIProject::CEGUIProject()
     : defaultResolution("1280x720") // 720p seems like a decent default nowadays, 16:9
@@ -86,16 +86,19 @@ bool CEGUIProject::loadFromFile(const QString& fileName)
 }
 
 // Saves in "CEED Project 1" format by default
-bool CEGUIProject::save(const QString& fileName)
+bool CEGUIProject::save(const QString& newFilePath)
 {
-    QString path;
-    if (fileName.isEmpty())
+    if (newFilePath.isEmpty())
     {
         // "save" vs "save as"
-        path = filePath;
         changed = false;
     }
-    else path = fileName;
+    else
+    {
+        // Set the project's file path to newPath so that if you press save next time it will save to the new path
+        // (This is what is expected from applications in general I think)
+        filePath = newFilePath;
+    }
 
     QDomDocument doc;
 
@@ -131,10 +134,10 @@ bool CEGUIProject::save(const QString& fileName)
 
     // Save to file
 
-    QFile file(path);
+    QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
     {
-        qDebug("CEGUIProject::save() > can't open the file for writing: "); // + path);
+        qDebug(QString("CEGUIProject::save() > can't open the file for writing: %1").arg(filePath).toLocal8Bit().data());
         return false;
     }
 

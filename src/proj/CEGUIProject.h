@@ -20,7 +20,7 @@ public:
     virtual Qt::DropActions supportedDragActions() const override;
 
     bool loadFromFile(const QString& fileName);
-    bool save(const QString& fileName = QString());
+    bool save(const QString& newFilePath = QString());
     void unload();
 
     bool checkAllDirectories() const;

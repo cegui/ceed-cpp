@@ -297,7 +297,7 @@ void ProjectManager::on_actionRemove_triggered()
     ui->view->setUpdatesEnabled(false);
 
     // Sort by row descending
-    qSort(selectedIndices.begin(), selectedIndices.end(), [](const QModelIndex& a, const QModelIndex& b)
+    std::sort(selectedIndices.begin(), selectedIndices.end(), [](const QModelIndex& a, const QModelIndex& b)
     {
         return a.row() > b.row();
     });
