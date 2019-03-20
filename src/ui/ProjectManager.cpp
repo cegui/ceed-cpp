@@ -1,4 +1,5 @@
 #include "src/ui/ProjectManager.h"
+#include "src/proj/CEGUIProject.h"
 #include "ui_ProjectManager.h"
 
 ProjectManager::ProjectManager(QWidget *parent) :
@@ -7,10 +8,9 @@ ProjectManager::ProjectManager(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    auto view = findChild<QTreeView*>("view");
-    if (view)
+    if (ui->view)
     {
-        view->sortByColumn(0, Qt::AscendingOrder);
+        ui->view->sortByColumn(0, Qt::AscendingOrder);
         //self.view.doubleClicked.connect(self.slot_itemDoubleClicked)
     }
 
@@ -24,6 +24,12 @@ ProjectManager::ProjectManager(QWidget *parent) :
 ProjectManager::~ProjectManager()
 {
     delete ui;
+}
+
+void ProjectManager::setProject(CEGUIProject* project)
+{
+    setEnabled(!!project);
+    ui->view->setModel(project);
 }
 
 /*
@@ -57,11 +63,6 @@ ProjectManager::~ProjectManager()
         self.removeAction.triggered.connect(self.slot_removeAction)
 
         self.view.customContextMenuRequested.connect(self.slot_customContextMenu)
-
-    def setProject(self, project):
-        self.setEnabled(project is not None)
-
-        self.view.setModel(project)
 
     @staticmethod
     def getItemFromModelIndex(modelIndex):

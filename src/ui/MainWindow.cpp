@@ -87,6 +87,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
+    //???CEGUI instance to CEGUIProjectManager?
     /*
         # we start CEGUI early and we always start it
         self.ceguiInstance = cegui.Instance()
@@ -269,12 +270,9 @@ bool MainWindow::on_actionQuit_triggered()
     // Close project after all tabs have been closed, there may be tabs requiring a project opened!
     if (CEGUIProjectManager::Instance().isProjectLoaded())
     {
-        // If the slot returned False, user pressed Cancel
-        /*
-            if not self.slot_closeProject():
-                # in case user pressed cancel the entire quitting processed has to be terminated
-                return False
-        */
+        // In case user pressed cancel the entire quitting processed has to be terminated
+        if (!on_actionCloseProject_triggered())
+            return false;
     }
 
     QApplication::quit();
@@ -285,15 +283,12 @@ bool MainWindow::on_actionQuit_triggered()
 void MainWindow::updateUIOnProjectChanged()
 {
     const bool isProjectLoaded = CEGUIProjectManager::Instance().isProjectLoaded();
+    auto project = CEGUIProjectManager::Instance().getCurrentProject();
 
-    /*
-        # view the newly opened project in the project manager
-        self.projectManager.setProject(self.project)
-    */
+    projectManager->setProject(project);
 
     if (isProjectLoaded)
-    {
-        auto project = CEGUIProjectManager::Instance().getCurrentProject();
+    {        
         recentlyUsedProjects->addRecentlyUsed(project->filePath);
 
         // TODO: Maybe this could be configurable?
@@ -338,18 +333,21 @@ void MainWindow::on_actionNewProject_triggered()
     // The dialog was accepted, close any open project
     CEGUIProjectManager::Instance().unloadProject();
 
+    /* Need creation params from dialog, WAS:
+        auto newProject = newProjectDialog.createProject()
+    */
     auto newProject = CEGUIProjectManager::Instance().createProject();
-/*
-        //!!!get settings from newProjectDialog!        
-        newProject.save()
 
+    //???save & load inside a createProject()?
+    newProject->save();
+/*
         # open the settings window after creation so that user can further customise their
         # new project file
         self.openProject(path = newProject.projectFilePath, openSettings = True)
 */
 
     // Save the project with the settings that were potentially set in the project settings dialog
-    CEGUIProjectManager::Instance().saveProject();
+    newProject->save();
 }
 
 void MainWindow::on_actionOpenProject_triggered()
@@ -402,7 +400,6 @@ void MainWindow::on_actionProjectSettings_triggered()
     {
         dialog.apply(*CEGUIProjectManager::Instance().getCurrentProject());
         /*
-            self.performProjectDirectoriesSanityCheck()
             self.syncProjectToCEGUIInstance()
         */
     }
@@ -456,7 +453,9 @@ void MainWindow::on_actionReportBug_triggered()
 
 void MainWindow::on_actionCEGUIDebugInfo_triggered()
 {
-    //self.ceguiContainerWidget.debugInfo.show()
+    /*
+        self.ceguiContainerWidget.debugInfo.show()
+    */
 }
 
 void MainWindow::on_actionAbout_triggered()
@@ -494,7 +493,9 @@ void MainWindow::slot_tabBarCustomContextMenuRequested(const QPoint& pos)
 
     if (tabIdx >= 0)
     {
-        //auto tabWidget = tabs->widget(tabIdx);
+        /*
+            auto tabWidget = tabs->widget(tabIdx);
+        */
         menu->addSeparator();
         QAction* dataTypeAction = new QAction("Data type: " /*+ (tabWidget.getDesiredSavingDataType())*/, this);
         dataTypeAction->setToolTip("Displays which data type this file will be saved to (the desired saving data type).");
@@ -538,10 +539,9 @@ void MainWindow::on_tabs_currentChanged(int index)
 
     if (currentEditor)
     {
+        currentEditor->activate();
         /*
-        wdt.tabbedEditor.activate()
-
-        undoViewer.setUndoStack(self.getUndoStack())
+            undoViewer.setUndoStack(self.getUndoStack())
         */
     }
 
@@ -845,14 +845,15 @@ void MainWindow::openRecentProject(const QString& path)
 {
     if (QFileInfo(path).exists())
     {
-        /*
-                if self.project:
-                    # give user a chance to save changes if needed
-                    if not self.slot_closeProject():
-                        return
+        auto project = CEGUIProjectManager::Instance().getCurrentProject();
+        if (project)
+        {
+            // Give user a chance to save changes if needed
+            if (!on_actionCloseProject_triggered())
+                return;
+        }
 
-                self.openProject(absolutePath)
-        */
+        CEGUIProjectManager::Instance().loadProject(path);
     }
     else
     {
@@ -981,71 +982,73 @@ void MainWindow::on_actionSaveProject_triggered()
     CEGUIProjectManager::Instance().saveProject();
 }
 
-void MainWindow::on_actionCloseProject_triggered()
+bool MainWindow::on_actionCloseProject_triggered()
 {
-/*
-        assert(self.project)
+    auto project = CEGUIProjectManager::Instance().getCurrentProject();
+    if (!project) return true;
 
-        if self.project.hasChanges():
-            result = QtGui.QMessageBox.question(self,
-                                                "Project file has changes!",
-                                                "There are unsaved changes in the project file "
-                                                "Do you want to save them? "
-                                                "(Pressing Discard will discard the changes!)",
-                                                QtGui.QMessageBox.Save | QtGui.QMessageBox.Discard | QtGui.QMessageBox.Cancel,
-                                                QtGui.QMessageBox.Save)
+    if (project->isModified())
+    {
+        auto result = QMessageBox::question(this,
+                                            "Project file has changes!",
+                                            "There are unsaved changes in the project file "
+                                            "Do you want to save them? "
+                                            "(Pressing Discard will discard the changes!)",
+                                            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
+                                            QMessageBox::Save);
 
-            if result == QtGui.QMessageBox.Save:
-                self.saveProject()
+        if (result == QMessageBox::Save)
+            project->save();
+        else if (result == QMessageBox::Cancel)
+            return false;
+    }
 
-            elif result == QtGui.QMessageBox.Cancel:
-                return False
-
-        self.closeProject()
-        updateUIOnProjectChanged()
-        return True
-*/
+    // 'project' pointer is invalidated here
+    CEGUIProjectManager::Instance().unloadProject();
+    updateUIOnProjectChanged();
+    return true;
 }
 
 void MainWindow::on_actionReloadResources_triggered()
 {
+    // Since we are effectively unloading the project and potentially nuking resources of it
+    // we should definitely unload all tabs that rely on it to prevent segfaults and other
+    // nasty phenomena
+
+    // We will remember previously opened tabs requiring a project so that we can load them up after we are done
+    QStringList filePathsToLoad;
+    int i = 0;
+    while (i < ui->tabs->count())
+    {
+        auto editor = getEditorForTab(i);
+        if (editor->requiresProject())
+            filePathsToLoad.append(editor->getFilePath());
+
+        ++i;
+    }
+
+    QString currEditorFilePath = currentEditor ? currentEditor->getFilePath() : "";
+
+    if (!closeAllTabsRequiringProject())
+    {
+        QMessageBox::information(this,
+                                 "Project dependent tabs still open!",
+                                 "You can't reload project's resources while having tabs that "
+                                 "depend on the project and its resources opened!");
+        return;
+    }
+
 /*
-        # since we are effectively unloading the project and potentially nuking resources of it
-        # we should definitely unload all tabs that rely on it to prevent segfaults and other
-        # nasty phenomena
-
-        # we will remember previously opened tabs requiring a project so that we can load them up
-        # after we are done
-        filePathsToLoad = []
-        i = 0
-        while i < self.tabs.count():
-            tabbedEditor = self.tabs.widget(i).tabbedEditor
-
-            if tabbedEditor.requiresProject:
-                filePathsToLoad.append(tabbedEditor.filePath)
-
-            i += 1
-
-        activeEditorPath = self.activeEditor.filePath if self.activeEditor else ""
-
-        if not self.closeAllTabsRequiringProject():
-            QtGui.QMessageBox.information(self,
-                                          "Project dependent tabs still open!",
-                                          "You can't reload project's resources while having tabs that "
-                                          "depend on the project and its resources opened!")
-            return
-
-        self.performProjectDirectoriesSanityCheck()
         self.syncProjectToCEGUIInstance()
-
-        # load previously loaded tabs requiring a project opened
-        for filePath in filePathsToLoad:
-            self.openEditorTab(filePath)
-
-        # previously active editor to be loaded last, this makes it active again
-        if activeEditorPath != "":
-            self.openEditorTab(activeEditorPath)
 */
+
+    // Load previously loaded tabs requiring a project opened
+    for (auto& filePath : filePathsToLoad)
+        openEditorTab(filePath);
+
+    // Previously active editor to be loaded last, this makes it active again
+    if (!currEditorFilePath.isEmpty())
+        openEditorTab(currEditorFilePath);
 }
 
 void MainWindow::on_actionNewLayout_triggered()
@@ -1073,11 +1076,14 @@ void MainWindow::on_actionNewOtherFile_triggered(const QString& title, const QSt
 */
 
     QString selectedFilter = (currFilter >= 0 && currFilter < filters.size()) ? filters[currFilter] : "";
+    QString fileName;
+    /*
     QString fileName = QFileDialog::getSaveFileName(this,
                                                     title,
                                                     defaultDir,
                                                     filters.join(";;"),
                                                     &selectedFilter);
+    */
 
     QFileDialog dialog(this, title, defaultDir, filters.join(";;"));
     dialog.selectNameFilter(selectedFilter);

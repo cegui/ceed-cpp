@@ -82,6 +82,7 @@ void CEGUIProjectManager::loadProject(const QString& fileName)
             self.slot_projectSettings() //!!!external, in MainWindow!
 
         else:
+        //!!!checkAllDirectories / performProjectDirectoriesSanityCheck is inside, don't call twice!
             self.syncProjectToCEGUIInstance()
     */
 
@@ -130,6 +131,9 @@ void CEGUIProjectManager::unloadProject()
 
     def syncProjectToCEGUIInstance(self, indicateErrorsWithDialogs = True):
         """Synchronises current project to the CEGUI instance.
+
+        //!!!already done in loadProject, but required in 2 other places!!!
+        self.performProjectDirectoriesSanityCheck()
 
         indicateErrorsWithDialogs - if True a dialog is opened in case of errors
 

@@ -110,7 +110,7 @@ private slots:
 
     void on_actionSaveProject_triggered();
 
-    void on_actionCloseProject_triggered();
+    bool on_actionCloseProject_triggered();
 
     void on_actionReloadResources_triggered();
 

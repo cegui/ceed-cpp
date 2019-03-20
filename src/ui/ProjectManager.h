@@ -9,13 +9,18 @@ namespace Ui {
 class ProjectManager;
 }
 
+class CEGUIProject;
+
 class ProjectManager : public QDockWidget
 {
     Q_OBJECT
 
 public:
+
     explicit ProjectManager(QWidget *parent = nullptr);
     ~ProjectManager();
+
+    void setProject(CEGUIProject* project = nullptr);
 
 signals:
 
