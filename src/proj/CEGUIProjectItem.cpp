@@ -171,7 +171,7 @@ void CEGUIProjectItem::setPath(const QString& path)
 
 QString CEGUIProjectItem::getPath() const
 {
-    assert(_type == Type::Unknown);
+    assert(_type != Type::Unknown);
     return data(Qt::UserRole + 2).toString();
 }
 

@@ -145,7 +145,7 @@ bool CEGUIProject::save(const QString& fileName)
 
 void CEGUIProject::unload()
 {
-    //
+    // Was empty in the original CEED
 }
 
 // Performs base directory and resource directories sanity check, raises IOError in case of a failure

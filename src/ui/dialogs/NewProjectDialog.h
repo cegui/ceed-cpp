@@ -18,6 +18,7 @@ public:
     explicit NewProjectDialog(QWidget *parent = nullptr);
     virtual ~NewProjectDialog() override;
 
+    QString getFilePath() const;
     bool isCreateResourceDirsSelected() const;
 
 public slots:

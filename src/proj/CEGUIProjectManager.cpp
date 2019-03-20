@@ -2,39 +2,59 @@
 #include "src/proj/CEGUIProject.h"
 #include "src/Application.h"
 #include "qmessagebox.h"
+#include "qdir.h"
 
 CEGUIProjectManager::CEGUIProjectManager()
-{
+{  
+/*
+    # we start CEGUI early and we always start it
+    self.ceguiInstance = cegui.Instance()
 
+    //!!!was created in a MainWindow!
+    self.ceguiContainerWidget = cegui_container.ContainerWidget(self.ceguiInstance, self)
+*/
 }
 
-CEGUIProject* CEGUIProjectManager::createProject()
+CEGUIProject* CEGUIProjectManager::createProject(const QString& filePath, bool createResourceDirs)
 {
-    //???unload prev project?
+    //???force unload prev project?
+    assert(!isProjectLoaded());
 
     currentProject.reset(new CEGUIProject());
-/*
-        ret.projectFilePath = self.projectFilePath.text()
+    currentProject->filePath = filePath;
 
-        if not ret.projectFilePath.endswith(".project"):
-            # enforce the "project" extension
-            ret.projectFilePath += ".project"
+    // Enforce the "project" extension
+    if (!currentProject->filePath.endsWith(".project"))
+        currentProject->filePath += ".project";
 
-        if self.createResourceDirs.checkState() == QtCore.Qt.Checked:
-            try:
-                prefix = os.path.dirname(ret.projectFilePath)
-                dirs = ["fonts", "imagesets", "looknfeel", "schemes", "layouts", "xml_schemas"]
+    if (createResourceDirs)
+    {
+        bool success = true;
+        QDir prefix = QFileInfo(currentProject->filePath).dir();
+        QStringList dirs = { "fonts", "imagesets", "looknfeel", "schemes", "layouts", "xml_schemas" };
+        for (const auto& dirName : dirs)
+        {
+            QDir dir(prefix.filePath(dirName));
+            if (!dir.exists())
+            {
+                if (!dir.mkdir("."))
+                    success = false;
+            }
+        }
 
-                for dir_ in dirs:
-                    if not os.path.exists(os.path.join(prefix, dir_)):
-                        os.mkdir(os.path.join(prefix, dir_))
+        if (!success)
+        {
+            QMessageBox::critical(qobject_cast<Application*>(qApp)->getMainWindow(),
+                                  "Cannot create resource directories!",
+                                  "There was a problem creating the resource directories. "
+                                  "Do you have the proper permissions on the parent directory?");
+        }
+    }
 
-            except OSError as e:
-                QtGui.QMessageBox.critical(self, "Cannot create resource \
-directories!", "There was a problem creating the resource \
-directories.  Do you have the proper permissions on the \
-parent directory? (exception info: %s)" % (e))
-*/
+    //???need?
+    currentProject->save();
+    loadProject(currentProject->filePath);
+
     return currentProject.get();
 }
 
@@ -42,9 +62,6 @@ parent directory? (exception info: %s)" % (e))
 // Caller must test if a project is opened and close it accordingly (with a dialog
 // being shown if there are changes to it)
 // Errors aren't indicated by exceptions or return values, dialogs are shown in case of errors.
-// path - Absolute path of the project file
-// openSettings - if True, the settings dialog is opened instead of just loading the resources,
-//               this is desirable when creating a new project
 void CEGUIProjectManager::loadProject(const QString& fileName)
 {
     if (isProjectLoaded())
@@ -109,34 +126,29 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
     }
 
 /*
-        try:
-            self.ceguiInstance.syncToProject(self.project, self)
+    try:
+        self.ceguiInstance.syncToProject(self.project, self)
 
-            return True
+        return true;
 
-        except Exception as e:
-            if indicateErrorsWithDialogs:
-                QtGui.QMessageBox.warning(self, "Failed to synchronise embedded CEGUI to your project",
-"""An attempt was made to load resources related to the project being opened, for some reason the loading didn't succeed so all resources were destroyed! The most likely reason is that the resource directories are wrong, this can be very easily remedied in the project settings.
-
-This means that editing capabilities of CEED will be limited to editing of files that don't require a project opened (for example: imagesets).
-
-Details of this error: %s""" % (e))
+    except Exception as e:
+        QtGui.QMessageBox.warning(self, "Failed to synchronise embedded CEGUI to your project",
+            "An attempt was made to load resources related to the project being opened, "
+            "for some reason the loading didn't succeed so all resources were destroyed! "
+            "The most likely reason is that the resource directories are wrong, this can "
+            "be very easily remedied in the project settings.\n\n"
+            "This means that editing capabilities of CEED will be limited to editing of files "
+            "that don't require a project opened (for example: imagesets).")
 */
+
     return false;
 }
 
-/*
-        # we start CEGUI early and we always start it
-        self.ceguiInstance = cegui.Instance()
-        self.ceguiContainerWidget = cegui_container.ContainerWidget(self.ceguiInstance, self)
-*/
-
 /* Was not used in the original CEED:
+ * //???do projectFilePath = newPath inside a project? Then this method is a wrapper and can be removed.
  *
     def saveProjectAs(self, newPath):
-        """Saves currently opened project to a custom path. For best reliability, use absolute file path as newPath
-        """
+        """Saves currently opened project to a custom path. For best reliability, use absolute file path as newPath"""
 
         self.project.save(newPath)
         # set the project's file path to newPath so that if you press save next time it will save to the new path

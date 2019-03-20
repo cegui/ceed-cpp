@@ -24,7 +24,7 @@ public:
         return mgr;
     }
 
-    CEGUIProject* createProject();
+    CEGUIProject* createProject(const QString& filePath, bool createResourceDirs);
     void loadProject(const QString& fileName);
     void saveProject(const QString& fileName = QString());
     void unloadProject();

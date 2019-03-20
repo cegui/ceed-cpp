@@ -21,6 +21,11 @@ NewProjectDialog::~NewProjectDialog()
     delete ui;
 }
 
+QString NewProjectDialog::getFilePath() const
+{
+    return ui->projectFilePath->text();
+}
+
 bool NewProjectDialog::isCreateResourceDirsSelected() const
 {
    auto createResourceDirs = findChild<QCheckBox*>("createResourceDirs");
@@ -29,8 +34,7 @@ bool NewProjectDialog::isCreateResourceDirsSelected() const
 
 void NewProjectDialog::accept()
 {
-    auto projectFilePath = findChild<FileLineEdit*>("projectFilePath");
-    QString path = projectFilePath->text();
+    QString path = ui->projectFilePath->text();
     if (path.isEmpty())
     {
         QMessageBox::critical(this, "Project file path empty!", "You must supply a valid project file path!");

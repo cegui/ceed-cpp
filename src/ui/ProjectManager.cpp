@@ -1,6 +1,9 @@
 #include "src/ui/ProjectManager.h"
 #include "src/proj/CEGUIProject.h"
+#include "src/proj/CEGUIProjectItem.h"
 #include "ui_ProjectManager.h"
+#include "qinputdialog.h"
+#include "qmenu.h"
 
 ProjectManager::ProjectManager(QWidget *parent) :
     QDockWidget(parent),
@@ -8,17 +11,14 @@ ProjectManager::ProjectManager(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    if (ui->view)
-    {
-        ui->view->sortByColumn(0, Qt::AscendingOrder);
-        //self.view.doubleClicked.connect(self.slot_itemDoubleClicked)
-    }
+    ui->view->sortByColumn(0, Qt::AscendingOrder);
+    ui->view->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    /*
-    self.setupContextMenu()
+    _contextMenu = new QMenu(this);
+    _contextMenu->addAction(ui->actionCreateFolder);
+    _contextMenu->addSeparator();
 
-    self.setProject(None)
-    */
+    setProject(nullptr);
 }
 
 ProjectManager::~ProjectManager()
@@ -28,22 +28,71 @@ ProjectManager::~ProjectManager()
 
 void ProjectManager::setProject(CEGUIProject* project)
 {
+    _project = project;
     setEnabled(!!project);
     ui->view->setModel(project);
 }
 
+void ProjectManager::on_view_doubleClicked(const QModelIndex& index)
+{
+    if (!index.isValid() || !index.model()) return;
+
+    //???can obtain item pointer itself?
+    CEGUIProjectItem::Type type = static_cast<CEGUIProjectItem::Type>(index.data(Qt::UserRole + 1).toInt());
+    if (type == CEGUIProjectItem::Type::File)
+    {
+        const CEGUIProject* project = static_cast<const CEGUIProject*>(index.model());
+        emit itemOpenRequested(project->getAbsolutePathOf(index.data(Qt::UserRole + 2).toString()));
+    }
+}
+
+void ProjectManager::on_actionCreateFolder_triggered()
+{
+    if (!_project) return;
+
+    // TODO: Name clashes!
+
+    bool ok = false;
+    auto text = QInputDialog::getText(this,
+                                      "Create a folder (only affects project file)",
+                                      "Name",
+                                      QLineEdit::Normal,
+                                      "New folder",
+                                      &ok);
+
+    if (!ok) return;
+
+    auto item = new CEGUIProjectItem(_project);
+    item->setType(CEGUIProjectItem::Type::Folder);
+    item->setPath(text);
+
+    auto parentIndex = ui->view->selectionModel()->currentIndex();
+    if (parentIndex.isValid() && static_cast<CEGUIProjectItem::Type>(parentIndex.data(Qt::UserRole + 1).toInt()) == CEGUIProjectItem::Type::Folder)
+    {
+        CEGUIProjectItem* parentItem = static_cast<CEGUIProjectItem*>(_project->itemFromIndex(parentIndex));
+        parentItem->appendRow(item);
+
+        /* TODO: remove if not needed. Example of model-agnostic child adding code.
+
+            if (model->columnCount(parentIndex) == 0) {
+                if (!model->insertColumn(0, parentIndex))
+                    return;
+            }
+
+            if (!model->insertRow(0, parentIndex))
+                return;
+
+            QModelIndex newIndex = model->index(0, 0, parentIndex);
+            model->setData(newIndex, QVariant(), Qt::EditRole);
+        */
+    }
+    else
+    {
+        _project->appendRow(item);
+    }
+}
+
 /*
-    def setupContextMenu(self):
-        self.view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-
-        self.contextMenu = QtGui.QMenu(self)
-
-        self.createFolderAction = QtGui.QAction(QtGui.QIcon("icons/project_management/create_folder.png"), "Create folder", self)
-        self.contextMenu.addAction(self.createFolderAction)
-        self.createFolderAction.triggered.connect(self.slot_createFolder)
-
-        self.contextMenu.addSeparator()
-
         self.addNewFileAction = QtGui.QAction(QtGui.QIcon("icons/project_management/add_new_file.png"), "Add new file", self)
         self.contextMenu.addAction(self.addNewFileAction)
         self.addNewFileAction.triggered.connect(self.slot_addNewFile)
@@ -63,27 +112,6 @@ void ProjectManager::setProject(CEGUIProject* project)
         self.removeAction.triggered.connect(self.slot_removeAction)
 
         self.view.customContextMenuRequested.connect(self.slot_customContextMenu)
-
-    @staticmethod
-    def getItemFromModelIndex(modelIndex):
-        # todo: is this ugly thing really the way to do this?
-
-        # Qt says in the docs that returned parent is never None but can be invalid if it's the root
-        if not modelIndex.parent().isValid():
-            # if it's invalid, we can use the indices as absolute model top level indices
-            return modelIndex.model().item(modelIndex.row(), modelIndex.column())
-        else:
-            # otherwise, resort to recursion
-            return ProjectManager.getItemFromModelIndex(modelIndex.parent()).child(modelIndex.row(), modelIndex.column())
-
-    def slot_itemDoubleClicked(self, modelIndex):
-        if not modelIndex.model():
-            return
-
-        item = ProjectManager.getItemFromModelIndex(modelIndex)
-        if item.itemType == Item.File:
-            # only react to files, expanding folders is handled by Qt
-            self.fileOpenRequested.emit(item.getAbsolutePath())
 
     def slot_customContextMenu(self, point):
         if self.isEnabled():
@@ -125,33 +153,6 @@ void ProjectManager::setProject(CEGUIProject* project)
                 #    item = self.getItemFromModelIndex(index)
 
         self.contextMenu.exec_(self.mapToGlobal(point))
-
-    def slot_createFolder(self):
-        # TODO: Name clashes!
-
-        text, ok = QtGui.QInputDialog.getText(self,
-                                              "Create a folder (only affects project file)",
-                                              "Name",
-                                              QtGui.QLineEdit.Normal,
-                                              "New folder")
-
-        if ok:
-            item = Item(self.project)
-            item.itemType = Item.Folder
-            item.name = text
-
-            selectedIndices = self.view.selectedIndexes()
-
-            if len(selectedIndices) == 0:
-                self.project.appendRow(item)
-
-            else:
-                assert(len(selectedIndices) == 1)
-
-                parent = self.getItemFromModelIndex(selectedIndices[0])
-                assert(parent.itemType == Item.Folder)
-
-                parent.appendRow(item)
 
     def slot_addNewFile(self):
         # TODO: name clashes, duplicates

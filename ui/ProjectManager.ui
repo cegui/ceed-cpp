@@ -54,7 +54,21 @@
     </item>
    </layout>
   </widget>
+  <action name="actionCreateFolder">
+   <property name="icon">
+    <iconset resource="../data/Resources.qrc">
+     <normaloff>:/icons/project_management/create_folder.png</normaloff>:/icons/project_management/create_folder.png</iconset>
+   </property>
+   <property name="text">
+    <string>Create folder</string>
+   </property>
+   <property name="toolTip">
+    <string>Create folder</string>
+   </property>
+  </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="../data/Resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

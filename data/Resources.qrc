@@ -54,5 +54,10 @@
         <file>images/splashscreen.png</file>
         <file>icons/settings/reset_entry_to_default.png</file>
         <file>icons/clean_undo_state.png</file>
+        <file>icons/project_management/add_existing_file.png</file>
+        <file>icons/project_management/add_new_file.png</file>
+        <file>icons/project_management/create_folder.png</file>
+        <file>icons/project_management/remove.png</file>
+        <file>icons/project_management/rename.png</file>
     </qresource>
 </RCC>

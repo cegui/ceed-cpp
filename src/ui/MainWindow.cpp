@@ -331,19 +331,10 @@ void MainWindow::on_actionNewProject_triggered()
     updateProjectDependentUI(nullptr);
     CEGUIProjectManager::Instance().unloadProject();
 
-    /* Need creation params from dialog, WAS:
-        auto newProject = newProjectDialog.createProject()
-    */
-    auto newProject = CEGUIProjectManager::Instance().createProject();
+    // Create a new project
+    auto newProject = CEGUIProjectManager::Instance().createProject(newProjectDialog.getFilePath(), newProjectDialog.isCreateResourceDirsSelected());
 
-    //???save & load inside a createProject()?
-    newProject->save();
-/*
-        # open the settings window after creation so that user can further customise their
-        # new project file
-        self.openProject(path = newProject.projectFilePath, openSettings = True)
-*/
-
+    // Open project settings dialog
     on_actionProjectSettings_triggered();
 
     // Save the project with the settings that were potentially set in the project settings dialog

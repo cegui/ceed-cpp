@@ -10,6 +10,7 @@ class ProjectManager;
 }
 
 class CEGUIProject;
+class QMenu;
 
 class ProjectManager : public QDockWidget
 {
@@ -26,8 +27,16 @@ signals:
 
     void itemOpenRequested(const QString& name);
 
+private slots:
+    void on_view_doubleClicked(const QModelIndex &index);
+
+    void on_actionCreateFolder_triggered();
+
 private:
+
     Ui::ProjectManager *ui;
+    QMenu* _contextMenu = nullptr;
+    CEGUIProject* _project = nullptr;
 };
 
 #endif // PROJECTMANAGER_H
