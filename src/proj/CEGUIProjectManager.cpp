@@ -6,12 +6,12 @@ CEGUIProjectManager::CEGUIProjectManager()
 
 }
 
-void CEGUIProjectManager::createProject()
+CEGUIProject* CEGUIProjectManager::createProject()
 {
+    //???unload prev project?
+
+    currentProject.reset(new CEGUIProject());
 /*
-    # creates the project using data from this dialog
-    def createProject(self):
-        ret = Project()
         ret.projectFilePath = self.projectFilePath.text()
 
         if not ret.projectFilePath.endswith(".project"):
@@ -32,9 +32,8 @@ void CEGUIProjectManager::createProject()
 directories!", "There was a problem creating the resource \
 directories.  Do you have the proper permissions on the \
 parent directory? (exception info: %s)" % (e))
-
-        return ret
 */
+    return currentProject.get();
 }
 
 // Opens the project file given in 'path'. Assumes no project is opened at the point this is called.
@@ -65,6 +64,7 @@ void CEGUIProjectManager::loadProject(const QString& fileName)
         return;
     }
 
+    //!!!FORMER performProjectDirectoriesSanityCheck!
     if (!currentProject->checkAllDirectories())
     {
         /*
@@ -79,7 +79,7 @@ void CEGUIProjectManager::loadProject(const QString& fileName)
 
     /*
         if openSettings:
-            self.slot_projectSettings()
+            self.slot_projectSettings() //!!!external, in MainWindow!
 
         else:
             self.syncProjectToCEGUIInstance()
@@ -90,7 +90,77 @@ void CEGUIProjectManager::loadProject(const QString& fileName)
     loadedProjectFileName = fileName;
 }
 
+void CEGUIProjectManager::saveProject(const QString& fileName)
+{
+    if (currentProject) currentProject->save(fileName);
+}
+
+//!!!separate UI, move it to MainWindow!
+// Closes currently opened project. Assumes one is opened at the point this is called.
 void CEGUIProjectManager::unloadProject()
 {
+    if (!currentProject) return;
+
+    /*
+        # since we are effectively unloading the project and potentially nuking resources of it
+        # we should definitely unload all tabs that rely on it to prevent segfaults and other
+        # nasty phenomena
+        if not self.closeAllTabsRequiringProject():
+            return
+
+        self.projectManager.setProject(None)
+        # clean resources that were potentially used with this project
+        self.ceguiInstance.cleanCEGUIResources()
+
+        self.project.unload()
+    */
+
     loadedProjectFileName.clear();
+    currentProject.reset();
+
+/*
+        # as the project was closed be will disable actions related to it
+        self.saveProjectAction.setEnabled(False)
+        self.closeProjectAction.setEnabled(False)
+        self.projectReloadResourcesAction.setEnabled(False)
+*/
 }
+
+/*
+
+    def syncProjectToCEGUIInstance(self, indicateErrorsWithDialogs = True):
+        """Synchronises current project to the CEGUI instance.
+
+        indicateErrorsWithDialogs - if True a dialog is opened in case of errors
+
+        Returns True if the procedure was successful
+        """
+
+        try:
+            self.ceguiInstance.syncToProject(self.project, self)
+
+            return True
+
+        except Exception as e:
+            if indicateErrorsWithDialogs:
+                QtGui.QMessageBox.warning(self, "Failed to synchronise embedded CEGUI to your project",
+"""An attempt was made to load resources related to the project being opened, for some reason the loading didn't succeed so all resources were destroyed! The most likely reason is that the resource directories are wrong, this can be very easily remedied in the project settings.
+
+This means that editing capabilities of CEED will be limited to editing of files that don't require a project opened (for example: imagesets).
+
+Details of this error: %s""" % (e))
+
+            return False
+*/
+
+/* Was not used in the original CEED:
+ *
+    def saveProjectAs(self, newPath):
+        """Saves currently opened project to a custom path. For best reliability, use absolute file path as newPath
+        """
+
+        self.project.save(newPath)
+        # set the project's file path to newPath so that if you press save next time it will save to the new path
+        # (This is what is expected from applications in general I think)
+        self.project.projectFilePath = newPath
+*/

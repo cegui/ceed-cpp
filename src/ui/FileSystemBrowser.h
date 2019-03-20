@@ -26,6 +26,7 @@ public:
     void setDirectory(const QString& dir);
 
     QToolButton* activeFileDirectoryButton() const;
+    QToolButton* projectDirectoryButton() const;
 
 signals:
 

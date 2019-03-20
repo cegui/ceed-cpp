@@ -56,6 +56,8 @@ private slots:
 
     void on_actionLicense_triggered();
 
+    void on_actionQt_triggered();
+
     void on_actionPreferences_triggered();
 
     void on_actionProjectSettings_triggered();
@@ -71,6 +73,14 @@ private slots:
     bool on_tabs_tabCloseRequested(int index);
 
     void on_actionCloseTab_triggered();
+
+    void on_actionCloseOtherTabs_triggered();
+
+    void on_actionCloseAllTabs_triggered();
+
+    void on_actionPreviousTab_triggered();
+
+    void on_actionNextTab_triggered();
 
     void on_actionZoomIn_triggered();
 
@@ -91,6 +101,24 @@ private slots:
     void on_actionPaste_triggered();
 
     void on_actionDelete_triggered();
+
+    void on_actionSave_triggered();
+
+    void on_actionSaveAs_triggered();
+
+    void on_actionSaveAll_triggered();
+
+    void on_actionSaveProject_triggered();
+
+    void on_actionCloseProject_triggered();
+
+    void on_actionReloadResources_triggered();
+
+    void on_actionNewLayout_triggered();
+
+    void on_actionNewImageset_triggered();
+
+    void on_actionNewOtherFile_triggered(const QString& title = "New File", const QStringList& filters = QStringList(), int currFilter = 0, const QString& autoSuffix = "");
 
 private:
 

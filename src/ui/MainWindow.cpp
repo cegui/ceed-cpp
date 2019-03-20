@@ -137,7 +137,7 @@ MainWindow::MainWindow(QWidget *parent) :
     });
 
     // Menu for the current editor
-    ui->menuEditor->setVisible(false);
+    ui->menuEditor->menuAction()->setVisible(false);
 
     connect(ui->menuTabs, &QMenu::aboutToShow, [this]()
     {
@@ -233,36 +233,6 @@ QToolBar* MainWindow::createToolbar(const QString& name)
     return toolbar;
 }
 
-void MainWindow::updateUIOnProjectChanged()
-{
-    const bool isProjectLoaded = CEGUIProjectManager::Instance().isProjectLoaded();
-
-    /*
-        # view the newly opened project in the project manager
-        self.projectManager.setProject(self.project)
-    */
-
-    if (isProjectLoaded)
-    {
-        auto project = CEGUIProjectManager::Instance().getCurrentProject();
-        recentlyUsedProjects->addRecentlyUsed(project->filePath);
-
-        // TODO: Maybe this could be configurable?
-        auto baseDir = project->getAbsolutePathOf("");
-        if (QFileInfo(baseDir).isDir())
-            fsBrowser->setDirectory(baseDir);
-    }
-    else
-    {
-        fsBrowser->setDirectory(QDir::homePath());
-    }
-
-    ui->actionSaveProject->setEnabled(isProjectLoaded);
-    ui->actionCloseProject->setEnabled(isProjectLoaded);
-    ui->actionProjectSettings->setEnabled(isProjectLoaded);
-    ui->actionReloadResources->setEnabled(isProjectLoaded);
-}
-
 void MainWindow::closeEvent(QCloseEvent* event)
 {
     if (!on_actionQuit_triggered())
@@ -312,6 +282,38 @@ bool MainWindow::on_actionQuit_triggered()
     return true;
 }
 
+void MainWindow::updateUIOnProjectChanged()
+{
+    const bool isProjectLoaded = CEGUIProjectManager::Instance().isProjectLoaded();
+
+    /*
+        # view the newly opened project in the project manager
+        self.projectManager.setProject(self.project)
+    */
+
+    if (isProjectLoaded)
+    {
+        auto project = CEGUIProjectManager::Instance().getCurrentProject();
+        recentlyUsedProjects->addRecentlyUsed(project->filePath);
+
+        // TODO: Maybe this could be configurable?
+        auto baseDir = project->getAbsolutePathOf("");
+        if (QFileInfo(baseDir).isDir())
+            fsBrowser->setDirectory(baseDir);
+    }
+    else
+    {
+        fsBrowser->setDirectory(QDir::homePath());
+    }
+
+    fsBrowser->projectDirectoryButton()->setEnabled(isProjectLoaded);
+
+    ui->actionSaveProject->setEnabled(isProjectLoaded);
+    ui->actionCloseProject->setEnabled(isProjectLoaded);
+    ui->actionProjectSettings->setEnabled(isProjectLoaded);
+    ui->actionReloadResources->setEnabled(isProjectLoaded);
+}
+
 void MainWindow::on_actionNewProject_triggered()
 {
     if (CEGUIProjectManager::Instance().isProjectLoaded())
@@ -336,18 +338,18 @@ void MainWindow::on_actionNewProject_triggered()
     // The dialog was accepted, close any open project
     CEGUIProjectManager::Instance().unloadProject();
 
+    auto newProject = CEGUIProjectManager::Instance().createProject();
 /*
-        //!!!get settings from newProjectDialog!
-        newProject = CEGUIProjectManager::Instance().createProject();
+        //!!!get settings from newProjectDialog!        
         newProject.save()
 
         # open the settings window after creation so that user can further customise their
         # new project file
         self.openProject(path = newProject.projectFilePath, openSettings = True)
-
-        # save the project with the settings that were potentially set in the project settings dialog
-        self.saveProject()
 */
+
+    // Save the project with the settings that were potentially set in the project settings dialog
+    CEGUIProjectManager::Instance().saveProject();
 }
 
 void MainWindow::on_actionOpenProject_triggered()
@@ -467,6 +469,11 @@ void MainWindow::on_actionLicense_triggered()
 {
     LicenseDialog dlg;
     dlg.exec();
+}
+
+void MainWindow::on_actionQt_triggered()
+{
+    QApplication::aboutQt();
 }
 
 void MainWindow::on_actionPreferences_triggered()
@@ -590,6 +597,49 @@ bool MainWindow::on_tabs_tabCloseRequested(int index)
 void MainWindow::on_actionCloseTab_triggered()
 {
     on_tabs_tabCloseRequested(ui->tabs->currentIndex());
+}
+
+void MainWindow::on_actionCloseOtherTabs_triggered()
+{
+    auto currTab = ui->tabs->currentWidget();
+    int i = 0;
+    while (i < ui->tabs->count())
+    {
+        // Don't close current & cancelled by user due to unsaved changes
+        if (ui->tabs->widget(i) == currTab)
+            ++i;
+        else if (!on_tabs_tabCloseRequested(i))
+            ++i;
+    }
+}
+
+void MainWindow::on_actionCloseAllTabs_triggered()
+{
+    int i = 0;
+    while (i < ui->tabs->count())
+    {
+        // Don't close ones cancelled by user due to unsaved changes
+        if (!on_tabs_tabCloseRequested(i))
+            ++i;
+    }
+}
+
+void MainWindow::on_actionPreviousTab_triggered()
+{
+    if (ui->tabs->count() < 2) return;
+    int index = ui->tabs->currentIndex() - 1;
+    if (index < 0)
+        index += ui->tabs->count();
+    ui->tabs->setCurrentIndex(index);
+}
+
+void MainWindow::on_actionNextTab_triggered()
+{
+    if (ui->tabs->count() < 2) return;
+    int index = ui->tabs->currentIndex() + 1;
+    if (index >= ui->tabs->count())
+        index = 0;
+    ui->tabs->setCurrentIndex(index);
 }
 
 // Opens editor tab. Creates new editor if such file wasn't opened yet and if it was opened,
@@ -904,319 +954,36 @@ void MainWindow::on_actionDelete_triggered()
     if (currentEditor) currentEditor->deleteSelected();
 }
 
+void MainWindow::on_actionSave_triggered()
+{
+    if (currentEditor) currentEditor->save();
+}
+
+void MainWindow::on_actionSaveAs_triggered()
+{
+    if (!currentEditor) return;
+
+    QString filePath = QFileDialog::getSaveFileName(this, "Save as", QFileInfo(currentEditor->getFilePath()).dir().path());
+    if (!filePath.isEmpty()) currentEditor->saveAs(filePath);
+}
+
+// Saves all opened tabbed editors and opened project (if any)
+void MainWindow::on_actionSaveAll_triggered()
+{
+    CEGUIProjectManager::Instance().saveProject();
+
+    for (auto&& editor : activeEditors)
+        editor->save();
+}
+
+void MainWindow::on_actionSaveProject_triggered()
+{
+    CEGUIProjectManager::Instance().saveProject();
+}
+
+void MainWindow::on_actionCloseProject_triggered()
+{
 /*
-
-class MainWindow(QtGui.QMainWindow):
-
-    project = property(lambda self: self._project,
-                       lambda self, value: self._setProject(value))
-
-    def _setProject(self, value):
-        self._project = value
-        if self.fileSystemBrowser:
-            self.fileSystemBrowser.projectDirectoryButton.setEnabled(True if value else False)
-
-    def setupActions(self):
-        # usage of a connection group in mainwindow may be unnecessary,
-        # we never use disconnectAll and/or connectAll, it is just used as a convenient
-        # way to group connections
-        self.connectionGroup = action.ConnectionGroup(self.actionManager)
-
-        #
-        # get and connect all actions we care about
-        #
-        self.newFileAction = self.actionManager.getAction("files/new_file")
-        self.connectionGroup.add(self.newFileAction, receiver = self.slot_newFileDialog)
-
-        self.newLayoutAction = self.actionManager.getAction("files/new_layout")
-        self.connectionGroup.add(self.newLayoutAction, receiver = self.slot_newLayoutDialog)
-
-        self.newImagesetAction = self.actionManager.getAction("files/new_imageset")
-        self.connectionGroup.add(self.newImagesetAction, receiver = self.slot_newImagesetDialog)
-
-        self.openFileAction = self.actionManager.getAction("files/open_file")
-        self.connectionGroup.add(self.openFileAction, receiver = self.slot_openFileDialog)
-
-        self.saveAction = self.actionManager.getAction("files/save_file")
-        self.saveAction.setEnabled(False)
-        self.connectionGroup.add(self.saveAction, receiver = self.slot_save)
-
-        self.saveAsAction = self.actionManager.getAction("files/save_file_as")
-        self.saveAsAction.setEnabled(False)
-        self.connectionGroup.add(self.saveAsAction, receiver = self.slot_saveAs)
-
-        self.saveAllAction = self.actionManager.getAction("files/save_all")
-        self.connectionGroup.add(self.saveAllAction, receiver = self.slot_saveAll)
-
-        # tab bar context menu (but also added to the file menu so it's easy to discover)
-        self.closeTabAction = self.actionManager.getAction("files/close_current_tab")
-        self.closeTabAction.setEnabled(False)
-        self.connectionGroup.add(self.closeTabAction, receiver = self.slot_closeTab)
-
-        self.closeOtherTabsAction = self.actionManager.getAction("files/close_other_tabs")
-        self.closeOtherTabsAction.setEnabled(False)
-        self.connectionGroup.add(self.closeOtherTabsAction, receiver = self.slot_closeOtherTabs)
-
-        self.closeAllTabsAction = self.actionManager.getAction("files/close_all_tabs")
-        self.connectionGroup.add(self.closeAllTabsAction, receiver = self.slot_closeAllTabs)
-        # end of tab bar context menu
-
-        self.previousTabAction = self.actionManager.getAction("files/previous_tab")
-        self.connectionGroup.add(self.previousTabAction, receiver = self.slot_previousTab)
-
-        self.nextTabAction = self.actionManager.getAction("files/next_tab")
-        self.connectionGroup.add(self.nextTabAction, receiver = self.slot_nextTab)
-
-        self.undoAction = self.actionManager.getAction("all_editors/undo")
-        self.undoAction.setEnabled(False)
-        self.connectionGroup.add(self.undoAction, receiver = self.slot_undo)
-
-        self.redoAction = self.actionManager.getAction("all_editors/redo")
-        self.redoAction.setEnabled(False)
-        self.connectionGroup.add(self.redoAction, receiver = self.slot_redo)
-
-        self.revertAction = self.actionManager.getAction("files/revert_file")
-        self.revertAction.setEnabled(False)
-        self.connectionGroup.add(self.revertAction, receiver = self.slot_revert)
-
-        self.cutAction = self.actionManager.getAction("all_editors/cut")
-        self.connectionGroup.add(self.cutAction, receiver = self.slot_cut)
-
-        self.copyAction = self.actionManager.getAction("all_editors/copy")
-        self.connectionGroup.add(self.copyAction, receiver = self.slot_copy)
-
-        self.pasteAction = self.actionManager.getAction("all_editors/paste")
-        self.connectionGroup.add(self.pasteAction, receiver = self.slot_paste)
-
-        self.deleteAction = self.actionManager.getAction("all_editors/delete")
-        self.connectionGroup.add(self.deleteAction, receiver = self.slot_delete)
-
-        self.projectSettingsAction = self.actionManager.getAction("project_management/project_settings")
-        self.projectSettingsAction.setEnabled(False)
-        self.connectionGroup.add(self.projectSettingsAction, receiver = self.slot_projectSettings)
-
-        self.projectReloadResourcesAction = self.actionManager.getAction("project_management/reload_resources")
-        self.projectReloadResourcesAction.setEnabled(False)
-        self.connectionGroup.add(self.projectReloadResourcesAction, receiver = self.slot_projectReloadResources)
-
-        self.preferencesAction = self.actionManager.getAction("general/application_settings")
-        self.connectionGroup.add(self.preferencesAction, receiver = self.settingsInterface.show)
-
-        self.newProjectAction = self.actionManager.getAction("project_management/new_project")
-        self.connectionGroup.add(self.newProjectAction, receiver = self.slot_newProject)
-
-        self.openProjectAction = self.actionManager.getAction("project_management/open_project")
-        self.connectionGroup.add(self.openProjectAction, receiver = self.slot_openProject)
-
-        self.saveProjectAction = self.actionManager.getAction("project_management/save_project")
-        self.saveProjectAction.setEnabled(False)
-        self.connectionGroup.add(self.saveProjectAction, receiver = self.slot_saveProject)
-
-        self.closeProjectAction = self.actionManager.getAction("project_management/close_project")
-        self.closeProjectAction.setEnabled(False)
-        self.connectionGroup.add(self.closeProjectAction, receiver = self.slot_closeProject)
-
-        self.quitAction = self.actionManager.getAction("general/quit")
-        self.connectionGroup.add(self.quitAction, receiver = self.slot_quit)
-
-        self.helpQuickstartAction = self.actionManager.getAction("general/help_quickstart")
-        self.connectionGroup.add(self.helpQuickstartAction, receiver = self.slot_helpQuickstart)
-
-        self.helpUserManualAction = self.actionManager.getAction("general/help_user_manual")
-        self.connectionGroup.add(self.helpUserManualAction, receiver = self.slot_helpUserManual)
-
-        self.helpWikiPageAction = self.actionManager.getAction("general/help_wiki_page")
-        self.connectionGroup.add(self.helpWikiPageAction, receiver = self.slot_helpWikiPage)
-
-        self.sendFeedbackAction = self.actionManager.getAction("general/send_feedback")
-        self.connectionGroup.add(self.sendFeedbackAction, receiver = self.slot_sendFeedback)
-
-        self.reportBugAction = self.actionManager.getAction("general/report_bug")
-        self.connectionGroup.add(self.reportBugAction, receiver = self.slot_reportBug)
-
-        self.ceguiDebugInfoAction = self.actionManager.getAction("general/cegui_debug_info")
-        self.connectionGroup.add(self.ceguiDebugInfoAction, receiver = self.slot_ceguiDebugInfo)
-
-        self.viewLicenseAction = self.actionManager.getAction("general/view_license")
-        self.connectionGroup.add(self.viewLicenseAction, receiver = self.slot_license)
-
-        self.aboutQtAction = self.actionManager.getAction("general/about_qt")
-        self.connectionGroup.add(self.aboutQtAction, receiver = QtGui.QApplication.aboutQt)
-
-        self.aboutAction = self.actionManager.getAction("general/about")
-        self.connectionGroup.add(self.aboutAction, receiver = self.slot_about)
-
-        self.zoomInAction = self.actionManager.getAction("all_editors/zoom_in")
-        self.connectionGroup.add(self.zoomInAction, receiver = self.slot_zoomIn)
-        self.zoomOutAction = self.actionManager.getAction("all_editors/zoom_out")
-        self.connectionGroup.add(self.zoomOutAction, receiver = self.slot_zoomOut)
-        self.zoomResetAction = self.actionManager.getAction("all_editors/zoom_reset")
-        self.connectionGroup.add(self.zoomResetAction, receiver = self.slot_zoomReset)
-
-        self.statusbarAction = self.actionManager.getAction("general/statusbar")
-        self.statusbarAction.setChecked(True)
-        self.connectionGroup.add(self.statusbarAction, receiver = self.slot_toggleStatusbar)
-
-        self.fullScreenAction = self.actionManager.getAction("general/full_screen")
-        self.connectionGroup.add(self.fullScreenAction, receiver = self.slot_toggleFullScreen)
-
-        self.connectionGroup.connectAll()
-
-    def syncProjectToCEGUIInstance(self, indicateErrorsWithDialogs = True):
-        """Synchronises current project to the CEGUI instance.
-
-        indicateErrorsWithDialogs - if True a dialog is opened in case of errors
-
-        Returns True if the procedure was successful
-        """
-
-        try:
-            self.ceguiInstance.syncToProject(self.project, self)
-
-            return True
-
-        except Exception as e:
-            if indicateErrorsWithDialogs:
-                QtGui.QMessageBox.warning(self, "Failed to synchronise embedded CEGUI to your project",
-"""An attempt was made to load resources related to the project being opened, for some reason the loading didn't succeed so all resources were destroyed! The most likely reason is that the resource directories are wrong, this can be very easily remedied in the project settings.
-
-This means that editing capabilities of CEED will be limited to editing of files that don't require a project opened (for example: imagesets).
-
-Details of this error: %s""" % (e))
-
-            return False
-
-    def performProjectDirectoriesSanityCheck(self, indicateErrorsWithDialogs = True):
-        try:
-            self.project.checkAllDirectories()
-
-            return True
-
-        except IOError as e:
-            if indicateErrorsWithDialogs:
-                QtGui.QMessageBox.warning(self, "At least one of project's resource directories is invalid",
-"""Project's resource directory paths didn't pass the sanity check, please check projects settings.
-
-Details of this error: %s""" % (e))
-
-            return False
-
-    def openProject(self, path, openSettings = False):
-        """Opens the project file given in 'path'. Assumes no project is opened at the point this is called.
-        The slot_openProject method will test if a project is opened and close it accordingly (with a dialog
-        being shown if there are changes to it)
-
-        Errors aren't indicated by exceptions or return values, dialogs are shown in case of errors.
-
-        path - Absolute path of the project file
-        openSettings - if True, the settings dialog is opened instead of just loading the resources,
-                       this is desirable when creating a new project
-        """
-
-        assert(self.project is None)
-
-        # reset project manager to a clean state just in case
-        self.projectManager.setProject(None)
-
-        self.project = project.Project()
-        try:
-            self.project.load(path)
-        except IOError:
-            QtGui.QMessageBox.critical(self, "Error when opening project", "It seems project at path '%s' doesn't exist or you don't have rights to open it." % (path))
-
-            self.project = None
-            return
-
-        self.performProjectDirectoriesSanityCheck()
-
-        # view the newly opened project in the project manager
-        self.projectManager.setProject(self.project)
-        # and set the filesystem browser path to the base folder of the project
-        # TODO: Maybe this could be configurable?
-        projectBaseDirectory = self.project.getAbsolutePathOf("")
-        if os.path.isdir(projectBaseDirectory):
-            self.fileSystemBrowser.setDirectory(projectBaseDirectory)
-
-        self.recentlyUsedProjects.addRecentlyUsed(self.project.projectFilePath)
-
-        # and enable respective actions
-        self.saveProjectAction.setEnabled(True)
-        self.closeProjectAction.setEnabled(True)
-        self.projectSettingsAction.setEnabled(True)
-        self.projectReloadResourcesAction.setEnabled(True)
-
-        if openSettings:
-            self.slot_projectSettings()
-
-        else:
-            self.syncProjectToCEGUIInstance()
-
-    def closeProject(self):
-        """Closes currently opened project. Assumes one is opened at the point this is called.
-        """
-
-        assert(self.project is not None)
-
-        # since we are effectively unloading the project and potentially nuking resources of it
-        # we should definitely unload all tabs that rely on it to prevent segfaults and other
-        # nasty phenomena
-        if not self.closeAllTabsRequiringProject():
-            return
-
-        self.projectManager.setProject(None)
-        # TODO: Do we really want to call this there? This was already called when the project was being opened.
-        #       It doesn't do anything harmful but maybe is unnecessary.
-        self.recentlyUsedProjects.addRecentlyUsed(self.project.projectFilePath)
-        # clean resources that were potentially used with this project
-        self.ceguiInstance.cleanCEGUIResources()
-
-        self.project.unload()
-        self.project = None
-
-        # as the project was closed be will disable actions related to it
-        self.saveProjectAction.setEnabled(False)
-        self.closeProjectAction.setEnabled(False)
-        self.projectReloadResourcesAction.setEnabled(False)
-
-    def saveProject(self):
-        """Saves currently opened project to the file it was opened from (or the last file it was saved to).
-        """
-
-        assert(self.project is not None)
-
-        self.project.save()
-
-    def saveProjectAs(self, newPath):
-        """Saves currently opened project to a custom path. For best reliability, use absolute file path as newPath
-        """
-
-        self.project.save(newPath)
-        # set the project's file path to newPath so that if you press save next time it will save to the new path
-        # (This is what is expected from applications in general I think)
-        self.project.projectFilePath = newPath
-
-    def getFilePathsOfAllTabsRequiringProject(self):
-        """Queries file paths of all tabs that require a project opened
-
-        This is used to bring previously closed tabs back up when reloading project resources
-        """
-
-        ret = []
-        i = 0
-        while i < self.tabs.count():
-            tabbedEditor = self.tabs.widget(i).tabbedEditor
-
-            if tabbedEditor.requiresProject:
-                ret.append(tabbedEditor.filePath)
-
-            i += 1
-
-        return ret
-
-    def slot_saveProject(self):
-        self.saveProject()
-
-    def slot_closeProject(self):
         assert(self.project)
 
         if self.project.hasChanges():
@@ -1235,16 +1002,30 @@ Details of this error: %s""" % (e))
                 return False
 
         self.closeProject()
+        updateUIOnProjectChanged()
         return True
+*/
+}
 
-    def slot_projectReloadResources(self):
+void MainWindow::on_actionReloadResources_triggered()
+{
+/*
         # since we are effectively unloading the project and potentially nuking resources of it
         # we should definitely unload all tabs that rely on it to prevent segfaults and other
         # nasty phenomena
 
         # we will remember previously opened tabs requiring a project so that we can load them up
         # after we are done
-        filePathsToLoad = self.getFilePathsOfAllTabsRequiringProject()
+        filePathsToLoad = []
+        i = 0
+        while i < self.tabs.count():
+            tabbedEditor = self.tabs.widget(i).tabbedEditor
+
+            if tabbedEditor.requiresProject:
+                filePathsToLoad.append(tabbedEditor.filePath)
+
+            i += 1
+
         activeEditorPath = self.activeEditor.filePath if self.activeEditor else ""
 
         if not self.closeAllTabsRequiringProject():
@@ -1264,146 +1045,112 @@ Details of this error: %s""" % (e))
         # previously active editor to be loaded last, this makes it active again
         if activeEditorPath != "":
             self.openEditorTab(activeEditorPath)
+*/
+}
 
-    def slot_newFileDialog(self, title = "New File", filtersList = None, selectedFilterIndex = 0, autoSuffix = False):
-        defaultDir = ""
-        if self.project:
-            defaultDir = self.project.getAbsolutePathOf("")
+void MainWindow::on_actionNewLayout_triggered()
+{
+    on_actionNewOtherFile_triggered("New Layout", { "Layout files (*.layout)" }, 0, "layout");
+}
 
-        # Qt (as of 4.8) does not support default suffix (extension) unless you use
-        # non-native file dialogs with non-static methods (see QFileDialog.setDefaultSuffix).
-        # HACK: We handle this differently depending on whether a default suffix is required
+void MainWindow::on_actionNewImageset_triggered()
+{
+    on_actionNewOtherFile_triggered("New Imageset", { "Imageset files (*.imageset)" }, 0, "imageset");
+}
 
-        if filtersList is None or len(filtersList) == 0 or not autoSuffix:
+void MainWindow::on_actionNewOtherFile_triggered(const QString& title, const QStringList& filters, int currFilter, const QString& autoSuffix)
+{
+    QString defaultDir;
+    if (CEGUIProjectManager::Instance().isProjectLoaded())
+        defaultDir = CEGUIProjectManager::Instance().getCurrentProject()->getAbsolutePathOf("");
+
+/*
+    # Qt (as of 4.8) does not support default suffix (extension) unless you use
+    # non-native file dialogs with non-static methods (see QFileDialog.setDefaultSuffix).
+    # HACK: We handle this differently depending on whether a default suffix is required
+
+    if filtersList is None or len(filtersList) == 0 or not autoSuffix:
+*/
+
+    QString selectedFilter = (currFilter >= 0 && currFilter < filters.size()) ? filters[currFilter] : "";
+    QString fileName = QFileDialog::getSaveFileName(this,
+                                                    title,
+                                                    defaultDir,
+                                                    filters.join(";;"),
+                                                    &selectedFilter);
+
+    QFileDialog dialog(this, title, defaultDir, filters.join(";;"));
+    dialog.selectNameFilter(selectedFilter);
+    dialog.setDefaultSuffix(autoSuffix);
+
+    if (dialog.exec())
+        fileName = dialog.selectedFiles()[0];
+
+    if (!fileName.isEmpty())
+    {
+        QFile file(fileName);
+        if (!file.open(QIODevice::WriteOnly))
+        {
+            QMessageBox::critical(this, "Error creating file!",
+                                  "CEED encountered an error trying to create a new file " + fileName);
+            return;
+        }
+        file.close();
+        openEditorTab(fileName);
+    }
+
+/*
+    else:
+        while True:
             fileName, selectedFilter = QtGui.QFileDialog.getSaveFileName(self,
                                                                          title,
                                                                          defaultDir,
                                                                          ";;".join(filtersList) if filtersList is not None and len(filtersList) > 0 else None,
-                                                                         filtersList[selectedFilterIndex] if filtersList is not None and len(filtersList) > selectedFilterIndex else None)
-            if fileName:
-                try:
-                    f = open(fileName, "w")
-                    f.close()
-                except IOError as e:
-                    QtGui.QMessageBox.critical(self, "Error creating file!",
-                                                     "CEED encountered an error trying to create a new file.\n\n(exception details: %s)" % (e))
-                    return
-
-                self.openEditorTab(fileName)
-        else:
-            while True:
-                fileName, selectedFilter = QtGui.QFileDialog.getSaveFileName(self,
-                                                                             title,
-                                                                             defaultDir,
-                                                                             ";;".join(filtersList) if filtersList is not None and len(filtersList) > 0 else None,
-                                                                             filtersList[selectedFilterIndex] if filtersList is not None and len(filtersList) > selectedFilterIndex else None,
-                                                                             QtGui.QFileDialog.DontConfirmOverwrite)
-                if not fileName:
-                    break
-
-                # if there is no dot, append the selected filter's extension
-                if fileName.find(".") == -1:
-                    # really ugly, handle with care
-                    # find last open paren
-                    i = selectedFilter.rfind("(")
-                    if i != -1:
-                        # find next dot
-                        i = selectedFilter.find(".", i)
-                        if i != -1:
-                            # find next space or close paren
-                            k = selectedFilter.find(")", i)
-                            l = selectedFilter.find(" ", i)
-                            if l != -1 and l < k:
-                                k = l
-                            if k != -1:
-                                selectedExt = selectedFilter[i:k]
-                                if selectedExt.find("*") == -1 and selectedExt.find("?") == -1:
-                                    fileName += selectedExt
-
-                # and now test & confirm overwrite
-                try:
-                    if os.path.exists(fileName):
-                        msgBox = QtGui.QMessageBox(self)
-                        msgBox.setText("A file named \"%s\" already exists in \"%s\"." % (os.path.basename(fileName), os.path.dirname(fileName)))
-                        msgBox.setInformativeText("Do you want to replace it, overwriting its contents?")
-                        msgBox.addButton(QtGui.QMessageBox.Cancel)
-                        replaceButton = msgBox.addButton("&Replace", QtGui.QMessageBox.YesRole)
-                        msgBox.setDefaultButton(replaceButton)
-                        msgBox.setIcon(QtGui.QMessageBox.Question)
-                        msgBox.exec_()
-                        if msgBox.clickedButton() != replaceButton:
-                            continue
-                    f = open(fileName, "w")
-                    f.close()
-                except IOError as e:
-                    QtGui.QMessageBox.critical(self, "Error creating file!",
-                                                     "CEED encountered an error trying to create a new file.\n\n(exception details: %s)" % (e))
-                    return
-
-                self.openEditorTab(fileName)
+                                                                         filtersList[selectedFilterIndex] if filtersList is not None and len(filtersList) > selectedFilterIndex else None,
+                                                                         QtGui.QFileDialog.DontConfirmOverwrite)
+            if not fileName:
                 break
 
-    def slot_newLayoutDialog(self):
-        self.slot_newFileDialog(title = "New Layout",
-                                filtersList = ["Layout files (*.layout)"],
-                                autoSuffix = True)
+            # if there is no dot, append the selected filter's extension
+            if fileName.find(".") == -1:
+                # really ugly, handle with care
+                # find last open paren
+                i = selectedFilter.rfind("(")
+                if i != -1:
+                    # find next dot
+                    i = selectedFilter.find(".", i)
+                    if i != -1:
+                        # find next space or close paren
+                        k = selectedFilter.find(")", i)
+                        l = selectedFilter.find(" ", i)
+                        if l != -1 and l < k:
+                            k = l
+                        if k != -1:
+                            selectedExt = selectedFilter[i:k]
+                            if selectedExt.find("*") == -1 and selectedExt.find("?") == -1:
+                                fileName += selectedExt
 
-    def slot_newImagesetDialog(self):
-        self.slot_newFileDialog(title = "New Imageset",
-                                filtersList = ["Imageset files (*.imageset)"],
-                                autoSuffix = True)
+            # and now test & confirm overwrite
+            try:
+                if os.path.exists(fileName):
+                    msgBox = QtGui.QMessageBox(self)
+                    msgBox.setText("A file named \"%s\" already exists in \"%s\"." % (os.path.basename(fileName), os.path.dirname(fileName)))
+                    msgBox.setInformativeText("Do you want to replace it, overwriting its contents?")
+                    msgBox.addButton(QtGui.QMessageBox.Cancel)
+                    replaceButton = msgBox.addButton("&Replace", QtGui.QMessageBox.YesRole)
+                    msgBox.setDefaultButton(replaceButton)
+                    msgBox.setIcon(QtGui.QMessageBox.Question)
+                    msgBox.exec_()
+                    if msgBox.clickedButton() != replaceButton:
+                        continue
+                f = open(fileName, "w")
+                f.close()
+            except IOError as e:
+                QtGui.QMessageBox.critical(self, "Error creating file!",
+                                                 "CEED encountered an error trying to create a new file.\n\n(exception details: %s)" % (e))
+                return
 
-    def slot_closeOtherTabs(self):
-        current = self.tabs.currentWidget()
-
-        i = 0
-        while i < self.tabs.count():
-            if self.tabs.widget(i) == current:
-                # we skip the current widget
-                i += 1
-            else:
-                if not self.slot_tabCloseRequested(i):
-                    # user selected Cancel, we skip this widget
-                    i += 1
-
-    def slot_closeAllTabs(self):
-        i = 0
-        while i < self.tabs.count():
-            if not self.slot_tabCloseRequested(i):
-                # user selected Cancel, we skip this widget
-                i += 1
-
-    def slot_previousTab(self):
-        if self.tabs.count() <= 1:
-            return
-        index = self.tabs.currentIndex() - 1
-        if index < 0:
-            index = self.tabs.count() + index
-        self.tabs.setCurrentIndex(index)
-
-    def slot_nextTab(self):
-        if self.tabs.count() <= 1:
-            return
-        index = (self.tabs.currentIndex() + 1) % self.tabs.count()
-        self.tabs.setCurrentIndex(index)
-
-    def slot_save(self):
-        if self.activeEditor:
-            self.activeEditor.save()
-
-    def slot_saveAs(self):
-        if self.activeEditor:
-            filePath, _ = QtGui.QFileDialog.getSaveFileName(self, "Save as", os.path.dirname(self.activeEditor.filePath))
-            if filePath: # make sure user hasn't cancelled the dialog
-                self.activeEditor.saveAs(filePath)
-
-    def slot_saveAll(self):
-        """Saves all opened tabbed editors and opened project (if any)
-        """
-
-        if self.project is not None:
-            self.project.save()
-
-        for editor in self.tabEditors:
-            editor.save()
+            self.openEditorTab(fileName)
+            break
 */
+}

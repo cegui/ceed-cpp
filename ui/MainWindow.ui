@@ -91,7 +91,7 @@
      <x>0</x>
      <y>0</y>
      <width>813</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -298,6 +298,9 @@
    </property>
   </action>
   <action name="actionCloseOtherTabs">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="../data/Resources.qrc">
      <normaloff>:/icons/actions/close_other_tabs.png</normaloff>:/icons/actions/close_other_tabs.png</iconset>
@@ -359,6 +362,9 @@
    </property>
   </action>
   <action name="actionCloseProject">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="../data/Resources.qrc">
      <normaloff>:/icons/actions/close_project.png</normaloff>:/icons/actions/close_project.png</iconset>
@@ -377,6 +383,9 @@
    </property>
   </action>
   <action name="actionCloseTab">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="../data/Resources.qrc">
      <normaloff>:/icons/actions/close_tab.png</normaloff>:/icons/actions/close_tab.png</iconset>
@@ -386,6 +395,9 @@
    </property>
   </action>
   <action name="actionSave">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="../data/Resources.qrc">
      <normaloff>:/icons/actions/save.png</normaloff>:/icons/actions/save.png</iconset>
@@ -395,6 +407,9 @@
    </property>
   </action>
   <action name="actionSaveAs">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="../data/Resources.qrc">
      <normaloff>:/icons/actions/save_as.png</normaloff>:/icons/actions/save_as.png</iconset>
@@ -413,6 +428,9 @@
    </property>
   </action>
   <action name="actionSaveProject">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="../data/Resources.qrc">
      <normaloff>:/icons/actions/save_project.png</normaloff>:/icons/actions/save_project.png</iconset>
@@ -475,6 +493,9 @@
    </property>
   </action>
   <action name="actionUndo">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="../data/Resources.qrc">
      <normaloff>:/icons/actions/undo.png</normaloff>:/icons/actions/undo.png</iconset>
@@ -484,6 +505,9 @@
    </property>
   </action>
   <action name="actionRedo">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="../data/Resources.qrc">
      <normaloff>:/icons/actions/redo.png</normaloff>:/icons/actions/redo.png</iconset>
@@ -493,6 +517,9 @@
    </property>
   </action>
   <action name="actionRevert">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Revert</string>
    </property>
@@ -559,6 +586,9 @@
    </property>
   </action>
   <action name="actionReloadResources">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="../data/Resources.qrc">
      <normaloff>:/icons/project_management/reload_resources.png</normaloff>:/icons/project_management/reload_resources.png</iconset>
@@ -568,6 +598,9 @@
    </property>
   </action>
   <action name="actionProjectSettings">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="../data/Resources.qrc">
      <normaloff>:/icons/actions/project_settings.png</normaloff>:/icons/actions/project_settings.png</iconset>

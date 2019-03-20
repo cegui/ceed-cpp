@@ -68,6 +68,11 @@ QToolButton* FileSystemBrowser::activeFileDirectoryButton() const
     return ui->activeFileDirectoryButton;
 }
 
+QToolButton* FileSystemBrowser::projectDirectoryButton() const
+{
+    return ui->projectDirectoryButton;
+}
+
 // Slot that gets triggered whenever user double clicks anything in the filesystem view
 void FileSystemBrowser::on_view_doubleClicked(const QModelIndex& index)
 {

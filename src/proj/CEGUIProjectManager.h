@@ -22,8 +22,9 @@ public:
         return mgr;
     }
 
-    void createProject();
+    CEGUIProject* createProject();
     void loadProject(const QString& fileName);
+    void saveProject(const QString& fileName = QString());
     void unloadProject();
     bool isProjectLoaded() const { return currentProject != nullptr; }
     CEGUIProject* getCurrentProject() const { return currentProject.get(); }
