@@ -66,6 +66,54 @@
     <string>Create folder</string>
    </property>
   </action>
+  <action name="actionNewFile">
+   <property name="icon">
+    <iconset resource="../data/Resources.qrc">
+     <normaloff>:/icons/project_management/add_new_file.png</normaloff>:/icons/project_management/add_new_file.png</iconset>
+   </property>
+   <property name="text">
+    <string>Add new file</string>
+   </property>
+   <property name="toolTip">
+    <string>Add new file</string>
+   </property>
+  </action>
+  <action name="actionExistingFiles">
+   <property name="icon">
+    <iconset resource="../data/Resources.qrc">
+     <normaloff>:/icons/project_management/add_existing_file.png</normaloff>:/icons/project_management/add_existing_file.png</iconset>
+   </property>
+   <property name="text">
+    <string>Add existing file(s)...</string>
+   </property>
+   <property name="toolTip">
+    <string>Add existing files</string>
+   </property>
+  </action>
+  <action name="actionRename">
+   <property name="icon">
+    <iconset resource="../data/Resources.qrc">
+     <normaloff>:/icons/project_management/rename.png</normaloff>:/icons/project_management/rename.png</iconset>
+   </property>
+   <property name="text">
+    <string>Rename</string>
+   </property>
+   <property name="toolTip">
+    <string>Rename file or folder</string>
+   </property>
+  </action>
+  <action name="actionRemove">
+   <property name="icon">
+    <iconset resource="../data/Resources.qrc">
+     <normaloff>:/icons/project_management/remove.png</normaloff>:/icons/project_management/remove.png</iconset>
+   </property>
+   <property name="text">
+    <string>Remove</string>
+   </property>
+   <property name="toolTip">
+    <string>Remove selected item(s) from the project</string>
+   </property>
+  </action>
  </widget>
  <resources>
   <include location="../data/Resources.qrc"/>

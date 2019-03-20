@@ -119,7 +119,7 @@ private slots:
 
     void on_actionNewImageset_triggered();
 
-    void on_actionNewOtherFile_triggered(const QString& title = "New File", const QStringList& filters = QStringList(), int currFilter = 0, const QString& autoSuffix = "");
+    void on_actionNewOtherFile_triggered();
 
 private:
 
@@ -136,6 +136,8 @@ private:
     bool closeAllTabsRequiringProject();
     EditorBase* getEditorForTab(int index) const;
     EditorBase* getEditorForTab(QWidget* tabWidget) const;
+
+    void createNewFile(const QString& title, const QStringList& filters, int currFilter, const QString& autoSuffix);
 
     Ui::MainWindow* ui;
     ProjectManager* projectManager = nullptr;

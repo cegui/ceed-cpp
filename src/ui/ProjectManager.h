@@ -30,9 +30,17 @@ signals:
 private slots:
     void on_view_doubleClicked(const QModelIndex &index);
 
+    void on_view_customContextMenuRequested(const QPoint &pos);
+
     void on_actionCreateFolder_triggered();
 
-    void on_view_customContextMenuRequested(const QPoint &pos);
+    void on_actionNewFile_triggered();
+
+    void on_actionExistingFiles_triggered();
+
+    void on_actionRename_triggered();
+
+    void on_actionRemove_triggered();
 
 private:
 

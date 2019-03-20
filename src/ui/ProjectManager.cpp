@@ -3,6 +3,8 @@
 #include "src/proj/CEGUIProjectItem.h"
 #include "ui_ProjectManager.h"
 #include "qinputdialog.h"
+#include "qfiledialog.h"
+#include "qmessagebox.h"
 #include "qmenu.h"
 
 ProjectManager::ProjectManager(QWidget *parent) :
@@ -17,6 +19,11 @@ ProjectManager::ProjectManager(QWidget *parent) :
     _contextMenu = new QMenu(this);
     _contextMenu->addAction(ui->actionCreateFolder);
     _contextMenu->addSeparator();
+    _contextMenu->addAction(ui->actionNewFile);
+    _contextMenu->addAction(ui->actionExistingFiles);
+    _contextMenu->addSeparator();
+    _contextMenu->addAction(ui->actionRename);
+    _contextMenu->addAction(ui->actionRemove);
 
     setProject(nullptr);
 }
@@ -44,6 +51,22 @@ void ProjectManager::on_view_doubleClicked(const QModelIndex& index)
         const CEGUIProject* project = static_cast<const CEGUIProject*>(index.model());
         emit itemOpenRequested(project->getAbsolutePathOf(index.data(Qt::UserRole + 2).toString()));
     }
+}
+
+void ProjectManager::on_view_customContextMenuRequested(const QPoint& pos)
+{
+    if (!isEnabled()) return;
+
+    auto selectedIndices = ui->view->selectionModel()->selectedIndexes();
+    const bool createElement = (selectedIndices.empty() || CEGUIProjectItem::isFolder(selectedIndices[0]));
+
+    ui->actionCreateFolder->setEnabled(createElement);
+    ui->actionNewFile->setEnabled(createElement);
+    ui->actionExistingFiles->setEnabled(createElement);
+    ui->actionRename->setEnabled(selectedIndices.size() == 1);
+    ui->actionRemove->setEnabled(!selectedIndices.empty());
+
+    _contextMenu->exec(mapToGlobal(pos));
 }
 
 void ProjectManager::on_actionCreateFolder_triggered()
@@ -93,111 +116,47 @@ void ProjectManager::on_actionCreateFolder_triggered()
     }
 }
 
-void ProjectManager::on_view_customContextMenuRequested(const QPoint& pos)
+void ProjectManager::on_actionNewFile_triggered()
 {
-    if (!isEnabled()) return;
+    // TODO: name clashes, duplicates
 
-    auto selectedIndices = ui->view->selectionModel()->selectedIndexes();
-    const bool createElement = (selectedIndices.empty() || CEGUIProjectItem::isFolder(selectedIndices[0]));
+    QString fileName = QFileDialog::getSaveFileName(this,
+                                                    "Create a new file and add it to the project",
+                                                    _project->getAbsolutePathOf(""));
 
-    ui->actionCreateFolder->setEnabled(createElement);
-/*
-            # we set everything to disabled and then enable what's relevant
-            self.addNewFileAction.setEnabled(False)
-            self.addExistingFileAction.setEnabled(False)
-            self.renameAction.setEnabled(False)
-            self.removeAction.setEnabled(False)
+    if (fileName.isEmpty()) return;
 
-            if len(selectedIndices) == 0:
-                self.addNewFileAction.setEnabled(True)
-                self.addExistingFileAction.setEnabled(True)
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly))
+    {
+        QMessageBox::critical(this, "Error creating file!",
+                              "CEED encountered an error trying to create a new file " + fileName);
+        return;
+    }
+    file.close();
 
-            elif len(selectedIndices) == 1:
-                index = selectedIndices[0]
-                item = self.getItemFromModelIndex(index)
+    auto item = new CEGUIProjectItem(_project);
+    item->setType(CEGUIProjectItem::Type::File);
+    item->setPath(_project->getRelativePathOf(fileName));
 
-                if item.itemType == Item.Folder:
-                    self.addNewFileAction.setEnabled(True)
-                    self.addExistingFileAction.setEnabled(True)
-
-                self.renameAction.setEnabled(True)
-                self.removeAction.setEnabled(True)
-
-            else:
-                # more than 1 selected item
-                self.removeAction.setEnabled(True)
-
-                #for index in selectedIndices:
-                #    item = self.getItemFromModelIndex(index)
-*/
-
-    _contextMenu->exec(mapToGlobal(pos));
+    auto parentIndex = ui->view->selectionModel()->currentIndex();
+    if (parentIndex.isValid() && CEGUIProjectItem::isFolder(parentIndex))
+    {
+        CEGUIProjectItem* parentItem = static_cast<CEGUIProjectItem*>(_project->itemFromIndex(parentIndex));
+        assert(parentItem);
+        parentItem->appendRow(item);
+    }
+    else
+    {
+        _project->appendRow(item);
+    }
 }
 
+void ProjectManager::on_actionExistingFiles_triggered()
+{
+    // TODO: name clashes, duplicates
+
 /*
-        self.addNewFileAction = QtGui.QAction(QtGui.QIcon("icons/project_management/add_new_file.png"), "Add new file", self)
-        self.contextMenu.addAction(self.addNewFileAction)
-        self.addNewFileAction.triggered.connect(self.slot_addNewFile)
-
-        self.addExistingFileAction = QtGui.QAction(QtGui.QIcon("icons/project_management/add_existing_file.png"), "Add existing file(s)", self)
-        self.contextMenu.addAction(self.addExistingFileAction)
-        self.addExistingFileAction.triggered.connect(self.slot_addExistingFile)
-
-        self.contextMenu.addSeparator()
-
-        self.renameAction = QtGui.QAction(QtGui.QIcon("icons/project_management/rename.png"), "Rename file/folder", self)
-        self.contextMenu.addAction(self.renameAction)
-        self.renameAction.triggered.connect(self.slot_renameAction)
-
-        self.removeAction = QtGui.QAction(QtGui.QIcon("icons/project_management/remove.png"), "Remove file(s)/folder(s)", self)
-        self.contextMenu.addAction(self.removeAction)
-        self.removeAction.triggered.connect(self.slot_removeAction)
-
-    def slot_addNewFile(self):
-        # TODO: name clashes, duplicates
-
-        file_, _ = QtGui.QFileDialog.getSaveFileName(
-            self,
-            "Create a new file and add it to the project",
-            self.project.getAbsolutePathOf("")
-        )
-
-        if file_ == "":
-            # user cancelled
-            return
-
-        try:
-            f = open(file_, "w")
-            f.close()
-
-        except OSError:
-            QtGui.QMessageBox.question(self,
-                                       "Can't create file!",
-                                       "Creating file '%s' failed. Exception details follow:\n%s" % (file_, sys.exc_info()[1]),
-                                       QtGui.QMessageBox.Ok)
-
-            return
-
-        selectedIndices = self.view.selectedIndexes()
-
-        item = Item(self.project)
-        item.itemType = Item.File
-        item.path = self.project.getRelativePathOf(file_)
-
-        if len(selectedIndices) == 0:
-            self.project.appendRow(item)
-
-        else:
-            assert(len(selectedIndices) == 1)
-
-            parent = self.getItemFromModelIndex(selectedIndices[0])
-            assert(parent.itemType == Item.Folder)
-
-            parent.appendRow(item)
-
-    def slot_addExistingFile(self):
-        # TODO: name clashes, duplicates
-
         files, _ = QtGui.QFileDialog.getOpenFileNames(self,
                                                            "Select one or more files to add to the project",
                                                            self.project.getAbsolutePathOf(""))
@@ -242,7 +201,20 @@ void ProjectManager::on_view_customContextMenuRequested(const QPoint& pos)
                 assert(parent.itemType == Item.Folder)
 
                 parent.appendRow(item)
+*/
+}
 
+void ProjectManager::on_actionRename_triggered()
+{
+
+}
+
+void ProjectManager::on_actionRemove_triggered()
+{
+
+}
+
+/*
     def slot_renameAction(self):
         # TODO: Name clashes!
 

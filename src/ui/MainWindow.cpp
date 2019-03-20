@@ -1042,15 +1042,20 @@ void MainWindow::on_actionReloadResources_triggered()
 
 void MainWindow::on_actionNewLayout_triggered()
 {
-    on_actionNewOtherFile_triggered("New Layout", { "Layout files (*.layout)" }, 0, "layout");
+    createNewFile("New Layout", { "Layout files (*.layout)" }, 0, "layout");
 }
 
 void MainWindow::on_actionNewImageset_triggered()
 {
-    on_actionNewOtherFile_triggered("New Imageset", { "Imageset files (*.imageset)" }, 0, "imageset");
+    createNewFile("New Imageset", { "Imageset files (*.imageset)" }, 0, "imageset");
 }
 
-void MainWindow::on_actionNewOtherFile_triggered(const QString& title, const QStringList& filters, int currFilter, const QString& autoSuffix)
+void MainWindow::on_actionNewOtherFile_triggered()
+{
+    createNewFile("New File", QStringList(), 0, "");
+}
+
+void MainWindow::createNewFile(const QString& title, const QStringList& filters, int currFilter, const QString& autoSuffix)
 {
     QString defaultDir;
     if (CEGUIProjectManager::Instance().isProjectLoaded())
