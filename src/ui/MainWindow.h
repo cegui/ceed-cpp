@@ -14,6 +14,7 @@ class FileSystemBrowser;
 class UndoViewer;
 class SettingsDialog;
 class RecentlyUsedMenuEntry;
+class CEGUIProject;
 typedef std::unique_ptr<class EditorBase> EditorBasePtr;
 typedef std::unique_ptr<class EditorFactoryBase> EditorFactoryBasePtr;
 
@@ -127,7 +128,7 @@ private:
     void setupToolbars();
     QToolBar* createToolbar(const QString& name);
 
-    void updateUIOnProjectChanged();
+    void updateProjectDependentUI(CEGUIProject* newProject);
 
     EditorBase* createEditorForFile(const QString& absolutePath);
     bool activateEditorTabByFilePath(const QString& absolutePath);

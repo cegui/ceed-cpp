@@ -87,13 +87,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
-    //???CEGUI instance to CEGUIProjectManager?
-    /*
-        # we start CEGUI early and we always start it
-        self.ceguiInstance = cegui.Instance()
-        self.ceguiContainerWidget = cegui_container.ContainerWidget(self.ceguiInstance, self)
-    */
-
     ui->tabs->tabBar()->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tabs->tabBar(), SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(slot_tabBarCustomContextMenuRequested(QPoint)));
 
@@ -280,24 +273,28 @@ bool MainWindow::on_actionQuit_triggered()
     return true;
 }
 
-void MainWindow::updateUIOnProjectChanged()
+void MainWindow::updateProjectDependentUI(CEGUIProject* newProject)
 {
-    const bool isProjectLoaded = CEGUIProjectManager::Instance().isProjectLoaded();
-    auto project = CEGUIProjectManager::Instance().getCurrentProject();
+    const bool isProjectLoaded = !!newProject;
 
-    projectManager->setProject(project);
+    projectManager->setProject(newProject);
 
     if (isProjectLoaded)
     {        
-        recentlyUsedProjects->addRecentlyUsed(project->filePath);
+        recentlyUsedProjects->addRecentlyUsed(newProject->filePath);
 
         // TODO: Maybe this could be configurable?
-        auto baseDir = project->getAbsolutePathOf("");
+        auto baseDir = newProject->getAbsolutePathOf("");
         if (QFileInfo(baseDir).isDir())
             fsBrowser->setDirectory(baseDir);
     }
     else
     {
+        // Since we are effectively unloading the project and potentially nuking resources of it
+        // we should definitely unload all tabs that rely on it to prevent segfaults and other
+        // nasty phenomena
+        assert(closeAllTabsRequiringProject());
+
         fsBrowser->setDirectory(QDir::homePath());
     }
 
@@ -331,6 +328,7 @@ void MainWindow::on_actionNewProject_triggered()
     if (newProjectDialog.exec() != QDialog::Accepted) return;
 
     // The dialog was accepted, close any open project
+    updateProjectDependentUI(nullptr);
     CEGUIProjectManager::Instance().unloadProject();
 
     /* Need creation params from dialog, WAS:
@@ -345,6 +343,8 @@ void MainWindow::on_actionNewProject_triggered()
         # new project file
         self.openProject(path = newProject.projectFilePath, openSettings = True)
 */
+
+    on_actionProjectSettings_triggered();
 
     // Save the project with the settings that were potentially set in the project settings dialog
     newProject->save();
@@ -364,6 +364,7 @@ void MainWindow::on_actionOpenProject_triggered()
 
         if (result != QMessageBox::Yes) return;
 
+        updateProjectDependentUI(nullptr);
         CEGUIProjectManager::Instance().unloadProject();
     }
 
@@ -375,7 +376,7 @@ void MainWindow::on_actionOpenProject_triggered()
     if (!fileName.isEmpty())
     {
         CEGUIProjectManager::Instance().loadProject(fileName);
-        updateUIOnProjectChanged();
+        updateProjectDependentUI(CEGUIProjectManager::Instance().getCurrentProject());
     }
 }
 
@@ -399,9 +400,7 @@ void MainWindow::on_actionProjectSettings_triggered()
     if (dialog.exec() == QDialog::Accepted)
     {
         dialog.apply(*CEGUIProjectManager::Instance().getCurrentProject());
-        /*
-            self.syncProjectToCEGUIInstance()
-        */
+        CEGUIProjectManager::Instance().syncProjectToCEGUIInstance();
     }
 }
 
@@ -1003,9 +1002,9 @@ bool MainWindow::on_actionCloseProject_triggered()
             return false;
     }
 
-    // 'project' pointer is invalidated here
+    updateProjectDependentUI(nullptr);
     CEGUIProjectManager::Instance().unloadProject();
-    updateUIOnProjectChanged();
+
     return true;
 }
 
@@ -1038,9 +1037,7 @@ void MainWindow::on_actionReloadResources_triggered()
         return;
     }
 
-/*
-        self.syncProjectToCEGUIInstance()
-*/
+    CEGUIProjectManager::Instance().syncProjectToCEGUIInstance();
 
     // Load previously loaded tabs requiring a project opened
     for (auto& filePath : filePathsToLoad)

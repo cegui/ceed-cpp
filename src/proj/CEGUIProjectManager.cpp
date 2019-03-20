@@ -1,5 +1,7 @@
 #include "src/proj/CEGUIProjectManager.h"
-#include "CEGUIProject.h"
+#include "src/proj/CEGUIProject.h"
+#include "src/Application.h"
+#include "qmessagebox.h"
 
 CEGUIProjectManager::CEGUIProjectManager()
 {
@@ -55,40 +57,16 @@ void CEGUIProjectManager::loadProject(const QString& fileName)
     currentProject.reset(new CEGUIProject());
     if (!currentProject->loadFromFile(fileName))
     {
-        /*
-        QMessageBox::critical(this,
+        QMessageBox::critical(qobject_cast<Application*>(qApp)->getMainWindow(),
                               "Error when opening project",
-                              tr("It seems project at path '%s' doesn't exist or you don't have rights to open it.").arg(fileName));
-        */
+                              QString("It seems project at path '%s' doesn't exist or you don't have rights to open it.").arg(fileName));
         currentProject.reset();
         return;
     }
 
-    //!!!FORMER performProjectDirectoriesSanityCheck!
-    if (!currentProject->checkAllDirectories())
-    {
-        /*
-        if (indicateErrorsWithDialogs)
-            QMessageBox::warning(self,
-                                 "At least one of project's resource directories is invalid",
-                                 "Project's resource directory paths didn't pass the sanity check, please check projects settings.
-                                 "Details of this error: %s");
-        */
-        return;
-    }
-
-    /*
-        if openSettings:
-            self.slot_projectSettings() //!!!external, in MainWindow!
-
-        else:
-        //!!!checkAllDirectories / performProjectDirectoriesSanityCheck is inside, don't call twice!
-            self.syncProjectToCEGUIInstance()
-    */
-
-    //!!!see updateUIOnProjectChanged for UI changes!
-
-    loadedProjectFileName = fileName;
+    // NB: must not be called in createProject() for new projects because it will be called
+    // after the initial project setup in a project settings dialog.
+    syncProjectToCEGUIInstance();
 }
 
 void CEGUIProjectManager::saveProject(const QString& fileName)
@@ -103,43 +81,34 @@ void CEGUIProjectManager::unloadProject()
     if (!currentProject) return;
 
     /*
-        # since we are effectively unloading the project and potentially nuking resources of it
-        # we should definitely unload all tabs that rely on it to prevent segfaults and other
-        # nasty phenomena
-        if not self.closeAllTabsRequiringProject():
-            return
-
-        self.projectManager.setProject(None)
         # clean resources that were potentially used with this project
         self.ceguiInstance.cleanCEGUIResources()
-
-        self.project.unload()
     */
 
-    loadedProjectFileName.clear();
+    currentProject->unload();
     currentProject.reset();
-
-/*
-        # as the project was closed be will disable actions related to it
-        self.saveProjectAction.setEnabled(False)
-        self.closeProjectAction.setEnabled(False)
-        self.projectReloadResourcesAction.setEnabled(False)
-*/
 }
 
+// Synchronises current project to the CEGUI instance
+bool CEGUIProjectManager::syncProjectToCEGUIInstance()
+{
+    if (!currentProject)
+    {
+        /*
+            self.ceguiInstance.cleanCEGUIResources()
+        */
+        return true;
+    }
+
+    if (!currentProject->checkAllDirectories())
+    {
+        QMessageBox::warning(qobject_cast<Application*>(qApp)->getMainWindow(),
+                             "At least one of project's resource directories is invalid",
+                             "Project's resource directory paths didn't pass the sanity check, please check projects settings.");
+        return false;
+    }
+
 /*
-
-    def syncProjectToCEGUIInstance(self, indicateErrorsWithDialogs = True):
-        """Synchronises current project to the CEGUI instance.
-
-        //!!!already done in loadProject, but required in 2 other places!!!
-        self.performProjectDirectoriesSanityCheck()
-
-        indicateErrorsWithDialogs - if True a dialog is opened in case of errors
-
-        Returns True if the procedure was successful
-        """
-
         try:
             self.ceguiInstance.syncToProject(self.project, self)
 
@@ -153,8 +122,14 @@ void CEGUIProjectManager::unloadProject()
 This means that editing capabilities of CEED will be limited to editing of files that don't require a project opened (for example: imagesets).
 
 Details of this error: %s""" % (e))
+*/
+    return false;
+}
 
-            return False
+/*
+        # we start CEGUI early and we always start it
+        self.ceguiInstance = cegui.Instance()
+        self.ceguiContainerWidget = cegui_container.ContainerWidget(self.ceguiInstance, self)
 */
 
 /* Was not used in the original CEED:
