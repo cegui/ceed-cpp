@@ -68,8 +68,6 @@ bool CEGUIProject::loadFromFile(const QString& fileName)
     xmlSchemasPath = QDir::cleanPath(xmlRoot.attribute("xmlSchemasPath", "./xml_schemas"));
     //???animations?
 
-    changed = false;
-
     //!!!TODO: scan & add files from project directories!
     // New project created in an existing folder structure must auto-add files.
     auto xmlItem = xmlRoot.firstChildElement("Items").firstChildElement("Item");
@@ -81,6 +79,8 @@ bool CEGUIProject::loadFromFile(const QString& fileName)
 
         xmlItem = xmlItem.nextSiblingElement("Item");
     }
+
+    changed = false;
 
     return true;
 }
@@ -101,8 +101,7 @@ bool CEGUIProject::save(const QString& fileName)
 
     // Write header
 
-    auto xmlRoot = doc.documentElement();
-    xmlRoot.setTagName("Project");
+    auto xmlRoot = doc.createElement("Project");
     xmlRoot.setAttribute("version", "CEED Project 1");
     xmlRoot.setAttribute("CEGUIVersion", CEGUIVersion);
     xmlRoot.setAttribute("CEGUIDefaultResolution", defaultResolution);
@@ -128,6 +127,7 @@ bool CEGUIProject::save(const QString& fileName)
     }
 
     xmlRoot.appendChild(xmlItems);
+    doc.appendChild(xmlRoot);
 
     // Save to file
 

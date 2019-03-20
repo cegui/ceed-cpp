@@ -32,6 +32,8 @@ private slots:
 
     void on_actionCreateFolder_triggered();
 
+    void on_view_customContextMenuRequested(const QPoint &pos);
+
 private:
 
     Ui::ProjectManager *ui;

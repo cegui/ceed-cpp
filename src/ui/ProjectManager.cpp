@@ -38,7 +38,7 @@ void ProjectManager::on_view_doubleClicked(const QModelIndex& index)
     if (!index.isValid() || !index.model()) return;
 
     //???can obtain item pointer itself?
-    CEGUIProjectItem::Type type = static_cast<CEGUIProjectItem::Type>(index.data(Qt::UserRole + 1).toInt());
+    CEGUIProjectItem::Type type = CEGUIProjectItem::getItemType(index);
     if (type == CEGUIProjectItem::Type::File)
     {
         const CEGUIProject* project = static_cast<const CEGUIProject*>(index.model());
@@ -67,9 +67,10 @@ void ProjectManager::on_actionCreateFolder_triggered()
     item->setPath(text);
 
     auto parentIndex = ui->view->selectionModel()->currentIndex();
-    if (parentIndex.isValid() && static_cast<CEGUIProjectItem::Type>(parentIndex.data(Qt::UserRole + 1).toInt()) == CEGUIProjectItem::Type::Folder)
+    if (parentIndex.isValid() && CEGUIProjectItem::isFolder(parentIndex))
     {
         CEGUIProjectItem* parentItem = static_cast<CEGUIProjectItem*>(_project->itemFromIndex(parentIndex));
+        assert(parentItem);
         parentItem->appendRow(item);
 
         /* TODO: remove if not needed. Example of model-agnostic child adding code.
@@ -92,6 +93,47 @@ void ProjectManager::on_actionCreateFolder_triggered()
     }
 }
 
+void ProjectManager::on_view_customContextMenuRequested(const QPoint& pos)
+{
+    if (!isEnabled()) return;
+
+    auto selectedIndices = ui->view->selectionModel()->selectedIndexes();
+    const bool createElement = (selectedIndices.empty() || CEGUIProjectItem::isFolder(selectedIndices[0]));
+
+    ui->actionCreateFolder->setEnabled(createElement);
+/*
+            # we set everything to disabled and then enable what's relevant
+            self.addNewFileAction.setEnabled(False)
+            self.addExistingFileAction.setEnabled(False)
+            self.renameAction.setEnabled(False)
+            self.removeAction.setEnabled(False)
+
+            if len(selectedIndices) == 0:
+                self.addNewFileAction.setEnabled(True)
+                self.addExistingFileAction.setEnabled(True)
+
+            elif len(selectedIndices) == 1:
+                index = selectedIndices[0]
+                item = self.getItemFromModelIndex(index)
+
+                if item.itemType == Item.Folder:
+                    self.addNewFileAction.setEnabled(True)
+                    self.addExistingFileAction.setEnabled(True)
+
+                self.renameAction.setEnabled(True)
+                self.removeAction.setEnabled(True)
+
+            else:
+                # more than 1 selected item
+                self.removeAction.setEnabled(True)
+
+                #for index in selectedIndices:
+                #    item = self.getItemFromModelIndex(index)
+*/
+
+    _contextMenu->exec(mapToGlobal(pos));
+}
+
 /*
         self.addNewFileAction = QtGui.QAction(QtGui.QIcon("icons/project_management/add_new_file.png"), "Add new file", self)
         self.contextMenu.addAction(self.addNewFileAction)
@@ -110,49 +152,6 @@ void ProjectManager::on_actionCreateFolder_triggered()
         self.removeAction = QtGui.QAction(QtGui.QIcon("icons/project_management/remove.png"), "Remove file(s)/folder(s)", self)
         self.contextMenu.addAction(self.removeAction)
         self.removeAction.triggered.connect(self.slot_removeAction)
-
-        self.view.customContextMenuRequested.connect(self.slot_customContextMenu)
-
-    def slot_customContextMenu(self, point):
-        if self.isEnabled():
-            # Qt fails at English a bit?
-            selectedIndices = self.view.selectedIndexes()
-            # </grammar-nazi-mode>
-
-            # we set everything to disabled and then enable what's relevant
-            self.createFolderAction.setEnabled(False)
-            self.addNewFileAction.setEnabled(False)
-            self.addExistingFileAction.setEnabled(False)
-            self.renameAction.setEnabled(False)
-            self.removeAction.setEnabled(False)
-
-            if len(selectedIndices) == 0:
-                # create root folder
-                self.createFolderAction.setEnabled(True)
-                self.addNewFileAction.setEnabled(True)
-                self.addExistingFileAction.setEnabled(True)
-
-            elif len(selectedIndices) == 1:
-                index = selectedIndices[0]
-                item = self.getItemFromModelIndex(index)
-
-                if item.itemType == Item.Folder:
-                    # create folder inside folder
-                    self.createFolderAction.setEnabled(True)
-                    self.addNewFileAction.setEnabled(True)
-                    self.addExistingFileAction.setEnabled(True)
-
-                self.renameAction.setEnabled(True)
-                self.removeAction.setEnabled(True)
-
-            else:
-                # more than 1 selected item
-                self.removeAction.setEnabled(True)
-
-                #for index in selectedIndices:
-                #    item = self.getItemFromModelIndex(index)
-
-        self.contextMenu.exec_(self.mapToGlobal(point))
 
     def slot_addNewFile(self):
         # TODO: name clashes, duplicates

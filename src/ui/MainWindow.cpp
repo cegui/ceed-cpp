@@ -844,6 +844,7 @@ void MainWindow::openRecentProject(const QString& path)
         }
 
         CEGUIProjectManager::Instance().loadProject(path);
+        updateProjectDependentUI(CEGUIProjectManager::Instance().getCurrentProject());
     }
     else
     {

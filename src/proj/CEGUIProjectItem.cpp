@@ -2,20 +2,25 @@
 #include "src/proj/CEGUIProject.h"
 #include "qdir.h"
 
-/*
-    itemType = property(lambda self: self.data(QtCore.Qt.UserRole + 1),
-                        lambda self, value: self.setItemType(value))
+CEGUIProjectItem::Type CEGUIProjectItem::getItemType(const QModelIndex& index)
+{
+    return static_cast<Type>(index.data(Qt::UserRole + 1).toInt());
+}
 
-    label = property(lambda self: self.text(),
-                     lambda self, value: self.setText(value))
+bool CEGUIProjectItem::isFile(const QModelIndex& index)
+{
+    return getItemType(index) == Type::File;
+}
 
-    icon = property(lambda self: self.icon(),
-                    lambda self, value: self.setIcon(QtGui.QIcon(value)))
-*/
+bool CEGUIProjectItem::isFolder(const QModelIndex& index)
+{
+    return getItemType(index) == Type::Folder;
+}
 
 CEGUIProjectItem::CEGUIProjectItem(CEGUIProject* project)
     : _project(project)
 {
+    setType(Type::Unknown);
     project->setModified();
 }
 
@@ -25,11 +30,13 @@ CEGUIProjectItem::~CEGUIProjectItem()
 
 QStandardItem* CEGUIProjectItem::clone() const
 {
-    CEGUIProjectItem* ret = new CEGUIProjectItem(_project);
-    ret->_type = _type;
+    auto type = getType();
 
-    if (_type == Type::File || _type == Type::Folder)
-        ret->_path = _path;
+    CEGUIProjectItem* ret = new CEGUIProjectItem(_project);
+    ret->setType(type);
+
+    if (type == Type::File || type == Type::Folder)
+        ret->setPath(getPath());
 
     return ret;
 }
@@ -41,13 +48,13 @@ void CEGUIProjectItem::loadFromElement(const QDomElement& xml)
     QString typeString = xml.attribute("type");
     if (typeString == "file")
     {
-        _type = Type::File;
-        _path = QDir::cleanPath(xml.attribute("path"));
+        setType(Type::File);
+        setPath(QDir::cleanPath(xml.attribute("path")));
     }
     else if (typeString == "folder")
     {
-        _type = Type::Folder;
-        _path = xml.attribute("name");
+        setType(Type::Folder);
+        setPath(xml.attribute("name"));
 
         auto xmlItem = xml.firstChildElement("Item");
         while (!xmlItem.isNull())
@@ -70,16 +77,17 @@ bool CEGUIProjectItem::saveToElement(QDomElement& xml)
 {
     xml.setTagName("Item");
 
-    if (_type == Type::File)
+    auto type = getType();
+    if (type == Type::File)
     {
         xml.setAttribute("type", "file");
-        xml.setAttribute("path", QDir::cleanPath(_path));
+        xml.setAttribute("path", QDir::cleanPath(getPath()));
         return true;
     }
-    else if (_type == Type::Folder)
+    else if (type == Type::Folder)
     {
         xml.setAttribute("type", "folder");
-        xml.setAttribute("name", _path);
+        xml.setAttribute("name", getPath());
 
         for (int i = 0; i < rowCount(); ++i)
         {
@@ -101,18 +109,23 @@ void CEGUIProjectItem::setType(CEGUIProjectItem::Type type)
 
     // We can drag files but we can't drop anything to them
     // We can drag folders and drop other items to them
-    setDragEnabled(_type == Type::File || _type == Type::Folder);
-    setDropEnabled(_type == Type::Folder);
+    setDragEnabled(type == Type::File || type == Type::Folder);
+    setDropEnabled(type == Type::Folder);
+}
+
+CEGUIProjectItem::Type CEGUIProjectItem::getType() const
+{
+    return static_cast<Type>(data(Qt::UserRole + 1).toInt());
 }
 
 void CEGUIProjectItem::setPath(const QString& path)
 {
-    switch (_type)
+    switch (getType())
     {
         case Type::File:
         {
             QFileInfo pathInfo(path);
-            _label = pathInfo.fileName();
+            setText(pathInfo.fileName());
 
             QString fileType = "unknown";
             QString extension = pathInfo.completeSuffix();
@@ -146,7 +159,7 @@ void CEGUIProjectItem::setPath(const QString& path)
                 fileType = "bitmap";
             }
 
-            _icon = ":/icons/project_items/" + fileType + ".png";
+            setIcon(QIcon(":/icons/project_items/" + fileType + ".png"));
 
             break;
         }
@@ -154,8 +167,8 @@ void CEGUIProjectItem::setPath(const QString& path)
         {
             // A hack to cause folders appear first when sorted
             // TODO: Override the sorting method and make this work more cleanly
-            _label = " " + path;
-            _icon = ":/icons/project_items/folder.png";
+            setText(" " + path);
+            setIcon(QIcon(":/icons/project_items/folder.png"));
             break;
         }
         default:
@@ -171,28 +184,29 @@ void CEGUIProjectItem::setPath(const QString& path)
 
 QString CEGUIProjectItem::getPath() const
 {
-    assert(_type != Type::Unknown);
+    assert(getType() != Type::Unknown);
     return data(Qt::UserRole + 2).toString();
 }
 
 // Returns path relative to the projects base directory
 QString CEGUIProjectItem::getRelativePath() const
 {
-    assert(_type == Type::File);
-    return _path;
+    assert(getType() == Type::File);
+    return getPath();
 }
 
 QString CEGUIProjectItem::getAbsolutePath() const
 {
-    assert(_type == Type::File);
-    return _project->getAbsolutePathOf(_path);
+    assert(getType() == Type::File);
+    return _project->getAbsolutePathOf(getPath());
 }
 
 // Checks whether given absolute path is referenced by this Item
 // or any of its descendants
 bool CEGUIProjectItem::referencesFilePath(const QString& filePath) const
 {
-    if (_type == Type::File)
+    auto type = getType();
+    if (type == Type::File)
     {
         // Figuring out whether 2 paths lead to the same file is a tricky
         // business. We will do our best but this might not work in all cases!
@@ -200,7 +214,7 @@ bool CEGUIProjectItem::referencesFilePath(const QString& filePath) const
         QFileInfo otherPath(QDir::cleanPath(filePath));
         return thisPath == otherPath;
     }
-    else if (_type == Type::Folder)
+    else if (type == Type::Folder)
     {
         for (int i = 0; i < rowCount(); ++i)
         {

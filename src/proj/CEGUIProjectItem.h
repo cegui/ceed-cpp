@@ -25,6 +25,10 @@ public:
         Folder
     };
 
+    static Type getItemType(const QModelIndex& index);
+    static bool isFile(const QModelIndex& index);
+    static bool isFolder(const QModelIndex& index);
+
     CEGUIProjectItem(CEGUIProject* project);
     virtual ~CEGUIProjectItem() override;
 
@@ -36,6 +40,7 @@ public:
     bool saveToElement(QDomElement& xml);
 
     void setType(Type type);
+    Type getType() const;
     void setPath(const QString& path);
     QString getPath() const;
     QString getRelativePath() const;
@@ -45,10 +50,6 @@ public:
 protected:
 
     CEGUIProject* _project = nullptr;
-    Type _type = Type::Unknown;
-    QString _path;
-    QString _label;
-    QString _icon;
 };
 
 #endif // CEGUIPROJECTITEM_H
