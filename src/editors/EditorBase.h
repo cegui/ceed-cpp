@@ -13,8 +13,10 @@ class QFileSystemWatcher;
 
 typedef std::unique_ptr<class EditorBase> EditorBasePtr;
 
-class EditorBase
+class EditorBase : public QObject
 {
+    Q_OBJECT
+
 public:
 
     EditorBase(/*compatibilityManager, */ const QString& filePath, bool createUndoStack = false);
@@ -50,6 +52,13 @@ public:
 
     QString getFilePath() const { return _filePath; }
     QString getLabelText() const { return _labelText /* + (hasChanges() ? " *" : "")*/; }
+
+signals:
+
+    void labelChanged();
+    void contentsChanged(bool isModified);
+    void undoAvailable(bool available, const QString& text);
+    void redoAvailable(bool available, const QString& text);
 
 protected:
 

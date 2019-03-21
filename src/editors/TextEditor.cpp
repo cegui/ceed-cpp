@@ -10,7 +10,7 @@ void TextEditor::initialize()
 {
     EditorBase::initialize();
 
-    textDocument = new QTextDocument;
+    textDocument = new QTextDocument();
 
     {
         QFile file(_filePath);
@@ -25,10 +25,18 @@ void TextEditor::initialize()
     textDocument->setModified(false);
     textDocument->setUndoRedoEnabled(true);
 
-    /*
-        self.textDocument.undoAvailable.connect(self.slot_undoAvailable)
-        self.textDocument.redoAvailable.connect(self.slot_redoAvailable)
-    */
+    connect(textDocument, &QTextDocument::contentsChanged, [this]()
+    {
+        emit contentsChanged(textDocument->isModified());
+    });
+    connect(textDocument, &QTextDocument::undoAvailable, [this](bool available)
+    {
+        emit undoAvailable(available, "");
+    });
+    connect(textDocument, &QTextDocument::redoAvailable, [this](bool available)
+    {
+        emit redoAvailable(available, "");
+    });
 }
 
 void TextEditor::finalize()
@@ -117,14 +125,6 @@ void TextEditor::updateFont()
     font.setStyleHint(QFont::Monospace);
     textDocument->setDefaultFont(font);
 }
-
-/*
-def slot_undoAvailable(self, available):
-    self.mainWindow.undoAction.setEnabled(available)
-
-def slot_redoAvailable(self, available):
-    self.mainWindow.redoAction.setEnabled(available)
-*/
 
 //---------------------------------------------------------------------
 

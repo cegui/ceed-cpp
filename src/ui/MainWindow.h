@@ -35,11 +35,10 @@ private slots:
     void openRecentProject(const QString& path);
     void openRecentFile(const QString& path);
 
-    void onUndoAvailable(bool available);
-    void onRedoAvailable(bool available);
-    void onUndoTextChanged(const QString& text);
-    void onRedoTextChanged(const QString& text);
-    void onUndoStackCleanChanged(bool clean);
+    void onUndoAvailable(bool available, const QString& text);
+    void onRedoAvailable(bool available, const QString& text);
+    void onEditorLabelChanged();
+    void onEditorContentsChanged(bool isModified);
 
     bool on_actionQuit_triggered();
     void on_actionStatusbar_toggled(bool arg1);

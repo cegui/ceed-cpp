@@ -30,6 +30,27 @@ EditorBase::EditorBase(/*compatibilityManager, */ const QString& filePath, bool 
         undoStack = new QUndoStack();
         undoStack->setUndoLimit(settings->getEntryValue("global/undo/limit").toInt());
         undoStack->setClean();
+
+        connect(undoStack, &QUndoStack::canUndoChanged, [this](bool available)
+        {
+            emit undoAvailable(available, undoStack->undoText());
+        });
+        connect(undoStack, &QUndoStack::canRedoChanged, [this](bool available)
+        {
+            emit redoAvailable(available, undoStack->redoText());
+        });
+        connect(undoStack, &QUndoStack::undoTextChanged, [this](const QString& text)
+        {
+            emit undoAvailable(undoStack->canUndo(), text);
+        });
+        connect(undoStack, &QUndoStack::redoTextChanged, [this](const QString& text)
+        {
+            emit redoAvailable(undoStack->canRedo(), text);
+        });
+        connect(undoStack, &QUndoStack::cleanChanged, [this](bool clear)
+        {
+            emit contentsChanged(!clear);
+        });
     }
 }
 
@@ -49,9 +70,7 @@ void EditorBase::enableFileMonitoring(bool enable)
         if (!fileMonitor)
         {
             fileMonitor = new QFileSystemWatcher(); // TODO: set parent, remove 'delete' from destructor?
-            /*
             connect(fileMonitor, &QFileSystemWatcher::fileChanged, this, &EditorBase::onFileChangedByExternalProgram);
-            */
         }
 
         fileMonitor->addPath(_filePath);
@@ -262,7 +281,6 @@ bool EditorBase::hasChanges() const
     return undoStack ? undoStack->isClean() : false;
 }
 
-//!!!???make data obtaining virtual instead?
 // Causes the editor to save all it's progress to the file.
 // targetPath should be absolute file path.
 bool EditorBase::saveAs(const QString& targetPath)
@@ -295,13 +313,7 @@ bool EditorBase::saveAs(const QString& targetPath)
     {
         _filePath = targetPath;
         _labelText = QFileInfo(_filePath).fileName(); //.baseName();
-
-        /*
-            //???use signal to update UI?
-            # because this might be called even before initialise is called!
-            if self.mainWindow is not None:
-                self.mainWindow.tabs.setTabText(self.mainWindow.tabs.indexOf(self.tabWidget), self.tabLabel)
-        */
+        emit labelChanged();
     }
 
     enableFileMonitoring(true);

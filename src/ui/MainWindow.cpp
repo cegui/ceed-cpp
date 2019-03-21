@@ -506,29 +506,24 @@ void MainWindow::on_tabs_currentChanged(int index)
 
     if (currentEditor)
     {
+        disconnect(currentEditor, &EditorBase::undoAvailable, this, &MainWindow::onUndoAvailable);
+        disconnect(currentEditor, &EditorBase::redoAvailable, this, &MainWindow::onRedoAvailable);
+        disconnect(currentEditor, &EditorBase::labelChanged, this, &MainWindow::onEditorLabelChanged);
+        disconnect(currentEditor, &EditorBase::contentsChanged, this, &MainWindow::onEditorContentsChanged);
+
         currentEditor->deactivate();
 
         ui->menuEditor->clear();
         ui->menuEditor->menuAction()->setVisible(false);
         ui->menuEditor->menuAction()->setEnabled(false);
 
-        auto undoStack = currentEditor->getUndoStack();
-        if (undoStack)
-        {
-            disconnect(undoStack, &QUndoStack::canUndoChanged, this, &MainWindow::onUndoAvailable);
-            disconnect(undoStack, &QUndoStack::canRedoChanged, this, &MainWindow::onRedoAvailable);
-            disconnect(undoStack, &QUndoStack::undoTextChanged, this, &MainWindow::onUndoTextChanged);
-            disconnect(undoStack, &QUndoStack::redoTextChanged, this, &MainWindow::onRedoTextChanged);
-            disconnect(undoStack, &QUndoStack::cleanChanged, this, &MainWindow::onUndoStackCleanChanged);
+        // Also reset texts in case the tabbed editor messed with them
+        ui->actionUndo->setEnabled(false);
+        ui->actionRedo->setEnabled(false);
+        ui->actionUndo->setText("Undo");
+        ui->actionRedo->setText("Redo");
 
-            // Also reset texts in case the tabbed editor messed with them
-            ui->actionUndo->setEnabled(false);
-            ui->actionRedo->setEnabled(false);
-            ui->actionUndo->setText("Undo");
-            ui->actionRedo->setText("Redo");
-
-            undoViewer->setUndoStack(nullptr);
-        }
+        undoViewer->setUndoStack(nullptr);
     }
 
     statusBar()->clearMessage();
@@ -557,13 +552,12 @@ void MainWindow::on_tabs_currentChanged(int index)
             ui->actionRedo->setEnabled(undoStack->canRedo());
             ui->actionUndo->setText("Undo " + undoStack->undoText());
             ui->actionRedo->setText("Redo " + undoStack->redoText());
-
-            connect(undoStack, &QUndoStack::canUndoChanged, this, &MainWindow::onUndoAvailable);
-            connect(undoStack, &QUndoStack::canRedoChanged, this, &MainWindow::onRedoAvailable);
-            connect(undoStack, &QUndoStack::undoTextChanged, this, &MainWindow::onUndoTextChanged);
-            connect(undoStack, &QUndoStack::redoTextChanged, this, &MainWindow::onRedoTextChanged);
-            connect(undoStack, &QUndoStack::cleanChanged, this, &MainWindow::onUndoStackCleanChanged);
         }
+
+        connect(currentEditor, &EditorBase::undoAvailable, this, &MainWindow::onUndoAvailable);
+        connect(currentEditor, &EditorBase::redoAvailable, this, &MainWindow::onRedoAvailable);
+        connect(currentEditor, &EditorBase::labelChanged, this, &MainWindow::onEditorLabelChanged);
+        connect(currentEditor, &EditorBase::contentsChanged, this, &MainWindow::onEditorContentsChanged);
     }
 
     ui->tabs->setUpdatesEnabled(true);
@@ -925,41 +919,43 @@ void MainWindow::openRecentFile(const QString& path)
     }
 }
 
-void MainWindow::onUndoAvailable(bool available)
+void MainWindow::onUndoAvailable(bool available, const QString& text)
 {
     ui->actionUndo->setEnabled(available);
+    ui->actionUndo->setText(text.isEmpty() ? "Undo" : "Undo " + text);
 }
 
-void MainWindow::onRedoAvailable(bool available)
+void MainWindow::onRedoAvailable(bool available, const QString& text)
 {
     ui->actionRedo->setEnabled(available);
+    ui->actionRedo->setText(text.isEmpty() ? "Redo" : "Redo " + text);
 }
 
-void MainWindow::onUndoTextChanged(const QString &text)
+void MainWindow::onEditorLabelChanged()
 {
-    ui->actionUndo->setText("Undo " + text);
-}
-
-void MainWindow::onRedoTextChanged(const QString &text)
-{
-    ui->actionRedo->setText("Redo " + text);
-}
-
-//!!!???catch contentChanged signal from editors instead? TextEditor doesn't use our undo stack!
-void MainWindow::onUndoStackCleanChanged(bool clean)
-{
-    assert(currentEditor);
+    EditorBase* editor = qobject_cast<EditorBase*>(sender());
+    assert(editor);
     if (!currentEditor) return;
+
+    const int tabIndex = ui->tabs->indexOf(editor->getWidget());
+    ui->tabs->setTabText(tabIndex, editor->getLabelText());
+}
+
+void MainWindow::onEditorContentsChanged(bool isModified)
+{
+    EditorBase* editor = qobject_cast<EditorBase*>(sender());
+    assert(editor && editor == currentEditor);
+    if (!editor) return;
 
     // Clean means that the undo stack is at a state where it's in sync with the underlying file
     // we set the undostack as clean usually when saving the file so we will assume that there
-    ui->actionSave->setEnabled(!clean);
+    ui->actionSave->setEnabled(isModified);
 
-    int tabIndex = ui->tabs->indexOf(currentEditor->getWidget());
-    if (clean)
-        ui->tabs->setTabIcon(tabIndex, QIcon());
-    else
+    const int tabIndex = ui->tabs->indexOf(editor->getWidget());
+    if (isModified)
         ui->tabs->setTabIcon(tabIndex, QIcon(":/icons/tabs/has_changes.png"));
+    else
+        ui->tabs->setTabIcon(tabIndex, QIcon());
 }
 
 void MainWindow::on_actionZoomIn_triggered()
