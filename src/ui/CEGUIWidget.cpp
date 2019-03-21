@@ -8,6 +8,9 @@ CEGUIWidget::CEGUIWidget(QWidget *parent) :
     ui->setupUi(this);
 
     /*
+        self.ceguiInstance = ceguiInstance
+        self.mainWindow = mainWindow
+
         self.currentParentWidget = None
 
         self.debugInfo = DebugInfo(self)
@@ -39,6 +42,8 @@ void CEGUIWidget::makeOpenGLContextCurrent()
     //view->viewport()->makeCurrent();
 }
 
+// If you have already activated this container, you can call this to enable CEGUI input propagation
+// (The CEGUI instance associated will get mouse and keyboard events if the widget has focus)
 void CEGUIWidget::setInputEnabled(bool enable)
 {
     CEGUIGraphicsView* view = findChild<CEGUIGraphicsView*>("view");
@@ -52,6 +57,14 @@ void CEGUIWidget::on_debugInfoButton_clicked()
 }
 
 /*
+
+class ViewState(object):
+    def __init__(self):
+        self.transform = None
+        self.horizontalScroll = 0
+        self.verticalScroll = 0
+//////
+
     def setViewFeatures(self, wheelZoom = False, middleButtonScroll = False, continuousRendering = True):
         """The CEGUI view class has several enable/disable features that are very hard to achieve using
         inheritance/composition so they are kept in the CEGUI view class and its base class.
@@ -168,4 +181,7 @@ void CEGUIWidget::on_debugInfoButton_clicked()
 
     def slot_resolutionBoxChanged(self, _):
         self.updateResolution()
+
+    def slot_debugInfoButton(self):
+        self.debugInfo.show()
 */

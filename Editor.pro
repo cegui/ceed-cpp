@@ -62,7 +62,8 @@ SOURCES += \
     src/ui/UndoViewer.cpp \
     src/util/DismissableMessage.cpp \
     src/ui/widgets/BitmapEditorWidget.cpp \
-    src/editors/BitmapEditor.cpp
+    src/editors/BitmapEditor.cpp \
+    src/editors/MultiModeEditor.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -99,7 +100,8 @@ HEADERS += \
     src/ui/UndoViewer.h \
     src/util/DismissableMessage.h \
     src/ui/widgets/BitmapEditorWidget.h \
-    src/editors/BitmapEditor.h
+    src/editors/BitmapEditor.h \
+    src/editors/MultiModeEditor.h
 
 FORMS += \
     ui/MainWindow.ui \

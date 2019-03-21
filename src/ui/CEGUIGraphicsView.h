@@ -3,6 +3,9 @@
 
 #include <QGraphicsView>
 
+// This is a final class, not suitable for subclassing. This views given scene using
+// QOpenGLWidget. It's designed to work with cegui.GraphicsScene derived classes.
+
 class CEGUIGraphicsView final : public QGraphicsView
 {
     Q_OBJECT
