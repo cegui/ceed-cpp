@@ -9,6 +9,7 @@
 class QWidget;
 class QMenu;
 class QUndoStack;
+class QFileSystemWatcher;
 
 typedef std::unique_ptr<class EditorBase> EditorBasePtr;
 
@@ -16,8 +17,8 @@ class EditorBase
 {
 public:
 
-    EditorBase(/*compatibilityManager, */ const QString& filePath);
-    virtual ~EditorBase() {}
+    EditorBase(/*compatibilityManager, */ const QString& filePath, bool createUndoStack = false);
+    virtual ~EditorBase();
 
     virtual void initialize();
     virtual void finalize();
@@ -34,8 +35,8 @@ public:
     virtual void cut() {}
     virtual void paste() {}
     virtual void deleteSelected() {}
-    virtual void undo() {}
-    virtual void redo() {}
+    virtual void undo();
+    virtual void redo();
     virtual void revert();
     virtual void zoomIn() {}
     virtual void zoomOut() {}
@@ -43,22 +44,30 @@ public:
     //virtual void zoomFit() {}
 
     virtual QWidget* getWidget() = 0;
-    QUndoStack* getUndoStack() const { return nullptr; } //!!!TODO: implement!
-    virtual bool hasChanges() const { return false; }
+    QUndoStack* getUndoStack() const { return undoStack; }
+    virtual bool hasChanges() const;
     virtual bool requiresProject() const { return false; }
 
     QString getFilePath() const { return _filePath; }
-    QString getLabelText() const { return _labelText + (hasChanges() ? " *" : ""); }
+    QString getLabelText() const { return _labelText /* + (hasChanges() ? " *" : "")*/; }
 
 protected:
 
+    void onFileChangedByExternalProgram();
+
     virtual void setupEditorMenu(QMenu* editorMenu);
+
     void enableFileMonitoring(bool enable);
+    void askForFileReload();
+
     virtual void getRawData(QByteArray& outRawData) {}
 
+    QFileSystemWatcher* fileMonitor = nullptr; //???one central, compare path?
+    QUndoStack* undoStack = nullptr;
     QString _filePath;
     QString _labelText;
     bool _initialized = false;
+    bool fileChangedByExternalProgram = false;
 };
 
 typedef std::unique_ptr<class EditorFactoryBase> EditorFactoryBasePtr;

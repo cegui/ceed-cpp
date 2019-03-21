@@ -59,5 +59,6 @@
         <file>icons/project_management/create_folder.png</file>
         <file>icons/project_management/remove.png</file>
         <file>icons/project_management/rename.png</file>
+        <file>icons/tabs/has_changes.png</file>
     </qresource>
 </RCC>

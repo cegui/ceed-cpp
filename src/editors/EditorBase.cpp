@@ -1,14 +1,17 @@
 #include "src/editors/EditorBase.h"
 #include "src/Application.h"
+#include "src/util/Settings.h"
 #include "qdir.h"
 #include "qmenu.h"
 #include "qmessagebox.h"
+#include "qfilesystemwatcher.h"
+#include "qundostack.h"
 
 // Constructs the editor.
 // compatibilityManager - manager that should be used to transform data between
 //                        various data types using compatibility layers
 // filePath - absolute file path of the file that should be opened
-EditorBase::EditorBase(/*compatibilityManager, */ const QString& filePath)
+EditorBase::EditorBase(/*compatibilityManager, */ const QString& filePath, bool createUndoStack)
 {
     _filePath = QDir::cleanPath(filePath);
     _labelText = QFileInfo(filePath).fileName(); //.baseName();
@@ -17,25 +20,93 @@ EditorBase::EditorBase(/*compatibilityManager, */ const QString& filePath)
         self.desiredSavingDataType = "" if self.compatibilityManager is None else self.compatibilityManager.EditorNativeType
         self.nativeData = None
 
-        #Set up a QFileSystemWatcher to watch for external changes to a file
-        self.fileMonitor = None
-        self.fileChangedByExternalProgram = False
         self.displayingReloadAlert = False
 */
+
+    if (createUndoStack)
+    {
+        auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+
+        undoStack = new QUndoStack();
+        undoStack->setUndoLimit(settings->getEntryValue("global/undo/limit").toInt());
+        undoStack->setClean();
+    }
+}
+
+EditorBase::~EditorBase()
+{
+    delete undoStack;
+    delete fileMonitor;
 }
 
 // Adds or removes a file monitor to the specified file so CEED will alert the user
 // that an external change happened to the file
 void EditorBase::enableFileMonitoring(bool enable)
 {
-/*
-        if self.fileMonitor is None:
-            self.fileMonitor = QtCore.QFileSystemWatcher(self.mainWindow)
-            self.fileMonitor.fileChanged.connect(self.slot_fileChangedByExternalProgram)
-        self.fileMonitor.addPath(path)
+    if (enable)
+    {
+        // Lazy initialization
+        if (!fileMonitor)
+        {
+            fileMonitor = new QFileSystemWatcher(); // TODO: set parent, remove 'delete' from destructor?
+            /*
+            connect(fileMonitor, &QFileSystemWatcher::fileChanged, this, &EditorBase::onFileChangedByExternalProgram);
+            */
+        }
 
-        if self.fileMonitor is not None: # FIXME: Will it ever be None at this point?
-            self.fileMonitor.removePath(path)
+        fileMonitor->addPath(_filePath);
+    }
+    else if (fileMonitor)
+    {
+        fileMonitor->removePath(_filePath);
+    }
+}
+
+// Pops a alert menu open asking the user s/he would like to reload the
+// file due to external changes being made
+//???move all this 'changed' detection to MainWindow, use single monitor etc?
+void EditorBase::askForFileReload()
+{
+/*
+        # If multiple file writes are made by an external program, multiple
+        # pop-ups will appear. Prevent that with a switch.
+        if not self.displayingReloadAlert:
+            self.displayingReloadAlert = True
+            ret = QtGui.QMessageBox.question(self.mainWindow,
+                                             "File has been modified externally!",
+                                             "The file that you have currently opened has been modified outside the CEGUI Unified Editor.\n\nReload the file?\n\nIf you select Yes, ALL UNDO HISTORY WILL BE DESTROYED!",
+                                             QtGui.QMessageBox.No | QtGui.QMessageBox.Yes,
+                                             QtGui.QMessageBox.No) # defaulting to No is safer IMO
+
+            self.fileChangedByExternalProgram = False
+
+            if ret == QtGui.QMessageBox.Yes:
+                self.reinitialise()
+
+            elif ret == QtGui.QMessageBox.No:
+                # FIXME: We should somehow make CEED think that we have changes :-/
+                #        That is hard to do because CEED relies on QUndoStack to get that info
+                pass
+
+            else:
+                # how did we get here?
+                assert(False)
+
+            self.displayingReloadAlert = False
+
+*/
+}
+
+// The callback method for external file changes.  This method is immediately called when
+// this editor is open.  Otherwise, it's called when the user activates the editor.
+//???move all this 'changed' detection to MainWindow, use single monitor etc?
+//!!!mark file as changed if fe refuse to reload!
+void EditorBase::onFileChangedByExternalProgram()
+{
+    fileChangedByExternalProgram = true;
+/*
+        if self.active:
+            self.askForFileReload()
 */
 }
 
@@ -126,6 +197,9 @@ void EditorBase::initialize()
                     # TODO: Dialog, can't convert
                     self.nativeData = ""
 */
+
+    if (undoStack) undoStack->clear();
+
     _initialized = true;
 }
 
@@ -141,10 +215,8 @@ void EditorBase::finalize()
 void EditorBase::activate(QMenu* editorMenu)
 {
     // If the file was changed by an external program, ask the user to reload the changes
-/*
-    if self.fileMonitor is not None and self.fileChangedByExternalProgram:
-        self.askForFileReload()
-*/
+    if (fileChangedByExternalProgram && fileMonitor)
+        askForFileReload();
 
     if (editorMenu)
     {
@@ -183,6 +255,11 @@ void EditorBase::reloadData()
 // Irrevocably destroys data associated with itself
 void EditorBase::destroy()
 {
+}
+
+bool EditorBase::hasChanges() const
+{
+    return undoStack ? undoStack->isClean() : false;
 }
 
 //!!!???make data obtaining virtual instead?
@@ -229,7 +306,19 @@ bool EditorBase::saveAs(const QString& targetPath)
 
     enableFileMonitoring(true);
 
+    if (undoStack) undoStack->setClean();
+
     return true;
+}
+
+void EditorBase::undo()
+{
+    if (undoStack) undoStack->undo();
+}
+
+void EditorBase::redo()
+{
+    if (undoStack) undoStack->redo();
 }
 
 // Causes the editor to discard all it's progress
@@ -237,62 +326,20 @@ void EditorBase::revert()
 {
     if (!hasChanges()) return;
 
-    // The default but kind of wasteful implementation
-    reloadData();
+    if (undoStack && undoStack->cleanIndex() >= 0)
+    {
+        // If we have undo stack, we can simply use it instead of the slower reinitialisation approach
+        undoStack->setIndex(undoStack->cleanIndex());
+    }
+    else
+    {
+        // It is possible that we can't undo/redo to cleanIndex. This can happen because of undo limitations.
+        // Use the default but kind of wasteful implementation.
+        reloadData();
+    }
 }
 
 /*
-    def slot_fileChangedByExternalProgram(self):
-        """The callback method for external file changes.  This method is
-        immediately called when this tab is open.  Otherwise, it's called when
-        the user clicks on the tab"""
-        self.fileChangedByExternalProgram = True
-        if self.active:
-            self.askForFileReload()
-
-    def askForFileReload(self):
-        """Pops a alert menu open asking the user s/he would like to reload the
-        file due to external changes being made"""
-
-        # If multiple file writes are made by an external program, multiple
-        # pop-ups will appear. Prevent that with a switch.
-        if not self.displayingReloadAlert:
-            self.displayingReloadAlert = True
-            ret = QtGui.QMessageBox.question(self.mainWindow,
-                                             "File has been modified externally!",
-                                             "The file that you have currently opened has been modified outside the CEGUI Unified Editor.\n\nReload the file?\n\nIf you select Yes, ALL UNDO HISTORY WILL BE DESTROYED!",
-                                             QtGui.QMessageBox.No | QtGui.QMessageBox.Yes,
-                                             QtGui.QMessageBox.No) # defaulting to No is safer IMO
-
-            self.fileChangedByExternalProgram = False
-
-            if ret == QtGui.QMessageBox.Yes:
-                self.reinitialise()
-
-            elif ret == QtGui.QMessageBox.No:
-                # FIXME: We should somehow make CEED think that we have changes :-/
-                #        That is hard to do because CEED relies on QUndoStack to get that info
-                pass
-
-            else:
-                # how did we get here?
-                assert(False)
-
-            self.displayingReloadAlert = False
-
-    def markHasChanges(self, hasChanges):
-        """Marks that this tabbed editor has changes, in this implementation this means
-        that the tab in the tab list gets an icon
-        """
-
-        if self.mainWindow is None:
-            return
-
-        if hasChanges:
-            self.mainWindow.tabs.setTabIcon(self.mainWindow.tabs.indexOf(self.tabWidget), QtGui.QIcon("icons/tabs/has_changes.png"))
-        else:
-            self.mainWindow.tabs.setTabIcon(self.mainWindow.tabs.indexOf(self.tabWidget), QtGui.QIcon())
-
     def getDesiredSavingDataType(self):
         """Returns current desired saving data type. Data type that will be used when user requests to save this file
         """

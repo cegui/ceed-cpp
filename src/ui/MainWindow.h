@@ -35,92 +35,55 @@ private slots:
     void openRecentProject(const QString& path);
     void openRecentFile(const QString& path);
 
+    void onUndoAvailable(bool available);
+    void onRedoAvailable(bool available);
+    void onUndoTextChanged(const QString& text);
+    void onRedoTextChanged(const QString& text);
+    void onUndoStackCleanChanged(bool clean);
+
     bool on_actionQuit_triggered();
-
     void on_actionStatusbar_toggled(bool arg1);
-
     void on_actionOpenProject_triggered();
-
     void on_actionFullScreen_triggered();
-
     void on_actionQuickstartGuide_triggered();
-
     void on_actionUserManual_triggered();
-
     void on_actionWikiPage_triggered();
-
     void on_actionSendFeedback_triggered();
-
     void on_actionReportBug_triggered();
-
     void on_actionCEGUIDebugInfo_triggered();
-
     void on_actionAbout_triggered();
-
     void on_actionLicense_triggered();
-
     void on_actionQt_triggered();
-
     void on_actionPreferences_triggered();
-
     void on_actionProjectSettings_triggered();
-
     void on_actionNewProject_triggered();
-
     void on_actionOpenFile_triggered();
-
     void slot_tabBarCustomContextMenuRequested(const QPoint& pos);
-
     void on_tabs_currentChanged(int index);
-
     bool on_tabs_tabCloseRequested(int index);
-
     void on_actionCloseTab_triggered();
-
     void on_actionCloseOtherTabs_triggered();
-
     void on_actionCloseAllTabs_triggered();
-
     void on_actionPreviousTab_triggered();
-
     void on_actionNextTab_triggered();
-
     void on_actionZoomIn_triggered();
-
     void on_actionZoomOut_triggered();
-
     void on_actionZoomReset_triggered();
-
     void on_actionUndo_triggered();
-
     void on_actionRedo_triggered();
-
     void on_actionRevert_triggered();
-
     void on_actionCut_triggered();
-
     void on_actionCopy_triggered();
-
     void on_actionPaste_triggered();
-
     void on_actionDelete_triggered();
-
     void on_actionSave_triggered();
-
     void on_actionSaveAs_triggered();
-
     void on_actionSaveAll_triggered();
-
     void on_actionSaveProject_triggered();
-
     bool on_actionCloseProject_triggered();
-
     void on_actionReloadResources_triggered();
-
     void on_actionNewLayout_triggered();
-
     void on_actionNewImageset_triggered();
-
     void on_actionNewOtherFile_triggered();
 
 private:
