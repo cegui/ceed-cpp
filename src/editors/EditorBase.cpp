@@ -19,8 +19,6 @@ EditorBase::EditorBase(/*compatibilityManager, */ const QString& filePath, bool 
         self.compatibilityManager = compatibilityManager
         self.desiredSavingDataType = "" if self.compatibilityManager is None else self.compatibilityManager.EditorNativeType
         self.nativeData = None
-
-        self.displayingReloadAlert = False
 */
 
     if (createUndoStack)
@@ -228,16 +226,8 @@ void EditorBase::deactivate()
 // Reinitialises this editor, effectivelly reloading the file off the hard drive again
 void EditorBase::reloadData()
 {
-    //!!!'current' stuff - to MainWindow!
-/*
-        wasCurrent = self.mainWindow.activeEditor is self
-*/
     finalize();
     initialize(); // sync status is updated inside
-/*
-        if wasCurrent:
-            self.makeCurrent()
-*/
 }
 
 // Irrevocably destroys data associated with itself
@@ -302,8 +292,7 @@ void EditorBase::resolveSyncConflict(bool reload)
 
     if (reload)
     {
-        finalize();
-        initialize();
+        reloadData();
     }
     else
     {
