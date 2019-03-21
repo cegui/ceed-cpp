@@ -27,7 +27,7 @@ EditorBase::EditorBase(/*compatibilityManager, */ const QString& filePath, bool 
     {
         auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
 
-        undoStack = new QUndoStack();
+        undoStack = new QUndoStack(this);
         undoStack->setUndoLimit(settings->getEntryValue("global/undo/limit").toInt());
         undoStack->setClean();
 
@@ -49,6 +49,8 @@ EditorBase::EditorBase(/*compatibilityManager, */ const QString& filePath, bool 
         });
         connect(undoStack, &QUndoStack::cleanChanged, [this](bool clear)
         {
+            // Clean means that the undo stack is at a state where it's in sync with the underlying file
+            // we set the undostack as clean usually when saving the file so we will assume that there
             emit contentsChanged(!clear);
         });
     }
@@ -56,8 +58,6 @@ EditorBase::EditorBase(/*compatibilityManager, */ const QString& filePath, bool 
 
 EditorBase::~EditorBase()
 {
-    delete undoStack;
-    delete fileMonitor;
 }
 
 // Adds or removes a file monitor to the specified file so CEED will alert the user
@@ -69,7 +69,8 @@ void EditorBase::enableFileMonitoring(bool enable)
         // Lazy initialization
         if (!fileMonitor)
         {
-            fileMonitor = new QFileSystemWatcher(); // TODO: set parent, remove 'delete' from destructor?
+            //???use global file monitor?
+            fileMonitor = new QFileSystemWatcher(this);
             connect(fileMonitor, &QFileSystemWatcher::fileChanged, this, &EditorBase::onFileChangedByExternalProgram);
         }
 
@@ -81,41 +82,6 @@ void EditorBase::enableFileMonitoring(bool enable)
     }
 }
 
-// Pops a alert menu open asking the user s/he would like to reload the
-// file due to external changes being made
-//???move all this 'changed' detection to MainWindow, use single monitor etc?
-void EditorBase::askForFileReload()
-{
-/*
-        # If multiple file writes are made by an external program, multiple
-        # pop-ups will appear. Prevent that with a switch.
-        if not self.displayingReloadAlert:
-            self.displayingReloadAlert = True
-            ret = QtGui.QMessageBox.question(self.mainWindow,
-                                             "File has been modified externally!",
-                                             "The file that you have currently opened has been modified outside the CEGUI Unified Editor.\n\nReload the file?\n\nIf you select Yes, ALL UNDO HISTORY WILL BE DESTROYED!",
-                                             QtGui.QMessageBox.No | QtGui.QMessageBox.Yes,
-                                             QtGui.QMessageBox.No) # defaulting to No is safer IMO
-
-            self.fileChangedByExternalProgram = False
-
-            if ret == QtGui.QMessageBox.Yes:
-                self.reinitialise()
-
-            elif ret == QtGui.QMessageBox.No:
-                # FIXME: We should somehow make CEED think that we have changes :-/
-                #        That is hard to do because CEED relies on QUndoStack to get that info
-                pass
-
-            else:
-                # how did we get here?
-                assert(False)
-
-            self.displayingReloadAlert = False
-
-*/
-}
-
 // The callback method for external file changes.  This method is immediately called when
 // this editor is open.  Otherwise, it's called when the user activates the editor.
 //???move all this 'changed' detection to MainWindow, use single monitor etc?
@@ -123,10 +89,7 @@ void EditorBase::askForFileReload()
 void EditorBase::onFileChangedByExternalProgram()
 {
     fileChangedByExternalProgram = true;
-/*
-        if self.active:
-            self.askForFileReload()
-*/
+    emit fileChangedExternally();
 }
 
 // This method loads everything up so this editor is ready to be switched to
@@ -218,6 +181,7 @@ void EditorBase::initialize()
 */
 
     if (undoStack) undoStack->clear();
+    fileChangedByExternalProgram = false;
 
     _initialized = true;
 }
@@ -233,10 +197,6 @@ void EditorBase::finalize()
 // There can be either 0 editors active (blank screen) or exactly 1 active.
 void EditorBase::activate(QMenu* editorMenu)
 {
-    // If the file was changed by an external program, ask the user to reload the changes
-    if (fileChangedByExternalProgram && fileMonitor)
-        askForFileReload();
-
     if (editorMenu)
     {
         editorMenu->clear();
@@ -264,7 +224,7 @@ void EditorBase::reloadData()
         wasCurrent = self.mainWindow.activeEditor is self
 */
     finalize();
-    initialize();
+    initialize(); // fileChangedByExternalProgram is set to false inside
 /*
         if wasCurrent:
             self.makeCurrent()

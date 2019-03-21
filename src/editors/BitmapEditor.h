@@ -18,7 +18,7 @@ public:
 
 protected:
 
-    BitmapEditorWidget widget; //???if it is a pointer, should BitmapEditor/EditorBase be a QObject? or delete manually?
+    BitmapEditorWidget widget;
 };
 
 class BitmapEditorFactory : public EditorFactoryBase

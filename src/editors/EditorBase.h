@@ -48,6 +48,7 @@ public:
     virtual QWidget* getWidget() = 0;
     QUndoStack* getUndoStack() const { return undoStack; }
     virtual bool hasChanges() const;
+    bool isModifiedExternally() const { return fileChangedByExternalProgram; }
     virtual bool requiresProject() const { return false; }
 
     QString getFilePath() const { return _filePath; }
@@ -57,6 +58,7 @@ signals:
 
     void labelChanged();
     void contentsChanged(bool isModified);
+    void fileChangedExternally();
     void undoAvailable(bool available, const QString& text);
     void redoAvailable(bool available, const QString& text);
 
@@ -67,7 +69,6 @@ protected:
     virtual void setupEditorMenu(QMenu* editorMenu);
 
     void enableFileMonitoring(bool enable);
-    void askForFileReload();
 
     virtual void getRawData(QByteArray& outRawData) {}
 

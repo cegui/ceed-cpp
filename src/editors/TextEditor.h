@@ -37,7 +37,7 @@ protected:
 
     void updateFont();
 
-    QTextEdit widget; //???if it is a pointer, should TextEditor/EditorBase be a QObject? or delete manually?
+    QTextEdit widget;
     QTextDocument* textDocument = nullptr;
     int fontSize = 10;
 };

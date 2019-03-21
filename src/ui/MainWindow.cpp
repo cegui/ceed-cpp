@@ -510,6 +510,7 @@ void MainWindow::on_tabs_currentChanged(int index)
         disconnect(currentEditor, &EditorBase::redoAvailable, this, &MainWindow::onRedoAvailable);
         disconnect(currentEditor, &EditorBase::labelChanged, this, &MainWindow::onEditorLabelChanged);
         disconnect(currentEditor, &EditorBase::contentsChanged, this, &MainWindow::onEditorContentsChanged);
+        disconnect(currentEditor, &EditorBase::fileChangedExternally, this, &MainWindow::onEditorFileChangedExternally);
 
         currentEditor->deactivate();
 
@@ -540,6 +541,10 @@ void MainWindow::on_tabs_currentChanged(int index)
 
     if (currentEditor)
     {
+        // If the file was changed by an external program, ask the user to reload the changes
+        if (currentEditor->isModifiedExternally())
+            onEditorFileChangedExternally();
+
         currentEditor->activate(ui->menuEditor);
 
         auto undoStack = currentEditor->getUndoStack();
@@ -558,6 +563,7 @@ void MainWindow::on_tabs_currentChanged(int index)
         connect(currentEditor, &EditorBase::redoAvailable, this, &MainWindow::onRedoAvailable);
         connect(currentEditor, &EditorBase::labelChanged, this, &MainWindow::onEditorLabelChanged);
         connect(currentEditor, &EditorBase::contentsChanged, this, &MainWindow::onEditorContentsChanged);
+        connect(currentEditor, &EditorBase::fileChangedExternally, this, &MainWindow::onEditorFileChangedExternally);
     }
 
     ui->tabs->setUpdatesEnabled(true);
@@ -935,7 +941,7 @@ void MainWindow::onEditorLabelChanged()
 {
     EditorBase* editor = qobject_cast<EditorBase*>(sender());
     assert(editor);
-    if (!currentEditor) return;
+    if (!editor) return;
 
     const int tabIndex = ui->tabs->indexOf(editor->getWidget());
     ui->tabs->setTabText(tabIndex, editor->getLabelText());
@@ -944,18 +950,55 @@ void MainWindow::onEditorLabelChanged()
 void MainWindow::onEditorContentsChanged(bool isModified)
 {
     EditorBase* editor = qobject_cast<EditorBase*>(sender());
-    assert(editor && editor == currentEditor);
+    assert(editor);
     if (!editor) return;
 
-    // Clean means that the undo stack is at a state where it's in sync with the underlying file
-    // we set the undostack as clean usually when saving the file so we will assume that there
-    ui->actionSave->setEnabled(isModified);
+    if (editor == currentEditor)
+        ui->actionSave->setEnabled(isModified);
 
     const int tabIndex = ui->tabs->indexOf(editor->getWidget());
     if (isModified)
         ui->tabs->setTabIcon(tabIndex, QIcon(":/icons/tabs/has_changes.png"));
     else
         ui->tabs->setTabIcon(tabIndex, QIcon());
+}
+
+// Pops a alert menu open asking the user s/he would like to reload the
+// file due to external changes being made
+void MainWindow::onEditorFileChangedExternally()
+{
+    // If multiple file writes are made by an external program,
+    // multiple pop-ups will appear. Prevent that with a switch.
+    if (displayingReloadAlert) return;
+
+    displayingReloadAlert = true;
+
+    // Slot is called directly on editor activation, sender will be null,
+    // and we should use currentEditor in that case.
+    EditorBase* editor = qobject_cast<EditorBase*>(sender());
+    if (!editor) editor = currentEditor;
+    if (!editor) return;
+
+    auto ret = QMessageBox::question(this,
+                                     "File has been modified externally!",
+                                     "The file that you have currently opened has been modified outside the CEGUI Unified Editor.\n\nReload the file?\n\nIf you select Yes, ALL UNDO HISTORY WILL BE DESTROYED!",
+                                     QMessageBox::No | QMessageBox::Yes,
+                                     QMessageBox::No); // defaulting to No is safer IMO
+
+    /*
+
+        self.fileChangedByExternalProgram = False
+
+        if ret == QtGui.QMessageBox.Yes:
+            self.reinitialise()
+
+        else
+            # FIXME: We should somehow make CEED think that we have changes :-/
+            #        That is hard to do because CEED relies on QUndoStack to get that info
+            pass
+*/
+
+    displayingReloadAlert = false;
 }
 
 void MainWindow::on_actionZoomIn_triggered()

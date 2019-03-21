@@ -39,6 +39,7 @@ private slots:
     void onRedoAvailable(bool available, const QString& text);
     void onEditorLabelChanged();
     void onEditorContentsChanged(bool isModified);
+    void onEditorFileChangedExternally();
 
     bool on_actionQuit_triggered();
     void on_actionStatusbar_toggled(bool arg1);
@@ -114,6 +115,7 @@ private:
     QAction* tabsMenuSeparator = nullptr;
 
     bool wasMaximizedBeforeFullscreen = false;
+    bool displayingReloadAlert = false;
 
     std::vector<EditorFactoryBasePtr> editorFactories;
     QStringList editorFactoryFileFilters;
