@@ -2,7 +2,8 @@
 #include "src/proj/CEGUIProject.h"
 #include "src/Application.h"
 #include "qmessagebox.h"
-#include "qdir.h"
+#include "qprogressdialog.h"
+#include "qdiriterator.h"
 
 CEGUIProjectManager::CEGUIProjectManager()
 {
@@ -11,7 +12,7 @@ CEGUIProjectManager::CEGUIProjectManager()
     self.lastRenderTimeDelta = 0
 
     //!!!was created in a MainWindow!
-    self.ceguiContainerWidget = cegui_container.ContainerWidget(self.ceguiInstance, self)
+    self.ceguiContainerWidget = CEGUIWidget(self.ceguiInstance, self /*mainWnd/*)
 */
 }
 
@@ -76,7 +77,7 @@ void CEGUIProjectManager::loadProject(const QString& filePath)
     {
         QMessageBox::critical(qobject_cast<Application*>(qApp)->getMainWindow(),
                               "Error when opening project",
-                              QString("It seems project at path '%s' doesn't exist or you don't have rights to open it.").arg(fileName));
+                              QString("It seems project at path '%s' doesn't exist or you don't have rights to open it.").arg(filePath));
         currentProject.reset();
         return;
     }
@@ -91,10 +92,8 @@ void CEGUIProjectManager::unloadProject()
 {
     if (!currentProject) return;
 
-    /*
-        # clean resources that were potentially used with this project
-        self.ceguiInstance.cleanCEGUIResources()
-    */
+    // Clean resources that were potentially used with this project
+    cleanCEGUIResources();
 
     currentProject->unload();
     currentProject.reset();
@@ -118,18 +117,12 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
         defaultBaseDirectory = os.path.join(os.path.curdir, "datafiles")
 
         rp = PyCEGUI.System.getSingleton().getResourceProvider()
-        rp.setResourceGroupDirectory("imagesets",
-                                       os.path.join(defaultBaseDirectory, "imagesets"))
-        rp.setResourceGroupDirectory("fonts",
-                                       os.path.join(defaultBaseDirectory, "fonts"))
-        rp.setResourceGroupDirectory("schemes",
-                                       os.path.join(defaultBaseDirectory, "schemes"))
-        rp.setResourceGroupDirectory("looknfeels",
-                                       os.path.join(defaultBaseDirectory, "looknfeel"))
-        rp.setResourceGroupDirectory("layouts",
-                                       os.path.join(defaultBaseDirectory, "layouts"))
-        rp.setResourceGroupDirectory("xml_schemas",
-                                       os.path.join(defaultBaseDirectory, "xml_schemas"))
+        rp.setResourceGroupDirectory("imagesets", os.path.join(defaultBaseDirectory, "imagesets"))
+        rp.setResourceGroupDirectory("fonts", os.path.join(defaultBaseDirectory, "fonts"))
+        rp.setResourceGroupDirectory("schemes", os.path.join(defaultBaseDirectory, "schemes"))
+        rp.setResourceGroupDirectory("looknfeels", os.path.join(defaultBaseDirectory, "looknfeel"))
+        rp.setResourceGroupDirectory("layouts", os.path.join(defaultBaseDirectory, "layouts"))
+        rp.setResourceGroupDirectory("xml_schemas", os.path.join(defaultBaseDirectory, "xml_schemas"))
 
         // All this will never be set to anything else again
         PyCEGUI.ImageManager.setImagesetDefaultResourceGroup("imagesets")
@@ -146,14 +139,12 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
     initialized = true;
 }
 
-// Synchronises current project to the CEGUI instance
+// Synchronises the CEGUI instance with the current project, respecting it's paths and resources
 bool CEGUIProjectManager::syncProjectToCEGUIInstance()
 {
     if (!currentProject)
     {
-        /*
-            self.ceguiInstance.cleanCEGUIResources()
-        */
+        cleanCEGUIResources();
         return true;
     }
 
@@ -167,229 +158,237 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
         return false;
     }
 
+    QProgressDialog progress(mainWnd);
+    progress.setWindowModality(Qt::WindowModal);
+    progress.setWindowTitle("Synchronising embedded CEGUI with the project");
+    progress.setCancelButton(nullptr);
+    progress.resize(400, 100);
+    progress.show();
+
+    ensureCEGUIInitialized();
 /*
-    try:
-        self.ceguiInstance.syncToProject(self.project, self)
+    ceguiContainerWidget->makeOpenGLContextCurrent();
+*/
 
-//////////////
-    def syncToProject(self, project, mainWindow = None):
-        """Synchronises the instance with given project, respecting it's paths and resources
-        """
+    QStringList schemeFiles;
+    auto absoluteSchemesPath = currentProject->getAbsolutePathOf(currentProject->schemesPath);
+    if (!QDir(absoluteSchemesPath).exists())
+    {
+        progress.reset();
+        QMessageBox::warning(mainWnd, "Failed to synchronise embedded CEGUI to your project",
+           "Can't list scheme path '" + absoluteSchemesPath + "'\n\n"
+           "This means that editing capabilities of CEED will be limited to editing of files "
+           "that don't require a project opened (for example: imagesets).");
+       return false;
+    }
 
-        progress = QtGui.QProgressDialog(mainWindow)
-        progress.setWindowModality(QtCore.Qt.WindowModal)
-        progress.setWindowTitle("Synchronising embedded CEGUI with the project")
-        progress.setCancelButton(None)
-        progress.resize(400, 100)
-        progress.show()
+    QDirIterator schemesIt(absoluteSchemesPath);
+    while (schemesIt.hasNext())
+    {
+        schemesIt.next();
+        QFileInfo info = schemesIt.fileInfo();
+        if (!info.isDir() && info.suffix() == "scheme")
+            schemeFiles.append(schemesIt.filePath());
+    }
 
-        self.ensureCEGUIInitialised()
-        self.makeGLContextCurrent()
+    progress.setMinimum(0);
+    progress.setMaximum(2 + 9 * schemeFiles.size());
 
-        schemeFiles = []
-        absoluteSchemesPath = project.getAbsolutePathOf(project.schemesPath)
-        if os.path.exists(absoluteSchemesPath):
-            for file_ in os.listdir(absoluteSchemesPath):
-                if file_.endswith(".scheme"):
-                    schemeFiles.append(file_)
-        else:
-            progress.reset()
-            raise IOError("Can't list scheme path '%s'" % (absoluteSchemesPath))
+    progress.setLabelText("Purging all resources...");
+    progress.setValue(0);
+    QApplication::instance()->processEvents();
 
-        progress.setMinimum(0)
-        progress.setMaximum(2 + 9 * len(schemeFiles))
+    // Destroy all previous resources (if any)
+    cleanCEGUIResources();
 
-        progress.setLabelText("Purging all resources...")
-        progress.setValue(0)
-        QtGui.QApplication.instance().processEvents()
+    progress.setLabelText("Setting resource paths...");
+    progress.setValue(1);
+    QApplication::instance()->processEvents();
 
-        # destroy all previous resources (if any)
-        self.cleanCEGUIResources()
+/*
+    rp = PyCEGUI.System.getSingleton().getResourceProvider()
+    rp.setResourceGroupDirectory("imagesets", project.getAbsolutePathOf(project.imagesetsPath))
+    rp.setResourceGroupDirectory("fonts", project.getAbsolutePathOf(project.fontsPath))
+    rp.setResourceGroupDirectory("schemes", project.getAbsolutePathOf(project.schemesPath))
+    rp.setResourceGroupDirectory("looknfeels", project.getAbsolutePathOf(project.looknfeelsPath))
+    rp.setResourceGroupDirectory("layouts", project.getAbsolutePathOf(project.layoutsPath))
+    rp.setResourceGroupDirectory("xml_schemas", project.getAbsolutePathOf(project.xmlSchemasPath))
+*/
 
-        progress.setLabelText("Setting resource paths...")
-        progress.setValue(1)
-        QtGui.QApplication.instance().processEvents()
+    progress.setLabelText("Recreating all schemes...");
+    progress.setValue(2);
+    QApplication::instance()->processEvents();
 
-        rp = PyCEGUI.System.getSingleton().getResourceProvider()
-        rp.setResourceGroupDirectory("imagesets", project.getAbsolutePathOf(project.imagesetsPath))
-        rp.setResourceGroupDirectory("fonts", project.getAbsolutePathOf(project.fontsPath))
-        rp.setResourceGroupDirectory("schemes", project.getAbsolutePathOf(project.schemesPath))
-        rp.setResourceGroupDirectory("looknfeels", project.getAbsolutePathOf(project.looknfeelsPath))
-        rp.setResourceGroupDirectory("layouts", project.getAbsolutePathOf(project.layoutsPath))
-        rp.setResourceGroupDirectory("xml_schemas", project.getAbsolutePathOf(project.xmlSchemasPath))
+/*
+    # we will load resources manually to be able to use the compatibility layer machinery
+    PyCEGUI.SchemeManager.getSingleton().setAutoLoadResources(False)
+*/
 
-        progress.setLabelText("Recreating all schemes...")
-        progress.setValue(2)
-        QtGui.QApplication.instance().processEvents()
+    bool result = true;
+    try
+    {
+        auto updateProgress = [&progress](const QString& schemeFile, const QString& message)
+        {
+            progress.setValue(progress.value() + 1);
+            progress.setLabelText(QString("Recreating all schemes... (%1)\n\n%2").arg(schemeFile, message));
+            QApplication::instance()->processEvents();
+        };
 
-        # we will load resources manually to be able to use the compatibility layer machinery
-        PyCEGUI.SchemeManager.getSingleton().setAutoLoadResources(False)
+        for (auto& schemeFile : schemeFiles)
+        {
+            updateProgress(schemeFile, "Parsing the scheme file");
 
-        from ceed import compatibility
-        import ceed.compatibility.scheme as scheme_compatibility
-        import ceed.compatibility.imageset as imageset_compatibility
-        import ceed.compatibility.font as font_compatibility
-        import ceed.compatibility.looknfeel as looknfeel_compatibility
+            /*
+            auto schemeFilePath = currentProject->getResourceFilePath(schemeFile, PyCEGUI.Scheme.getDefaultResourceGroup());
 
-        try:
-            for schemeFile in schemeFiles:
-                def updateProgress(message):
-                    progress.setValue(progress.value() + 1)
-                    progress.setLabelText("Recreating all schemes... (%s)\n\n%s" % (schemeFile, message))
+            rawData = open(schemeFilePath, "r").read()
+            rawDataType = scheme_compatibility.manager.EditorNativeType
 
-                    QtGui.QApplication.instance().processEvents()
+            try:
+                rawDataType = scheme_compatibility.manager.guessType(rawData, schemeFilePath)
 
-                updateProgress("Parsing the scheme file")
-                schemeFilePath = project.getResourceFilePath(schemeFile, PyCEGUI.Scheme.getDefaultResourceGroup())
-                rawData = open(schemeFilePath, "r").read()
-                rawDataType = scheme_compatibility.manager.EditorNativeType
+            except compatibility.NoPossibleTypesError:
+                QtGui.QMessageBox.warning(None, "Scheme doesn't match any known data type", "The scheme '%s' wasn't recognised by CEED as any scheme data type known to it. Please check that the data isn't corrupted. CEGUI instance synchronisation aborted!" % (schemeFilePath))
+                return
+
+            except compatibility.MultiplePossibleTypesError as e:
+                suitableVersion = scheme_compatibility.manager.getSuitableDataTypeForCEGUIVersion(project.CEGUIVersion)
+
+                if suitableVersion not in e.possibleTypes:
+                    QtGui.QMessageBox.warning(None, "Incorrect scheme data type", "The scheme '%s' checked out as some potential data types, however not any of these is suitable for your project's target CEGUI version '%s', please check your project settings! CEGUI instance synchronisation aborted!" % (schemeFilePath, suitableVersion))
+                    return
+
+                rawDataType = suitableVersion
+
+            nativeData = scheme_compatibility.manager.transform(rawDataType, scheme_compatibility.manager.EditorNativeType, rawData)
+            scheme = PyCEGUI.SchemeManager.getSingleton().createFromString(nativeData)
+
+            # NOTE: This is very CEGUI implementation specific unfortunately!
+            #
+            #       However I am not really sure how to do this any better.
+
+            updateProgress("Loading XML imagesets")
+            xmlImagesetIterator = scheme.getXMLImagesets()
+            while not xmlImagesetIterator.isAtEnd():
+                loadableUIElement = xmlImagesetIterator.getCurrentValue()
+                imagesetFilePath = project.getResourceFilePath(loadableUIElement.filename, loadableUIElement.resourceGroup if loadableUIElement.resourceGroup != "" else PyCEGUI.ImageManager.getImagesetDefaultResourceGroup())
+                imagesetRawData = open(imagesetFilePath, "r").read()
+                imagesetRawDataType = imageset_compatibility.manager.EditorNativeType
 
                 try:
-                    rawDataType = scheme_compatibility.manager.guessType(rawData, schemeFilePath)
+                    imagesetRawDataType = imageset_compatibility.manager.guessType(imagesetRawData, imagesetFilePath)
 
                 except compatibility.NoPossibleTypesError:
-                    QtGui.QMessageBox.warning(None, "Scheme doesn't match any known data type", "The scheme '%s' wasn't recognised by CEED as any scheme data type known to it. Please check that the data isn't corrupted. CEGUI instance synchronisation aborted!" % (schemeFilePath))
+                    QtGui.QMessageBox.warning(None, "Imageset doesn't match any known data type", "The imageset '%s' wasn't recognised by CEED as any imageset data type known to it. Please check that the data isn't corrupted. CEGUI instance synchronisation aborted!" % (imagesetFilePath))
                     return
 
                 except compatibility.MultiplePossibleTypesError as e:
-                    suitableVersion = scheme_compatibility.manager.getSuitableDataTypeForCEGUIVersion(project.CEGUIVersion)
+                    suitableVersion = imageset_compatibility.manager.getSuitableDataTypeForCEGUIVersion(project.CEGUIVersion)
 
                     if suitableVersion not in e.possibleTypes:
-                        QtGui.QMessageBox.warning(None, "Incorrect scheme data type", "The scheme '%s' checked out as some potential data types, however not any of these is suitable for your project's target CEGUI version '%s', please check your project settings! CEGUI instance synchronisation aborted!" % (schemeFilePath, suitableVersion))
+                        QtGui.QMessageBox.warning(None, "Incorrect imageset data type", "The imageset '%s' checked out as some potential data types, however none of these is suitable for your project's target CEGUI version '%s', please check your project settings! CEGUI instance synchronisation aborted!" % (imagesetFilePath, suitableVersion))
                         return
 
-                    rawDataType = suitableVersion
+                    imagesetRawDataType = suitableVersion
 
-                nativeData = scheme_compatibility.manager.transform(rawDataType, scheme_compatibility.manager.EditorNativeType, rawData)
-                scheme = PyCEGUI.SchemeManager.getSingleton().createFromString(nativeData)
+                imagesetNativeData = imageset_compatibility.manager.transform(imagesetRawDataType, imageset_compatibility.manager.EditorNativeType, imagesetRawData)
 
-                # NOTE: This is very CEGUI implementation specific unfortunately!
-                #
-                #       However I am not really sure how to do this any better.
+                PyCEGUI.ImageManager.getSingleton().loadImagesetFromString(imagesetNativeData)
+                xmlImagesetIterator.next()
 
-                updateProgress("Loading XML imagesets")
-                xmlImagesetIterator = scheme.getXMLImagesets()
-                while not xmlImagesetIterator.isAtEnd():
-                    loadableUIElement = xmlImagesetIterator.getCurrentValue()
-                    imagesetFilePath = project.getResourceFilePath(loadableUIElement.filename, loadableUIElement.resourceGroup if loadableUIElement.resourceGroup != "" else PyCEGUI.ImageManager.getImagesetDefaultResourceGroup())
-                    imagesetRawData = open(imagesetFilePath, "r").read()
-                    imagesetRawDataType = imageset_compatibility.manager.EditorNativeType
+            updateProgress("Loading image file imagesets")
+            scheme.loadImageFileImagesets()
 
-                    try:
-                        imagesetRawDataType = imageset_compatibility.manager.guessType(imagesetRawData, imagesetFilePath)
+            updateProgress("Loading fonts")
+            fontIterator = scheme.getFonts()
+            while not fontIterator.isAtEnd():
+                loadableUIElement = fontIterator.getCurrentValue()
+                fontFilePath = project.getResourceFilePath(loadableUIElement.filename, loadableUIElement.resourceGroup if loadableUIElement.resourceGroup != "" else PyCEGUI.Font.getDefaultResourceGroup())
+                fontRawData = open(fontFilePath, "r").read()
+                fontRawDataType = font_compatibility.manager.EditorNativeType
 
-                    except compatibility.NoPossibleTypesError:
-                        QtGui.QMessageBox.warning(None, "Imageset doesn't match any known data type", "The imageset '%s' wasn't recognised by CEED as any imageset data type known to it. Please check that the data isn't corrupted. CEGUI instance synchronisation aborted!" % (imagesetFilePath))
+                try:
+                    fontRawDataType = font_compatibility.manager.guessType(fontRawData, fontFilePath)
+
+                except compatibility.NoPossibleTypesError:
+                    QtGui.QMessageBox.warning(None, "Font doesn't match any known data type", "The font '%s' wasn't recognised by CEED as any font data type known to it. Please check that the data isn't corrupted. CEGUI instance synchronisation aborted!" % (fontFilePath))
+                    return
+
+                except compatibility.MultiplePossibleTypesError as e:
+                    suitableVersion = font_compatibility.manager.getSuitableDataTypeForCEGUIVersion(project.CEGUIVersion)
+
+                    if suitableVersion not in e.possibleTypes:
+                        QtGui.QMessageBox.warning(None, "Incorrect font data type", "The font '%s' checked out as some potential data types, however none of these is suitable for your project's target CEGUI version '%s', please check your project settings! CEGUI instance synchronisation aborted!" % (fontFilePath, suitableVersion))
                         return
 
-                    except compatibility.MultiplePossibleTypesError as e:
-                        suitableVersion = imageset_compatibility.manager.getSuitableDataTypeForCEGUIVersion(project.CEGUIVersion)
+                    fontRawDataType = suitableVersion
 
-                        if suitableVersion not in e.possibleTypes:
-                            QtGui.QMessageBox.warning(None, "Incorrect imageset data type", "The imageset '%s' checked out as some potential data types, however none of these is suitable for your project's target CEGUI version '%s', please check your project settings! CEGUI instance synchronisation aborted!" % (imagesetFilePath, suitableVersion))
-                            return
+                fontNativeData = font_compatibility.manager.transform(fontRawDataType, font_compatibility.manager.EditorNativeType, fontRawData)
 
-                        imagesetRawDataType = suitableVersion
+                PyCEGUI.FontManager.getSingleton().createFromString(fontNativeData)
+                fontIterator.next()
 
-                    imagesetNativeData = imageset_compatibility.manager.transform(imagesetRawDataType, imageset_compatibility.manager.EditorNativeType, imagesetRawData)
+            updateProgress("Loading looknfeels")
+            looknfeelIterator = scheme.getLookNFeels()
+            while not looknfeelIterator.isAtEnd():
+                loadableUIElement = looknfeelIterator.getCurrentValue()
+                looknfeelFilePath = project.getResourceFilePath(loadableUIElement.filename, loadableUIElement.resourceGroup if loadableUIElement.resourceGroup != "" else PyCEGUI.WidgetLookManager.getDefaultResourceGroup())
+                looknfeelRawData = open(looknfeelFilePath, "r").read()
+                looknfeelRawDataType = looknfeel_compatibility.manager.EditorNativeType
+                try:
+                    looknfeelRawDataType = looknfeel_compatibility.manager.guessType(looknfeelRawData, looknfeelFilePath)
 
-                    PyCEGUI.ImageManager.getSingleton().loadImagesetFromString(imagesetNativeData)
-                    xmlImagesetIterator.next()
+                except compatibility.NoPossibleTypesError:
+                    QtGui.QMessageBox.warning(None, "LookNFeel doesn't match any known data type", "The looknfeel '%s' wasn't recognised by CEED as any looknfeel data type known to it. Please check that the data isn't corrupted. CEGUI instance synchronisation aborted!" % (looknfeelFilePath))
+                    return
 
-                updateProgress("Loading image file imagesets")
-                scheme.loadImageFileImagesets()
+                except compatibility.MultiplePossibleTypesError as e:
+                    suitableVersion = looknfeel_compatibility.manager.getSuitableDataTypeForCEGUIVersion(project.CEGUIVersion)
 
-                updateProgress("Loading fonts")
-                fontIterator = scheme.getFonts()
-                while not fontIterator.isAtEnd():
-                    loadableUIElement = fontIterator.getCurrentValue()
-                    fontFilePath = project.getResourceFilePath(loadableUIElement.filename, loadableUIElement.resourceGroup if loadableUIElement.resourceGroup != "" else PyCEGUI.Font.getDefaultResourceGroup())
-                    fontRawData = open(fontFilePath, "r").read()
-                    fontRawDataType = font_compatibility.manager.EditorNativeType
-
-                    try:
-                        fontRawDataType = font_compatibility.manager.guessType(fontRawData, fontFilePath)
-
-                    except compatibility.NoPossibleTypesError:
-                        QtGui.QMessageBox.warning(None, "Font doesn't match any known data type", "The font '%s' wasn't recognised by CEED as any font data type known to it. Please check that the data isn't corrupted. CEGUI instance synchronisation aborted!" % (fontFilePath))
+                    if suitableVersion not in e.possibleTypes:
+                        QtGui.QMessageBox.warning(None, "Incorrect looknfeel data type", "The looknfeel '%s' checked out as some potential data types, however none of these is suitable for your project's target CEGUI version '%s', please check your project settings! CEGUI instance synchronisation aborted!" % (looknfeelFilePath, suitableVersion))
                         return
 
-                    except compatibility.MultiplePossibleTypesError as e:
-                        suitableVersion = font_compatibility.manager.getSuitableDataTypeForCEGUIVersion(project.CEGUIVersion)
+                    looknfeelRawDataType = suitableVersion
 
-                        if suitableVersion not in e.possibleTypes:
-                            QtGui.QMessageBox.warning(None, "Incorrect font data type", "The font '%s' checked out as some potential data types, however none of these is suitable for your project's target CEGUI version '%s', please check your project settings! CEGUI instance synchronisation aborted!" % (fontFilePath, suitableVersion))
-                            return
+                looknfeelNativeData = looknfeel_compatibility.manager.transform(looknfeelRawDataType, looknfeel_compatibility.manager.EditorNativeType, looknfeelRawData)
 
-                        fontRawDataType = suitableVersion
+                PyCEGUI.WidgetLookManager.getSingleton().parseLookNFeelSpecificationFromString(looknfeelNativeData)
+                looknfeelIterator.next()
 
-                    fontNativeData = font_compatibility.manager.transform(fontRawDataType, font_compatibility.manager.EditorNativeType, fontRawData)
-
-                    PyCEGUI.FontManager.getSingleton().createFromString(fontNativeData)
-                    fontIterator.next()
-
-                updateProgress("Loading looknfeels")
-                looknfeelIterator = scheme.getLookNFeels()
-                while not looknfeelIterator.isAtEnd():
-                    loadableUIElement = looknfeelIterator.getCurrentValue()
-                    looknfeelFilePath = project.getResourceFilePath(loadableUIElement.filename, loadableUIElement.resourceGroup if loadableUIElement.resourceGroup != "" else PyCEGUI.WidgetLookManager.getDefaultResourceGroup())
-                    looknfeelRawData = open(looknfeelFilePath, "r").read()
-                    looknfeelRawDataType = looknfeel_compatibility.manager.EditorNativeType
-                    try:
-                        looknfeelRawDataType = looknfeel_compatibility.manager.guessType(looknfeelRawData, looknfeelFilePath)
-
-                    except compatibility.NoPossibleTypesError:
-                        QtGui.QMessageBox.warning(None, "LookNFeel doesn't match any known data type", "The looknfeel '%s' wasn't recognised by CEED as any looknfeel data type known to it. Please check that the data isn't corrupted. CEGUI instance synchronisation aborted!" % (looknfeelFilePath))
-                        return
-
-                    except compatibility.MultiplePossibleTypesError as e:
-                        suitableVersion = looknfeel_compatibility.manager.getSuitableDataTypeForCEGUIVersion(project.CEGUIVersion)
-
-                        if suitableVersion not in e.possibleTypes:
-                            QtGui.QMessageBox.warning(None, "Incorrect looknfeel data type", "The looknfeel '%s' checked out as some potential data types, however none of these is suitable for your project's target CEGUI version '%s', please check your project settings! CEGUI instance synchronisation aborted!" % (looknfeelFilePath, suitableVersion))
-                            return
-
-                        looknfeelRawDataType = suitableVersion
-
-                    looknfeelNativeData = looknfeel_compatibility.manager.transform(looknfeelRawDataType, looknfeel_compatibility.manager.EditorNativeType, looknfeelRawData)
-
-                    PyCEGUI.WidgetLookManager.getSingleton().parseLookNFeelSpecificationFromString(looknfeelNativeData)
-                    looknfeelIterator.next()
-
-                updateProgress("Loading window renderer factory modules")
-                scheme.loadWindowRendererFactories()
-                updateProgress("Loading window factories")
-                scheme.loadWindowFactories()
-                updateProgress("Loading factory aliases")
-                scheme.loadFactoryAliases()
-                updateProgress("Loading falagard mappings")
-                scheme.loadFalagardMappings()
-
-        except:
-            self.cleanCEGUIResources()
-            raise
-
-        finally:
-            # put SchemeManager into the default state again
-            PyCEGUI.SchemeManager.getSingleton().setAutoLoadResources(True)
-
-            progress.reset()
-            QtGui.QApplication.instance().processEvents()
-///////////
-
-        return true;
-
-    except Exception as e:
-        QtGui.QMessageBox.warning(self, "Failed to synchronise embedded CEGUI to your project",
+            updateProgress("Loading window renderer factory modules")
+            scheme.loadWindowRendererFactories()
+            updateProgress("Loading window factories")
+            scheme.loadWindowFactories()
+            updateProgress("Loading factory aliases")
+            scheme.loadFactoryAliases()
+            updateProgress("Loading falagard mappings")
+            scheme.loadFalagardMappings()
+            */
+        }
+    }
+    catch (...)
+    {
+        cleanCEGUIResources();
+        QMessageBox::warning(mainWnd, "Failed to synchronise embedded CEGUI to your project",
             "An attempt was made to load resources related to the project being opened, "
             "for some reason the loading didn't succeed so all resources were destroyed! "
             "The most likely reason is that the resource directories are wrong, this can "
             "be very easily remedied in the project settings.\n\n"
             "This means that editing capabilities of CEED will be limited to editing of files "
-            "that don't require a project opened (for example: imagesets).")
+            "that don't require a project opened (for example: imagesets).");
+        result = false;
+    }
+
+/*
+    # put SchemeManager into the default state again
+    PyCEGUI.SchemeManager.getSingleton().setAutoLoadResources(True)
 */
 
-    return false;
+    progress.reset();
+    QApplication::instance()->processEvents();
+
+    return result;
 }
 
 // Destroy all previous resources (if any)
@@ -416,16 +415,13 @@ void CEGUIProjectManager::cleanCEGUIResources()
 */
 }
 
+// Retrieves names of skins that are available from the set of schemes that were loaded.
+// see syncProjectToCEGUIInstance
+QStringList CEGUIProjectManager::getAvailableSkins() const
+{
+    QStringList skins;
+
 /*
-    def getAvailableSkins(self):
-        """Retrieves skins (as strings representing their names) that are available
-        from the set of schemes that were loaded.
-
-        see syncToProject
-        """
-
-        skins = []
-
         it = PyCEGUI.WindowFactoryManager.getSingleton().getFalagardMappingIterator()
         while not it.isAtEnd():
             currentSkin = it.getCurrentValue().d_windowType.split('/')[0]
@@ -440,47 +436,54 @@ void CEGUIProjectManager::cleanCEGUIResources()
                 skins.append(currentSkin)
 
             it.next()
+*/
 
-        return sorted(skins)
+    std::sort(skins.begin(), skins.end());
+    return skins;
+}
 
-    def getAvailableFonts(self):
-        """Retrieves fonts (as strings representing their names) that are available
-        from the set of schemes that were loaded.
+// Retrieves names of fonts that are available from the set of schemes that were loaded.
+// see syncProjectToCEGUIInstance
+QStringList CEGUIProjectManager::getAvailableFonts() const
+{
+    QStringList fonts;
 
-        see syncToProject
-        """
-
-        fonts = []
-
+/*
         it = PyCEGUI.FontManager.getSingleton().getIterator()
         while not it.isAtEnd():
             fonts.append(it.getCurrentKey())
             it.next()
+*/
 
-        return sorted(fonts)
+    std::sort(fonts.begin(), fonts.end());
+    return fonts;
+}
 
-    def getAvailableImages(self):
-        """Retrieves images (as strings representing their names) that are available
-        from the set of schemes that were loaded.
+// Retrieves names of images that are available from the set of schemes that were loaded.
+// see syncProjectToCEGUIInstance
+QStringList CEGUIProjectManager::getAvailableImages() const
+{
+    QStringList images;
 
-        see syncToProject
-        """
-
-        images = []
-
+/*
         it = PyCEGUI.ImageManager.getSingleton().getIterator()
         while not it.isAtEnd():
             images.append(it.getCurrentKey())
             it.next()
+*/
 
-        return sorted(images)
+    std::sort(images.begin(), images.end());
+    return images;
+}
 
-    def getAvailableWidgetsBySkin(self):
-        """Retrieves all mappings (string names) of all widgets that can be created
+// Retrieves all mappings (string names) of all widgets that can be created
+// see syncProjectToCEGUIInstance
+QStringList CEGUIProjectManager::getAvailableWidgetsBySkin() const
+{
+    // FIXME: return map<string, string list>!
+    QStringList ret;
 
-        see syncToProject
-        """
-
+/*
         ret = {}
         ret["__no_skin__"] = ["DefaultWindow", "DragContainer",
                               "VerticalLayoutContainer", "HorizontalLayoutContainer",
@@ -514,49 +517,51 @@ void CEGUIProjectManager::cleanCEGUIResources()
         # sort the lists
         for look in ret:
             ret[look].sort()
-
-        return ret
-
-    def getWidgetPreviewImage(self, widgetType, previewWidth = 128, previewHeight = 64):
-        """Renders and retrieves a widget preview image (as QImage).
-
-        This is useful for various widget selection lists as a preview.
-        """
-
-        self.ensureCEGUIInitialised()
-        self.makeGLContextCurrent()
-
-        system = PyCEGUI.System.getSingleton()
-
-        renderer = system.getRenderer()
-
-        renderTarget = PyCEGUIOpenGLRenderer.OpenGLViewportTarget(renderer)
-        renderTarget.setArea(PyCEGUI.Rectf(0, 0, previewWidth, previewHeight))
-        renderingSurface = PyCEGUI.RenderingSurface(renderTarget)
-
-        widgetInstance = PyCEGUI.WindowManager.getSingleton().createWindow(widgetType, "preview")
-        widgetInstance.setRenderingSurface(renderingSurface)
-        # set it's size and position so that it shows up
-        widgetInstance.setPosition(PyCEGUI.UVector2(PyCEGUI.UDim(0, 0), PyCEGUI.UDim(0, 0)))
-        widgetInstance.setSize(PyCEGUI.USize(PyCEGUI.UDim(0, previewWidth), PyCEGUI.UDim(0, previewHeight)))
-        # fake update to ensure everything is set
-        widgetInstance.update(1)
-
-        temporaryFBO = QtOpenGL.QGLFramebufferObject(previewWidth, previewHeight, GL.GL_TEXTURE_2D)
-        temporaryFBO.bind()
-
-        renderingSurface.invalidate()
-
-        renderer.beginRendering()
-
-        try:
-            widgetInstance.render()
-
-        finally:
-            # no matter what happens we have to clean after ourselves!
-            renderer.endRendering()
-            temporaryFBO.release()
-            PyCEGUI.WindowManager.getSingleton().destroyWindow(widgetInstance)
-
-        return temporaryFBO.toImage()
 */
+
+    return ret;
+}
+
+// Renders and retrieves a widget preview QImage. This is useful for various widget selection lists as a preview.
+QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int previewWidth, int previewHeight)
+{
+    ensureCEGUIInitialized();
+/*
+    ceguiContainerWidget->makeOpenGLContextCurrent();
+
+    system = PyCEGUI.System.getSingleton()
+
+    renderer = system.getRenderer()
+
+    renderTarget = PyCEGUIOpenGLRenderer.OpenGLViewportTarget(renderer)
+    renderTarget.setArea(PyCEGUI.Rectf(0, 0, previewWidth, previewHeight))
+    renderingSurface = PyCEGUI.RenderingSurface(renderTarget)
+
+    widgetInstance = PyCEGUI.WindowManager.getSingleton().createWindow(widgetType, "preview")
+    widgetInstance.setRenderingSurface(renderingSurface)
+    # set it's size and position so that it shows up
+    widgetInstance.setPosition(PyCEGUI.UVector2(PyCEGUI.UDim(0, 0), PyCEGUI.UDim(0, 0)))
+    widgetInstance.setSize(PyCEGUI.USize(PyCEGUI.UDim(0, previewWidth), PyCEGUI.UDim(0, previewHeight)))
+    # fake update to ensure everything is set
+    widgetInstance.update(1)
+
+    temporaryFBO = QtOpenGL.QGLFramebufferObject(previewWidth, previewHeight, GL.GL_TEXTURE_2D)
+    temporaryFBO.bind()
+
+    renderingSurface.invalidate()
+
+    renderer.beginRendering()
+
+    try:
+        widgetInstance.render()
+
+    finally:
+        # no matter what happens we have to clean after ourselves!
+        renderer.endRendering()
+        temporaryFBO.release()
+        PyCEGUI.WindowManager.getSingleton().destroyWindow(widgetInstance)
+
+    return temporaryFBO.toImage()
+*/
+    return QImage();
+}

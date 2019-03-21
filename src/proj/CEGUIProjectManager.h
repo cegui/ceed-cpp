@@ -1,6 +1,7 @@
 #ifndef CEGUIPROJECTMANAGER_H
 #define CEGUIPROJECTMANAGER_H
 #include "qstring.h"
+#include "qimage.h"
 
 // A singleton CEGUI manager class controls the loaded project and encapsulates a running CEGUI instance.
 // Right now CEGUI can only be instantiated once because it's full of singletons. This might change in the
@@ -31,6 +32,12 @@ public:
     void unloadProject();
     bool isProjectLoaded() const { return currentProject != nullptr; }
     CEGUIProject* getCurrentProject() const { return currentProject.get(); }
+
+    QStringList getAvailableSkins() const;
+    QStringList getAvailableFonts() const;
+    QStringList getAvailableImages() const;
+    QStringList getAvailableWidgetsBySkin() const; //!!!map skin -> list!
+    QImage getWidgetPreviewImage(const QString& widgetType, int previewWidth = 128, int previewHeight = 64);
 
     bool syncProjectToCEGUIInstance();
 
