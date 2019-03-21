@@ -1,5 +1,5 @@
-#include "src/proj/CEGUIProject.h"
-#include "src/proj/CEGUIProjectItem.h"
+#include "src/cegui/CEGUIProject.h"
+#include "src/cegui/CEGUIProjectItem.h"
 #include "qfile.h"
 #include "qdir.h"
 #include "qdom.h"

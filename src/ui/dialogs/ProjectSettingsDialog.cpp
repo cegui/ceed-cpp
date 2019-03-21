@@ -1,7 +1,7 @@
 #include "src/ui/dialogs/ProjectSettingsDialog.h"
 #include "ui_ProjectSettingsDialog.h"
 #include "src/ui/widgets/FileLineEdit.h"
-#include "src/proj/CEGUIProject.h"
+#include "src/cegui/CEGUIProject.h"
 #include "qdir.h"
 #include "qfileinfo.h"
 

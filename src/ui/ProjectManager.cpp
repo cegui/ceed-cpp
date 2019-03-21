@@ -1,6 +1,6 @@
 #include "src/ui/ProjectManager.h"
-#include "src/proj/CEGUIProject.h"
-#include "src/proj/CEGUIProjectItem.h"
+#include "src/cegui/CEGUIProject.h"
+#include "src/cegui/CEGUIProjectItem.h"
 #include "ui_ProjectManager.h"
 #include "qinputdialog.h"
 #include "qfiledialog.h"

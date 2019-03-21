@@ -1,5 +1,5 @@
-#include "src/proj/CEGUIProjectItem.h"
-#include "src/proj/CEGUIProject.h"
+#include "src/cegui/CEGUIProjectItem.h"
+#include "src/cegui/CEGUIProject.h"
 #include "qdir.h"
 
 CEGUIProjectItem::Type CEGUIProjectItem::getItemType(const QModelIndex& index)

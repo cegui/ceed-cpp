@@ -1,5 +1,5 @@
-#include "src/proj/CEGUIProjectManager.h"
-#include "src/proj/CEGUIProject.h"
+#include "src/cegui/CEGUIProjectManager.h"
+#include "src/cegui/CEGUIProject.h"
 #include "src/Application.h"
 #include "qmessagebox.h"
 #include "qprogressdialog.h"

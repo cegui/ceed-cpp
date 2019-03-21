@@ -30,12 +30,12 @@ SOURCES += \
     src/main.cpp \
     src/ui/MainWindow.cpp \
     src/ui/ProjectManager.cpp \
-    src/proj/CEGUIProjectManager.cpp \
+    src/cegui/CEGUIProjectManager.cpp \
     src/ui/CEGUIWidget.cpp \
     src/ui/CEGUIGraphicsView.cpp \
     src/ui/CEGUIGraphicsScene.cpp \
-    src/proj/CEGUIProject.cpp \
-    src/proj/CEGUIProjectItem.cpp \
+    src/cegui/CEGUIProject.cpp \
+    src/cegui/CEGUIProjectItem.cpp \
     src/ui/dialogs/NewProjectDialog.cpp \
     src/ui/dialogs/ProjectSettingsDialog.cpp \
     src/ui/FileSystemBrowser.cpp \
@@ -67,12 +67,12 @@ SOURCES += \
 HEADERS += \
     src/ui/ProjectManager.h \
     src/ui/MainWindow.h \
-    src/proj/CEGUIProjectManager.h \
+    src/cegui/CEGUIProjectManager.h \
     src/ui/CEGUIWidget.h \
     src/ui/CEGUIGraphicsView.h \
     src/ui/CEGUIGraphicsScene.h \
-    src/proj/CEGUIProject.h \
-    src/proj/CEGUIProjectItem.h \
+    src/cegui/CEGUIProject.h \
+    src/cegui/CEGUIProjectItem.h \
     src/ui/dialogs/NewProjectDialog.h \
     src/ui/dialogs/ProjectSettingsDialog.h \
     src/ui/FileSystemBrowser.h \
