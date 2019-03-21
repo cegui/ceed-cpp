@@ -54,7 +54,14 @@ void TextEditor::finalize()
 
 void TextEditor::getRawData(QByteArray& outRawData)
 {
-    outRawData = textDocument->toPlainText().toUtf8();
+    if (textDocument)
+        outRawData = textDocument->toPlainText().toUtf8();
+}
+
+void TextEditor::markAsUnchanged()
+{
+    if (textDocument) textDocument->setModified(false);
+    EditorBase::markAsUnchanged();
 }
 
 void TextEditor::copy()

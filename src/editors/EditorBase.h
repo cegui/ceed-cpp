@@ -19,6 +19,14 @@ class EditorBase : public QObject
 
 public:
 
+    // Synchronization status between our editor and the file on disk.
+    enum class SyncStatus
+    {
+        Sync,       // Our editor is in sync with the file on disk
+        NotSync,    // Our editor is out of sync (file was modified externally and we kept our version)
+        Conflict    // Our editor is out of sync and waits for the user to resolve state
+    };
+
     EditorBase(/*compatibilityManager, */ const QString& filePath, bool createUndoStack = false);
     virtual ~EditorBase();
 
@@ -31,6 +39,7 @@ public:
 
     bool save() { return saveAs(_filePath); }
     bool saveAs(const QString& targetPath);
+    void resolveSyncConflict(bool reload);
 
     // Application commands implementation
     virtual void copy() {}
@@ -48,7 +57,7 @@ public:
     virtual QWidget* getWidget() = 0;
     QUndoStack* getUndoStack() const { return undoStack; }
     virtual bool hasChanges() const;
-    bool isModifiedExternally() const { return fileChangedByExternalProgram; }
+    bool isModifiedExternally() const { return syncStatus == SyncStatus::Conflict; }
     virtual bool requiresProject() const { return false; }
 
     QString getFilePath() const { return _filePath; }
@@ -71,13 +80,14 @@ protected:
     void enableFileMonitoring(bool enable);
 
     virtual void getRawData(QByteArray& outRawData) {}
+    virtual void markAsUnchanged();
 
     QFileSystemWatcher* fileMonitor = nullptr; //???one central, compare path?
     QUndoStack* undoStack = nullptr;
     QString _filePath;
     QString _labelText;
+    SyncStatus syncStatus = SyncStatus::Sync;
     bool _initialized = false;
-    bool fileChangedByExternalProgram = false;
 };
 
 typedef std::unique_ptr<class EditorFactoryBase> EditorFactoryBasePtr;

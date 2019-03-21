@@ -82,16 +82,25 @@ void EditorBase::enableFileMonitoring(bool enable)
     }
 }
 
+void EditorBase::markAsUnchanged()
+{
+    syncStatus = SyncStatus::Sync;
+    if (undoStack) undoStack->setClean();
+
+    // Force GUI update (modified mark etc)
+    emit contentsChanged(false);
+}
+
 // The callback method for external file changes.  This method is immediately called when
-// this editor is open.  Otherwise, it's called when the user activates the editor.
+// this editor is open. Otherwise, it's called when the user activates the editor.
 //???move all this 'changed' detection to MainWindow, use single monitor etc?
-//!!!mark file as changed if fe refuse to reload!
 void EditorBase::onFileChangedByExternalProgram()
 {
-    fileChangedByExternalProgram = true;
+    syncStatus = SyncStatus::Conflict;
     emit fileChangedExternally();
 }
 
+//???TODO: make names better? initialize says nothing about loading from disc etc!
 // This method loads everything up so this editor is ready to be switched to
 void EditorBase::initialize()
 {
@@ -181,9 +190,9 @@ void EditorBase::initialize()
 */
 
     if (undoStack) undoStack->clear();
-    fileChangedByExternalProgram = false;
-
     _initialized = true;
+    enableFileMonitoring(true);
+    markAsUnchanged();
 }
 
 // Cleans up after itself, this is usually called when you want the editor to close
@@ -224,7 +233,7 @@ void EditorBase::reloadData()
         wasCurrent = self.mainWindow.activeEditor is self
 */
     finalize();
-    initialize(); // fileChangedByExternalProgram is set to false inside
+    initialize(); // sync status is updated inside
 /*
         if wasCurrent:
             self.makeCurrent()
@@ -236,9 +245,12 @@ void EditorBase::destroy()
 {
 }
 
+// We have changes if our undo stack is not clear or if our data
+// if out of sync with the data on disk.
 bool EditorBase::hasChanges() const
 {
-    return undoStack ? undoStack->isClean() : false;
+    if (undoStack && !undoStack->isClean()) return true;
+    return syncStatus != SyncStatus::Sync;
 }
 
 // Causes the editor to save all it's progress to the file.
@@ -246,11 +258,12 @@ bool EditorBase::hasChanges() const
 bool EditorBase::saveAs(const QString& targetPath)
 {
     // Stop monitoring the file, the changes that are about to occur are not
-    // picked up as being from an external program!
+    // picked up as being from an external program! Also file renaming breaks
+    // watching it, so re-enabling monitor is necessary.
     enableFileMonitoring(false);
 
     QFile file(targetPath);
-    if (file.open(QIODevice::WriteOnly))
+    if (!file.open(QIODevice::WriteOnly))
     {
         QMessageBox::critical(qobject_cast<Application*>(qApp)->getMainWindow(),
                               "Error saving file!",
@@ -277,10 +290,28 @@ bool EditorBase::saveAs(const QString& targetPath)
     }
 
     enableFileMonitoring(true);
-
-    if (undoStack) undoStack->setClean();
+    markAsUnchanged();
 
     return true;
+}
+
+// Either reload file from disk or confirm desynchronization
+void EditorBase::resolveSyncConflict(bool reload)
+{
+    if (syncStatus != SyncStatus::Conflict) return;
+
+    if (reload)
+    {
+        finalize();
+        initialize();
+    }
+    else
+    {
+        syncStatus = SyncStatus::NotSync;
+
+        // Force GUI update (modified mark etc)
+        emit contentsChanged(true);
+    }
 }
 
 void EditorBase::undo()

@@ -34,6 +34,7 @@ public:
 protected:
 
     virtual void getRawData(QByteArray& outRawData) override;
+    virtual void markAsUnchanged() override;
 
     void updateFont();
 

@@ -981,22 +981,12 @@ void MainWindow::onEditorFileChangedExternally()
 
     auto ret = QMessageBox::question(this,
                                      "File has been modified externally!",
-                                     "The file that you have currently opened has been modified outside the CEGUI Unified Editor.\n\nReload the file?\n\nIf you select Yes, ALL UNDO HISTORY WILL BE DESTROYED!",
+                                     "The file that you have currently opened has been modified outside the CEGUI Unified Editor."
+                                     "\n\nReload the file?\n\nIf you select Yes, ALL UNDO HISTORY WILL BE DESTROYED!",
                                      QMessageBox::No | QMessageBox::Yes,
                                      QMessageBox::No); // defaulting to No is safer IMO
 
-    /*
-
-        self.fileChangedByExternalProgram = False
-
-        if ret == QtGui.QMessageBox.Yes:
-            self.reinitialise()
-
-        else
-            # FIXME: We should somehow make CEED think that we have changes :-/
-            #        That is hard to do because CEED relies on QUndoStack to get that info
-            pass
-*/
+    editor->resolveSyncConflict(ret == QMessageBox::Yes);
 
     displayingReloadAlert = false;
 }
