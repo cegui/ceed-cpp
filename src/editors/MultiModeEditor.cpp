@@ -5,14 +5,16 @@ MultiModeEditor::MultiModeEditor(/*compatibilityManager, */ const QString& fileP
 {
     tabs.setTabPosition(QTabWidget::South);
     tabs.setTabShape(QTabWidget::Triangular);
+
+    connect(&tabs, &QTabWidget::currentChanged, this, &MultiModeEditor::slot_currentChanged);
+}
+
+void MultiModeEditor::slot_currentChanged()
+{
+    //
 }
 
 /*
-    def __init__(self, compatibilityManager, filePath):
-        self.currentChanged.connect(self.slot_currentChanged)
-
-        # will be -1, that means no tabs are selected
-        self.currentTabIndex = self.currentIndex()
         # when canceling tab transfer we have to switch back and avoid unnecessary deactivate/activate cycle
         self.ignoreCurrentChanged = False
         # to avoid unnecessary undo command pushes we ignore currentChanged if we are

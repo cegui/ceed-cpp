@@ -20,7 +20,10 @@ public:
 
 protected:
 
+    void slot_currentChanged();
+
     QTabWidget tabs;
+    int currentTabIndex = -1;
 };
 
 #endif // MULTIMODEEDITOR_H
