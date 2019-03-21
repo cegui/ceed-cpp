@@ -7,6 +7,7 @@ BitmapEditor::BitmapEditor(const QString& filePath)
 
 void BitmapEditor::initialize()
 {
+    EditorBase::initialize();
     widget.openFile(_filePath);
 }
 

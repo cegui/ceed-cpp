@@ -44,6 +44,11 @@ void TextEditor::finalize()
     EditorBase::finalize();
 }
 
+void TextEditor::getRawData(QByteArray& outRawData)
+{
+    outRawData = textDocument->toPlainText().toUtf8();
+}
+
 void TextEditor::copy()
 {
     widget.copy();
@@ -119,11 +124,6 @@ def slot_undoAvailable(self, available):
 
 def slot_redoAvailable(self, available):
     self.mainWindow.redoAction.setEnabled(available)
-
-def saveAs(self, targetPath, updateCurrentPath = True):
-    self.nativeData = self.textDocument.toPlainText()
-
-    return super(TextTabbedEditor, self).saveAs(targetPath, updateCurrentPath)
 */
 
 //---------------------------------------------------------------------

@@ -27,6 +27,8 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    EditorBase* getCurrentEditor() const { return currentEditor; }
+
 private slots:
 
     void openEditorTab(const QString& absolutePath);

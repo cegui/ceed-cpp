@@ -1,5 +1,8 @@
 #include "src/editors/EditorBase.h"
+#include "src/Application.h"
 #include "qdir.h"
+#include "qmenu.h"
+#include "qmessagebox.h"
 
 // Constructs the editor.
 // compatibilityManager - manager that should be used to transform data between
@@ -14,10 +17,6 @@ EditorBase::EditorBase(/*compatibilityManager, */ const QString& filePath)
         self.desiredSavingDataType = "" if self.compatibilityManager is None else self.compatibilityManager.EditorNativeType
         self.nativeData = None
 
-        self.active = False
-
-        self.mainWindow = None
-
         #Set up a QFileSystemWatcher to watch for external changes to a file
         self.fileMonitor = None
         self.fileChangedByExternalProgram = False
@@ -25,15 +24,26 @@ EditorBase::EditorBase(/*compatibilityManager, */ const QString& filePath)
 */
 }
 
+// Adds or removes a file monitor to the specified file so CEED will alert the user
+// that an external change happened to the file
+void EditorBase::enableFileMonitoring(bool enable)
+{
+/*
+        if self.fileMonitor is None:
+            self.fileMonitor = QtCore.QFileSystemWatcher(self.mainWindow)
+            self.fileMonitor.fileChanged.connect(self.slot_fileChangedByExternalProgram)
+        self.fileMonitor.addPath(path)
+
+        if self.fileMonitor is not None: # FIXME: Will it ever be None at this point?
+            self.fileMonitor.removePath(path)
+*/
+}
+
 // This method loads everything up so this editor is ready to be switched to
-//???all mainWindow related things must be done externally in a main window?
-void EditorBase::initialize(/*mainWindow*/)
+void EditorBase::initialize()
 {
     assert(!_initialized);
 /*
-    self.mainWindow = mainWindow
-    self.tabWidget.tabbedEditor = self
-
     if self.compatibilityManager is not None:
         rawData = codecs.open(self.filePath, mode = "r", encoding = "utf-8").read()
         rawDataType = ""
@@ -119,144 +129,110 @@ void EditorBase::initialize(/*mainWindow*/)
     _initialized = true;
 }
 
-// Cleans up after itself this is usually called when you want the tab closed
+// Cleans up after itself, this is usually called when you want the editor to close
 void EditorBase::finalize()
 {
     assert(_initialized);
     _initialized = false;
 }
 
-// The tab gets "on stage", it's been clicked on and is now the only active tab.
-// There can be either 0 tabs active (blank screen) or exactly 1 tab active.
-//???to MainWindow???
-void EditorBase::activate()
+// The editor gets "on stage", it's been clicked on and is now the only active one.
+// There can be either 0 editors active (blank screen) or exactly 1 active.
+void EditorBase::activate(QMenu* editorMenu)
 {
+    // If the file was changed by an external program, ask the user to reload the changes
 /*
-        currentActive = self.mainWindow.activeEditor
-
-        # no need to deactivate and then activate again
-        if currentActive == self:
-            return
-
-        if currentActive is not None:
-            currentActive.deactivate()
-
-        self.active = True
-
-        self.mainWindow.activeEditor = self
-        self.mainWindow.undoViewer.setUndoStack(self.getUndoStack())
-
-        # If the file was changed by an external program, ask the user to reload
-        # the changes
-        if self.fileMonitor is not None and self.fileChangedByExternalProgram:
-            self.askForFileReload()
-
-        edMenu = self.mainWindow.editorMenu
-        edMenu.clear()
-        visible, enabled = self.rebuildEditorMenu(edMenu)
-        edMenu.menuAction().setVisible(visible)
-        edMenu.menuAction().setEnabled(enabled)
+    if self.fileMonitor is not None and self.fileChangedByExternalProgram:
+        self.askForFileReload()
 */
+
+    if (editorMenu)
+    {
+        editorMenu->clear();
+        setupEditorMenu(editorMenu);
+    }
 }
 
-// The tab gets "off stage", user switched to another tab. This is also called
-// when user closes the tab (deactivate and then finalise is called).
-//???to MainWindow???
+void EditorBase::setupEditorMenu(QMenu* editorMenu)
+{
+    editorMenu->menuAction()->setVisible(false);
+    editorMenu->menuAction()->setEnabled(false);
+}
+
+// The editor gets "off stage", user switched to another editor or
+// closed the editor (deactivate() and then finalize() is called).
 void EditorBase::deactivate()
 {
-/*
-        self.active = False
-
-        if self.mainWindow.activeEditor == self:
-            self.mainWindow.activeEditor = None
-            edMenu = self.mainWindow.editorMenu
-            edMenu.clear()
-            edMenu.menuAction().setEnabled(False)
-            edMenu.menuAction().setVisible(False)
-*/
 }
 
-// Reinitialises this tabbed editor, effectivelly reloading the file off the hard drive again
+// Reinitialises this editor, effectivelly reloading the file off the hard drive again
 void EditorBase::reloadData()
 {
+    //!!!'current' stuff - to MainWindow!
 /*
         wasCurrent = self.mainWindow.activeEditor is self
-
-        mainWindow = self.mainWindow
-        self.finalise()
-        self.initialise(mainWindow)
-
+*/
+    finalize();
+    initialize();
+/*
         if wasCurrent:
             self.makeCurrent()
 */
 }
 
-// Removes itself from the tab list and irrevocably destroys data associated with itself
-//!!!FIXME: completely UI method, move to main window!
+// Irrevocably destroys data associated with itself
 void EditorBase::destroy()
 {
-/*
-        i = 0
-        wdt = self.mainWindow.tabs.widget(i)
-        tabRemoved = False
-
-        while wdt:
-            if wdt == self.tabWidget:
-                self.mainWindow.tabs.removeTab(i)
-                tabRemoved = True
-                break
-
-            i = i + 1
-            wdt = self.mainWindow.tabs.widget(i)
-
-        assert(tabRemoved)
-*/
 }
 
-// Causes the tabbed editor to save all it's progress to the file.
+//!!!???make data obtaining virtual instead?
+// Causes the editor to save all it's progress to the file.
 // targetPath should be absolute file path.
-bool EditorBase::saveAs(const QString& targetPath, bool updateCurrentPath)
+bool EditorBase::saveAs(const QString& targetPath)
 {
+    // Stop monitoring the file, the changes that are about to occur are not
+    // picked up as being from an external program!
+    enableFileMonitoring(false);
+
+    QFile file(targetPath);
+    if (file.open(QIODevice::WriteOnly))
+    {
+        QMessageBox::critical(qobject_cast<Application*>(qApp)->getMainWindow(),
+                              "Error saving file!",
+                              "CEED encountered an error trying to save the file " + targetPath);
+        enableFileMonitoring(true);
+        return false;
+    }
+
+    QByteArray rawData;
+    getRawData(rawData);
 /*
-        outputData = self.nativeData if self.nativeData is not None else ""
-        if self.compatibilityManager is not None:
-            outputData = self.compatibilityManager.transform(self.compatibilityManager.EditorNativeType, self.desiredSavingDataType, self.nativeData)
+    if self.compatibilityManager is not None:
+        outputData = self.compatibilityManager.transform(self.compatibilityManager.EditorNativeType, self.desiredSavingDataType, self.nativeData)
+*/
+    file.write(rawData);
+    file.close();
 
-        # Stop monitoring the file, the changes that are about to occur are not
-        # picked up as being from an external program!
-        self.removeFileMonitor(self.filePath)
+    constexpr bool updateCurrentPath = true;
+    if (updateCurrentPath)
+    {
+        _filePath = targetPath;
+        _labelText = QFileInfo(_filePath).fileName(); //.baseName();
 
-        try:
-            f = codecs.open(targetPath, mode = "w", encoding = "utf-8")
-            f.write(outputData)
-            f.close()
-
-        except IOError as e:
-            # The rest of the code is skipped, so be sure to turn file
-            # monitoring back on
-            self.addFileMonitor(self.filePath)
-            QtGui.QMessageBox.critical(self, "Error saving file!",
-                                       "CEED encountered an error trying to save the file.\n\n(exception details: %s)" % (e))
-            return False
-
+        /*
             //???use signal to update UI?
-        if updateCurrentPath:
-            # changes current path to the path we saved to
-            self.filePath = targetPath
-
-            # update tab text
-            self.tabLabel = os.path.basename(self.filePath)
-
             # because this might be called even before initialise is called!
             if self.mainWindow is not None:
                 self.mainWindow.tabs.setTabText(self.mainWindow.tabs.indexOf(self.tabWidget), self.tabLabel)
+        */
+    }
 
-        self.addFileMonitor(self.filePath)
-*/
+    enableFileMonitoring(true);
+
     return true;
 }
 
-// Causes the tabbed editor to discard all it's progress
+// Causes the editor to discard all it's progress
 void EditorBase::revert()
 {
     if (!hasChanges()) return;
@@ -265,9 +241,68 @@ void EditorBase::revert()
     reloadData();
 }
 
+/*
+    def slot_fileChangedByExternalProgram(self):
+        """The callback method for external file changes.  This method is
+        immediately called when this tab is open.  Otherwise, it's called when
+        the user clicks on the tab"""
+        self.fileChangedByExternalProgram = True
+        if self.active:
+            self.askForFileReload()
+
+    def askForFileReload(self):
+        """Pops a alert menu open asking the user s/he would like to reload the
+        file due to external changes being made"""
+
+        # If multiple file writes are made by an external program, multiple
+        # pop-ups will appear. Prevent that with a switch.
+        if not self.displayingReloadAlert:
+            self.displayingReloadAlert = True
+            ret = QtGui.QMessageBox.question(self.mainWindow,
+                                             "File has been modified externally!",
+                                             "The file that you have currently opened has been modified outside the CEGUI Unified Editor.\n\nReload the file?\n\nIf you select Yes, ALL UNDO HISTORY WILL BE DESTROYED!",
+                                             QtGui.QMessageBox.No | QtGui.QMessageBox.Yes,
+                                             QtGui.QMessageBox.No) # defaulting to No is safer IMO
+
+            self.fileChangedByExternalProgram = False
+
+            if ret == QtGui.QMessageBox.Yes:
+                self.reinitialise()
+
+            elif ret == QtGui.QMessageBox.No:
+                # FIXME: We should somehow make CEED think that we have changes :-/
+                #        That is hard to do because CEED relies on QUndoStack to get that info
+                pass
+
+            else:
+                # how did we get here?
+                assert(False)
+
+            self.displayingReloadAlert = False
+
+    def markHasChanges(self, hasChanges):
+        """Marks that this tabbed editor has changes, in this implementation this means
+        that the tab in the tab list gets an icon
+        """
+
+        if self.mainWindow is None:
+            return
+
+        if hasChanges:
+            self.mainWindow.tabs.setTabIcon(self.mainWindow.tabs.indexOf(self.tabWidget), QtGui.QIcon("icons/tabs/has_changes.png"))
+        else:
+            self.mainWindow.tabs.setTabIcon(self.mainWindow.tabs.indexOf(self.tabWidget), QtGui.QIcon())
+
+    def getDesiredSavingDataType(self):
+        """Returns current desired saving data type. Data type that will be used when user requests to save this file
+        """
+
+        return self.desiredSavingDataType if self.compatibilityManager is not None else None
+*/
+
 //---------------------------------------------------------------------
 
-bool EditorFactoryBase::canEditFile(const QString &filePath) const
+bool EditorFactoryBase::canEditFile(const QString& filePath) const
 {
     return getFileExtensions().contains(QFileInfo(filePath).completeSuffix());
 }

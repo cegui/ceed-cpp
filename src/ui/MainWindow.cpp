@@ -497,12 +497,20 @@ void MainWindow::slot_tabBarCustomContextMenuRequested(const QPoint& pos)
 
 void MainWindow::on_tabs_currentChanged(int index)
 {
+    auto newEditor = getEditorForTab(index);
+    if (currentEditor == newEditor) return;
+
     // To fight flicker
     ui->tabs->setUpdatesEnabled(false);
 
-    auto widget = ui->tabs->widget(index);
     if (currentEditor)
+    {
         currentEditor->deactivate();
+
+        ui->menuEditor->clear();
+        ui->menuEditor->menuAction()->setVisible(false);
+        ui->menuEditor->menuAction()->setEnabled(false);
+    }
 
     // It's the tabbed editor's responsibility to handle these, we disable them by default,
     // also reset their texts in case the tabbed editor messed with them
@@ -517,7 +525,7 @@ void MainWindow::on_tabs_currentChanged(int index)
 
     statusBar()->clearMessage();
 
-    currentEditor = getEditorForTab(widget);
+    currentEditor = newEditor;
 
     const bool hasEditor = (currentEditor != nullptr);
     fsBrowser->activeFileDirectoryButton()->setEnabled(hasEditor);
@@ -529,10 +537,8 @@ void MainWindow::on_tabs_currentChanged(int index)
 
     if (currentEditor)
     {
-        currentEditor->activate();
-        /*
-            undoViewer.setUndoStack(self.getUndoStack())
-        */
+        currentEditor->activate(ui->menuEditor);
+        undoViewer->setUndoStack(currentEditor->getUndoStack());
     }
 
     ui->tabs->setUpdatesEnabled(true);
@@ -653,8 +659,17 @@ void MainWindow::closeEditorTab(EditorBase* editor)
     });
     if (it == activeEditors.end()) return;
 
+    const int tabIndex = ui->tabs->indexOf(editor->getWidget());
+
     editor->finalize();
     editor->destroy();
+
+    if (tabIndex >= 0)
+    {
+        // TODO: if this never asserts it can be safely removed
+        assert(ui->tabs->widget(tabIndex) == editor->getWidget());
+        ui->tabs->removeTab(tabIndex);
+    }
 
     activeEditors.erase(it);
 }

@@ -14,7 +14,7 @@ public:
     TextEditor(const QString& filePath);
     //virtual ~TextEditor() override {}
 
-    virtual void initialize(/*mainWindow*/) override;
+    virtual void initialize() override;
     virtual void finalize() override;
 
     virtual void copy() override;
@@ -32,6 +32,8 @@ public:
     virtual bool hasChanges() const override;
 
 protected:
+
+    virtual void getRawData(QByteArray& outRawData) override;
 
     void updateFont();
 

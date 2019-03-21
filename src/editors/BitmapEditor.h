@@ -12,7 +12,7 @@ public:
 
     BitmapEditor(const QString& filePath);
 
-    virtual void initialize(/*mainWindow*/) override;
+    virtual void initialize() override;
 
     virtual QWidget* getWidget() override { return &widget; }
 

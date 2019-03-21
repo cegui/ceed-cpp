@@ -2,6 +2,8 @@
 #include "ui_FileSystemBrowser.h"
 #include "src/cegui/CEGUIProjectManager.h"
 #include "src/cegui/CEGUIProject.h"
+#include "src/ui/MainWindow.h"
+#include "src/editors/EditorBase.h"
 
 FileSystemBrowser::FileSystemBrowser(QWidget *parent) :
     QDockWidget(parent),
@@ -9,14 +11,10 @@ FileSystemBrowser::FileSystemBrowser(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    //???
-    // CEED comment (Qt 4.8): causes way too many problems
-    //model.setReadOnly(false);
     model.setReadOnly(true);
 
     auto view = findChild<QListView*>("view");
     view->setModel(&model);
-
 
     // Set to project directory if project open, otherwise to user's home
     if (CEGUIProjectManager::Instance().isProjectLoaded())
@@ -103,16 +101,17 @@ void FileSystemBrowser::on_homeDirectoryButton_pressed()
 
 void FileSystemBrowser::on_activeFileDirectoryButton_pressed()
 {
-/*
-    if ceed.mainwindow.MainWindow.instance.activeEditor is not None:
-        filePath = ceed.mainwindow.MainWindow.instance.activeEditor.filePath
-        dirPath = os.path.dirname(filePath)
-        self.setDirectory(dirPath)
-        # select the active file
-        modelIndex = self.model.index(filePath)
-        if modelIndex and modelIndex.isValid():
-            self.view.setCurrentIndex(modelIndex)
-*/
+    auto mainWnd = qobject_cast<MainWindow*>(parentWidget());
+    if (!mainWnd || !mainWnd->getCurrentEditor()) return;
+
+    QString filePath = mainWnd->getCurrentEditor()->getFilePath();
+
+    setDirectory(QFileInfo(filePath).path());
+
+    // Select the active file
+    auto modelIndex = model.index(filePath);
+    if (modelIndex.isValid())
+        ui->view->setCurrentIndex(modelIndex);
 }
 
 // Slot that gets triggered whenever the user selects an path from the list
