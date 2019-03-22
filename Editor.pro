@@ -63,7 +63,8 @@ SOURCES += \
     src/util/DismissableMessage.cpp \
     src/ui/widgets/BitmapEditorWidget.cpp \
     src/editors/BitmapEditor.cpp \
-    src/editors/MultiModeEditor.cpp
+    src/editors/MultiModeEditor.cpp \
+    src/editors/CodeEditMode.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -101,7 +102,8 @@ HEADERS += \
     src/util/DismissableMessage.h \
     src/ui/widgets/BitmapEditorWidget.h \
     src/editors/BitmapEditor.h \
-    src/editors/MultiModeEditor.h
+    src/editors/MultiModeEditor.h \
+    src/editors/CodeEditMode.h
 
 FORMS += \
     ui/MainWindow.ui \
