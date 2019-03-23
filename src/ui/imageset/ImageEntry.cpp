@@ -1,8 +1,12 @@
 #include "src/ui/imageset/ImageEntry.h"
+#include "src/ui/imageset/ImagesetEntry.h"
+#include "src/util/Utils.h"
 #include "qdom.h"
+#include "qpainter.h"
 
 ImageEntry::ImageEntry(QGraphicsItem* parent)
     //!!!init base class ResizableRectItem with parent!
+    : QGraphicsRectItem(parent)
 {
     setAcceptHoverEvents(true);
     setFlags(ItemIsMovable | ItemIsSelectable | ItemSendsGeometryChanges);
@@ -71,6 +75,45 @@ void ImageEntry::saveToElement(QDomElement& xml)
 */
 }
 
+// If we are selected in the dock widget, this updates the property box
+void ImageEntry::updateDockWidget()
+{
+    updateListItem();
+/*
+        if not self.listItem:
+            return
+
+        dockWidget = self.listItem.dockWidget
+        if dockWidget.activeImageEntry == self:
+            dockWidget.refreshActiveImageEntry()
+*/
+}
+
+// Updates the list item associated with this image entry in the dock widget
+void ImageEntry::updateListItem()
+{
+/*
+        if not self.listItem:
+            return
+
+        self.listItem.setText(self.name)
+*/
+    constexpr int previewWidth = 24;
+    constexpr int previewHeight = 24;
+
+    QPixmap preview(previewWidth, previewHeight);
+    QPainter painter(&preview);
+    painter.setBrush(Utils::getCheckerboardBrush());
+    painter.drawRect(0, 0, previewWidth, previewHeight);
+    QPixmap scaledPixmap = getPixmap().scaled(QSize(previewWidth, previewHeight), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    painter.drawPixmap((previewWidth - scaledPixmap.width()) / 2, (previewHeight - scaledPixmap.height()) / 2, scaledPixmap);
+    painter.end();
+
+/*
+        self.listItem.setIcon(QtGui.QIcon(preview))
+*/
+}
+
 QString ImageEntry::name() const
 {
 /*
@@ -84,6 +127,18 @@ void ImageEntry::setName(const QString &newName)
 /*
     label.setPlainText(value)
 */
+}
+
+// Creates and returns a pixmap containing what's in the underlying image in the rectangle
+// that this ImageEntry has set. This is mostly used for preview thumbnails in the dock widget.
+QPixmap ImageEntry::getPixmap()
+{
+    ImagesetEntry* imagesetEntry = static_cast<ImagesetEntry*>(parentItem());
+    return imagesetEntry->pixmap().copy(
+                static_cast<int>(pos().x()),
+                static_cast<int>(pos().y()),
+                static_cast<int>(rect().width()),
+                static_cast<int>(rect().height()));
 }
 
 /*
@@ -122,40 +177,6 @@ void ImageEntry::setName(const QString &newName)
 
         return super(ImageEntry, self).constrainResizeRect(rect, oldRect)
 
-    def getPixmap(self):
-        """Creates and returns a pixmap containing what's in the underlying image in the rectangle
-        that this ImageEntry has set.
-
-        This is mostly used for preview thumbnails in the dock widget.
-        """
-        return self.imagesetEntry.pixmap().copy(int(self.pos().x()), int(self.pos().y()),
-                                                int(self.rect().width()), int(self.rect().height()))
-
-    def updateListItem(self):
-        """Updates the list item associated with this image entry in the dock widget
-        """
-
-        if not self.listItem:
-            return
-
-        self.listItem.setText(self.name)
-
-        previewWidth = 24
-        previewHeight = 24
-
-        preview = QtGui.QPixmap(previewWidth, previewHeight)
-        painter = QtGui.QPainter(preview)
-        painter.setBrush(qtwidgets.getCheckerboardBrush())
-        painter.drawRect(0, 0, previewWidth, previewHeight)
-        scaledPixmap = self.getPixmap().scaled(QtCore.QSize(previewWidth, previewHeight),
-                                               QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
-        painter.drawPixmap((previewWidth - scaledPixmap.width()) / 2,
-                           (previewHeight - scaledPixmap.height()) / 2,
-                           scaledPixmap)
-        painter.end()
-
-        self.listItem.setIcon(QtGui.QIcon(preview))
-
     def updateListItemSelection(self):
         """Synchronises the selection in the dock widget's list. This makes sure that when you select
         this item the list sets the selection to this item as well.
@@ -178,19 +199,6 @@ void ImageEntry::setName(const QString &newName)
             self.listItem.setSelected(False)
 
         dockWidget.selectionSynchronisationUnderway = False
-
-    def updateDockWidget(self):
-        """If we are selected in the dock widget, this updates the property box
-        """
-
-        self.updateListItem()
-
-        if not self.listItem:
-            return
-
-        dockWidget = self.listItem.dockWidget
-        if dockWidget.activeImageEntry == self:
-            dockWidget.refreshActiveImageEntry()
 
     def itemChange(self, change, value):
         if change == QtGui.QGraphicsItem.ItemSelectedHasChanged:

@@ -11,6 +11,7 @@ ImagesetEntry::ImagesetEntry(QGraphicsItem* parent)
 {
     setShapeMode(BoundingRectShape);
     setCursor(Qt::ArrowCursor);
+
 /*
         self.visual = visual
 
@@ -147,15 +148,14 @@ void ImagesetEntry::loadImage(const QString& relPath)
     // to the new pixmap's dimensions
     for (auto& imageEntry : imageEntries)
     {
-/*
-        imageEntry.setPos(imageEntry.pos())
-        imageEntry.updateDockWidget()
-*/
+        imageEntry->setPos(imageEntry->pos());
+        imageEntry->updateDockWidget();
     }
 
 /*
     self.visual.refreshSceneRect()
 */
+
     if (!imageMonitor)
     {
         imageMonitor = new QFileSystemWatcher();

@@ -18,10 +18,15 @@ public:
     void loadFromElement(const QDomElement& xml);
     void saveToElement(QDomElement& xml);
 
+    void updateDockWidget();
+    void updateListItem();
+
     QString name() const;
     void setName(const QString& newName);
 
 protected:
+
+    QPixmap getPixmap();
 
     QString autoScaled = "";
     int nativeHorzRes = 0;
