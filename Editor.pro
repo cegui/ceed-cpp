@@ -64,7 +64,10 @@ SOURCES += \
     src/ui/widgets/BitmapEditorWidget.cpp \
     src/editors/BitmapEditor.cpp \
     src/editors/MultiModeEditor.cpp \
-    src/editors/CodeEditMode.cpp
+    src/editors/CodeEditMode.cpp \
+    src/util/ActionManager.cpp \
+    src/util/Action.cpp \
+    src/util/ActionCategory.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -103,7 +106,10 @@ HEADERS += \
     src/ui/widgets/BitmapEditorWidget.h \
     src/editors/BitmapEditor.h \
     src/editors/MultiModeEditor.h \
-    src/editors/CodeEditMode.h
+    src/editors/CodeEditMode.h \
+    src/util/ActionManager.h \
+    src/util/Action.h \
+    src/util/ActionCategory.h
 
 FORMS += \
     ui/MainWindow.ui \
