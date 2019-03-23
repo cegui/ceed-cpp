@@ -19,8 +19,8 @@ public:
 
     virtual void initialize() override;
     virtual void finalize() override;
-    virtual void activate(QMenu* editorMenu) override;
-    virtual void deactivate() override;
+    virtual void activate(MainWindow& mainWindow) override;
+    virtual void deactivate(MainWindow& mainWindow) override;
 
     // Application commands implementation
 //    virtual void copy() {}
@@ -37,11 +37,10 @@ public:
 
     virtual QWidget* getWidget() override { return &tabs; }
     //virtual bool hasChanges() const;
-    virtual bool requiresProject() const { return true; }
+    virtual bool requiresProject() const override { return true; }
 
 protected:
 
-    virtual void setupEditorMenu(QMenu* editorMenu) override;
     //virtual void getRawData(QByteArray& outRawData) {}
     //virtual void markAsUnchanged();
 };

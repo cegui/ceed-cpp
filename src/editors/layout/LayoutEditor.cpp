@@ -60,9 +60,9 @@ void LayoutEditor::finalize()
     MultiModeEditor::finalize();
 }
 
-void LayoutEditor::activate(QMenu* editorMenu)
+void LayoutEditor::activate(MainWindow& mainWindow)
 {
-    MultiModeEditor::activate(editorMenu);
+    MultiModeEditor::activate(mainWindow);
 
 /*
         self.mainWindow.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.visual.hierarchyDockWidget)
@@ -74,20 +74,16 @@ void LayoutEditor::activate(QMenu* editorMenu)
         self.mainWindow.addToolBar(QtCore.Qt.ToolBarArea.TopToolBarArea, self.visual.toolBar)
         self.visual.toolBar.show()
 */
+    /*
+            editorMenu.setTitle("&Layout")
+            self.visual.rebuildEditorMenu(editorMenu)
+
+            return True, self.currentWidget() == self.visual
+            // visible, enabled
+    */
 }
 
-void LayoutEditor::setupEditorMenu(QMenu* editorMenu)
-{
-/*
-        editorMenu.setTitle("&Layout")
-        self.visual.rebuildEditorMenu(editorMenu)
-
-        return True, self.currentWidget() == self.visual
-        // visible, enabled
-*/
-}
-
-void LayoutEditor::deactivate()
+void LayoutEditor::deactivate(MainWindow& mainWindow)
 {
 /*
         self.mainWindow.removeDockWidget(self.visual.hierarchyDockWidget)
@@ -95,7 +91,7 @@ void LayoutEditor::deactivate()
         self.mainWindow.removeDockWidget(self.visual.createWidgetDockWidget)
         self.mainWindow.removeToolBar(self.visual.toolBar)
 */
-    MultiModeEditor::deactivate();
+    MultiModeEditor::deactivate(mainWindow);
 }
 
 /*

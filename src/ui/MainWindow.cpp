@@ -189,6 +189,11 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+QMenu *MainWindow::getEditorMenu() const
+{
+    return ui->menuEditor;
+}
+
 void MainWindow::setupToolbars()
 {
     // FIXME: here until I manage to create menu toolbutton in Qt Creator
@@ -513,7 +518,7 @@ void MainWindow::on_tabs_currentChanged(int index)
         disconnect(currentEditor, &EditorBase::contentsChanged, this, &MainWindow::onEditorContentsChanged);
         disconnect(currentEditor, &EditorBase::fileChangedExternally, this, &MainWindow::onEditorFileChangedExternally);
 
-        currentEditor->deactivate();
+        currentEditor->deactivate(*this);
 
         ui->menuEditor->clear();
         ui->menuEditor->menuAction()->setVisible(false);
@@ -546,7 +551,7 @@ void MainWindow::on_tabs_currentChanged(int index)
         if (currentEditor->isModifiedExternally())
             onEditorFileChangedExternally();
 
-        currentEditor->activate(ui->menuEditor);
+        currentEditor->activate(*this);
 
         auto undoStack = currentEditor->getUndoStack();
         if (undoStack)

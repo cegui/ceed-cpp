@@ -28,6 +28,7 @@ public:
     ~MainWindow();
 
     EditorBase* getCurrentEditor() const { return currentEditor; }
+    QMenu* getEditorMenu() const;
 
 private slots:
 

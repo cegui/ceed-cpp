@@ -1,7 +1,9 @@
 #include "src/editors/imageset/ImagesetVisualMode.h"
 #include "src/Application.h"
 #include "src/util/Settings.h"
+#include "src/ui/imageset/ImagesetEntry.h"
 #include "qopenglwidget.h"
+#include "qdom.h"
 
 ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
     //!!!: IEditMode(editor)
@@ -43,20 +45,17 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
     setDragMode(RubberBandDrag);
     setBackgroundBrush(QBrush(Qt::lightGray));
 
+    connect(scene(), &QGraphicsScene::selectionChanged, this, &ImagesetVisualMode::slot_selectionChanged);
+
 /*
-        self.scene().selectionChanged.connect(self.slot_selectionChanged)
-
-
-        self.imagesetEntry = None
-
         self.dockWidget = ImagesetEditorDockWidget(self)
-
-        self.setupActions()
 */
+    setupActions();
 }
 
+void ImagesetVisualMode::setupActions()
+{
 /*
-    def setupActions(self):
         self.connectionGroup = action.ConnectionGroup(action.ActionManager.instance)
 
         self.editOffsetsAction = action.getAction("imageset/edit_offsets")
@@ -100,7 +99,26 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
         self.contextMenu.addAction(action.getAction("all_editors/zoom_reset"))
         self.contextMenu.addSeparator() // ----------------------
         self.contextMenu.addAction(self.editOffsetsAction)
+*/
+}
 
+void ImagesetVisualMode::loadImagesetEntryFromElement(const QDomElement& xmlRoot)
+{
+    scene()->clear();
+
+    imagesetEntry = new ImagesetEntry(this);
+/*
+        self.imagesetEntry.loadFromElement(element)
+        self.scene().addItem(self.imagesetEntry)
+
+        self.refreshSceneRect()
+
+        self.dockWidget.setImagesetEntry(self.imagesetEntry)
+        self.dockWidget.refresh()
+*/
+}
+
+/*
     def rebuildEditorMenu(self, editorMenu):
         """Adds actions to the editor menu"""
         // similar to the toolbar, includes the focus filter box action
@@ -113,9 +131,6 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
         editorMenu.addSeparator() // ---------------------------
         editorMenu.addAction(self.focusImageListFilterBoxAction)
 
-    def initialise(self, rootElement):
-        self.loadImagesetEntryFromElement(rootElement)
-
     def refreshSceneRect(self):
         boundingRect = self.imagesetEntry.boundingRect()
 
@@ -125,18 +140,6 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
 
         boundingRect.adjust(-100, -100, 100, 100)
         self.scene().setSceneRect(boundingRect)
-
-    def loadImagesetEntryFromElement(self, element):
-        self.scene().clear()
-
-        self.imagesetEntry = elements.ImagesetEntry(self)
-        self.imagesetEntry.loadFromElement(element)
-        self.scene().addItem(self.imagesetEntry)
-
-        self.refreshSceneRect()
-
-        self.dockWidget.setImagesetEntry(self.imagesetEntry)
-        self.dockWidget.refresh()
 
     def moveImageEntries(self, imageEntries, delta):
         if delta.manhattanLength() > 0 and len(imageEntries) > 0:
@@ -547,15 +550,6 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
         else:
             event.accept()
 
-    def slot_selectionChanged(self):
-        // if dockWidget is changing the selection, back off
-        if self.dockWidget.selectionUnderway:
-            return
-
-        selectedItems = self.scene().selectedItems()
-        if len(selectedItems) == 1:
-            if isinstance(selectedItems[0], elements.ImageEntry):
-                self.dockWidget.list.scrollToItem(selectedItems[0].listItem)
 
     def slot_toggleEditOffsets(self, enabled):
         self.scene().clearSelection()
@@ -651,3 +645,17 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
     def performDelete(self):
         return self.deleteSelectedImageEntries()
 */
+
+void ImagesetVisualMode::slot_selectionChanged()
+{
+/*
+        // if dockWidget is changing the selection, back off
+        if self.dockWidget.selectionUnderway:
+            return
+
+        selectedItems = self.scene().selectedItems()
+        if len(selectedItems) == 1:
+            if isinstance(selectedItems[0], elements.ImageEntry):
+                self.dockWidget.list.scrollToItem(selectedItems[0].listItem)
+*/
+}

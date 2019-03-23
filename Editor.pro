@@ -75,7 +75,11 @@ SOURCES += \
     src/editors/layout/LayoutPreviewerMode.cpp \
     src/editors/imageset/ImagesetVisualMode.cpp \
     src/ui/imageset/ImagesetEditorDockWidget.cpp \
-    src/ui/ResizableGraphicsView.cpp
+    src/ui/ResizableGraphicsView.cpp \
+    src/ui/imageset/ImageLabel.cpp \
+    src/ui/imageset/ImageOffsetMark.cpp \
+    src/ui/imageset/ImageEntry.cpp \
+    src/ui/imageset/ImagesetEntry.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -125,7 +129,11 @@ HEADERS += \
     src/editors/layout/LayoutPreviewerMode.h \
     src/editors/imageset/ImagesetVisualMode.h \
     src/ui/imageset/ImagesetEditorDockWidget.h \
-    src/ui/ResizableGraphicsView.h
+    src/ui/ResizableGraphicsView.h \
+    src/ui/imageset/ImageLabel.h \
+    src/ui/imageset/ImageOffsetMark.h \
+    src/ui/imageset/ImageEntry.h \
+    src/ui/imageset/ImagesetEntry.h
 
 FORMS += \
     ui/MainWindow.ui \

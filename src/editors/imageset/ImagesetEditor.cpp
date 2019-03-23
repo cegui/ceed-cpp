@@ -5,7 +5,11 @@
 #include "src/util/SettingsCategory.h"
 #include "src/util/SettingsSection.h"
 #include "src/util/SettingsEntry.h"
+#include "src/ui/MainWindow.h"
 #include "qmenu.h"
+#include "qdom.h"
+#include "qfile.h"
+#include "qmessagebox.h"
 
 ImagesetEditor::ImagesetEditor(const QString& filePath)
     : MultiModeEditor(/*imageset_compatibility.manager, */ filePath)
@@ -32,38 +36,46 @@ void ImagesetEditor::initialize()
 {
     MultiModeEditor::initialize();
 
-/*
-        root = None
-        try:
-            root = ElementTree.fromstring(self.nativeData)
+    QDomDocument doc;
 
-        except:
-            # things didn't go smooth
-            # 2 reasons for that
-            #  * the file is empty
-            #  * the contents of the file are invalid
-            #
-            # In the first case we will silently move along (it is probably just a new file),
-            # in the latter we will output a message box informing about the situation
+    {
+        QFile file(_filePath);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            assert(false);
+            return;
+        }
 
-            # the file should exist at this point, so we are not checking and letting exceptions
-            # fly out of this method
-            if os.path.getsize(self.filePath) > 2:
-                # the file contains more than just CR LF
-                QtGui.QMessageBox.question(self,
-                                           "Can't parse given imageset!",
-                                           "Parsing '%s' failed, it's most likely not a valid XML file. "
-                                           "Constructing empty imageset instead (if you save you will override the invalid data!). "
-                                           "Exception details follow:\n%s" % (self.filePath, sys.exc_info()[1]),
-                                           QtGui.QMessageBox.Ok)
+        const auto fileSize = file.size();
+        if (!doc.setContent(&file))
+        {
+            // Things didn't go smooth
+            // 2 reasons for that
+            //  * the file is empty
+            //  * the contents of the file are invalid
+            //
+            // In the first case we will silently move along (it is probably just a new file),
+            // in the latter we will output a message box informing about the situation
 
-            # we construct the minimal empty imageset
-            root = ElementTree.Element("Imageset")
-            root.set("Name", "")
-            root.set("Imagefile", "")
+            if (fileSize > 2)
+            {
+                // The file contains more than just CR LF
+                QMessageBox::question(&tabs,
+                                      "Can't parse given imageset!",
+                                      QString("Parsing '%1' failed, it's most likely not a valid XML file. "
+                                      "Constructing empty imageset instead (if you save you will override the invalid data!). "
+                                      ).arg(_filePath),
+                                      QMessageBox::Ok);
+            }
 
-        self.visual.initialise(root)
-*/
+            QDomElement xmlRoot = doc.createElement("Imageset");
+            xmlRoot.setAttribute("Name", "");
+            xmlRoot.setAttribute("Imagefile", "");
+            doc.appendChild(xmlRoot);
+        }
+    }
+
+    visualMode->loadImagesetEntryFromElement(doc.documentElement());
 }
 
 void ImagesetEditor::finalize()
@@ -75,9 +87,9 @@ void ImagesetEditor::finalize()
     MultiModeEditor::finalize();
 }
 
-void ImagesetEditor::activate(QMenu* editorMenu)
+void ImagesetEditor::activate(MainWindow& mainWindow)
 {
-    MultiModeEditor::activate(editorMenu);
+    MultiModeEditor::activate(mainWindow);
 /*
         self.mainWindow.addToolBar(QtCore.Qt.ToolBarArea.TopToolBarArea, self.visual.toolBar)
         self.visual.toolBar.show()
@@ -85,10 +97,8 @@ void ImagesetEditor::activate(QMenu* editorMenu)
         self.mainWindow.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.visual.dockWidget)
         self.visual.dockWidget.setVisible(True)
 */
-}
 
-void ImagesetEditor::setupEditorMenu(QMenu* editorMenu)
-{
+    auto editorMenu = mainWindow.getEditorMenu();
     editorMenu->setTitle("&Imageset");
 /*
         self.visual.rebuildEditorMenu(editorMenu)
@@ -97,69 +107,73 @@ void ImagesetEditor::setupEditorMenu(QMenu* editorMenu)
     editorMenu->setEnabled(tabs.currentWidget() == visualMode);
 }
 
-void ImagesetEditor::deactivate()
+void ImagesetEditor::deactivate(MainWindow& mainWindow)
 {
     /*
         self.mainWindow.removeDockWidget(self.visual.dockWidget)
         self.mainWindow.removeToolBar(self.visual.toolBar)
     */
-    MultiModeEditor::deactivate();
+    MultiModeEditor::deactivate(mainWindow);
 }
 
+void ImagesetEditor::copy()
+{
+    if (tabs.currentWidget() == visualMode)
+        ; //visualMode->copy();
+}
+
+void ImagesetEditor::cut()
+{
+    if (tabs.currentWidget() == visualMode)
+        ; //visualMode->cut();
+}
+
+void ImagesetEditor::paste()
+{
+    if (tabs.currentWidget() == visualMode)
+        ; //visualMode->paste();
+}
+
+void ImagesetEditor::deleteSelected()
+{
+    if (tabs.currentWidget() == visualMode)
+        ; //visualMode->deleteSelected();
+}
+
+void ImagesetEditor::zoomIn()
+{
+    if (tabs.currentWidget() == visualMode)
+        visualMode->zoomIn();
+}
+
+void ImagesetEditor::zoomOut()
+{
+    if (tabs.currentWidget() == visualMode)
+        visualMode->zoomOut();
+}
+
+void ImagesetEditor::zoomReset()
+{
+    if (tabs.currentWidget() == visualMode)
+        visualMode->zoomReset();
+}
+
+void ImagesetEditor::getRawData(QByteArray& outRawData)
+{
+    // If user saved in code mode, we process the code by propagating it to visual
+    // (allowing the change propagation to do the code validating and other work for us)
+    if (tabs.currentWidget() == codeMode)
+        codeMode->propagateToVisual();
+
 /*
-    def saveAs(self, targetPath, updateCurrentPath = True):
-        codeMode = self.currentWidget() is self.code
-
-        # if user saved in code mode, we process the code by propagating it to visual
-        # (allowing the change propagation to do the code validating and other work for us)
-
-        if codeMode:
-            self.code.propagateToVisual()
-
         rootElement = self.visual.imagesetEntry.saveToElement()
         # we indent to make the resulting files as readable as possible
         xmledit.indent(rootElement)
 
         self.nativeData = ElementTree.tostring(rootElement, "utf-8")
-
-        return super(ImagesetTabbedEditor, self).saveAs(targetPath, updateCurrentPath)
-
-    def performCut(self):
-        if self.currentWidget() is self.visual:
-            return self.visual.performCut()
-
-        return False
-
-    def performCopy(self):
-        if self.currentWidget() is self.visual:
-            return self.visual.performCopy()
-
-        return False
-
-    def performPaste(self):
-        if self.currentWidget() is self.visual:
-            return self.visual.performPaste()
-
-        return False
-
-    def performDelete(self):
-        if self.currentWidget() is self.visual:
-            return self.visual.performDelete()
-
-        return False
-
-    def zoomIn(self):
-        if self.currentWidget() is self.visual:
-            self.visual.zoomIn()
-
-    def zoomOut(self):
-        if self.currentWidget() is self.visual:
-            self.visual.zoomOut()
-
-    def zoomReset(self):
-        if self.currentWidget() is self.visual:
-            self.visual.zoomOriginal()
 */
+    //outRawData = string.toUtf8();
+}
 
 void ImagesetEditor::createActions(ActionManager& mgr)
 {

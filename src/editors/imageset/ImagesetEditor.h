@@ -28,21 +28,18 @@ public:
 
     virtual void initialize() override;
     virtual void finalize() override;
-    virtual void activate(QMenu* editorMenu) override;
-    virtual void deactivate() override;
+    virtual void activate(MainWindow& mainWindow) override;
+    virtual void deactivate(MainWindow& mainWindow) override;
 
     // Application commands implementation
-//    virtual void copy() {}
-//    virtual void cut() {}
-//    virtual void paste() {}
-//    virtual void deleteSelected() {}
-//    virtual void undo();
-//    virtual void redo();
-//    virtual void revert();
-//    virtual void zoomIn() {}
-//    virtual void zoomOut() {}
-//    virtual void zoomReset() {}
-//    //virtual void zoomFit() {}
+    virtual void copy() override;
+    virtual void cut() override;
+    virtual void paste() override;
+    virtual void deleteSelected() override;
+    virtual void zoomIn() override;
+    virtual void zoomOut() override;
+    virtual void zoomReset() override;
+    //virtual void zoomFit() {}
 
     virtual QWidget* getWidget() override { return &tabs; }
     //virtual bool hasChanges() const;
@@ -50,7 +47,8 @@ public:
 
 protected:
 
-    virtual void setupEditorMenu(QMenu* editorMenu) override;
+    virtual void getRawData(QByteArray& outRawData) override;
+
     //virtual void getRawData(QByteArray& outRawData) {}
     //virtual void markAsUnchanged();
 

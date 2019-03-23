@@ -7,9 +7,9 @@
 // This is the base class for a class that takes a file and allows manipulation with it
 
 class QWidget;
-class QMenu;
 class QUndoStack;
 class QFileSystemWatcher;
+class MainWindow;
 
 typedef std::unique_ptr<class EditorBase> EditorBasePtr;
 
@@ -32,8 +32,8 @@ public:
 
     virtual void initialize();
     virtual void finalize();
-    virtual void activate(QMenu* editorMenu);
-    virtual void deactivate();
+    virtual void activate(MainWindow& mainWindow);
+    virtual void deactivate(MainWindow& mainWindow);
     void reloadData();
     void destroy();
 
@@ -74,8 +74,6 @@ signals:
 protected:
 
     void onFileChangedByExternalProgram();
-
-    virtual void setupEditorMenu(QMenu* editorMenu);
 
     void enableFileMonitoring(bool enable);
 
