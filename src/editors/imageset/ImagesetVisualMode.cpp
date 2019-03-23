@@ -1,44 +1,51 @@
 #include "src/editors/imageset/ImagesetVisualMode.h"
+#include "src/Application.h"
+#include "src/util/Settings.h"
+#include "qopenglwidget.h"
 
 ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
     //!!!: IEditMode(editor)
 {
+    wheelZoomEnabled = true;
+    middleButtonDragScrollEnabled = true;
+
+    // Reset to unreachable value
+    lastMousePosition.setX(-10000);
+    lastMousePosition.setY(-10000);
+
+    setScene(new QGraphicsScene());
+
+    setFocusPolicy(Qt::ClickFocus);
+    setFrameStyle(QFrame::NoFrame);
+
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    if (settings->getEntryValue("imageset/visual/partial_updates").toBool())
+    {
+        // the commented lines are possible optimisation, I found out that they don't really
+        // speed it up in a noticeable way so I commented them out
+
+        //setOptimizationFlag(DontSavePainterState, true);
+        //setOptimizationFlag(DontAdjustForAntialiasing, true);
+        //setCacheMode(CacheBackground);
+        setViewportUpdateMode(MinimalViewportUpdate);
+        //setRenderHint(QPainter::Antialiasing, false);
+        //setRenderHint(QPainter::TextAntialiasing, false);
+        //setRenderHint(QPainter::SmoothPixmapTransform, false);
+    }
+    else
+    {
+        // use OpenGL for view redrawing
+        // depending on the platform and hardware this may be faster or slower
+        setViewport(new QOpenGLWidget());
+        setViewportUpdateMode(FullViewportUpdate);
+    }
+
+    setDragMode(RubberBandDrag);
+    setBackgroundBrush(QBrush(Qt::lightGray));
+
 /*
-        self.wheelZoomEnabled = True
-        self.middleButtonDragScrollEnabled = True
-
-        self.lastMousePosition = None
-
-        scene = QtGui.QGraphicsScene()
-        self.setScene(scene)
-
-        self.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.setFrameStyle(QtGui.QFrame.NoFrame)
-
-        if settings.getEntry("imageset/visual/partial_updates").value:
-            # the commented lines are possible optimisation, I found out that they don't really
-            # speed it up in a noticeable way so I commented them out
-
-            #self.setOptimizationFlag(QGraphicsView.DontSavePainterState, True)
-            #self.setOptimizationFlag(QGraphicsView.DontAdjustForAntialiasing, True)
-            #self.setCacheMode(QGraphicsView.CacheBackground)
-            self.setViewportUpdateMode(QtGui.QGraphicsView.MinimalViewportUpdate)
-            #self.setRenderHint(QPainter.Antialiasing, False)
-            #self.setRenderHint(QPainter.TextAntialiasing, False)
-            #self.setRenderHint(QPainter.SmoothPixmapTransform, False)
-
-        else:
-            # use OpenGL for view redrawing
-            # depending on the platform and hardware this may be faster or slower
-            self.setViewport(QtOpenGL.QGLWidget())
-            self.setViewportUpdateMode(QtGui.QGraphicsView.FullViewportUpdate)
-
         self.scene().selectionChanged.connect(self.slot_selectionChanged)
 
-        self.tabbedEditor = tabbedEditor
-
-        self.setDragMode(QtGui.QGraphicsView.RubberBandDrag)
-        self.setBackgroundBrush(QtGui.QBrush(QtCore.Qt.lightGray))
 
         self.imagesetEntry = None
 
@@ -73,7 +80,7 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
 
         self.toolBar.addAction(self.createImageAction)
         self.toolBar.addAction(self.duplicateSelectedImagesAction)
-        self.toolBar.addSeparator() # ---------------------------
+        self.toolBar.addSeparator() // ---------------------------
         self.toolBar.addAction(self.editOffsetsAction)
         self.toolBar.addAction(self.cycleOverlappingAction)
 
@@ -85,25 +92,25 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
         self.contextMenu.addAction(self.createImageAction)
         self.contextMenu.addAction(self.duplicateSelectedImagesAction)
         self.contextMenu.addAction(action.getAction("all_editors/delete"))
-        self.contextMenu.addSeparator() # ----------------------
+        self.contextMenu.addSeparator() // ----------------------
         self.contextMenu.addAction(self.cycleOverlappingAction)
-        self.contextMenu.addSeparator() # ----------------------
+        self.contextMenu.addSeparator() // ----------------------
         self.contextMenu.addAction(action.getAction("all_editors/zoom_in"))
         self.contextMenu.addAction(action.getAction("all_editors/zoom_out"))
         self.contextMenu.addAction(action.getAction("all_editors/zoom_reset"))
-        self.contextMenu.addSeparator() # ----------------------
+        self.contextMenu.addSeparator() // ----------------------
         self.contextMenu.addAction(self.editOffsetsAction)
 
     def rebuildEditorMenu(self, editorMenu):
         """Adds actions to the editor menu"""
-        # similar to the toolbar, includes the focus filter box action
+        // similar to the toolbar, includes the focus filter box action
         editorMenu.addAction(self.createImageAction)
         editorMenu.addAction(self.duplicateSelectedImagesAction)
-        editorMenu.addSeparator() # ---------------------------
+        editorMenu.addSeparator() // ---------------------------
         editorMenu.addAction(self.cycleOverlappingAction)
-        editorMenu.addSeparator() # ---------------------------
+        editorMenu.addSeparator() // ---------------------------
         editorMenu.addAction(self.editOffsetsAction)
-        editorMenu.addSeparator() # ---------------------------
+        editorMenu.addSeparator() // ---------------------------
         editorMenu.addAction(self.focusImageListFilterBoxAction)
 
     def initialise(self, rootElement):
@@ -112,9 +119,9 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
     def refreshSceneRect(self):
         boundingRect = self.imagesetEntry.boundingRect()
 
-        # the reason to make the bounding rect 100px bigger on all the sides is to make
-        # middle button drag scrolling easier (you can put the image where you want without
-        # running out of scene
+        // the reason to make the bounding rect 100px bigger on all the sides is to make
+        // middle button drag scrolling easier (you can put the image where you want without
+        // running out of scene
 
         boundingRect.adjust(-100, -100, 100, 100)
         self.scene().setSceneRect(boundingRect)
@@ -145,10 +152,10 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
             cmd = undo.MoveCommand(self, imageNames, oldPositions, newPositions)
             self.tabbedEditor.undoStack.push(cmd)
 
-            # we handled this
+            // we handled this
             return True
 
-        # we didn't handle this
+        // we didn't handle this
         return False
 
     def resizeImageEntries(self, imageEntries, topLeftDelta, bottomRightDelta):
@@ -179,10 +186,10 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
             cmd = undo.GeometryChangeCommand(self, imageNames, oldPositions, oldRects, newPositions, newRects)
             self.tabbedEditor.undoStack.push(cmd)
 
-            # we handled this
+            // we handled this
             return True
 
-        # we didn't handle this
+        // we didn't handle this
         return False
 
     def cycleOverlappingImages(self):
@@ -194,7 +201,7 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
 
             overlappingItems = self.scene().items(rect)
 
-            # first we stack everything before our current selection
+            // first we stack everything before our current selection
             successor = None
             for item in overlappingItems:
                 if item == selection[0] or item.parentItem() != selection[0].parentItem():
@@ -210,17 +217,17 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
 
                     successor.stackBefore(item)
 
-                # we deselect current
+                // we deselect current
                 selection[0].setSelected(False)
                 selection[0].hoverLeaveEvent(None)
-                # and select what was at the bottom (thus getting this to the top)
+                // and select what was at the bottom (thus getting this to the top)
                 successor.setSelected(True)
                 successor.hoverEnterEvent(None)
 
-            # we handled this
+            // we handled this
             return True
 
-        # we didn't handle this
+        // we didn't handle this
         return False
 
     def createImage(self, centrePositionX, centrePositionY):
@@ -228,7 +235,7 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
         the newly created image will then 'encapsulate' the centrepoint
         """
 
-        # find a unique image name
+        // find a unique image name
         name = "NewImage"
         index = 1
 
@@ -275,16 +282,16 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
         TODO: Can be used for the copy-paste functionality too
         """
 
-        # Try the desired name exactly
+        // Try the desired name exactly
         if self.getImageByName(desiredName) is None:
             return desiredName
 
-        # Try with prefix and suffix
+        // Try with prefix and suffix
         desiredName = copyPrefix + desiredName + copySuffix
         if self.getImageByName(desiredName) is None:
             return desiredName
 
-        # We're forced to append a counter, start with number 2 (_copy2, copy3, etc.)
+        // We're forced to append a counter, start with number 2 (_copy2, copy3, etc.)
         counter = 2
         while True:
             tmpName = desiredName + str(counter)
@@ -314,7 +321,7 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
             return True
 
         else:
-            # we didn't handle this
+            // we didn't handle this
             return False
 
     def duplicateSelectedImageEntries(self):
@@ -348,7 +355,7 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
             return True
 
         else:
-            # we didn't handle this
+            // we didn't handle this
             return False
 
     def deleteSelectedImageEntries(self):
@@ -367,15 +374,15 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
         if self.tabbedEditor.editorMenu() is not None:
             self.tabbedEditor.editorMenu().menuAction().setEnabled(True)
 
-        # connect all our actions
+        // connect all our actions
         self.connectionGroup.connectAll()
-        # call this every time the visual editing is shown to sync all entries up
+        // call this every time the visual editing is shown to sync all entries up
         self.slot_toggleEditOffsets(self.editOffsetsAction.isChecked())
 
         super(VisualEditing, self).showEvent(event)
 
     def hideEvent(self, event):
-        # disconnected all our actions
+        // disconnected all our actions
         self.connectionGroup.disconnectAll()
 
         self.dockWidget.setEnabled(False)
@@ -390,7 +397,7 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
 
         if event.buttons() & QtCore.Qt.LeftButton:
             for selectedItem in self.scene().selectedItems():
-                # selectedItem could be ImageEntry or ImageOffset!
+                // selectedItem could be ImageEntry or ImageOffset!
                 selectedItem.potentialMove = True
                 selectedItem.oldPosition = None
 
@@ -402,7 +409,7 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
 
         super(VisualEditing, self).mouseReleaseEvent(event)
 
-        # moving
+        // moving
         moveImageNames = []
         moveImageOldPositions = {}
         moveImageNewPositions = {}
@@ -411,15 +418,15 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
         moveOffsetOldPositions = {}
         moveOffsetNewPositions = {}
 
-        # resizing
+        // resizing
         resizeImageNames = []
         resizeImageOldPositions = {}
         resizeImageOldRects = {}
         resizeImageNewPositions = {}
         resizeImageNewRects = {}
 
-        # we have to "expand" the items, adding parents of resizing handles
-        # instead of the handles themselves
+        // we have to "expand" the items, adding parents of resizing handles
+        // instead of the handles themselves
         expandedSelectedItems = []
         for selectedItem in self.scene().selectedItems():
             if isinstance(selectedItem, elements.ImageEntry):
@@ -433,17 +440,17 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
             if isinstance(selectedItem, elements.ImageEntry):
                 if selectedItem.oldPosition:
                     if selectedItem.mouseOver:
-                        # show the label again if mouse is over because moving finished
+                        // show the label again if mouse is over because moving finished
                         selectedItem.label.setVisible(True)
 
-                    # only include that if the position really changed
+                    // only include that if the position really changed
                     if selectedItem.oldPosition != selectedItem.pos():
                         moveImageNames.append(selectedItem.name)
                         moveImageOldPositions[selectedItem.name] = selectedItem.oldPosition
                         moveImageNewPositions[selectedItem.name] = selectedItem.pos()
 
                 if selectedItem.resized:
-                    # only include that if the position or rect really changed
+                    // only include that if the position or rect really changed
                     if selectedItem.resizeOldPos != selectedItem.pos() or selectedItem.resizeOldRect != selectedItem.rect():
                         resizeImageNames.append(selectedItem.name)
                         resizeImageOldPositions[selectedItem.name] = selectedItem.resizeOldPos
@@ -457,7 +464,7 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
 
             elif isinstance(selectedItem, elements.ImageOffset):
                 if selectedItem.oldPosition:
-                    # only include that if the position really changed
+                    // only include that if the position really changed
                     if selectedItem.oldPosition != selectedItem.pos():
                         moveOffsetNames.append(selectedItem.imageEntry.name)
                         moveOffsetOldPositions[selectedItem.imageEntry.name] = selectedItem.oldPosition
@@ -466,10 +473,10 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
                 selectedItem.potentialMove = False
                 selectedItem.oldPosition = None
 
-        # NOTE: It should never happen that more than one of these sets is populated
-        #       User moves images XOR moves offsets XOR resizes images
-        #
-        #       I don't do elif for robustness though, who knows what can happen ;-)
+        // NOTE: It should never happen that more than one of these sets is populated
+        //       User moves images XOR moves offsets XOR resizes images
+        //
+        //       I don't do elif for robustness though, who knows what can happen ;-)
 
         if len(moveImageNames) > 0:
             cmd = undo.MoveCommand(self, moveImageNames, moveImageOldPositions, moveImageNewPositions)
@@ -489,7 +496,7 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
         super(VisualEditing, self).mouseMoveEvent(event)
 
     def keyReleaseEvent(self, event):
-        # TODO: offset keyboard handling
+        // TODO: offset keyboard handling
 
         handled = False
 
@@ -541,7 +548,7 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
             event.accept()
 
     def slot_selectionChanged(self):
-        # if dockWidget is changing the selection, back off
+        // if dockWidget is changing the selection, back off
         if self.dockWidget.selectionUnderway:
             return
 
@@ -567,9 +574,9 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
         """
 
         filterBox = self.dockWidget.filterBox
-        # selects all contents of the filter so that user can replace that with their search phrase
+        // selects all contents of the filter so that user can replace that with their search phrase
         filterBox.selectAll()
-        # sets focus so that typing puts text into the filter box without clicking
+        // sets focus so that typing puts text into the filter box without clicking
         filterBox.setFocus()
 
     def performCut(self):
@@ -634,7 +641,7 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
         cmd = undo.PasteCommand(self, newNames, newPositions, newRects, newOffsets)
         self.tabbedEditor.undoStack.push(cmd)
 
-        # select just the pasted image definitions for convenience
+        // select just the pasted image definitions for convenience
         self.scene().clearSelection()
         for name in newNames:
             self.imagesetEntry.getImageEntry(name).setSelected(True)

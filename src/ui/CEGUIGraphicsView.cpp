@@ -6,7 +6,7 @@
 //!!!subclass of resizable.GraphicsView, cegui.GLContextProvider!
 // TODO: look at resizable.GraphicsView for scrolling & scaling
 CEGUIGraphicsView::CEGUIGraphicsView(QWidget *parent) :
-    QGraphicsView(parent)
+    ResizableGraphicsView(parent)
 {
     auto vp = new QOpenGLWidget();
 
@@ -17,9 +17,9 @@ CEGUIGraphicsView::CEGUIGraphicsView(QWidget *parent) :
     vp->setFormat(format);
 
     setViewport(vp);
-    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    setViewportUpdateMode(FullViewportUpdate);
 
-    setOptimizationFlags(QGraphicsView::DontClipPainter | QGraphicsView::DontAdjustForAntialiasing);
+    setOptimizationFlags(DontClipPainter | DontAdjustForAntialiasing);
 
     // Prepare to receive input
     setMouseTracking(true);
@@ -44,7 +44,7 @@ void CEGUIGraphicsView::updateSelfAndScene()
 
 void CEGUIGraphicsView::drawBackground(QPainter *painter, const QRectF &rect)
 {
-    QGraphicsView::drawBackground(painter, rect);
+    ResizableGraphicsView::drawBackground(painter, rect);
 
     if (continuousRendering)
     {

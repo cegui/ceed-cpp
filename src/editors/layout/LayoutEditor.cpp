@@ -343,7 +343,6 @@ void LayoutEditor::createSettings(Settings& mgr)
                                   "deal with them at all. Only use if you know what you are doing! This might clutter the interface a lot.",
                                   "checkbox", false, 11));
     secVisual->addEntry(std::move(entry));
-
 }
 //---------------------------------------------------------------------
 

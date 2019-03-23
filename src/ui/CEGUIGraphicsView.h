@@ -1,16 +1,17 @@
 #ifndef CEGUIGRAPHICSVIEW_H
 #define CEGUIGRAPHICSVIEW_H
 
-#include <QGraphicsView>
+#include "src/ui/ResizableGraphicsView.h"
 
 // This is a final class, not suitable for subclassing. This views given scene using
-// QOpenGLWidget. It's designed to work with cegui.GraphicsScene derived classes.
+// QOpenGLWidget. It's designed to work with CEGUIGraphicsScene derived classes.
 
-class CEGUIGraphicsView final : public QGraphicsView
+class CEGUIGraphicsView final : public ResizableGraphicsView
 {
     Q_OBJECT
 
 public:
+
     explicit CEGUIGraphicsView(QWidget *parent = nullptr);
     ~CEGUIGraphicsView();
 

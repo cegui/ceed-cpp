@@ -74,7 +74,8 @@ SOURCES += \
     src/editors/imageset/ImagesetCodeMode.cpp \
     src/editors/layout/LayoutPreviewerMode.cpp \
     src/editors/imageset/ImagesetVisualMode.cpp \
-    src/ui/imageset/ImagesetEditorDockWidget.cpp
+    src/ui/imageset/ImagesetEditorDockWidget.cpp \
+    src/ui/ResizableGraphicsView.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -123,7 +124,8 @@ HEADERS += \
     src/editors/imageset/ImagesetCodeMode.h \
     src/editors/layout/LayoutPreviewerMode.h \
     src/editors/imageset/ImagesetVisualMode.h \
-    src/ui/imageset/ImagesetEditorDockWidget.h
+    src/ui/imageset/ImagesetEditorDockWidget.h \
+    src/ui/ResizableGraphicsView.h
 
 FORMS += \
     ui/MainWindow.ui \
