@@ -3,6 +3,8 @@
 #include "src/util/SettingsCategory.h"
 #include "src/util/SettingsSection.h"
 #include "src/util/SettingsEntry.h"
+#include "src/editors/imageset/ImagesetEditor.h"
+#include "src/editors/layout/LayoutEditor.h"
 #include "qsplashscreen.h"
 #include "qsettings.h"
 
@@ -127,14 +129,10 @@ void Application::createSettingsEntries()
                                   "colour", false, 4));
     secBG->addEntry(std::move(entry));
 
-    //!!!if used only by editors, move to editor factories & call on factories init!
+    ImagesetEditor::createSettings(*settings);
+    LayoutEditor::createSettings(*settings);
+
     /*
-    import ceed.editors.imageset.settings_decl as imageset_settings
-    imageset_settings.declare(self)
-
-    import ceed.editors.layout.settings_decl as layout_settings
-    layout_settings.declare(self)
-
     import ceed.editors.looknfeel.settings_decl as looknfeel_settings
     looknfeel_settings.declare(self)
     */

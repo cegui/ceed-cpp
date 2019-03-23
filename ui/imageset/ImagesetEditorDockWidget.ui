@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>DockWidget</class>
+ <class>ImagesetEditorDockWidget</class>
  <widget class="QDockWidget" name="DockWidget">
   <property name="enabled">
    <bool>false</bool>
@@ -409,7 +409,7 @@
   <customwidget>
    <class>FileLineEdit</class>
    <extends>QWidget</extends>
-   <header>ceed.qtwidgets</header>
+   <header>src/ui/widgets/FileLineEdit.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

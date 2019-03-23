@@ -1,14 +1,19 @@
 #include "src/editors/imageset/ImagesetEditor.h"
 #include "src/editors/imageset/ImagesetCodeMode.h"
+#include "src/editors/imageset/ImagesetVisualMode.h"
+#include "src/util/Settings.h"
+#include "src/util/SettingsCategory.h"
+#include "src/util/SettingsSection.h"
+#include "src/util/SettingsEntry.h"
+#include "qmenu.h"
 
 ImagesetEditor::ImagesetEditor(const QString& filePath)
     : MultiModeEditor(/*imageset_compatibility.manager, */ filePath)
 {
-/*
-        self.visual = visual.VisualEditing(self)
-        self.addTab(self.visual, "Visual")
-*/
-    auto codeMode = new ImagesetCodeMode(*this);
+    visualMode = new ImagesetVisualMode(*this);
+    tabs.addTab(visualMode, "Visual");
+
+    codeMode = new ImagesetCodeMode(*this);
     tabs.addTab(codeMode, "Code");
 /*
         # set the toolbar icon size according to the setting and subscribe to it
@@ -16,6 +21,10 @@ ImagesetEditor::ImagesetEditor(const QString& filePath)
         self.updateToolbarSize(self.tbIconSizeEntry.value)
         self.tbIconSizeCallback = lambda value: self.updateToolbarSize(value)
         self.tbIconSizeEntry.subscribe(self.tbIconSizeCallback)
+    def updateToolbarSize(self, size):
+        if size < 16:
+            size = 16
+        self.visual.toolBar.setIconSize(QtCore.QSize(size, size))
 */
 }
 
@@ -80,13 +89,12 @@ void ImagesetEditor::activate(QMenu* editorMenu)
 
 void ImagesetEditor::setupEditorMenu(QMenu* editorMenu)
 {
+    editorMenu->setTitle("&Imageset");
 /*
-        editorMenu.setTitle("&Imageset")
         self.visual.rebuildEditorMenu(editorMenu)
-
-        return True, self.currentWidget() == self.visual
-        // visible, enabled
 */
+    editorMenu->setVisible(true);
+    editorMenu->setEnabled(tabs.currentWidget() == visualMode);
 }
 
 void ImagesetEditor::deactivate()
@@ -99,11 +107,6 @@ void ImagesetEditor::deactivate()
 }
 
 /*
-    def updateToolbarSize(self, size):
-        if size < 16:
-            size = 16
-        self.visual.toolBar.setIconSize(QtCore.QSize(size, size))
-
     def saveAs(self, targetPath, updateCurrentPath = True):
         codeMode = self.currentWidget() is self.code
 
@@ -158,9 +161,9 @@ void ImagesetEditor::deactivate()
             self.visual.zoomOriginal()
 */
 
+void ImagesetEditor::createActions(ActionManager& mgr)
+{
 /*
-
-def declare(actionManager):
     cat = actionManager.createCategory(name = "imageset", label = "Imageset Editor")
 
     cat.createAction(name = "edit_offsets", label = "Edit &Offsets",
@@ -185,22 +188,26 @@ def declare(actionManager):
                      help_ = "This allows you to easily press a shortcut and immediately search through image definitions without having to reach for a mouse.",
                      icon = QtGui.QIcon("icons/imageset_editing/focus_image_list_filter_box.png"),
                      defaultShortcut = QtGui.QKeySequence(QtGui.QKeySequence.Find))
-
-def declare(settings):
-    category = settings.createCategory(name = "imageset", label = "Imageset editing")
-
-    visual = category.createSection(name = "visual", label = "Visual editing")
-
-    visual.createEntry(name = "overlay_image_labels", type_ = bool, label = "Show overlay labels of images",
-                    help_ = "Show overlay labels of images.",
-                    defaultValue = True, widgetHint = "checkbox",
-                    sortingWeight = 1)
-
-    visual.createEntry(name = "partial_updates", type_ = bool, label = "Use partial drawing updates",
-                    help_ = "Will use partial 2D updates using accelerated 2D machinery. The performance of this is very dependent on your platform and hardware. MacOSX handles partial updates much better than Linux it seems. If you have a very good GPU, don't tick this.",
-                    defaultValue = False, widgetHint = "checkbox", changeRequiresRestart = True,
-                    sortingWeight = 2)
 */
+}
+
+void ImagesetEditor::createSettings(Settings& mgr)
+{
+    auto catImageset = mgr.createCategory("imageset", "Imageset editing");
+    auto secVisual = catImageset->createSection("visual", "Visual editing");
+
+    SettingsEntryPtr entry(new SettingsEntry(*secVisual, "overlay_image_labels", true, "Show overlay labels of images",
+                                             "Show overlay labels of images.",
+                                             "checkbox", false, 1));
+    secVisual->addEntry(std::move(entry));
+
+    entry.reset(new SettingsEntry(*secVisual, "partial_updates", false, "Use partial drawing updates",
+                                  "Will use partial 2D updates using accelerated 2D machinery. The performance of this is very "
+                                  "dependent on your platform and hardware. MacOSX handles partial updates much better than Linux "
+                                  "it seems. If you have a very good GPU, don't tick this.",
+                                  "checkbox", true, 2));
+    secVisual->addEntry(std::move(entry));
+}
 
 //---------------------------------------------------------------------
 

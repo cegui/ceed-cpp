@@ -72,7 +72,9 @@ SOURCES += \
     src/editors/imageset/ImagesetEditor.cpp \
     src/editors/layout/LayoutCodeMode.cpp \
     src/editors/imageset/ImagesetCodeMode.cpp \
-    src/editors/layout/LayoutPreviewerMode.cpp
+    src/editors/layout/LayoutPreviewerMode.cpp \
+    src/editors/imageset/ImagesetVisualMode.cpp \
+    src/ui/imageset/ImagesetEditorDockWidget.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -119,7 +121,9 @@ HEADERS += \
     src/editors/imageset/ImagesetEditor.h \
     src/editors/layout/LayoutCodeMode.h \
     src/editors/imageset/ImagesetCodeMode.h \
-    src/editors/layout/LayoutPreviewerMode.h
+    src/editors/layout/LayoutPreviewerMode.h \
+    src/editors/imageset/ImagesetVisualMode.h \
+    src/ui/imageset/ImagesetEditorDockWidget.h
 
 FORMS += \
     ui/MainWindow.ui \
@@ -134,7 +138,8 @@ FORMS += \
     ui/dialogs/MultiplePossibleFactoriesDialog.ui \
     ui/dialogs/PenDialog.ui \
     ui/dialogs/KeySequenceDialog.ui \
-    ui/widgets/BitmapEditorWidget.ui
+    ui/widgets/BitmapEditorWidget.ui \
+    ui/imageset/ImagesetEditorDockWidget.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

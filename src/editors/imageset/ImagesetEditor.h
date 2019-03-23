@@ -12,9 +12,17 @@
 //                that is 25x25 pixels, set the offset to -12, -12
 // Underlying image - the image that lies under the image entries/rectangles (bitmap image)
 
+class ImagesetVisualMode;
+class ImagesetCodeMode;
+class ActionManager;
+class Settings;
+
 class ImagesetEditor : public MultiModeEditor
 {
 public:
+
+    static void createActions(ActionManager& mgr);
+    static void createSettings(Settings& mgr);
 
     ImagesetEditor(const QString& filePath);
 
@@ -45,6 +53,9 @@ protected:
     virtual void setupEditorMenu(QMenu* editorMenu) override;
     //virtual void getRawData(QByteArray& outRawData) {}
     //virtual void markAsUnchanged();
+
+    ImagesetVisualMode* visualMode = nullptr;
+    ImagesetCodeMode* codeMode = nullptr;
 };
 
 class ImagesetEditorFactory : public EditorFactoryBase
