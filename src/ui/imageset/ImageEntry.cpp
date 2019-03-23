@@ -5,8 +5,7 @@
 #include "qpainter.h"
 
 ImageEntry::ImageEntry(QGraphicsItem* parent)
-    //!!!init base class ResizableRectItem with parent!
-    : QGraphicsRectItem(parent)
+    : ResizableRectItem(parent)
 {
     setAcceptHoverEvents(true);
     setFlags(ItemIsMovable | ItemIsSelectable | ItemSendsGeometryChanges);

@@ -1,15 +1,13 @@
 #ifndef IMAGEENTRY_H
 #define IMAGEENTRY_H
 
-//!!!DBG TMP!
-#include "qgraphicsitem.h"
+#include "src/ui/ResizableRectItem.h"
 
 // Represents the image of the imageset, can be drag moved, selected, resized, ...
 
 class QDomElement;
 
-//!!!ResizableRectItem subclass!
-class ImageEntry : public QGraphicsRectItem
+class ImageEntry : public ResizableRectItem
 {
 public:
 
