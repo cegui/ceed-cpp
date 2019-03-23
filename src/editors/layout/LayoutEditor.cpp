@@ -1,4 +1,5 @@
 #include "src/editors/layout/LayoutEditor.h"
+#include "src/editors/layout/LayoutCodeMode.h"
 
 LayoutEditor::LayoutEditor(const QString& filePath)
     : MultiModeEditor(/*layout_compatibility.manager, */ filePath)
@@ -7,8 +8,10 @@ LayoutEditor::LayoutEditor(const QString& filePath)
         self.visual = visual.VisualEditing(self)
         self.addTab(self.visual, "Visual")
 
-        self.code = code.CodeEditing(self)
-        self.addTab(self.code, "Code")
+*/
+    auto codeMode = new LayoutCodeMode(*this);
+    tabs.addTab(codeMode, "Code");
+/*
 
         # Layout Previewer is not actually an edit mode, you can't edit the layout from it,
         # however for everything to work smoothly we do push edit mode changes to it to the

@@ -21,6 +21,8 @@
 #include "src/editors/NoEditor.h"
 #include "src/editors/TextEditor.h"
 #include "src/editors/BitmapEditor.h"
+#include "src/editors/layout/LayoutEditor.h"
+#include "src/editors/imageset/ImagesetEditor.h"
 #include "src/ui/dialogs/AboutDialog.h"
 #include "src/ui/dialogs/LicenseDialog.h"
 #include "src/ui/dialogs//NewProjectDialog.h"
@@ -59,11 +61,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     editorFactories.push_back(std::make_unique<TextEditorFactory>());
     editorFactories.push_back(std::make_unique<BitmapEditorFactory>());
+    editorFactories.push_back(std::make_unique<LayoutEditorFactory>());
+    editorFactories.push_back(std::make_unique<ImagesetEditorFactory>());
     /*
         animation_list_editor.AnimationListTabbedEditorFactory(),           // Animation files
-        bitmap_editor.BitmapTabbedEditorFactory(),                          // Bitmap files
-        imageset_editor.ImagesetTabbedEditorFactory(),                      // Imageset files
-        layout_editor.LayoutTabbedEditorFactory(),                          // Layout files
         looknfeel_editor.LookNFeelTabbedEditorFactory(),                    //
         #property_mappings_editor.PropertyMappingsTabbedEditorFactory(),    // Property Mapping files
     */

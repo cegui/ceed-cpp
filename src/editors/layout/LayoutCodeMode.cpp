@@ -20,7 +20,7 @@ QString LayoutCodeMode::getNativeCode()
     return "";
 }
 
-bool ImagesetCodeMode::propagateNativeCode(const QString& code)
+bool LayoutCodeMode::propagateNativeCode(const QString& code)
 {
     // We have to make the context the current context to ensure textures are fine
     /*

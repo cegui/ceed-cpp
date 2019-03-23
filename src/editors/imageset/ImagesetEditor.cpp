@@ -1,4 +1,5 @@
 #include "src/editors/imageset/ImagesetEditor.h"
+#include "src/editors/imageset/ImagesetCodeMode.h"
 
 ImagesetEditor::ImagesetEditor(const QString& filePath)
     : MultiModeEditor(/*imageset_compatibility.manager, */ filePath)
@@ -6,10 +7,10 @@ ImagesetEditor::ImagesetEditor(const QString& filePath)
 /*
         self.visual = visual.VisualEditing(self)
         self.addTab(self.visual, "Visual")
-
-        self.code = code.CodeEditing(self)
-        self.addTab(self.code, "Code")
-
+*/
+    auto codeMode = new ImagesetCodeMode(*this);
+    tabs.addTab(codeMode, "Code");
+/*
         # set the toolbar icon size according to the setting and subscribe to it
         self.tbIconSizeEntry = settings.getEntry("global/ui/toolbar_icon_size")
         self.updateToolbarSize(self.tbIconSizeEntry.value)
