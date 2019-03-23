@@ -158,6 +158,50 @@ void ImagesetEditor::deactivate()
             self.visual.zoomOriginal()
 */
 
+/*
+
+def declare(actionManager):
+    cat = actionManager.createCategory(name = "imageset", label = "Imageset Editor")
+
+    cat.createAction(name = "edit_offsets", label = "Edit &Offsets",
+                     help_ = "When you select an image definition, a crosshair will appear in it representing it's offset centrepoint.",
+                     icon = QtGui.QIcon("icons/imageset_editing/edit_offsets.png"),
+                     defaultShortcut = QtGui.QKeySequence(QtCore.Qt.Key_Space)).setCheckable(True)
+
+    cat.createAction(name = "cycle_overlapping", label = "Cycle O&verlapping Image Definitions",
+                     help_ = "When images definition overlap in such a way that makes it hard/impossible to select the definition you want, this allows you to select on of them and then just cycle until the right one is selected.",
+                     icon = QtGui.QIcon("icons/imageset_editing/cycle_overlapping.png"),
+                     defaultShortcut = QtGui.QKeySequence(QtCore.Qt.Key_Q))
+
+    cat.createAction(name = "create_image", label = "&Create Image Definition",
+                     help_ = "Creates a new image definition at the current cursor position, sized 50x50 pixels.",
+                     icon = QtGui.QIcon("icons/imageset_editing/create_image.png"))
+
+    cat.createAction(name = "duplicate_image", label = "&Duplicate Image Definition",
+                     help_ = "Duplicates selected image definitions.",
+                     icon = QtGui.QIcon("icons/imageset_editing/duplicate_image.png"))
+
+    cat.createAction(name = "focus_image_list_filter_box", label = "&Focus Image Definition List Filter Box",
+                     help_ = "This allows you to easily press a shortcut and immediately search through image definitions without having to reach for a mouse.",
+                     icon = QtGui.QIcon("icons/imageset_editing/focus_image_list_filter_box.png"),
+                     defaultShortcut = QtGui.QKeySequence(QtGui.QKeySequence.Find))
+
+def declare(settings):
+    category = settings.createCategory(name = "imageset", label = "Imageset editing")
+
+    visual = category.createSection(name = "visual", label = "Visual editing")
+
+    visual.createEntry(name = "overlay_image_labels", type_ = bool, label = "Show overlay labels of images",
+                    help_ = "Show overlay labels of images.",
+                    defaultValue = True, widgetHint = "checkbox",
+                    sortingWeight = 1)
+
+    visual.createEntry(name = "partial_updates", type_ = bool, label = "Use partial drawing updates",
+                    help_ = "Will use partial 2D updates using accelerated 2D machinery. The performance of this is very dependent on your platform and hardware. MacOSX handles partial updates much better than Linux it seems. If you have a very good GPU, don't tick this.",
+                    defaultValue = False, widgetHint = "checkbox", changeRequiresRestart = True,
+                    sortingWeight = 2)
+*/
+
 //---------------------------------------------------------------------
 
 QString ImagesetEditorFactory::getFileTypesDescription() const

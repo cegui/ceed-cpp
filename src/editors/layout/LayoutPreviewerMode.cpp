@@ -1,44 +1,20 @@
-##############################################################################
-#   CEED - Unified CEGUI asset editor
-#
-#   Copyright (C) 2011-2012   Martin Preisler <martin@preisler.me>
-#                             and contributing authors (see AUTHORS file)
-#
-#   This program is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation, either version 3 of the License, or
-#   (at your option) any later version.
-#
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-##############################################################################
+#include "src/editors/layout/LayoutPreviewerMode.h"
 
-from PySide import QtGui
-
-from ceed.editors import multi
-
-import PyCEGUI
-
-class LayoutPreviewer(QtGui.QWidget, multi.EditMode):
-    """Provides "Live Preview" which is basically interactive CEGUI rendering
-    without any other outlines or what not over it.
-    """
-
-    def __init__(self, tabbedEditor):
-        super(LayoutPreviewer, self).__init__()
-
+LayoutPreviewerMode::LayoutPreviewerMode(MultiModeEditor& editor, QWidget* parent)
+    : QWidget(parent)
+    //!!!, IEditMode(editor) //???EditModeBase?
+{
+/*
         self.tabbedEditor = tabbedEditor
         self.rootWidget = None
 
         layout = QtGui.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
+*/
+}
 
+/*
     def activate(self):
         super(LayoutPreviewer, self).activate()
 
@@ -83,6 +59,4 @@ class LayoutPreviewer(QtGui.QWidget, multi.EditMode):
             PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(None)
 
         super(LayoutPreviewer, self).hideEvent(event)
-
-# needs to be at the end, import to get the singleton
-from ceed import mainwindow
+*/
