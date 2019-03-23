@@ -79,7 +79,8 @@ SOURCES += \
     src/ui/imageset/ImageLabel.cpp \
     src/ui/imageset/ImageOffsetMark.cpp \
     src/ui/imageset/ImageEntry.cpp \
-    src/ui/imageset/ImagesetEntry.cpp
+    src/ui/imageset/ImagesetEntry.cpp \
+    src/util/Utils.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -133,7 +134,8 @@ HEADERS += \
     src/ui/imageset/ImageLabel.h \
     src/ui/imageset/ImageOffsetMark.h \
     src/ui/imageset/ImageEntry.h \
-    src/ui/imageset/ImagesetEntry.h
+    src/ui/imageset/ImagesetEntry.h \
+    src/util/Utils.h
 
 FORMS += \
     ui/MainWindow.ui \

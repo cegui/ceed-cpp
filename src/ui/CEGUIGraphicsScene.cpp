@@ -1,5 +1,6 @@
 #include "src/ui/CEGUIGraphicsScene.h"
 #include "src/util/Settings.h"
+#include "src/util/Utils.h"
 #include "src/Application.h"
 #include "qpainter.h"
 #include "qpaintengine.h"
@@ -18,7 +19,7 @@ CEGUIGraphicsScene::CEGUIGraphicsScene()
     checkerFirstColour = settings->getEntryValue("cegui/background/first_colour").value<QColor>();
     checkerSecondColour = settings->getEntryValue("cegui/background/second_colour").value<QColor>();
 
-    checkerboardBrush = getCheckerboardBrush(checkerWidth, checkerHeight, checkerFirstColour, checkerSecondColour);
+    checkerboardBrush = Utils::getCheckerboardBrush(checkerWidth, checkerHeight, checkerFirstColour, checkerSecondColour);
 }
 
 void CEGUIGraphicsScene::setCEGUIDisplaySize(float width, float height, bool lazyUpdate)
@@ -157,29 +158,4 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
 */
 
     painter->endNativePainting();
-}
-
-// Small helper function that generates a brush usually seen in graphics editing tools. The checkerboard brush
-// that draws background seen when edited images are transparent.
-QBrush CEGUIGraphicsScene::getCheckerboardBrush(int halfWidth, int halfHeight, QColor firstColour, QColor secondColour)
-{
-    // Disallow too large half sizes to prevent crashes in QPainter and slowness in general
-    halfWidth = std::min(halfWidth, 256);
-    halfHeight = std::min(halfHeight, 256);
-
-    QBrush ret;
-    QPixmap texture(2 * halfWidth, 2 * halfHeight);
-
-    // Render checker
-    {
-        QPainter painter(&texture);
-        painter.fillRect(0, 0, halfWidth, halfHeight, firstColour);
-        painter.fillRect(halfWidth, halfHeight, halfWidth, halfHeight, firstColour);
-        painter.fillRect(halfWidth, 0, halfWidth, halfHeight, secondColour);
-        painter.fillRect(0, halfHeight, halfWidth, halfHeight, secondColour);
-    }
-
-    ret.setTexture(texture);
-
-    return ret;
 }

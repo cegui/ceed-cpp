@@ -21,9 +21,6 @@ public:
 
 protected:
 
-    // TODO: move from here to utility functions!
-    QBrush getCheckerboardBrush(int halfWidth = 5, int halfHeight = 5, QColor firstColour = Qt::darkGray, QColor secondColour = Qt::gray);
-
     time_t lastDelta = 0;
     time_t timeOfLastRender;
 

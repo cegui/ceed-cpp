@@ -1,6 +1,7 @@
 #include "src/ui/imageset/ImageEntry.h"
 
-ImageEntry::ImageEntry()
+ImageEntry::ImageEntry(QGraphicsItem* parent)
+    //!!!init base class with parent!
 {
 
 }
