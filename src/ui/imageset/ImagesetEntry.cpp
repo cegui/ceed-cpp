@@ -31,10 +31,8 @@ ImagesetEntry::~ImagesetEntry()
 void ImagesetEntry::loadFromElement(const QDomElement& xml)
 {
     _name = xml.attribute("name", "Unknown");
-/*
 
-    self.loadImage(xml.attribute("imagefile", ""))
-*/
+    loadImage(xml.attribute("imagefile", ""));
 
     nativeHorzRes = xml.attribute("nativeHorzRes", "800").toInt();
     nativeVertRes = xml.attribute("nativeVertRes", "600").toInt();
@@ -45,9 +43,7 @@ void ImagesetEntry::loadFromElement(const QDomElement& xml)
     while (!xmlImage.isNull())
     {
         ImageEntry* image = new ImageEntry(this);
-/*
-        image.loadFromElement(imageElement)
-*/
+        image->loadFromElement(xmlImage);
         imageEntries.push_back(image);
 
         xmlImage = xmlImage.nextSiblingElement("Image");
@@ -66,24 +62,23 @@ void ImagesetEntry::saveToElement(QDomElement& xml)
     xml.setAttribute("nativeVertRes", QString::number(nativeVertRes));
     xml.setAttribute("autoScaled", autoScaled);
 
-/*
-    for image in self.imageEntries:
-        ret.append(image.saveToElement())
-*/
+    for (auto& image : imageEntries)
+    {
+        auto xmlImage = xml.ownerDocument().createElement("Image");
+        image->saveToElement(xmlImage);
+        xml.appendChild(xmlImage);
+    }
 }
 
 ImageEntry* ImagesetEntry::getImageEntry(const QString& name) const
 {
-    /*
-    def getImageEntry(self, name):
-        for image in self.imageEntries:
-            if image.name == name:
-                return image
+    auto it = std::find_if(imageEntries.begin(), imageEntries.end(), [&name](ImageEntry* ent)
+    {
+        return ent->name() == name;
+    });
 
-        assert(False)
-        return None
-        */
-    return nullptr;
+    assert(it != imageEntries.end());
+    return (it != imageEntries.end()) ? (*it) : nullptr;
 }
 
 //Returns an absolute (OS specific!) path of the underlying image

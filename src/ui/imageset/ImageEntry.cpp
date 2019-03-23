@@ -1,83 +1,31 @@
 #include "src/ui/imageset/ImageEntry.h"
+#include "qdom.h"
 
 ImageEntry::ImageEntry(QGraphicsItem* parent)
-    //!!!init base class with parent!
+    //!!!init base class ResizableRectItem with parent!
 {
+    setAcceptHoverEvents(true);
+    setFlags(ItemIsMovable | ItemIsSelectable | ItemSendsGeometryChanges);
+    setVisible(true);
 
-}
+    // Reset to unreachable value
+    oldPosition.setX(-10000);
+    oldPosition.setY(-10000);
 
 /*
-
-class ImageEntry(resizable.ResizableRectItem):
-    """
-    """
-
-    # the image's "real parameters" are properties that directly access Qt's
-    # facilities, this is done to make the code cleaner and save a little memory
-
-    name = property(lambda self: self.label.toPlainText(),
-                    lambda self, value: self.label.setPlainText(value))
-
-    xpos = property(lambda self: int(self.pos().x()),
-                    lambda self, value: self.setPos(value, self.pos().y()))
-    ypos = property(lambda self: int(self.pos().y()),
-                    lambda self, value: self.setPos(self.pos().x(), value))
-    width = property(lambda self: int(self.rect().width()),
-                     lambda self, value: self.setRect(QtCore.QRectF(0, 0, max(1, value), self.height)))
-    height = property(lambda self: int(self.rect().height()),
-                      lambda self, value: self.setRect(QtCore.QRectF(0, 0, self.width, max(1, value))))
-
-    xoffset = property(lambda self: int(-(self.offset.pos().x() - 0.5)),
-                       lambda self, value: self.offset.setX(-float(value) + 0.5))
-    yoffset = property(lambda self: int(-(self.offset.pos().y() - 0.5)),
-                       lambda self, value: self.offset.setY(-float(value) + 0.5))
-
-    nativeRes = property(lambda self: (self.nativeHorzRes, self.nativeVertRes),
-                         lambda self, value: self.setNativeRes(value))
-
-    def __init__(self, imagesetEntry):
-        super(ImageEntry, self).__init__(imagesetEntry)
-
-        self.nativeHorzRes = 0
-        self.nativeVertRes = 0
-        self.autoScaled = ""
-
-        self.imagesetEntry = imagesetEntry
-
-        self.setAcceptsHoverEvents(True)
-        self.isHovered = False
-
-        # used for undo
-        self.potentialMove = False
-        self.oldPosition = None
-        self.resized = False
-
-        self.setFlags(QtGui.QGraphicsItem.ItemIsMovable |
-                      QtGui.QGraphicsItem.ItemIsSelectable |
-                      QtGui.QGraphicsItem.ItemSendsGeometryChanges)
-
-        self.setVisible(True)
-
         self.label = ImageLabel(self)
         self.offset = ImageOffset(self)
 
         # list item in the dock widget's ListWidget
         # this allows fast updates of the list item without looking it up
-        # It is save to assume that this is None or a valid QListWidgetItem
+        # It is safe to assume that this is None or a valid QListWidgetItem
         self.listItem = None
+*/
+}
 
-    def constrainResizeRect(self, rect, oldRect):
-        # we simply round the rectangle because we only support "full" pixels
-
-        # NOTE: Imageset as such might support floating point pixels but it's never what you
-        #       really want, image quality deteriorates a lot
-
-        rect = QtCore.QRectF(QtCore.QPointF(round(rect.topLeft().x()), round(rect.topLeft().y())),
-                             QtCore.QPointF(round(rect.bottomRight().x()), round(rect.bottomRight().y())))
-
-        return super(ImageEntry, self).constrainResizeRect(rect, oldRect)
-
-    def loadFromElement(self, element):
+void ImageEntry::loadFromElement(const QDomElement& xml)
+{
+/*
         self.name = element.get("name", "Unknown")
 
         self.xpos = int(element.get("xPos", 0))
@@ -91,10 +39,13 @@ class ImageEntry(resizable.ResizableRectItem):
         self.nativeHorzRes = int(element.get("nativeHorzRes", 0))
         self.nativeVertRes = int(element.get("nativeVertRes", 0))
         self.autoScaled = element.get("autoScaled", "")
+*/
+}
 
-    def saveToElement(self):
-        ret = ElementTree.Element("Image")
-
+void ImageEntry::saveToElement(QDomElement& xml)
+{
+    xml.setTagName("Image");
+/*
         ret.set("name", self.name)
 
         ret.set("xPos", str(self.xpos))
@@ -117,6 +68,59 @@ class ImageEntry(resizable.ResizableRectItem):
             ret.set("autoScaled", self.autoScaled)
 
         return ret
+*/
+}
+
+QString ImageEntry::name() const
+{
+/*
+    label.toPlainText()
+*/
+    return "";
+}
+
+void ImageEntry::setName(const QString &newName)
+{
+/*
+    label.setPlainText(value)
+*/
+}
+
+/*
+    # the image's "real parameters" are properties that directly access Qt's
+    # facilities, this is done to make the code cleaner and save a little memory
+
+    name = property(lambda self: self.,
+                    lambda self, value: self.)
+
+    xpos = property(lambda self: int(self.pos().x()),
+                    lambda self, value: self.setPos(value, self.pos().y()))
+    ypos = property(lambda self: int(self.pos().y()),
+                    lambda self, value: self.setPos(self.pos().x(), value))
+    width = property(lambda self: int(self.rect().width()),
+                     lambda self, value: self.setRect(QtCore.QRectF(0, 0, max(1, value), self.height)))
+    height = property(lambda self: int(self.rect().height()),
+                      lambda self, value: self.setRect(QtCore.QRectF(0, 0, self.width, max(1, value))))
+
+    xoffset = property(lambda self: int(-(self.offset.pos().x() - 0.5)),
+                       lambda self, value: self.offset.setX(-float(value) + 0.5))
+    yoffset = property(lambda self: int(-(self.offset.pos().y() - 0.5)),
+                       lambda self, value: self.offset.setY(-float(value) + 0.5))
+
+    nativeRes = property(lambda self: (self.nativeHorzRes, self.nativeVertRes),
+                         lambda self, value: self.setNativeRes(value))
+
+
+    def constrainResizeRect(self, rect, oldRect):
+        # we simply round the rectangle because we only support "full" pixels
+
+        # NOTE: Imageset as such might support floating point pixels but it's never what you
+        #       really want, image quality deteriorates a lot
+
+        rect = QtCore.QRectF(QtCore.QPointF(round(rect.topLeft().x()), round(rect.topLeft().y())),
+                             QtCore.QPointF(round(rect.bottomRight().x()), round(rect.bottomRight().y())))
+
+        return super(ImageEntry, self).constrainResizeRect(rect, oldRect)
 
     def getPixmap(self):
         """Creates and returns a pixmap containing what's in the underlying image in the rectangle
