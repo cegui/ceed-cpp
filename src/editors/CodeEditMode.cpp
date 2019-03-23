@@ -1,5 +1,6 @@
 #include "src/editors/CodeEditMode.h"
 #include "qmessagebox.h"
+#include "qscrollbar.h"
 
 // TODO: Some highlighting and other aids
 
@@ -13,7 +14,7 @@ CodeEditMode::CodeEditMode(MultiModeEditor& editor)
 void CodeEditMode::activate()
 {
     //IEditMode::activate();
-    setCodeWithoutUndoHistory(getNativeCode());
+    refreshFromVisual();
 }
 
 bool CodeEditMode::deactivate()
@@ -37,6 +38,11 @@ bool CodeEditMode::deactivate()
     }
 
     return ret; // && IEditMode::deactivate();
+}
+
+void CodeEditMode::refreshFromVisual()
+{
+    setCodeWithoutUndoHistory(getNativeCode());
 }
 
 // Propagates source code from this Code editing mode to your editor implementation.
@@ -68,6 +74,42 @@ void CodeEditMode::slot_contentsChange(int /*position*/, int charsRemoved, int c
     }
 
     lastUndoText = document()->toPlainText();
+}
+
+//---------------------------------------------------------------------
+
+// Refreshes this Code editing mode with current native source code and moves to the last scroll and cursor positions
+ViewRestoringCodeEditMode::ViewRestoringCodeEditMode(MultiModeEditor& editor)
+    : CodeEditMode(editor)
+{
+}
+
+void ViewRestoringCodeEditMode::refreshFromVisual()
+{
+    CodeEditMode::refreshFromVisual();
+
+    auto vbar = verticalScrollBar();
+    vbar->setValue(lastVertScrollBarValue);
+
+    auto cur = textCursor();
+    cur.setPosition(lastCursorSelectionStart);
+    cur.setPosition(lastCursorSelectionEnd, QTextCursor::KeepAnchor);
+    setFocus();
+    setTextCursor(cur);
+}
+
+// Propagates source code from this Code editing mode to your editor implementation and stores
+// the last scrollbar and cursor positions
+bool ViewRestoringCodeEditMode::propagateToVisual()
+{
+    auto vbar = verticalScrollBar();
+    lastVertScrollBarValue = vbar->value();
+
+    auto cur = textCursor();
+    lastCursorSelectionStart = cur.selectionStart();
+    lastCursorSelectionEnd = cur.selectionEnd();
+
+    return CodeEditMode::propagateToVisual();
 }
 
 //---------------------------------------------------------------------

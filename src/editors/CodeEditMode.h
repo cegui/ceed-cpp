@@ -21,7 +21,8 @@ public:
     // Synchronizes your editor implementation with given native source code
     virtual bool propagateNativeCode(const QString& code) = 0;
 
-    bool propagateToVisual();
+    virtual void refreshFromVisual();
+    virtual bool propagateToVisual();
     void setCodeWithoutUndoHistory(const QString& code);
 
 protected slots:
@@ -33,6 +34,22 @@ protected:
     MultiModeEditor& _editor; //???to base edit mode (IEditMode)?
     bool ignoreUndoCommands = false;
     QString lastUndoText;
+};
+
+class ViewRestoringCodeEditMode : public CodeEditMode
+{
+public:
+
+    ViewRestoringCodeEditMode(MultiModeEditor& editor);
+
+    virtual void refreshFromVisual() override;
+    virtual bool propagateToVisual() override;
+
+protected:
+
+    int lastVertScrollBarValue = 0;
+    int lastCursorSelectionEnd = 0;
+    int lastCursorSelectionStart = 0;
 };
 
 // Undo command for code edit mode.

@@ -69,7 +69,9 @@ SOURCES += \
     src/util/Action.cpp \
     src/util/ActionCategory.cpp \
     src/editors/layout/LayoutEditor.cpp \
-    src/editors/imageset/ImagesetEditor.cpp
+    src/editors/imageset/ImagesetEditor.cpp \
+    src/editors/layout/LayoutCodeMode.cpp \
+    src/editors/imageset/ImagesetCodeMode.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -113,7 +115,9 @@ HEADERS += \
     src/util/Action.h \
     src/util/ActionCategory.h \
     src/editors/layout/LayoutEditor.h \
-    src/editors/imageset/ImagesetEditor.h
+    src/editors/imageset/ImagesetEditor.h \
+    src/editors/layout/LayoutCodeMode.h \
+    src/editors/imageset/ImagesetCodeMode.h
 
 FORMS += \
     ui/MainWindow.ui \
