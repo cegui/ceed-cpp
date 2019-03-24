@@ -9,6 +9,7 @@
 // combinations and resize many things at once).
 
 class QMouseEvent;
+class ResizableRectItem;
 
 class ResizingHandle : public QGraphicsRectItem
 {
@@ -26,7 +27,7 @@ public:
         TopLeft
     };
 
-    ResizingHandle(QGraphicsItem* parent = nullptr);
+    ResizingHandle(ResizableRectItem* parent = nullptr);
 
     QPointF performResizing(QPointF value);
     void onScaleChanged(qreal scaleX, qreal scaleY);
@@ -44,7 +45,8 @@ protected:
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
 
     Type _type = Type::Top;
-    bool mouseOver = false;
+    bool _mouseOver = false;
+    bool _ignoreGeometryChanges = false;
 };
 
 #endif // RESIZINGHANDLE_H
