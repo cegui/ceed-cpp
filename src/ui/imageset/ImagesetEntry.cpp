@@ -131,9 +131,8 @@ void ImagesetEntry::loadImage(const QString& relPath)
     // should update itself accordingly
     if (imageMonitor) imageMonitor->removePath(getAbsoluteImageFile());
 
-    QString absPath = getAbsoluteImageFile();
-
     imageFile = relPath;
+    QString absPath = getAbsoluteImageFile();
     setPixmap(QPixmap(absPath));
     transparencyBackground->setRect(boundingRect());
 

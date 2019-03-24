@@ -77,7 +77,7 @@ protected:
 
     void enableFileMonitoring(bool enable);
 
-    virtual void getRawData(QByteArray& outRawData) {}
+    virtual void getRawData(QByteArray& /*outRawData*/) {}
     virtual void markAsUnchanged();
 
     QFileSystemWatcher* fileMonitor = nullptr; //???one central, compare path?

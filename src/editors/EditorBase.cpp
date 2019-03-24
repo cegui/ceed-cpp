@@ -202,13 +202,13 @@ void EditorBase::finalize()
 
 // The editor gets "on stage", it's been clicked on and is now the only active one.
 // There can be either 0 editors active (blank screen) or exactly 1 active.
-void EditorBase::activate(MainWindow& mainWindow)
+void EditorBase::activate(MainWindow& /*mainWindow*/)
 {
 }
 
 // The editor gets "off stage", user switched to another editor or
 // closed the editor (deactivate() and then finalize() is called).
-void EditorBase::deactivate(MainWindow& mainWindow)
+void EditorBase::deactivate(MainWindow& /*mainWindow*/)
 {
 }
 

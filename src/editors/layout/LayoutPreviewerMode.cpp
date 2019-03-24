@@ -1,17 +1,16 @@
 #include "src/editors/layout/LayoutPreviewerMode.h"
+#include "qboxlayout.h"
 
 LayoutPreviewerMode::LayoutPreviewerMode(MultiModeEditor& editor, QWidget* parent)
     : QWidget(parent)
-    //!!!, IEditMode(editor) //???EditModeBase?
+    , IEditMode(editor)
 {
 /*
-        self.tabbedEditor = tabbedEditor
         self.rootWidget = None
-
-        layout = QtGui.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
 */
+    auto layout = new QVBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0);
+    setLayout(layout);
 }
 
 /*
