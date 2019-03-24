@@ -8,11 +8,43 @@
 // is to easily support multi selection resizing (you can multi-select various edges in all imaginable
 // combinations and resize many things at once).
 
+class QMouseEvent;
+
 class ResizingHandle : public QGraphicsRectItem
 {
 public:
 
+    enum class Type
+    {
+        Top,
+        Bottom,
+        Left,
+        Right,
+        TopRight,
+        BottomRight,
+        BottomLeft,
+        TopLeft
+    };
+
     ResizingHandle(QGraphicsItem* parent = nullptr);
+
+    QPointF performResizing(QPointF value);
+    void onScaleChanged(qreal scaleX, qreal scaleY);
+    void mouseReleaseEventSelected(QMouseEvent* event);
+
+    bool isEdge() const { return _type == Type::Top || _type == Type::Bottom || _type == Type::Left || _type == Type::Right; }
+    bool isHorizontal() const { return _type == Type::Top || _type == Type::Bottom; }
+    bool isVertical() const { return _type == Type::Left || _type == Type::Right; }
+    bool isCorner() const { return !isEdge(); }
+
+protected:
+
+    virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
+    virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
+    virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
+
+    Type _type = Type::Top;
+    bool mouseOver = false;
 };
 
 #endif // RESIZINGHANDLE_H

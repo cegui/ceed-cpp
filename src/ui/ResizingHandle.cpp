@@ -1,4 +1,5 @@
 #include "src/ui/ResizingHandle.h"
+#include "qcursor.h"
 
 ResizingHandle::ResizingHandle(QGraphicsItem* parent)
     : QGraphicsRectItem(parent)
@@ -11,35 +12,119 @@ ResizingHandle::ResizingHandle(QGraphicsItem* parent)
 
         self.ignoreGeometryChanges = False
         self.ignoreTransformChanges = False
-        self.mouseOver = False
         self.currentView = None
+*/
+
+    if (isEdge())
+    {
+        //setPen(self.parentResizable.getEdgeResizingHandleHiddenPen())
+
+        setCursor(isHorizontal() ? Qt::SizeVerCursor : Qt::SizeHorCursor);
+    }
+    else
+    {
+        //self.setPen(self.parentResizable.getCornerResizingHandleHiddenPen())
+
+        setZValue(1.0);
+
+        if (_type == Type::TopRight || _type == Type::BottomLeft)
+            setCursor(Qt::SizeBDiagCursor);
+        else
+            setCursor(Qt::SizeFDiagCursor);
+    }
+
+}
+
+// Adjusts the parent rectangle and returns a position to use for this handle (with restrictions accounted for)
+QPointF ResizingHandle::performResizing(QPointF value)
+{
+    auto delta = value - pos();
+/*
+        // TOP:
+
+        _, dy1, _, _ = self.parentResizable.performResizing(self, 0, deltaY, 0, 0)
+
+        return QtCore.QPointF(self.pos().x(), dy1 + self.pos().y())
+
+        // BOTTOM:
+
+        _, _, _, dy2 = self.parentResizable.performResizing(self, 0, 0, 0, deltaY)
+
+        return QtCore.QPointF(self.pos().x(), dy2 + self.pos().y())
+
+        // LEFT:
+
+        dx1, _, _, _ = self.parentResizable.performResizing(self, deltaX, 0, 0, 0)
+
+        return QtCore.QPointF(dx1 + self.pos().x(), self.pos().y())
+
+        // RIGHT:
+
+        _, _, dx2, _ = self.parentResizable.performResizing(self, 0, 0, deltaX, 0)
+
+        return QtCore.QPointF(dx2 + self.pos().x(), self.pos().y())
+
+        // TR:
+
+        _, dy1, dx2, _ = self.parentResizable.performResizing(self, 0, deltaY, deltaX, 0)
+
+        return QtCore.QPointF(dx2 + self.pos().x(), dy1 + self.pos().y())
+
+        // BR:
+
+        _, _, dx2, dy2 = self.parentResizable.performResizing(self, 0, 0, deltaX, deltaY)
+
+        return QtCore.QPointF(dx2 + self.pos().x(), dy2 + self.pos().y())
+
+        // BL:
+
+        dx1, _, _, dy2 = self.parentResizable.performResizing(self, deltaX, 0, 0, deltaY)
+
+        return QtCore.QPointF(dx1 + self.pos().x(), dy2 + self.pos().y())
+
+        // TL:
+
+        dx1, dy1, _, _ = self.parentResizable.performResizing(self, deltaX, deltaY, 0, 0)
+
+        return QtCore.QPointF(dx1 + self.pos().x(), dy1 + self.pos().y())
+*/
+    return QPointF(0.0 + pos().x(), 0.0 + pos().y());
+}
+
+void ResizingHandle::onScaleChanged(qreal scaleX, qreal scaleY)
+{
+    auto tfm = transform();
+
+    const qreal counterScaleX = isHorizontal() ? 1.0 : (1.0 / scaleX);
+    const qreal counterScaleY = isVertical() ? 1.0 : (1.0 / scaleY);
+
+    tfm = QTransform(counterScaleX, tfm.m12(), tfm.m13(),
+                     tfm.m21(), counterScaleY, tfm.m23(),
+                     tfm.m31(), tfm.m32(), tfm.m33());
+
+    setTransform(tfm);
+}
+
+// Called when mouse is released whilst this was selected. This notifies us that resizing might have ended.
+void ResizingHandle::mouseReleaseEventSelected(QMouseEvent* event)
+{
+/*
+    if self.parentResizable.resizeInProgress:
+        # resize was in progress and just ended
+        self.parentResizable.resizeInProgress = False
+        self.parentResizable.setPen(self.parentResizable.getHoverPen() if self.parentResizable.mouseOver else self.parentResizable.getNormalPen())
+
+        newPos = self.parentResizable.pos() + self.parentResizable.rect().topLeft()
+        newRect = QtCore.QRectF(0, 0, self.parentResizable.rect().width(), self.parentResizable.rect().height())
+
+        self.parentResizable.notifyResizeFinished(newPos, newRect)
 */
 }
 
+// This method does most of the resize work
+QVariant ResizingHandle::itemChange(GraphicsItemChange change, const QVariant& value)
+{
 /*
-    def performResizing(self, value):
-        """Adjusts the parent rectangle and returns a position to use for this handle
-        (with restrictions accounted for)
-        """
-
-        # designed to be overriden
-        # pylint: disable-msg=R0201
-
-        return value
-
-    def unselectAllSiblingHandles(self):
-        """Makes sure all siblings of this handle are unselected."""
-
-        assert(self.parentResizable)
-
-        for item in self.parentResizable.childItems():
-            if isinstance(item, ResizingHandle) and not self is item:
-                item.setSelected(False)
-
-    def itemChange(self, change, value):
-        """This overriden method does most of the resize work
-        """
-
         if change == QtGui.QGraphicsItem.ItemSelectedChange:
             if self.parentResizable.isSelected():
                 # we disallow multi-selecting a resizable item and one of it's handles,
@@ -49,7 +134,11 @@ ResizingHandle::ResizingHandle(QGraphicsItem* parent)
             # if we have indeed been selected, make sure all our sibling handles are unselected
             # we allow multi-selecting multiple handles but only one handle per resizable is allowed
 
-            self.unselectAllSiblingHandles()
+            // Make sure all siblings of this handle are unselected
+            for item in self.parentResizable.childItems():
+                if isinstance(item, ResizingHandle) and not self is item:
+                    item.setSelected(False)
+
             self.parentResizable.notifyHandleSelected(self)
 
         elif change == QtGui.QGraphicsItem.ItemPositionChange:
@@ -75,219 +164,28 @@ ResizingHandle::ResizingHandle(QGraphicsItem* parent)
 
                 return ret
 
-        return super(ResizingHandle, self).itemChange(change, value)
-
-    def mouseReleaseEventSelected(self, event):
-        """Called when mouse is released whilst this was selected.
-        This notifies us that resizing might have ended.
-        """
-
-        if self.parentResizable.resizeInProgress:
-            # resize was in progress and just ended
-            self.parentResizable.resizeInProgress = False
-            self.parentResizable.setPen(self.parentResizable.getHoverPen() if self.parentResizable.mouseOver else self.parentResizable.getNormalPen())
-
-            newPos = self.parentResizable.pos() + self.parentResizable.rect().topLeft()
-            newRect = QtCore.QRectF(0, 0, self.parentResizable.rect().width(), self.parentResizable.rect().height())
-
-            self.parentResizable.notifyResizeFinished(newPos, newRect)
-
-    def hoverEnterEvent(self, event):
-        super(ResizingHandle, self).hoverEnterEvent(event)
-
-        self.mouseOver = True
-
-    def hoverLeaveEvent(self, event):
-        self.mouseOver = False
-
-        super(ResizingHandle, self).hoverLeaveEvent(event)
-
-    def scaleChanged(self, sx, sy):
-        pass
-
-class EdgeResizingHandle(ResizingHandle):
-    """Resizing handle positioned on one of the 4 edges
-    """
-
-    def __init__(self, parent):
-        super(EdgeResizingHandle, self).__init__(parent)
-
-        self.setPen(self.parentResizable.getEdgeResizingHandleHiddenPen())
-
-    def hoverEnterEvent(self, event):
-        super(EdgeResizingHandle, self).hoverEnterEvent(event)
-
-        self.setPen(self.parentResizable.getEdgeResizingHandleHoverPen())
-
-    def hoverLeaveEvent(self, event):
-        self.setPen(self.parentResizable.getEdgeResizingHandleHiddenPen())
-
-        super(EdgeResizingHandle, self).hoverLeaveEvent(event)
-
-class TopEdgeResizingHandle(EdgeResizingHandle):
-    def __init__(self, parent):
-        super(TopEdgeResizingHandle, self).__init__(parent)
-
-        self.setCursor(QtCore.Qt.SizeVerCursor)
-
-    def performResizing(self, value):
-        delta = value.y() - self.pos().y()
-        _, dy1, _, _ = self.parentResizable.performResizing(self, 0, delta, 0, 0)
-
-        return QtCore.QPointF(self.pos().x(), dy1 + self.pos().y())
-
-    def scaleChanged(self, sx, sy):
-        super(TopEdgeResizingHandle, self).scaleChanged(sx, sy)
-
-        transform = self.transform()
-        transform = QtGui.QTransform(1.0, transform.m12(), transform.m13(),
-                                     transform.m21(), 1.0 / sy, transform.m23(),
-                                     transform.m31(), transform.m32(), transform.m33())
-        self.setTransform(transform)
-
-class BottomEdgeResizingHandle(EdgeResizingHandle):
-    def __init__(self, parent):
-        super(BottomEdgeResizingHandle, self).__init__(parent)
-
-        self.setCursor(QtCore.Qt.SizeVerCursor)
-
-    def performResizing(self, value):
-        delta = value.y() - self.pos().y()
-        _, _, _, dy2 = self.parentResizable.performResizing(self, 0, 0, 0, delta)
-
-        return QtCore.QPointF(self.pos().x(), dy2 + self.pos().y())
-
-    def scaleChanged(self, sx, sy):
-        super(BottomEdgeResizingHandle, self).scaleChanged(sx, sy)
-
-        transform = self.transform()
-        transform = QtGui.QTransform(1.0, transform.m12(), transform.m13(),
-                                     transform.m21(), 1.0 / sy, transform.m23(),
-                                     transform.m31(), transform.m32(), transform.m33())
-        self.setTransform(transform)
-
-class LeftEdgeResizingHandle(EdgeResizingHandle):
-    def __init__(self, parent):
-        super(LeftEdgeResizingHandle, self).__init__(parent)
-
-        self.setCursor(QtCore.Qt.SizeHorCursor)
-
-    def performResizing(self, value):
-        delta = value.x() - self.pos().x()
-        dx1, _, _, _ = self.parentResizable.performResizing(self, delta, 0, 0, 0)
-
-        return QtCore.QPointF(dx1 + self.pos().x(), self.pos().y())
-
-    def scaleChanged(self, sx, sy):
-        super(LeftEdgeResizingHandle, self).scaleChanged(sx, sy)
-
-        transform = self.transform()
-        transform = QtGui.QTransform(1.0 / sx, transform.m12(), transform.m13(),
-                                     transform.m21(), 1.0, transform.m23(),
-                                     transform.m31(), transform.m32(), transform.m33())
-        self.setTransform(transform)
-
-class RightEdgeResizingHandle(EdgeResizingHandle):
-    def __init__(self, parent):
-        super(RightEdgeResizingHandle, self).__init__(parent)
-
-        self.setCursor(QtCore.Qt.SizeHorCursor)
-
-    def performResizing(self, value):
-        delta = value.x() - self.pos().x()
-        _, _, dx2, _ = self.parentResizable.performResizing(self, 0, 0, delta, 0)
-
-        return QtCore.QPointF(dx2 + self.pos().x(), self.pos().y())
-
-    def scaleChanged(self, sx, sy):
-        super(RightEdgeResizingHandle, self).scaleChanged(sx, sy)
-
-        transform = self.transform()
-        transform = QtGui.QTransform(1.0 / sx, transform.m12(), transform.m13(),
-                                     transform.m21(), 1.0, transform.m23(),
-                                     transform.m31(), transform.m32(), transform.m33())
-        self.setTransform(transform)
-
-class CornerResizingHandle(ResizingHandle):
-    """Resizing handle positioned in one of the 4 corners.
-    """
-
-    def __init__(self, parent):
-        super(CornerResizingHandle, self).__init__(parent)
-
-        self.setPen(self.parentResizable.getCornerResizingHandleHiddenPen())
-        self.setFlags(self.flags())
-
-        self.setZValue(1)
-
-    def scaleChanged(self, sx, sy):
-        super(CornerResizingHandle, self).scaleChanged(sx, sy)
-
-        transform = self.transform()
-        transform = QtGui.QTransform(1.0 / sx, transform.m12(), transform.m13(),
-                                     transform.m21(), 1.0 / sy, transform.m23(),
-                                     transform.m31(), transform.m32(), transform.m33())
-        self.setTransform(transform)
-
-    def hoverEnterEvent(self, event):
-        super(CornerResizingHandle, self).hoverEnterEvent(event)
-
-        self.setPen(self.parentResizable.getCornerResizingHandleHoverPen())
-
-    def hoverLeaveEvent(self, event):
-        self.setPen(self.parentResizable.getCornerResizingHandleHiddenPen())
-
-        super(CornerResizingHandle, self).hoverLeaveEvent(event)
-
-class TopRightCornerResizingHandle(CornerResizingHandle):
-    def __init__(self, parent):
-        super(TopRightCornerResizingHandle, self).__init__(parent)
-
-        self.setCursor(QtCore.Qt.SizeBDiagCursor)
-
-    def performResizing(self, value):
-        deltaX = value.x() - self.pos().x()
-        deltaY = value.y() - self.pos().y()
-        _, dy1, dx2, _ = self.parentResizable.performResizing(self, 0, deltaY, deltaX, 0)
-
-        return QtCore.QPointF(dx2 + self.pos().x(), dy1 + self.pos().y())
-
-class BottomRightCornerResizingHandle(CornerResizingHandle):
-    def __init__(self, parent):
-        super(BottomRightCornerResizingHandle, self).__init__(parent)
-
-        self.setCursor(QtCore.Qt.SizeFDiagCursor)
-
-    def performResizing(self, value):
-        deltaX = value.x() - self.pos().x()
-        deltaY = value.y() - self.pos().y()
-        _, _, dx2, dy2 = self.parentResizable.performResizing(self, 0, 0, deltaX, deltaY)
-
-        return QtCore.QPointF(dx2 + self.pos().x(), dy2 + self.pos().y())
-
-class BottomLeftCornerResizingHandle(CornerResizingHandle):
-    def __init__(self, parent):
-        super(BottomLeftCornerResizingHandle, self).__init__(parent)
-
-        self.setCursor(QtCore.Qt.SizeBDiagCursor)
-
-    def performResizing(self, value):
-        deltaX = value.x() - self.pos().x()
-        deltaY = value.y() - self.pos().y()
-        dx1, _, _, dy2 = self.parentResizable.performResizing(self, deltaX, 0, 0, deltaY)
-
-        return QtCore.QPointF(dx1 + self.pos().x(), dy2 + self.pos().y())
-
-class TopLeftCornerResizingHandle(CornerResizingHandle):
-    def __init__(self, parent):
-        super(TopLeftCornerResizingHandle, self).__init__(parent)
-
-        self.setCursor(QtCore.Qt.SizeFDiagCursor)
-
-    def performResizing(self, value):
-        deltaX = value.x() - self.pos().x()
-        deltaY = value.y() - self.pos().y()
-        dx1, dy1, _, _ = self.parentResizable.performResizing(self, deltaX, deltaY, 0, 0)
-
-        return QtCore.QPointF(dx1 + self.pos().x(), dy1 + self.pos().y())
 */
+    return QGraphicsRectItem::itemChange(change, value);
+}
+
+void ResizingHandle::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
+{
+    QGraphicsRectItem::hoverEnterEvent(event);
+    mouseOver = true;
+
+    if (isEdge())
+        ;//setPen(self.parentResizable.getEdgeResizingHandleHoverPen())
+    else
+        ;//setPen(self.parentResizable.getCornerResizingHandleHoverPen())
+}
+
+void ResizingHandle::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
+{
+    if (isEdge())
+        ;//setPen(self.parentResizable.getEdgeResizingHandleHiddenPen())
+    else
+        ;//setPen(self.parentResizable.getCornerResizingHandleHiddenPen())
+
+    mouseOver = false;
+    QGraphicsRectItem::hoverLeaveEvent(event);
+}
