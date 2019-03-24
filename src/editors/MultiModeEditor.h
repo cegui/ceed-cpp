@@ -5,15 +5,24 @@
 #include "qtabwidget.h"
 #include "qundostack.h"
 
+class MultiModeEditor;
+
 // Base interface for multi-mode editor tabs
 class IEditMode
 {
 public:
 
+    IEditMode(MultiModeEditor& editor) : _editor(editor) {}
     virtual ~IEditMode() {}
 
     virtual void activate() {}
     virtual bool deactivate() { return true; } // If this returns false, the action is terminated and the mode stays in place
+
+    MultiModeEditor& getEditor() const { return _editor; }
+
+protected:
+
+    MultiModeEditor& _editor;
 };
 
 // This class represents tabbed editor that has little tabs on the bottom

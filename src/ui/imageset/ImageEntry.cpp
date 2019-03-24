@@ -2,7 +2,11 @@
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/imageset/ImageLabel.h"
 #include "src/ui/imageset/ImageOffsetMark.h"
+#include "src/ui/MainWindow.h" // for status bar
 #include "src/util/Utils.h"
+#include "src/util/Settings.h"
+#include "src/Application.h"
+#include "qstatusbar.h"
 #include "qdom.h"
 #include "qpainter.h"
 
@@ -18,7 +22,7 @@ ImageEntry::ImageEntry(QGraphicsItem* parent)
     oldPosition.setY(-10000);
 
     label = new ImageLabel(this);
-    offset = new ImageOffset(this);
+    offset = new ImageOffsetMark(this);
 
 /*
         # list item in the dock widget's ListWidget
@@ -30,9 +34,8 @@ ImageEntry::ImageEntry(QGraphicsItem* parent)
 
 void ImageEntry::loadFromElement(const QDomElement& xml)
 {
+    setName(xml.attribute("name", "Unknown"));
 /*
-        self.name = element.get("name", "Unknown")
-
         self.xpos = int(element.get("xPos", 0))
         self.ypos = int(element.get("yPos", 0))
         self.width = int(element.get("width", 1))
@@ -40,19 +43,19 @@ void ImageEntry::loadFromElement(const QDomElement& xml)
 
         self.xoffset = int(element.get("xOffset", 0))
         self.yoffset = int(element.get("yOffset", 0))
-
-        self.nativeHorzRes = int(element.get("nativeHorzRes", 0))
-        self.nativeVertRes = int(element.get("nativeVertRes", 0))
-        self.autoScaled = element.get("autoScaled", "")
 */
+
+    nativeHorzRes = xml.attribute("nativeHorzRes", "0").toInt();
+    nativeVertRes = xml.attribute("nativeVertRes", "0").toInt();
+    autoScaled = xml.attribute("autoScaled", "");
 }
 
 void ImageEntry::saveToElement(QDomElement& xml)
 {
     xml.setTagName("Image");
-/*
-        ret.set("name", self.name)
 
+    xml.setAttribute("name", name());
+/*
         ret.set("xPos", str(self.xpos))
         ret.set("yPos", str(self.ypos))
         ret.set("width", str(self.width))
@@ -62,18 +65,11 @@ void ImageEntry::saveToElement(QDomElement& xml)
         if self.xoffset != 0 or self.yoffset != 0:
             ret.set("xOffset", str(self.xoffset))
             ret.set("yOffset", str(self.yoffset))
-
-        if self.nativeHorzRes != 0:
-            ret.set("nativeHorzRes", str(self.nativeHorzRes))
-
-        if self.nativeVertRes != 0:
-            ret.set("nativeVertRes", str(self.nativeVertRes))
-
-        if self.autoScaled != "":
-            ret.set("autoScaled", self.autoScaled)
-
-        return ret
 */
+
+    if (nativeHorzRes) xml.setAttribute("nativeHorzRes", QString::number(nativeHorzRes));
+    if (nativeVertRes) xml.setAttribute("nativeVertRes", QString::number(nativeVertRes));
+    if (!autoScaled.isEmpty()) xml.setAttribute("autoScaled", autoScaled);
 }
 
 // If we are selected in the dock widget, this updates the property box
@@ -125,6 +121,114 @@ void ImageEntry::setName(const QString& newName)
     label->setPlainText(newName);
 }
 
+void ImageEntry::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
+{
+    ResizableRectItem::paint(painter, option, widget);
+
+    // To be more visible, we draw yellow rect over the usual dashed double colour rect
+    if (isSelected())
+    {
+        painter->setPen(QColor(255, 255, 0, 255));
+        painter->drawRect(rect());
+    }
+}
+
+QVariant ImageEntry::itemChange(GraphicsItemChange change, const QVariant& value)
+{
+    if (change == ItemSelectedHasChanged)
+    {
+        if (value.toBool())
+        {
+            auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+            if (settings->getEntryValue("imageset/visual/overlay_image_labels").toBool())
+                label->setVisible(true);
+
+            /*
+                if self.imagesetEntry.showOffsets:
+                    self.offset.setVisible(True)
+            */
+
+            setZValue(zValue() + 1);
+        }
+        else
+        {
+            if (!isHovered) label->setVisible(false);
+            /*
+                    if not self.offset.isSelected() and not self.offset.isHovered:
+                        self.offset.setVisible(False)
+
+            */
+            setZValue(zValue() - 1);
+        }
+
+        updateListItemSelection();
+    }
+    else if (change == ItemPositionChange)
+    {
+        /*
+                    if self.potentialMove and not self.oldPosition:
+                        self.oldPosition = self.pos()
+                        # hide label when moving so user can see edges clearly
+                        self.label.setVisible(False)
+
+                    newPosition = value
+
+                    # if, for whatever reason, the loading of the pixmap failed,
+                    # we don't constrain to the empty null pixmap
+
+                    # only constrain when the pixmap is valid
+                    if not self.imagesetEntry.pixmap().isNull():
+
+                        rect = self.imagesetEntry.boundingRect()
+                        rect.setWidth(rect.width() - self.rect().width())
+                        rect.setHeight(rect.height() - self.rect().height())
+
+                        if not rect.contains(newPosition):
+                            newPosition.setX(min(rect.right(), max(newPosition.x(), rect.left())))
+                            newPosition.setY(min(rect.bottom(), max(newPosition.y(), rect.top())))
+
+                    # now round the position to pixels
+                    newPosition.setX(round(newPosition.x()))
+                    newPosition.setY(round(newPosition.y()))
+
+                    return newPosition
+        */
+    }
+
+    return ResizableRectItem::itemChange(change, value);
+}
+
+void ImageEntry::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
+{
+    ResizableRectItem::hoverEnterEvent(event);
+
+    setZValue(zValue() + 1);
+
+    Application* app = qobject_cast<Application*>(qApp);
+
+    auto&& settings = app->getSettings();
+    if (settings->getEntryValue("imageset/visual/overlay_image_labels").toBool())
+        label->setVisible(true);
+
+    app->getMainWindow()->statusBar()->showMessage(QString("Image: '%1'\t\tXPos: %2, YPos: %3, Width: %4, Height: %5")
+                                                   .arg(name()).arg(pos().x()).arg(pos().y()).arg(rect().width()).arg(rect().height()));
+
+    isHovered = true;
+}
+
+void ImageEntry::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
+{
+    isHovered = false;
+
+    qobject_cast<Application*>(qApp)->getMainWindow()->statusBar()->clearMessage();
+
+    if (!isSelected()) label->setVisible(false);
+
+    setZValue(zValue() - 1);
+
+    ResizableRectItem::hoverLeaveEvent(event);
+}
+
 // Creates and returns a pixmap containing what's in the underlying image in the rectangle
 // that this ImageEntry has set. This is mostly used for preview thumbnails in the dock widget.
 QPixmap ImageEntry::getPixmap()
@@ -135,6 +239,31 @@ QPixmap ImageEntry::getPixmap()
                 static_cast<int>(pos().y()),
                 static_cast<int>(rect().width()),
                 static_cast<int>(rect().height()));
+}
+
+// Synchronises the selection in the dock widget's list. This makes sure that when you select
+// this item the list sets the selection to this item as well.
+void ImageEntry::updateListItemSelection()
+{
+/*
+        if not self.listItem:
+            return
+
+        dockWidget = self.listItem.dockWidget
+
+        # the dock widget itself is performing a selection, we shall not interfere
+        if dockWidget.selectionUnderway:
+            return
+
+        dockWidget.selectionSynchronisationUnderway = True
+
+        if self.isSelected() or self.isAnyHandleSelected() or self.offset.isSelected():
+            self.listItem.setSelected(True)
+        else:
+            self.listItem.setSelected(False)
+
+        dockWidget.selectionSynchronisationUnderway = False
+*/
 }
 
 /*
@@ -162,6 +291,10 @@ QPixmap ImageEntry::getPixmap()
                          lambda self, value: self.setNativeRes(value))
 
 
+    def setNativeRes(self, value):
+        # NB: This is just a wrapper to make the property setter lambda work
+        self.nativeHorzRes, self.nativeVertRes = value
+
     def constrainResizeRect(self, rect, oldRect):
         # we simply round the rectangle because we only support "full" pixels
 
@@ -172,80 +305,6 @@ QPixmap ImageEntry::getPixmap()
                              QtCore.QPointF(round(rect.bottomRight().x()), round(rect.bottomRight().y())))
 
         return super(ImageEntry, self).constrainResizeRect(rect, oldRect)
-
-    def updateListItemSelection(self):
-        """Synchronises the selection in the dock widget's list. This makes sure that when you select
-        this item the list sets the selection to this item as well.
-        """
-
-        if not self.listItem:
-            return
-
-        dockWidget = self.listItem.dockWidget
-
-        # the dock widget itself is performing a selection, we shall not interfere
-        if dockWidget.selectionUnderway:
-            return
-
-        dockWidget.selectionSynchronisationUnderway = True
-
-        if self.isSelected() or self.isAnyHandleSelected() or self.offset.isSelected():
-            self.listItem.setSelected(True)
-        else:
-            self.listItem.setSelected(False)
-
-        dockWidget.selectionSynchronisationUnderway = False
-
-    def itemChange(self, change, value):
-        if change == QtGui.QGraphicsItem.ItemSelectedHasChanged:
-            if value:
-                if settings.getEntry("imageset/visual/overlay_image_labels").value:
-                    self.label.setVisible(True)
-
-                if self.imagesetEntry.showOffsets:
-                    self.offset.setVisible(True)
-
-                self.setZValue(self.zValue() + 1)
-            else:
-                if not self.isHovered:
-                    self.label.setVisible(False)
-
-                if not self.offset.isSelected() and not self.offset.isHovered:
-                    self.offset.setVisible(False)
-
-                self.setZValue(self.zValue() - 1)
-
-            self.updateListItemSelection()
-
-        elif change == QtGui.QGraphicsItem.ItemPositionChange:
-            if self.potentialMove and not self.oldPosition:
-                self.oldPosition = self.pos()
-                # hide label when moving so user can see edges clearly
-                self.label.setVisible(False)
-
-            newPosition = value
-
-            # if, for whatever reason, the loading of the pixmap failed,
-            # we don't constrain to the empty null pixmap
-
-            # only constrain when the pixmap is valid
-            if not self.imagesetEntry.pixmap().isNull():
-
-                rect = self.imagesetEntry.boundingRect()
-                rect.setWidth(rect.width() - self.rect().width())
-                rect.setHeight(rect.height() - self.rect().height())
-
-                if not rect.contains(newPosition):
-                    newPosition.setX(min(rect.right(), max(newPosition.x(), rect.left())))
-                    newPosition.setY(min(rect.bottom(), max(newPosition.y(), rect.top())))
-
-            # now round the position to pixels
-            newPosition.setX(round(newPosition.x()))
-            newPosition.setY(round(newPosition.y()))
-
-            return newPosition
-
-        return super(ImageEntry, self).itemChange(change, value)
 
     def notifyResizeStarted(self):
         super(ImageEntry, self).notifyResizeStarted()
@@ -262,41 +321,4 @@ QPixmap ImageEntry::getPixmap()
 
         # mark as resized so we can pick it up in VisualEditing.mouseReleaseEvent
         self.resized = True
-
-    def hoverEnterEvent(self, event):
-        super(ImageEntry, self).hoverEnterEvent(event)
-
-        self.setZValue(self.zValue() + 1)
-
-        if settings.getEntry("imageset/visual/overlay_image_labels").value:
-            self.label.setVisible(True)
-
-        mainwindow.MainWindow.instance.statusBar().showMessage("Image: '%s'\t\tXPos: %i, YPos: %i, Width: %i, Height: %i" %
-                                                               (self.name, self.pos().x(), self.pos().y(), self.rect().width(), self.rect().height()))
-
-        self.isHovered = True
-
-    def hoverLeaveEvent(self, event):
-        mainwindow.MainWindow.instance.statusBar().clearMessage()
-
-        self.isHovered = False
-
-        if not self.isSelected():
-            self.label.setVisible(False)
-
-        self.setZValue(self.zValue() - 1)
-
-        super(ImageEntry, self).hoverLeaveEvent(event)
-
-    def paint(self, painter, option, widget):
-        super(ImageEntry, self).paint(painter, option, widget)
-
-        # to be more visible, we draw yellow rect over the usual dashed double colour rect
-        if self.isSelected():
-            painter.setPen(QtGui.QColor(255, 255, 0, 255))
-            painter.drawRect(self.rect())
-
-    def setNativeRes(self, value):
-        # NB: This is just a wrapper to make the property setter lambda work
-        self.nativeHorzRes, self.nativeVertRes = value
 */

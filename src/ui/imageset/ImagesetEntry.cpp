@@ -1,22 +1,22 @@
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/imageset/ImageEntry.h"
+#include "src/editors/imageset/ImagesetVisualMode.h"
 #include "src/util/Utils.h"
+#include "src/Application.h"
 #include "qfilesystemwatcher.h"
+#include "qmessagebox.h"
 #include "qcursor.h"
+#include "qfileinfo.h"
+#include "qdir.h"
 #include "qdom.h"
 #include "qpen.h"
 
-ImagesetEntry::ImagesetEntry(QGraphicsItem* parent)
-    : QGraphicsPixmapItem(/*parent*/)
+ImagesetEntry::ImagesetEntry(ImagesetVisualMode& visualMode)
+    : QGraphicsPixmapItem() // Top-level item
+    , _visualMode(visualMode)
 {
     setShapeMode(BoundingRectShape);
     setCursor(Qt::ArrowCursor);
-
-/*
-        self.visual = visual
-
-        self.displayingReloadAlert = False
-*/
 
     transparencyBackground = new QGraphicsRectItem(this);
     transparencyBackground->setFlags(ItemStacksBehindParent);
@@ -85,46 +85,39 @@ ImageEntry* ImagesetEntry::getImageEntry(const QString& name) const
 //Returns an absolute (OS specific!) path of the underlying image
 QString ImagesetEntry::getAbsoluteImageFile() const
 {
-/*
-        return os.path.join(os.path.dirname(self.visual.tabbedEditor.filePath), self.imageFile)
-*/
-    return "";
+    auto imagesetPath = _visualMode.getEditor().getFilePath();
+    return QFileInfo(imagesetPath).dir().absoluteFilePath(imageFile);
 }
 
 // Converts given absolute underlying image path relative to the directory where the .imageset file resides
 QString ImagesetEntry::convertToRelativeImageFile(const QString& absPath) const
 {
-/*
-        return os.path.normpath(os.path.relpath(absoluteImageFile, os.path.dirname(self.visual.tabbedEditor.filePath)))
-*/
-    return "";
+    QDir imagesetDir = QFileInfo(_visualMode.getEditor().getFilePath()).dir();
+    return QDir::cleanPath(imagesetDir.relativeFilePath(absPath));
 }
 
 // Monitor the image with a QFilesystemWatcher, ask user to reload if changes to the file were made
 void ImagesetEntry::onImageChangedByExternalProgram()
 {
-    //???really here?
-/*
-if not self.displayingReloadAlert:
-    self.displayingReloadAlert = True
-    ret = QtGui.QMessageBox.question(self.visual.tabbedEditor.mainWindow,
-                                     "Underlying image '%s' has been modified externally!" % (self.imageFile),
-                                     "The file has been modified outside the CEGUI Unified Editor.\n\nReload the file?\n\nIf you select Yes, UNDO HISTORY MIGHT BE PARTIALLY BROKEN UNLESS THE NEW SIZE IS THE SAME OR LARGER THAN THE OLD!",
-                                     QtGui.QMessageBox.No | QtGui.QMessageBox.Yes,
-                                     QtGui.QMessageBox.No) # defaulting to No is safer IMO
+    //???really here? or maybe somewhere in MainWindow?
+    //can subscribe on global file watcher, MainWindow will process dialog,
+    //and if user chooses to reload file, signal will be emitted or method will be called.
 
-    if ret == QtGui.QMessageBox.Yes:
-        self.loadImage(self.imageFile)
+    if (displayingReloadAlert) return;
 
-    elif ret == QtGui.QMessageBox.No:
-        pass
+    displayingReloadAlert = true;
 
-    else:
-        # how did we get here?
-        assert(False)
+    auto ret = QMessageBox::question(qobject_cast<Application*>(qApp)->getMainWindow(),
+                                     QString("Underlying image '%1' has been modified externally!").arg(imageFile),
+                                     "The file has been modified outside the CEGUI Unified Editor.\n\nReload the file?\n\n"
+                                     "If you select Yes, UNDO HISTORY MIGHT BE PARTIALLY BROKEN UNLESS THE NEW SIZE IS THE "
+                                     "SAME OR LARGER THAN THE OLD!",
+                                     QMessageBox::No | QMessageBox::Yes,
+                                     QMessageBox::No); // defaulting to No is safer IMO
 
-    self.displayingReloadAlert = False
-*/
+    if (ret == QMessageBox::Yes) loadImage(imageFile);
+
+    displayingReloadAlert = false;
 }
 
 // Replaces the underlying image (if any is loaded) to the image on given relative path
@@ -152,9 +145,7 @@ void ImagesetEntry::loadImage(const QString& relPath)
         imageEntry->updateDockWidget();
     }
 
-/*
-    self.visual.refreshSceneRect()
-*/
+    _visualMode.refreshSceneRect();
 
     if (!imageMonitor)
     {

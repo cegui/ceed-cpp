@@ -26,7 +26,13 @@ public:
 
 protected:
 
+    virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
+    virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
+    virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
+    virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
+
     QPixmap getPixmap();
+    void updateListItemSelection();
 
     ImageLabel* label = nullptr;
     ImageOffsetMark* offset = nullptr;

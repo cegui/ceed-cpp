@@ -17,6 +17,8 @@ public:
 
     void loadImagesetEntryFromElement(const QDomElement& xmlRoot);
 
+    void refreshSceneRect();
+
 protected slots:
 
     void slot_selectionChanged();

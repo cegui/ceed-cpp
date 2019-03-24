@@ -10,12 +10,13 @@
 class QDomElement;
 class ImageEntry;
 class QFileSystemWatcher;
+class ImagesetVisualMode;
 
 class ImagesetEntry : public QGraphicsPixmapItem
 {
 public:
 
-    ImagesetEntry(QGraphicsItem *parent = nullptr);
+    ImagesetEntry(ImagesetVisualMode& visualMode);
     ~ImagesetEntry() override;
 
     void loadFromElement(const QDomElement& xml);
@@ -34,6 +35,8 @@ protected:
 
     void loadImage(const QString& relPath);
 
+    ImagesetVisualMode& _visualMode;
+
     QString _name = "Unknown";
     QString imageFile;
     QString autoScaled = "false";
@@ -43,8 +46,11 @@ protected:
 
     std::vector<ImageEntry*> imageEntries;
 
-    QFileSystemWatcher* imageMonitor = nullptr;
     QGraphicsRectItem* transparencyBackground = nullptr;
+
+    //???here or in MainWindow?
+    QFileSystemWatcher* imageMonitor = nullptr;
+    bool displayingReloadAlert = false;
 };
 
 #endif // IMAGESETENTRY_H

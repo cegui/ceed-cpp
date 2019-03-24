@@ -6,7 +6,7 @@
 #include "qdom.h"
 
 ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
-    //!!!: IEditMode(editor)
+    : IEditMode(editor)
 {
     wheelZoomEnabled = true;
     middleButtonDragScrollEnabled = true;
@@ -106,16 +106,26 @@ void ImagesetVisualMode::loadImagesetEntryFromElement(const QDomElement& xmlRoot
 {
     scene()->clear();
 
-    imagesetEntry = new ImagesetEntry(this);
+    imagesetEntry = new ImagesetEntry(*this);
+    imagesetEntry->loadFromElement(xmlRoot);
+    scene()->addItem(imagesetEntry);
+
+    refreshSceneRect();
+
 /*
-        self.imagesetEntry.loadFromElement(element)
-        self.scene().addItem(self.imagesetEntry)
-
-        self.refreshSceneRect()
-
-        self.dockWidget.setImagesetEntry(self.imagesetEntry)
-        self.dockWidget.refresh()
+    self.dockWidget.setImagesetEntry(self.imagesetEntry)
+    self.dockWidget.refresh()
 */
+}
+
+void ImagesetVisualMode::refreshSceneRect()
+{
+    // The reason to make the bounding rect 100px bigger on all the sides is to make
+    // middle button drag scrolling easier (you can put the image where you want without
+    // running out of scene
+    auto boundingRect = imagesetEntry->boundingRect();
+    boundingRect.adjust(-100, -100, 100, 100);
+    scene()->setSceneRect(boundingRect);
 }
 
 /*
@@ -130,16 +140,6 @@ void ImagesetVisualMode::loadImagesetEntryFromElement(const QDomElement& xmlRoot
         editorMenu.addAction(self.editOffsetsAction)
         editorMenu.addSeparator() // ---------------------------
         editorMenu.addAction(self.focusImageListFilterBoxAction)
-
-    def refreshSceneRect(self):
-        boundingRect = self.imagesetEntry.boundingRect()
-
-        // the reason to make the bounding rect 100px bigger on all the sides is to make
-        // middle button drag scrolling easier (you can put the image where you want without
-        // running out of scene
-
-        boundingRect.adjust(-100, -100, 100, 100)
-        self.scene().setSceneRect(boundingRect)
 
     def moveImageEntries(self, imageEntries, delta):
         if delta.manhattanLength() > 0 and len(imageEntries) > 0:

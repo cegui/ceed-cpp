@@ -31,7 +31,6 @@ protected slots:
 
 protected:
 
-    MultiModeEditor& _editor; //???to base edit mode (IEditMode)?
     bool ignoreUndoCommands = false;
     QString lastUndoText;
 };

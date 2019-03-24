@@ -5,7 +5,7 @@
 // TODO: Some highlighting and other aids
 
 CodeEditMode::CodeEditMode(MultiModeEditor& editor)
-    : _editor(editor)
+    : IEditMode(editor)
 {
     document()->setUndoRedoEnabled(false);
     connect(document(), &QTextDocument::contentsChange, this, &CodeEditMode::slot_contentsChange);
