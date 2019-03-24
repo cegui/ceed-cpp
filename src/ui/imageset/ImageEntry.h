@@ -23,6 +23,10 @@ public:
 
     QString name() const;
     void setName(const QString& newName);
+    int offsetX() const;
+    void setOffsetX(int value);
+    int offsetY() const;
+    void setOffsetY(int value);
 
 protected:
 
@@ -44,7 +48,7 @@ protected:
 
     // Used for undo
     bool potentialMove = false;
-    QPoint oldPosition;
+    QPointF oldPosition;
     bool resized = false;
 };
 

@@ -23,6 +23,8 @@ public:
     void saveToElement(QDomElement& xml);
 
     ImageEntry* getImageEntry(const QString& name) const;
+    bool showOffsets() const { return _showOffsets; }
+    void setShowOffsets(bool value) { _showOffsets = value; }
 
     QString getAbsoluteImageFile() const;
     QString convertToRelativeImageFile(const QString& absPath) const;
@@ -42,7 +44,7 @@ protected:
     QString autoScaled = "false";
     int nativeHorzRes = 800;
     int nativeVertRes = 600;
-    bool showOffsets = false;
+    bool _showOffsets = false;
 
     std::vector<ImageEntry*> imageEntries;
 

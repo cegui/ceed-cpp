@@ -54,11 +54,11 @@ QVariant ImageOffsetMark::itemChange(GraphicsItemChange change, const QVariant& 
 void ImageOffsetMark::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
 {
     QGraphicsPixmapItem::hoverEnterEvent(event);
-    isHovered = true;
+    _isHovered = true;
 }
 
 void ImageOffsetMark::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
 {
-    isHovered = false;
+    _isHovered = false;
     QGraphicsPixmapItem::hoverLeaveEvent(event);
 }

@@ -13,6 +13,8 @@ public:
 
     ImageOffsetMark(QGraphicsItem* parent = nullptr);
 
+    bool isHovered() const { return _isHovered; }
+
 protected:
 
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
@@ -21,7 +23,7 @@ protected:
 
     QPointF oldPosition;        // Used for undo
     bool potentialMove = false; // Used for undo
-    bool isHovered = false;     // Internal attribute to help decide when to hide/show the offset crosshair
+    bool _isHovered = false;     // Internal attribute to help decide when to hide/show the offset crosshair
 };
 
 #endif // IMAGEOFFSETMARK_H

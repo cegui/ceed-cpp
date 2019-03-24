@@ -2,6 +2,7 @@
 #include "src/Application.h"
 #include "src/util/Settings.h"
 #include "src/ui/imageset/ImagesetEntry.h"
+#include "src/ui/imageset/ImageEntry.h"
 #include "qopenglwidget.h"
 #include "qdom.h"
 
@@ -652,10 +653,15 @@ void ImagesetVisualMode::slot_selectionChanged()
         // if dockWidget is changing the selection, back off
         if self.dockWidget.selectionUnderway:
             return
-
-        selectedItems = self.scene().selectedItems()
-        if len(selectedItems) == 1:
-            if isinstance(selectedItems[0], elements.ImageEntry):
-                self.dockWidget.list.scrollToItem(selectedItems[0].listItem)
 */
+
+    auto selectedItems = scene()->selectedItems();
+    if (selectedItems.size() == 1)
+    {
+        ImageEntry* entry = dynamic_cast<ImageEntry*>(selectedItems[0]);
+        /*
+        if (entry)
+            dockWidget.list.scrollToItem(selectedItems[0].listItem);
+        */
+    }
 }
