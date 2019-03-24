@@ -1,5 +1,7 @@
 #include "src/ui/imageset/ImageEntry.h"
 #include "src/ui/imageset/ImagesetEntry.h"
+#include "src/ui/imageset/ImageLabel.h"
+#include "src/ui/imageset/ImageOffsetMark.h"
 #include "src/util/Utils.h"
 #include "qdom.h"
 #include "qpainter.h"
@@ -15,10 +17,10 @@ ImageEntry::ImageEntry(QGraphicsItem* parent)
     oldPosition.setX(-10000);
     oldPosition.setY(-10000);
 
-/*
-        self.label = ImageLabel(self)
-        self.offset = ImageOffset(self)
+    label = new ImageLabel(this);
+    offset = new ImageOffset(this);
 
+/*
         # list item in the dock widget's ListWidget
         # this allows fast updates of the list item without looking it up
         # It is safe to assume that this is None or a valid QListWidgetItem
@@ -115,17 +117,12 @@ void ImageEntry::updateListItem()
 
 QString ImageEntry::name() const
 {
-/*
-    label.toPlainText()
-*/
-    return "";
+    return label->toPlainText();
 }
 
-void ImageEntry::setName(const QString &newName)
+void ImageEntry::setName(const QString& newName)
 {
-/*
-    label.setPlainText(value)
-*/
+    label->setPlainText(newName);
 }
 
 // Creates and returns a pixmap containing what's in the underlying image in the rectangle

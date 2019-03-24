@@ -1,49 +1,37 @@
 #include "src/ui/imageset/ImageLabel.h"
+#include "qapplication.h"
+#include "qpalette.h"
+#include "qpainter.h"
 
-ImageLabel::ImageLabel()
+ImageLabel::ImageLabel(QGraphicsItem* parent)
+    : QGraphicsTextItem(parent)
 {
+    setFlags(ItemIgnoresTransformations);
+    setOpacity(0.8);
+    setVisible(false);
+    setPlainText("Unknown");
 
+    // We make the label a lot more transparent when mouse is over it to make it easier
+    // to work around the top edge of the image
+    setAcceptHoverEvents(true);
 }
 
-/*
-class ImageLabel(QtGui.QGraphicsTextItem):
-    """
-    """
+void ImageLabel::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
+{
+    const auto& palette = qApp->palette();
+    painter->fillRect(boundingRect(), palette.color(QPalette::Normal, QPalette::Base));
+    painter->drawRect(boundingRect());
+    QGraphicsTextItem::paint(painter, option, widget);
+}
 
-    def __init__(self, imageEntry):
-        super(ImageLabel, self).__init__(imageEntry)
+void ImageLabel::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
+{
+    QGraphicsTextItem::hoverEnterEvent(event);
+    setOpacity(0.2);
+}
 
-        self.imageEntry = imageEntry
-
-        self.setFlags(QtGui.QGraphicsItem.ItemIgnoresTransformations)
-        self.setOpacity(0.8)
-
-        self.setPlainText("Unknown")
-
-        # we make the label a lot more transparent when mouse is over it to make it easier
-        # to work around the top edge of the image
-        self.setAcceptHoverEvents(True)
-        # the default opacity (when mouse is not over the label)
-        self.setOpacity(0.8)
-
-        # be invisible by default and wait for hover/selection events
-        self.setVisible(False)
-
-    def paint(self, painter, option, widget):
-        palette = QtGui.QApplication.palette()
-
-        painter.fillRect(self.boundingRect(), palette.color(QtGui.QPalette.Normal, QtGui.QPalette.Base))
-        painter.drawRect(self.boundingRect())
-
-        super(ImageLabel, self).paint(painter, option, widget)
-
-    def hoverEnterEvent(self, event):
-        super(ImageLabel, self).hoverEnterEvent(event)
-
-        self.setOpacity(0.2)
-
-    def hoverLeaveEvent(self, event):
-        self.setOpacity(0.8)
-
-        super(ImageLabel, self).hoverLeaveEvent(event)
-*/
+void ImageLabel::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
+{
+    setOpacity(0.8);
+    QGraphicsTextItem::hoverLeaveEvent(event);
+}

@@ -6,6 +6,8 @@
 // Represents the image of the imageset, can be drag moved, selected, resized, ...
 
 class QDomElement;
+class ImageLabel;
+class ImageOffsetMark;
 
 class ImageEntry : public ResizableRectItem
 {
@@ -25,6 +27,9 @@ public:
 protected:
 
     QPixmap getPixmap();
+
+    ImageLabel* label = nullptr;
+    ImageOffsetMark* offset = nullptr;
 
     QString autoScaled = "";
     int nativeHorzRes = 0;

@@ -9,7 +9,14 @@
 class ImageLabel : public QGraphicsTextItem
 {
 public:
-    ImageLabel();
+
+    ImageLabel(QGraphicsItem* parent = nullptr);
+
+protected:
+
+    virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
+    virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
+    virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
 };
 
 #endif // IMAGELABEL_H

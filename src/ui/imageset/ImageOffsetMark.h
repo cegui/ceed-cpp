@@ -10,7 +10,18 @@
 class ImageOffsetMark : public QGraphicsPixmapItem
 {
 public:
-    ImageOffsetMark();
+
+    ImageOffsetMark(QGraphicsItem* parent = nullptr);
+
+protected:
+
+    virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
+    virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
+    virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
+
+    QPointF oldPosition;        // Used for undo
+    bool potentialMove = false; // Used for undo
+    bool isHovered = false;     // Internal attribute to help decide when to hide/show the offset crosshair
 };
 
 #endif // IMAGEOFFSETMARK_H

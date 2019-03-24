@@ -60,5 +60,6 @@
         <file>icons/project_management/remove.png</file>
         <file>icons/project_management/rename.png</file>
         <file>icons/tabs/has_changes.png</file>
+        <file>icons/imageset_editing/offset_crosshair.png</file>
     </qresource>
 </RCC>
