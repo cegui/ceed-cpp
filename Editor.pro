@@ -81,7 +81,8 @@ SOURCES += \
     src/ui/imageset/ImageEntry.cpp \
     src/ui/imageset/ImagesetEntry.cpp \
     src/util/Utils.cpp \
-    src/ui/ResizableRectItem.cpp
+    src/ui/ResizableRectItem.cpp \
+    src/ui/ResizingHandle.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -137,7 +138,8 @@ HEADERS += \
     src/ui/imageset/ImageEntry.h \
     src/ui/imageset/ImagesetEntry.h \
     src/util/Utils.h \
-    src/ui/ResizableRectItem.h
+    src/ui/ResizableRectItem.h \
+    src/ui/ResizingHandle.h
 
 FORMS += \
     ui/MainWindow.ui \
