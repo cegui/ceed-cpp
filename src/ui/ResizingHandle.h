@@ -27,11 +27,13 @@ public:
         TopLeft
     };
 
-    ResizingHandle(ResizableRectItem* parent = nullptr);
+    ResizingHandle(Type type, ResizableRectItem* parent = nullptr);
 
     QPointF performResizing(QPointF value);
     void onScaleChanged(qreal scaleX, qreal scaleY);
     void mouseReleaseEventSelected(QMouseEvent* event);
+
+    void showHandle(bool show);
 
     bool isEdge() const { return _type == Type::Top || _type == Type::Bottom || _type == Type::Left || _type == Type::Right; }
     bool isHorizontal() const { return _type == Type::Top || _type == Type::Bottom; }

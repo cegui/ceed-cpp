@@ -1,23 +1,23 @@
 #include "src/ui/ResizingHandle.h"
 #include "src/ui/ResizableRectItem.h"
 #include "qcursor.h"
+#include "qpen.h"
 
-ResizingHandle::ResizingHandle(ResizableRectItem* parent)
+ResizingHandle::ResizingHandle(Type type, ResizableRectItem* parent)
     : QGraphicsRectItem(parent)
+    , _type(type)
 {
     setFlags(ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
     setAcceptHoverEvents(true);
 
+    showHandle(false);
+
     if (isEdge())
     {
-        //setPen(parent->getEdgeResizingHandleHiddenPen())
-
         setCursor(isHorizontal() ? Qt::SizeVerCursor : Qt::SizeHorCursor);
     }
     else
     {
-        //self.setPen(parent->getCornerResizingHandleHiddenPen())
-
         setZValue(1.0);
 
         if (_type == Type::TopRight || _type == Type::BottomLeft)
@@ -51,11 +51,10 @@ QPointF ResizingHandle::performResizing(QPointF value)
         case Type::TopRight: top = delta.y(); right = delta.x(); break;
     }
 
-    // Modifies left, right, top & bottom inside, results are actual changes
     ResizableRectItem* parentResizable = static_cast<ResizableRectItem*>(parentItem());
-    /*
-        parentResizable.performResizing(self, left, top, right, bottom)
-    */
+
+    // Modifies left, right, top & bottom inside, results are actual changes
+    parentResizable->performResizing(*this, left, top, right, bottom);
 
     return QPointF(left + right + pos().x(), top + bottom + pos().y());
 }
@@ -91,51 +90,76 @@ void ResizingHandle::mouseReleaseEventSelected(QMouseEvent* event)
 */
 }
 
+void ResizingHandle::showHandle(bool show)
+{
+    QPen pen;
+    if (show)
+    {
+        pen.setColor(QColor(0, 255, 255, 255));
+        pen.setWidth(2.0);
+        pen.setCosmetic(true);
+    }
+    else
+    {
+        pen.setColor(Qt::transparent);
+    }
+
+    setPen(pen);
+}
+
 // This method does most of the resize work
 QVariant ResizingHandle::itemChange(GraphicsItemChange change, const QVariant& value)
 {
     ResizableRectItem* parentResizable = static_cast<ResizableRectItem*>(parentItem());
-/*
-        if change == QtGui.QGraphicsItem.ItemSelectedChange:
-            if parentResizable->isSelected():
-                # we disallow multi-selecting a resizable item and one of it's handles,
-                return False
 
-        elif change == QtGui.QGraphicsItem.ItemSelectedHasChanged:
-            # if we have indeed been selected, make sure all our sibling handles are unselected
-            # we allow multi-selecting multiple handles but only one handle per resizable is allowed
+    if (change == ItemSelectedChange)
+    {
+        // We disallow multi-selecting a resizable item and one of it's handles
+        if (parentResizable->isSelected()) return false;
+    }
+    else if (change == ItemSelectedHasChanged)
+    {
+        // If we have indeed been selected, make sure all our sibling handles are unselected.
+        // We allow multi-selecting multiple handles but only one handle per resizable is allowed.
 
-            // Make sure all siblings of this handle are unselected
-            for item in parentResizable->childItems():
-                if isinstance(item, ResizingHandle) and not self is item:
-                    item.setSelected(False)
+        // Make sure all siblings of this handle are unselected
+        for (QGraphicsItem* item : parentResizable->childItems())
+        {
+            ResizingHandle* handle = dynamic_cast<ResizingHandle*>(item);
+            if (handle && handle != this) handle->setSelected(false);
+        }
 
+        /*
             parentResizable->notifyHandleSelected(self)
+        */
+    }
+    else if (change == ItemPositionChange)
+    {
+        // This is the money code
+        // Changing position of the handle resizes the whole resizable
+        /*
+        if not parentResizable->resizeInProgress and not _ignoreGeometryChanges:
+            parentResizable->resizeInProgress = True
+            parentResizable->resizeOldPos = parentResizable->pos()
+            parentResizable->resizeOldRect = parentResizable->rect()
 
-        elif change == QtGui.QGraphicsItem.ItemPositionChange:
-            # this is the money code
-            # changing position of the handle resizes the whole resizable
-            if not parentResizable->resizeInProgress and not _ignoreGeometryChanges:
-                parentResizable->resizeInProgress = True
-                parentResizable->resizeOldPos = parentResizable->pos()
-                parentResizable->resizeOldRect = parentResizable->rect()
+            parentResizable->setPen(parentResizable->getPenWhileResizing())
+            parentResizable->hideAllHandles(excluding = self)
 
-                parentResizable->setPen(parentResizable->getPenWhileResizing())
-                parentResizable->hideAllHandles(excluding = self)
+            parentResizable->notifyResizeStarted()
 
-                parentResizable->notifyResizeStarted()
+        if parentResizable->resizeInProgress:
+            ret = self.performResizing(value)
 
-            if parentResizable->resizeInProgress:
-                ret = self.performResizing(value)
+            newPos = parentResizable->pos() + parentResizable->rect().topLeft()
+            newRect = QtCore.QRectF(0, 0, parentResizable->rect().width(), parentResizable->rect().height())
 
-                newPos = parentResizable->pos() + parentResizable->rect().topLeft()
-                newRect = QtCore.QRectF(0, 0, parentResizable->rect().width(), parentResizable->rect().height())
+            parentResizable->notifyResizeProgress(newPos, newRect)
 
-                parentResizable->notifyResizeProgress(newPos, newRect)
+            return ret
+        */
+    }
 
-                return ret
-
-*/
     return QGraphicsRectItem::itemChange(change, value);
 }
 
@@ -143,22 +167,12 @@ void ResizingHandle::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
 {
     QGraphicsRectItem::hoverEnterEvent(event);
     _mouseOver = true;
-
-    ResizableRectItem* parentResizable = static_cast<ResizableRectItem*>(parentItem());
-    if (isEdge())
-        ;//setPen(parentResizable->getEdgeResizingHandleHoverPen())
-    else
-        ;//setPen(parentResizable->getCornerResizingHandleHoverPen())
+    showHandle(true);
 }
 
 void ResizingHandle::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
 {
-    ResizableRectItem* parentResizable = static_cast<ResizableRectItem*>(parentItem());
-    if (isEdge())
-        ;//setPen(parentResizable->getEdgeResizingHandleHiddenPen())
-    else
-        ;//setPen(parentResizable->getCornerResizingHandleHiddenPen())
-
+    showHandle(false);
     _mouseOver = false;
     QGraphicsRectItem::hoverLeaveEvent(event);
 }

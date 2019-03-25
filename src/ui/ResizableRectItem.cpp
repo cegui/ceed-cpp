@@ -1,4 +1,6 @@
 #include "src/ui/ResizableRectItem.h"
+#include "src/ui/ResizingHandle.h"
+#include "qcursor.h"
 
 ResizableRectItem::ResizableRectItem(QGraphicsItem* parent)
     : QGraphicsRectItem(parent)
@@ -7,8 +9,6 @@ ResizableRectItem::ResizableRectItem(QGraphicsItem* parent)
     setAcceptHoverEvents(true);
 
 /*
-        self.mouseOver = False
-
         self.topEdgeHandle = TopEdgeResizingHandle(self)
         self.bottomEdgeHandle = BottomEdgeResizingHandle(self)
         self.leftEdgeHandle = LeftEdgeResizingHandle(self)
@@ -19,28 +19,165 @@ ResizableRectItem::ResizableRectItem(QGraphicsItem* parent)
         self.bottomLeftCornerHandle = BottomLeftCornerResizingHandle(self)
         self.topLeftCornerHandle = TopLeftCornerResizingHandle(self)
 
-        self.handlesDirty = True
-        self.currentScaleX = 1
-        self.currentScaleY = 1
-
-        self.ignoreGeometryChanges = False
-
-        self.resizeInProgress = False
         self.resizeOldPos = None
         self.resizeOldRect = None
-        self.moveInProgress = False
         self.moveOldPos = None
-
-        self.hideAllHandles()
-
+*/
+    hideAllHandles();
+/*
         self.outerHandleSize = 0
         self.innerHandleSize = 0
         self.setOuterHandleSize(15)
         self.setInnerHandleSize(10)
 
-        self.setCursor(QtCore.Qt.OpenHandCursor)
         self.setPen(self.getNormalPen())
 */
+    setCursor(Qt::OpenHandCursor);
+}
+
+void ResizableRectItem::unselectAllHandles()
+{
+
+}
+
+void ResizableRectItem::hideAllHandles()
+{
+
+}
+
+// Adjusts the rectangle and returns a 4-tuple of the actual used deltas (with restrictions accounted for)
+// Deltas are in-out, returning the actual change applied. The default implementation doesn't use the handle parameter.
+void ResizableRectItem::performResizing(const ResizingHandle& handle, qreal& deltaLeft, qreal& deltaTop, qreal& deltaRight, qreal& deltaBottom)
+{
+    auto newRect = rect().adjusted(deltaLeft, deltaTop, deltaRight, deltaBottom);
+    newRect = constrainResizeRect(newRect, rect());
+
+    // TODO: the rect moves as a whole when it can't be sized any less
+    //       this is probably not the behavior we want!
+
+    deltaLeft = newRect.left() - rect().left();
+    deltaTop = newRect.top() - rect().top();
+    deltaRight = newRect.right() - rect().right();
+    deltaBottom = newRect.bottom() - rect().bottom();
+
+    setRect(newRect);
+}
+
+QRectF ResizableRectItem::constrainResizeRect(QRectF rect, QRectF oldRect)
+{
+/*
+        minSize = self.getMinSize()
+        maxSize = self.getMaxSize()
+
+        if minSize:
+            minRect = QtCore.QRectF(rect.center() - QtCore.QPointF(0.5 * minSize.width(), 0.5 * minSize.height()), minSize)
+            rect = rect.united(minRect)
+        if maxSize:
+            maxRect = QtCore.QRectF(rect.center() - QtCore.QPointF(0.5 * maxSize.width(), 0.5 * maxSize.height()), maxSize)
+            rect.intersected(maxRect)
+*/
+    return rect;
+}
+
+void ResizableRectItem::onScaleChanged(qreal scaleX, qreal scaleY)
+{
+    _currentScaleX = scaleX;
+    _currentScaleY = scaleY;
+
+    for (QGraphicsItem* item : childItems())
+    {
+        ResizingHandle* handle = dynamic_cast<ResizingHandle*>(item);
+        if (handle)
+        {
+            handle->onScaleChanged(scaleX, scaleY);
+            continue;
+        }
+
+        ResizableRectItem* rectItem = dynamic_cast<ResizableRectItem*>(item);
+        if (rectItem)
+        {
+            rectItem->onScaleChanged(scaleX, scaleY);
+            continue;
+        }
+    }
+
+    _handlesDirty = true;
+
+/*
+        self.ensureHandlesUpdated()
+*/
+}
+
+void ResizableRectItem::mouseReleaseEventSelected(QMouseEvent* event)
+{
+    if (_moveInProgress)
+    {
+        _moveInProgress = false;
+        notifyMoveFinished(pos());
+    }
+}
+
+void ResizableRectItem::notifyResizeFinished(QPointF newPos, QRectF newRect)
+{
+    _ignoreGeometryChanges = true;
+    setRect(newRect);
+    setPos(newPos);
+    _ignoreGeometryChanges = false;
+}
+
+QVariant ResizableRectItem::itemChange(GraphicsItemChange change, const QVariant& value)
+{
+    if (change == ItemSelectedHasChanged)
+    {
+        if (value.toBool())
+            unselectAllHandles();
+        else
+            hideAllHandles();
+    }
+    else if (change == ItemPositionChange)
+    {
+        auto point = constrainMovePoint(value.toPointF());
+        if (!_moveInProgress && !_ignoreGeometryChanges)
+        {
+            _moveInProgress = true;
+            moveOldPos = pos();
+
+            /*
+                setPen(self.getPenWhileMoving())
+            */
+
+            hideAllHandles();
+
+            notifyMoveStarted();
+        }
+
+        if (_moveInProgress)
+        {
+            // 'point' is the new position, self.pos() is the old position,
+            // we use 'point' to avoid the 1 pixel lag
+            notifyMoveProgress(point);
+        }
+    }
+
+    return QGraphicsRectItem::itemChange(change, value);
+}
+
+void ResizableRectItem::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
+{
+    QGraphicsRectItem::hoverEnterEvent(event);
+    /*
+        setPen(self.getHoverPen())
+    */
+    _mouseOver = true;
+}
+
+void ResizableRectItem::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
+{
+    _mouseOver = false;
+    /*
+        setPen(self.getNormalPen())
+    */
+    QGraphicsRectItem::hoverLeaveEvent(event);
 }
 
 /*
@@ -75,34 +212,6 @@ ResizableRectItem::ResizableRectItem(QGraphicsItem* parent)
 
         return ret
 
-    def getEdgeResizingHandleHoverPen(self):
-        ret = QtGui.QPen()
-        ret.setColor(QtGui.QColor(0, 255, 255, 255))
-        ret.setWidth(2)
-        ret.setCosmetic(True)
-
-        return ret
-
-    def getEdgeResizingHandleHiddenPen(self):
-        ret = QtGui.QPen()
-        ret.setColor(QtCore.Qt.transparent)
-
-        return ret
-
-    def getCornerResizingHandleHoverPen(self):
-        ret = QtGui.QPen()
-        ret.setColor(QtGui.QColor(0, 255, 255, 255))
-        ret.setWidth(2)
-        ret.setCosmetic(True)
-
-        return ret
-
-    def getCornerResizingHandleHiddenPen(self):
-        ret = QtGui.QPen()
-        ret.setColor(QtCore.Qt.transparent)
-
-        return ret
-
     def setOuterHandleSize(self, size):
         self.outerHandleSize = size
         self.handlesDirty = True
@@ -116,42 +225,6 @@ ResizableRectItem::ResizableRectItem(QGraphicsItem* parent)
 
         self.handlesDirty = True
         self.ensureHandlesUpdated()
-
-    def constrainMovePoint(self, point):
-        return point
-
-    def constrainResizeRect(self, rect, oldRect):
-        minSize = self.getMinSize()
-        maxSize = self.getMaxSize()
-
-        if minSize:
-            minRect = QtCore.QRectF(rect.center() - QtCore.QPointF(0.5 * minSize.width(), 0.5 * minSize.height()), minSize)
-            rect = rect.united(minRect)
-        if maxSize:
-            maxRect = QtCore.QRectF(rect.center() - QtCore.QPointF(0.5 * maxSize.width(), 0.5 * maxSize.height()), maxSize)
-            rect.intersected(maxRect)
-
-        return rect
-
-    def performResizing(self, handle, deltaX1, deltaY1, deltaX2, deltaY2):
-        """Adjusts the rectangle and returns a 4-tuple of the actual used deltas
-        (with restrictions accounted for)
-
-        The default implementation doesn't use the handle parameter.
-        """
-
-        newRect = self.rect().adjusted(deltaX1, deltaY1, deltaX2, deltaY2)
-        newRect = self.constrainResizeRect(newRect, self.rect())
-
-        # TODO: the rect moves as a whole when it can't be sized any less
-        #       this is probably not the behavior we want!
-
-        topLeftDelta = newRect.topLeft() - self.rect().topLeft()
-        bottomRightDelta = newRect.bottomRight() - self.rect().bottomRight()
-
-        self.setRect(newRect)
-
-        return topLeftDelta.x(), topLeftDelta.y(), bottomRightDelta.x(), bottomRightDelta.y()
 
     def hideAllHandles(self, excluding = None):
         """Hides all handles. If a handle is given as the 'excluding' parameter, this handle is
@@ -180,12 +253,6 @@ ResizableRectItem::ResizableRectItem(QGraphicsItem* parent)
         for item in self.childItems():
             if isinstance(item, ResizingHandle):
                 item.setSelected(False)
-
-    def notifyHandleSelected(self, handle):
-        """A method meant to be overridden when you want to react when a handle is selected
-        """
-
-        pass
 
     def isAnyHandleSelected(self):
         """Checks whether any of the 8 handles is selected.
@@ -341,84 +408,4 @@ ResizableRectItem::ResizableRectItem(QGraphicsItem* parent)
             self.topLeftCornerHandle.ignoreGeometryChanges = False
 
         self.handlesDirty = False
-
-    def notifyResizeStarted(self):
-        pass
-
-    def notifyResizeProgress(self, newPos, newRect):
-        pass
-
-    def notifyResizeFinished(self, newPos, newRect):
-        self.ignoreGeometryChanges = True
-        self.setRect(newRect)
-        self.setPos(newPos)
-        self.ignoreGeometryChanges = False
-
-    def notifyMoveStarted(self):
-        pass
-
-    def notifyMoveProgress(self, newPos):
-        pass
-
-    def notifyMoveFinished(self, newPos):
-        pass
-
-    def scaleChanged(self, sx, sy):
-        self.currentScaleX = sx
-        self.currentScaleY = sy
-
-        for childItem in self.childItems():
-            if isinstance(childItem, ResizingHandle):
-                childItem.scaleChanged(sx, sy)
-
-            elif isinstance(childItem, ResizableRectItem):
-                childItem.scaleChanged(sx, sy)
-
-        self.handlesDirty = True
-        self.ensureHandlesUpdated()
-
-    def itemChange(self, change, value):
-        if change == QtGui.QGraphicsItem.ItemSelectedHasChanged:
-            if value:
-                self.unselectAllHandles()
-            else:
-                self.hideAllHandles()
-
-        elif change == QtGui.QGraphicsItem.ItemPositionChange:
-            value = self.constrainMovePoint(value)
-
-            if not self.moveInProgress and not self.ignoreGeometryChanges:
-                self.moveInProgress = True
-                self.moveOldPos = self.pos()
-
-                self.setPen(self.getPenWhileMoving())
-                self.hideAllHandles()
-
-                self.notifyMoveStarted()
-
-            if self.moveInProgress:
-                # value is the new position, self.pos() is the old position
-                # we use value to avoid the 1 pixel lag
-                self.notifyMoveProgress(value)
-
-        return super(ResizableRectItem, self).itemChange(change, value)
-
-    def hoverEnterEvent(self, event):
-        super(ResizableRectItem, self).hoverEnterEvent(event)
-
-        self.setPen(self.getHoverPen())
-        self.mouseOver = True
-
-    def hoverLeaveEvent(self, event):
-        self.mouseOver = False
-        self.setPen(self.getNormalPen())
-
-        super(ResizableRectItem, self).hoverLeaveEvent(event)
-
-    def mouseReleaseEventSelected(self, event):
-        if self.moveInProgress:
-            self.moveInProgress = False
-            newPos = self.pos()
-
-            self.notifyMoveFinished(newPos)
 */
