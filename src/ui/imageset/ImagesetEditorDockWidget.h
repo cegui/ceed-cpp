@@ -28,6 +28,8 @@ private:
 
     Ui::ImagesetEditorDockWidget *ui;
     ImagesetEntry* imagesetEntry = nullptr;
+
+    bool selectionSynchronisationUnderway = false;
 };
 
 #endif // IMAGESETEDITORDOCKWIDGET_H

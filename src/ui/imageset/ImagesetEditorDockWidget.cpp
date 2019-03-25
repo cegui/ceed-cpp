@@ -35,9 +35,6 @@ ImagesetEditorDockWidget::ImagesetEditorDockWidget(QWidget *parent) :
 /*
         self.visual = visual
 
-        self.ui = ceed.ui.editors.imageset.dockwidget.Ui_DockWidget()
-        self.ui.setupUi(self)
-
         self.name = self.findChild(QtGui.QLineEdit, "name")
         self.name.textEdited.connect(self.slot_nameEdited)
         self.image = self.findChild(qtwidgets.FileLineEdit, "image")
@@ -103,27 +100,20 @@ ImagesetEditorDockWidget::~ImagesetEditorDockWidget()
     delete ui;
 }
 
+// Refreshes the whole list
+// Note: User potentially loses selection when this is called!
 void ImagesetEditorDockWidget::refresh()
 {
+    // FIXME: This is really really weird!
+    //        If I call list.clear() it crashes when undoing image deletes for some reason
+    //        I already spent several hours tracking it down and I couldn't find anything
+    //        If I remove items one by one via takeItem, everything works :-/
+    ui->list->clear();
+
+    selectionSynchronisationUnderway = true;
+    while (ui->list->takeItem(0)) ;
+    selectionSynchronisationUnderway = false;
 /*
-        """Refreshes the whole list
-
-        Note: User potentially looses selection when this is called!
-        """
-
-        # FIXME: This is really really weird!
-        #        If I call list.clear() it crashes when undoing image deletes for some reason
-        #        I already spent several hours tracking it down and I couldn't find anything
-        #
-        #        If I remove items one by one via takeItem, everything works :-/
-        #self.list.clear()
-
-        self.selectionSynchronisationUnderway = True
-
-        while self.list.takeItem(0):
-            pass
-
-        self.selectionSynchronisationUnderway = False
 
         self.setActiveImageEntry(None)
 
