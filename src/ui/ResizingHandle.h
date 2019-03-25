@@ -34,6 +34,7 @@ public:
     void mouseReleaseEventSelected(QMouseEvent* event);
 
     void showHandle(bool show);
+    void ignoreGeometryChanges(bool ignore) { _ignoreGeometryChanges = ignore; }
 
     bool isEdge() const { return _type == Type::Top || _type == Type::Bottom || _type == Type::Left || _type == Type::Right; }
     bool isHorizontal() const { return _type == Type::Top || _type == Type::Bottom; }

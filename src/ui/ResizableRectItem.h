@@ -18,13 +18,21 @@ public:
     ResizableRectItem(QGraphicsItem *parent = nullptr);
 
     void unselectAllHandles();
-    void hideAllHandles();
+    void hideAllHandles(ResizingHandle* excluding = nullptr);
+    void setResizingEnabled(bool enabled = true);
+    void setRect(QRectF newRect);
+    bool isAnyHandleSelected() const;
 
     virtual void performResizing(const ResizingHandle& handle, qreal& deltaLeft, qreal& deltaTop, qreal& deltaRight, qreal& deltaBottom);
     virtual QPointF constrainMovePoint(QPointF value) { return value; }
     virtual QRectF constrainResizeRect(QRectF rect, QRectF oldRect);
     virtual QSizeF getMinSize() const { return QSizeF(1.0, 1.0); }
     virtual QSizeF getMaxSize() const { return QSizeF(std::numeric_limits<qreal>().max(), std::numeric_limits<qreal>().max()); }
+
+    virtual QPen getNormalPen() const;
+    virtual QPen getHoverPen() const;
+    virtual QPen getPenWhileResizing() const;
+    virtual QPen getPenWhileMoving() const;
 
     void onScaleChanged(qreal scaleX, qreal scaleY);
     void mouseReleaseEventSelected(QMouseEvent* event);
@@ -45,6 +53,15 @@ protected:
     virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
 
+    ResizingHandle* topEdgeHandle = nullptr;
+    ResizingHandle* bottomEdgeHandle = nullptr;
+    ResizingHandle* leftEdgeHandle = nullptr;
+    ResizingHandle* rightEdgeHandle = nullptr;
+    ResizingHandle* topRightCornerHandle = nullptr;
+    ResizingHandle* bottomRightCornerHandle = nullptr;
+    ResizingHandle* bottomLeftCornerHandle = nullptr;
+    ResizingHandle* topLeftCornerHandle = nullptr;
+
     qreal _currentScaleX = 1.0;
     qreal _currentScaleY = 1.0;
 
@@ -53,6 +70,9 @@ protected:
     bool _handlesDirty = true;
 
     QPointF moveOldPos;
+    //QPointF resizeOldPos;
+    //QRectF resizeOldRect;
+
     bool _mouseOver = false;
     bool _moveInProgress = false;
     bool _resizeInProgress = false;
