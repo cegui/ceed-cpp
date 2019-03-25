@@ -186,116 +186,66 @@ void ResizableRectItem::updateHandles()
     topEdgeHandle->ignoreGeometryChanges(true);
     topEdgeHandle->setPos(0.0, 0.0);
     if (useInnerHandles)
-        topEdgeHandle->setRect(0, -_innerHandleSize, rect().width(), _innerHandleSize);
+        topEdgeHandle->setRect(0.0, -_innerHandleSize, rect().width(), _innerHandleSize);
     else
         topEdgeHandle->setRect(0.0, 0.0, rect().width(), _outerHandleSize);
     topEdgeHandle->ignoreGeometryChanges(false);
 
-            /*
+    bottomEdgeHandle->ignoreGeometryChanges(true);
+    bottomEdgeHandle->setPos(0.0, rect().height());
+    if (useInnerHandles)
+        bottomEdgeHandle->setRect(0.0, 0.0, rect().width(), _innerHandleSize);
+    else
+        bottomEdgeHandle->setRect(0.0, -_outerHandleSize, rect().width(), _outerHandleSize);
+    bottomEdgeHandle->ignoreGeometryChanges(false);
 
-        if useInnerHandles:
+    leftEdgeHandle->ignoreGeometryChanges(true);
+    leftEdgeHandle->setPos(0.0, 0.0);
+    if (useInnerHandles)
+        leftEdgeHandle->setRect(-_innerHandleSize, 0.0, _innerHandleSize, rect().height());
+    else
+        leftEdgeHandle->setRect(0.0, 0.0, _outerHandleSize, rect().height());
+    leftEdgeHandle->ignoreGeometryChanges(false);
 
-            self.bottomEdgeHandle.ignoreGeometryChanges = True
-            self.bottomEdgeHandle.setPos(0, self.rect().height())
-            self.bottomEdgeHandle.setRect(0, 0,
-                                       self.rect().width(),
-                                       self.innerHandleSize)
-            self.bottomEdgeHandle.ignoreGeometryChanges = False
+    rightEdgeHandle->ignoreGeometryChanges(true);
+    rightEdgeHandle->setPos(rect().width(), 0.0);
+    if (useInnerHandles)
+        rightEdgeHandle->setRect(0.0, 0.0, _innerHandleSize, rect().height());
+    else
+        rightEdgeHandle->setRect(-_outerHandleSize, 0.0, _outerHandleSize, rect().height());
+    rightEdgeHandle->ignoreGeometryChanges(false);
 
-            self.leftEdgeHandle.ignoreGeometryChanges = True
-            self.leftEdgeHandle.setPos(0, 0)
-            self.leftEdgeHandle.setRect(-self.innerHandleSize, 0,
-                                       self.innerHandleSize,
-                                       self.rect().height())
-            self.leftEdgeHandle.ignoreGeometryChanges = False
+    topRightCornerHandle->ignoreGeometryChanges(true);
+    topRightCornerHandle->setPos(rect().width(), 0.0);
+    if (useInnerHandles)
+        topRightCornerHandle->setRect(0.0, -_innerHandleSize, _innerHandleSize, _innerHandleSize);
+    else
+        topRightCornerHandle->setRect(-_outerHandleSize, 0.0, _outerHandleSize, _outerHandleSize);
+    topRightCornerHandle->ignoreGeometryChanges(false);
 
-            self.rightEdgeHandle.ignoreGeometryChanges = True
-            self.rightEdgeHandle.setPos(QtCore.QPointF(self.rect().width(), 0))
-            self.rightEdgeHandle.setRect(0, 0,
-                                       self.innerHandleSize,
-                                       self.rect().height())
-            self.rightEdgeHandle.ignoreGeometryChanges = False
+    bottomRightCornerHandle->ignoreGeometryChanges(true);
+    bottomRightCornerHandle->setPos(rect().width(), rect().height());
+    if (useInnerHandles)
+        bottomRightCornerHandle->setRect(0.0, 0.0, _innerHandleSize, _innerHandleSize);
+    else
+        bottomRightCornerHandle->setRect(-_outerHandleSize, -_outerHandleSize, _outerHandleSize, _outerHandleSize);
+    bottomRightCornerHandle->ignoreGeometryChanges(false);
 
-            self.topRightCornerHandle.ignoreGeometryChanges = True
-            self.topRightCornerHandle.setPos(self.rect().width(), 0)
-            self.topRightCornerHandle.setRect(0, -self.innerHandleSize,
-                                       self.innerHandleSize,
-                                       self.innerHandleSize)
-            self.topRightCornerHandle.ignoreGeometryChanges = False
+    bottomLeftCornerHandle->ignoreGeometryChanges(true);
+    bottomLeftCornerHandle->setPos(0.0, rect().height());
+    if (useInnerHandles)
+        bottomLeftCornerHandle->setRect(-_innerHandleSize, 0.0, _innerHandleSize, _innerHandleSize);
+    else
+        bottomLeftCornerHandle->setRect(0.0, -_outerHandleSize, _outerHandleSize, _outerHandleSize);
+    bottomLeftCornerHandle->ignoreGeometryChanges(false);
 
-            self.bottomRightCornerHandle.ignoreGeometryChanges = True
-            self.bottomRightCornerHandle.setPos(self.rect().width(), self.rect().height())
-            self.bottomRightCornerHandle.setRect(0, 0,
-                                       self.innerHandleSize,
-                                       self.innerHandleSize)
-            self.bottomRightCornerHandle.ignoreGeometryChanges = False
-
-            self.bottomLeftCornerHandle.ignoreGeometryChanges = True
-            self.bottomLeftCornerHandle.setPos(0, self.rect().height())
-            self.bottomLeftCornerHandle.setRect(-self.innerHandleSize, 0,
-                                       self.innerHandleSize,
-                                       self.innerHandleSize)
-            self.bottomLeftCornerHandle.ignoreGeometryChanges = False
-
-            self.topLeftCornerHandle.ignoreGeometryChanges = True
-            self.topLeftCornerHandle.setPos(0, 0)
-            self.topLeftCornerHandle.setRect(-self.innerHandleSize, -self.innerHandleSize,
-                                       self.innerHandleSize,
-                                       self.innerHandleSize)
-            self.topLeftCornerHandle.ignoreGeometryChanges = False
-
-        else:
-
-
-            self.bottomEdgeHandle.ignoreGeometryChanges = True
-            self.bottomEdgeHandle.setPos(0, self.rect().height())
-            self.bottomEdgeHandle.setRect(0, -self.outerHandleSize,
-                                       self.rect().width(),
-                                       self.outerHandleSize)
-            self.bottomEdgeHandle.ignoreGeometryChanges = False
-
-            self.leftEdgeHandle.ignoreGeometryChanges = True
-            self.leftEdgeHandle.setPos(QtCore.QPointF(0, 0))
-            self.leftEdgeHandle.setRect(0, 0,
-                                       self.outerHandleSize,
-                                       self.rect().height())
-            self.leftEdgeHandle.ignoreGeometryChanges = False
-
-            self.rightEdgeHandle.ignoreGeometryChanges = True
-            self.rightEdgeHandle.setPos(QtCore.QPointF(self.rect().width(), 0))
-            self.rightEdgeHandle.setRect(-self.outerHandleSize, 0,
-                                       self.outerHandleSize,
-                                       self.rect().height())
-            self.rightEdgeHandle.ignoreGeometryChanges = False
-
-            self.topRightCornerHandle.ignoreGeometryChanges = True
-            self.topRightCornerHandle.setPos(self.rect().width(), 0)
-            self.topRightCornerHandle.setRect(-self.outerHandleSize, 0,
-                                       self.outerHandleSize,
-                                       self.outerHandleSize)
-            self.topRightCornerHandle.ignoreGeometryChanges = False
-
-            self.bottomRightCornerHandle.ignoreGeometryChanges = True
-            self.bottomRightCornerHandle.setPos(self.rect().width(), self.rect().height())
-            self.bottomRightCornerHandle.setRect(-self.outerHandleSize, -self.outerHandleSize,
-                                       self.outerHandleSize,
-                                       self.outerHandleSize)
-            self.bottomRightCornerHandle.ignoreGeometryChanges = False
-
-            self.bottomLeftCornerHandle.ignoreGeometryChanges = True
-            self.bottomLeftCornerHandle.setPos(0, self.rect().height())
-            self.bottomLeftCornerHandle.setRect(0, -self.outerHandleSize,
-                                       self.outerHandleSize,
-                                       self.outerHandleSize)
-            self.bottomLeftCornerHandle.ignoreGeometryChanges = False
-
-            self.topLeftCornerHandle.ignoreGeometryChanges = True
-            self.topLeftCornerHandle.setPos(0, 0)
-            self.topLeftCornerHandle.setRect(0, 0,
-                                       self.outerHandleSize,
-                                       self.outerHandleSize)
-            self.topLeftCornerHandle.ignoreGeometryChanges = False
-*/
+    topLeftCornerHandle->ignoreGeometryChanges(true);
+    topLeftCornerHandle->setPos(0.0, 0.0);
+    if (useInnerHandles)
+        topLeftCornerHandle->setRect(-_innerHandleSize, -_innerHandleSize, _innerHandleSize, _innerHandleSize);
+    else
+        topLeftCornerHandle->setRect(0.0, 0.0, _outerHandleSize, _outerHandleSize);
+    topLeftCornerHandle->ignoreGeometryChanges(false);
 
     _handlesDirty = false;
 }
