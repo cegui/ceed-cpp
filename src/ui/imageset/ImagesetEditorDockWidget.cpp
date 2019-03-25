@@ -1,48 +1,38 @@
 #include "src/ui/imageset/ImagesetEditorDockWidget.h"
 #include "ui_ImagesetEditorDockWidget.h"
+#include "qitemdelegate.h"
+
+// The only reason for this is to track when we are editing.
+// We need this to discard key events when editor is open.
+// TODO: Isn't there a better way to do this?
+class ImageEntryItemDelegate : public QItemDelegate
+{
+public:
+
+    virtual void setEditorData(QWidget *editor, const QModelIndex &index) const override
+    {
+        editing = true;
+        QItemDelegate::setEditorData(editor, index);
+    }
+
+    virtual void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override
+    {
+        QItemDelegate::setModelData(editor, model, index);
+        editing = false;
+    }
+
+protected:
+
+      mutable bool editing = false;
+};
 
 ImagesetEditorDockWidget::ImagesetEditorDockWidget(QWidget *parent) :
     QDockWidget(parent),
     ui(new Ui::ImagesetEditorDockWidget)
 {
     ui->setupUi(this);
-}
-
-ImagesetEditorDockWidget::~ImagesetEditorDockWidget()
-{
-    delete ui;
-}
 
 /*
-
-class ImageEntryItemDelegate(QtGui.QItemDelegate):
-    """The only reason for this is to track when we are editing.
-
-    We need this to discard key events when editor is open.
-    TODO: Isn't there a better way to do this?
-    """
-
-    def __init__(self):
-        super(ImageEntryItemDelegate, self).__init__()
-        self.editing = False
-
-    def setEditorData(self, editor, index):
-        self.editing = True
-
-        super(ImageEntryItemDelegate, self).setEditorData(editor, index)
-
-    def setModelData(self, editor, model, index):
-        super(ImageEntryItemDelegate, self).setModelData(editor, model, index)
-
-        self.editing = False
-
-class ImagesetEditorDockWidget(QtGui.QDockWidget):
-    """Provides list of images, property editing of currently selected image and create/delete
-    """
-
-    def __init__(self, visual):
-        super(ImagesetEditorDockWidget, self).__init__()
-
         self.visual = visual
 
         self.ui = ceed.ui.editors.imageset.dockwidget.Ui_DockWidget()
@@ -105,11 +95,17 @@ class ImagesetEditorDockWidget(QtGui.QDockWidget):
         self.nativeVertResPerImage.textEdited.connect(self.slot_nativeResolutionPerImageEdited)
 
         self.setActiveImageEntry(None)
+*/
+}
 
-    def setImagesetEntry(self, imagesetEntry):
-        self.imagesetEntry = imagesetEntry
+ImagesetEditorDockWidget::~ImagesetEditorDockWidget()
+{
+    delete ui;
+}
 
-    def refresh(self):
+void ImagesetEditorDockWidget::refresh()
+{
+/*
         """Refreshes the whole list
 
         Note: User potentially looses selection when this is called!
@@ -154,6 +150,10 @@ class ImagesetEditorDockWidget(QtGui.QDockWidget):
 
         # explicitly call the filtering again to make sure it's in sync
         self.filterChanged(self.filterBox.text())
+*/
+}
+
+/*
 
     def setActiveImageEntry(self, imageEntry):
         """Active image entry is the image entry that is selected when there are no

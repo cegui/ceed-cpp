@@ -21,6 +21,7 @@ public:
     void hideAllHandles(ResizingHandle* excluding = nullptr);
     void setResizingEnabled(bool enabled = true);
     void setRect(QRectF newRect);
+    void setRect(qreal ax, qreal ay, qreal w, qreal h) { setRect(QRectF(ax, ay, w, h)); }
     bool isAnyHandleSelected() const;
 
     virtual void performResizing(const ResizingHandle& handle, qreal& deltaLeft, qreal& deltaTop, qreal& deltaRight, qreal& deltaBottom);
@@ -37,13 +38,13 @@ public:
     void onScaleChanged(qreal scaleX, qreal scaleY);
     void mouseReleaseEventSelected(QMouseEvent* event);
 
-    virtual void notifyHandleSelected(ResizingHandle* handle) = 0;
-    virtual void notifyResizeStarted() = 0;
-    virtual void notifyResizeProgress(QPointF newPos, QRectF newRect) = 0;
+    virtual void notifyHandleSelected(ResizingHandle* /*handle*/) {}
+    virtual void notifyResizeStarted() {}
+    virtual void notifyResizeProgress(QPointF /*newPos*/, QRectF /*newRect*/) {}
     virtual void notifyResizeFinished(QPointF newPos, QRectF newRect);
-    virtual void notifyMoveStarted() = 0;
-    virtual void notifyMoveProgress(QPointF newPos) = 0;
-    virtual void notifyMoveFinished(QPointF newPos) = 0;
+    virtual void notifyMoveStarted() {}
+    virtual void notifyMoveProgress(QPointF /*newPos*/) {}
+    virtual void notifyMoveFinished(QPointF /*newPos*/) {}
 
 protected:
 

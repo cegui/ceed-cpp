@@ -3,6 +3,7 @@
 #include "src/util/Settings.h"
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/imageset/ImageEntry.h"
+#include "src/ui/imageset/ImagesetEditorDockWidget.h"
 #include "qopenglwidget.h"
 #include "qdom.h"
 
@@ -48,9 +49,8 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
 
     connect(scene(), &QGraphicsScene::selectionChanged, this, &ImagesetVisualMode::slot_selectionChanged);
 
-/*
-        self.dockWidget = ImagesetEditorDockWidget(self)
-*/
+    dockWidget = new ImagesetEditorDockWidget(this);
+
     setupActions();
 }
 

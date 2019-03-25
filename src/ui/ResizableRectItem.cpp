@@ -77,7 +77,7 @@ bool ResizableRectItem::isAnyHandleSelected() const
 
 // Adjusts the rectangle and returns a 4-tuple of the actual used deltas (with restrictions accounted for)
 // Deltas are in-out, returning the actual change applied. The default implementation doesn't use the handle parameter.
-void ResizableRectItem::performResizing(const ResizingHandle& handle, qreal& deltaLeft, qreal& deltaTop, qreal& deltaRight, qreal& deltaBottom)
+void ResizableRectItem::performResizing(const ResizingHandle& /*handle*/, qreal& deltaLeft, qreal& deltaTop, qreal& deltaRight, qreal& deltaBottom)
 {
     auto newRect = rect().adjusted(deltaLeft, deltaTop, deltaRight, deltaBottom);
     newRect = constrainResizeRect(newRect, rect());

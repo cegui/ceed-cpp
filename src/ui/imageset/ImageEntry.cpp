@@ -32,6 +32,38 @@ ImageEntry::ImageEntry(QGraphicsItem* parent)
 */
 }
 
+// We simply round the rectangle because we only support "full" pixels
+// NOTE: Imageset as such might support floating point pixels but it's never what you really want, image quality deteriorates a lot
+QRectF ImageEntry::constrainResizeRect(QRectF rect, QRectF oldRect)
+{
+    rect = QRectF(QPointF(round(rect.topLeft().x()), round(rect.topLeft().y())),
+                  QPointF(round(rect.bottomRight().x()), round(rect.bottomRight().y())));
+    return ResizableRectItem::constrainResizeRect(rect, oldRect);
+}
+
+void ImageEntry::notifyResizeStarted()
+{
+    ResizableRectItem::notifyResizeStarted();
+
+    // Hide label when resizing so user can see edges clearly
+    label->setVisible(false);
+}
+
+void ImageEntry::notifyResizeFinished(QPointF newPos, QRectF newRect)
+{
+    ResizableRectItem::notifyResizeFinished(newPos, newRect);
+
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    if (_mouseOver && settings->getEntryValue("imageset/visual/overlay_image_labels").toBool())
+    {
+        // If mouse is over we show the label again when resizing finishes
+        label->setVisible(true);
+    }
+
+    // Mark as resized so we can pick it up in VisualEditing.mouseReleaseEvent
+    resized = true;
+}
+
 void ImageEntry::loadFromElement(const QDomElement& xml)
 {
     setName(xml.attribute("name", "Unknown"));
@@ -299,31 +331,4 @@ void ImageEntry::updateListItemSelection()
     def setNativeRes(self, value):
         # NB: This is just a wrapper to make the property setter lambda work
         self.nativeHorzRes, self.nativeVertRes = value
-
-    def constrainResizeRect(self, rect, oldRect):
-        # we simply round the rectangle because we only support "full" pixels
-
-        # NOTE: Imageset as such might support floating point pixels but it's never what you
-        #       really want, image quality deteriorates a lot
-
-        rect = QtCore.QRectF(QtCore.QPointF(round(rect.topLeft().x()), round(rect.topLeft().y())),
-                             QtCore.QPointF(round(rect.bottomRight().x()), round(rect.bottomRight().y())))
-
-        return super(ImageEntry, self).constrainResizeRect(rect, oldRect)
-
-    def notifyResizeStarted(self):
-        super(ImageEntry, self).notifyResizeStarted()
-
-        # hide label when resizing so user can see edges clearly
-        self.label.setVisible(False)
-
-    def notifyResizeFinished(self, newPos, newRect):
-        super(ImageEntry, self).notifyResizeFinished(newPos, newRect)
-
-        if self.mouseOver and settings.getEntry("imageset/visual/overlay_image_labels").value:
-            # if mouse is over we show the label again when resizing finishes
-            self.label.setVisible(True)
-
-        # mark as resized so we can pick it up in VisualEditing.mouseReleaseEvent
-        self.resized = True
 */

@@ -7,6 +7,7 @@
 // This is the "Visual" tab for imageset editing
 
 class ImagesetEntry;
+class ImagesetEditorDockWidget;
 class QDomElement;
 
 class ImagesetVisualMode : public ResizableGraphicsView, public IEditMode
@@ -19,6 +20,8 @@ public:
 
     void refreshSceneRect();
 
+    //ImagesetEditorDockWidget* getDockWidget() const { return dockWidget; }
+
 protected slots:
 
     void slot_selectionChanged();
@@ -29,6 +32,7 @@ protected:
 
     QPoint lastMousePosition;
     ImagesetEntry* imagesetEntry = nullptr;
+    ImagesetEditorDockWidget* dockWidget = nullptr;
 };
 
 #endif // IMAGESETVISUALMODE_H
