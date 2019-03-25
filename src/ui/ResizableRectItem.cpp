@@ -21,14 +21,9 @@ ResizableRectItem::ResizableRectItem(QGraphicsItem* parent)
 
         self.resizeOldPos = None
         self.resizeOldRect = None
-        self.moveOldPos = None
 */
     hideAllHandles();
 /*
-        self.outerHandleSize = 0
-        self.innerHandleSize = 0
-        self.setOuterHandleSize(15)
-        self.setInnerHandleSize(10)
 
         self.setPen(self.getNormalPen())
 */
@@ -102,10 +97,7 @@ void ResizableRectItem::onScaleChanged(qreal scaleX, qreal scaleY)
     }
 
     _handlesDirty = true;
-
-/*
-        self.ensureHandlesUpdated()
-*/
+    updateHandles();
 }
 
 void ResizableRectItem::mouseReleaseEventSelected(QMouseEvent* event)
@@ -125,171 +117,13 @@ void ResizableRectItem::notifyResizeFinished(QPointF newPos, QRectF newRect)
     _ignoreGeometryChanges = false;
 }
 
-QVariant ResizableRectItem::itemChange(GraphicsItemChange change, const QVariant& value)
+// Updates all the handles according to geometry
+void ResizableRectItem::updateHandles()
 {
-    if (change == ItemSelectedHasChanged)
-    {
-        if (value.toBool())
-            unselectAllHandles();
-        else
-            hideAllHandles();
-    }
-    else if (change == ItemPositionChange)
-    {
-        auto point = constrainMovePoint(value.toPointF());
-        if (!_moveInProgress && !_ignoreGeometryChanges)
-        {
-            _moveInProgress = true;
-            moveOldPos = pos();
+    // Updating handles while resizing would mess things up big times, so we just ignore the update in that circumstance
+    if (!_handlesDirty || _resizeInProgress) return;
 
-            /*
-                setPen(self.getPenWhileMoving())
-            */
-
-            hideAllHandles();
-
-            notifyMoveStarted();
-        }
-
-        if (_moveInProgress)
-        {
-            // 'point' is the new position, self.pos() is the old position,
-            // we use 'point' to avoid the 1 pixel lag
-            notifyMoveProgress(point);
-        }
-    }
-
-    return QGraphicsRectItem::itemChange(change, value);
-}
-
-void ResizableRectItem::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
-{
-    QGraphicsRectItem::hoverEnterEvent(event);
     /*
-        setPen(self.getHoverPen())
-    */
-    _mouseOver = true;
-}
-
-void ResizableRectItem::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
-{
-    _mouseOver = false;
-    /*
-        setPen(self.getNormalPen())
-    */
-    QGraphicsRectItem::hoverLeaveEvent(event);
-}
-
-/*
-    def getMinSize(self):
-        ret = QtCore.QSizeF(1, 1)
-
-        return ret
-
-    def getMaxSize(self):
-        return None
-
-    def getNormalPen(self):
-        ret = QtGui.QPen()
-        ret.setColor(QtGui.QColor(255, 255, 255, 150))
-        ret.setStyle(QtCore.Qt.DotLine)
-
-        return ret
-
-    def getHoverPen(self):
-        ret = QtGui.QPen()
-        ret.setColor(QtGui.QColor(0, 255, 255, 255))
-
-        return ret
-
-    def getPenWhileResizing(self):
-        ret = QtGui.QPen(QtGui.QColor(255, 0, 255, 255))
-
-        return ret
-
-    def getPenWhileMoving(self):
-        ret = QtGui.QPen(QtGui.QColor(255, 0, 255, 255))
-
-        return ret
-
-    def setOuterHandleSize(self, size):
-        self.outerHandleSize = size
-        self.handlesDirty = True
-
-    def setInnerHandleSize(self, size):
-        self.innerHandleSize = size
-        self.handlesDirty = True
-
-    def setRect(self, rect):
-        super(ResizableRectItem, self).setRect(rect)
-
-        self.handlesDirty = True
-        self.ensureHandlesUpdated()
-
-    def hideAllHandles(self, excluding = None):
-        """Hides all handles. If a handle is given as the 'excluding' parameter, this handle is
-        skipped over when hiding
-        """
-
-        for item in self.childItems():
-            if isinstance(item, ResizingHandle) and item is not excluding:
-                if isinstance(item, EdgeResizingHandle):
-                    item.setPen(self.getEdgeResizingHandleHiddenPen())
-
-                elif isinstance(item, CornerResizingHandle):
-                    item.setPen(self.getCornerResizingHandleHiddenPen())
-
-    def setResizingEnabled(self, enabled = True):
-        """Makes it possible to disable or enable resizing
-        """
-
-        for item in self.childItems():
-            if isinstance(item, ResizingHandle):
-                item.setVisible(enabled)
-
-    def unselectAllHandles(self):
-        """Unselects all handles of this resizable"""
-
-        for item in self.childItems():
-            if isinstance(item, ResizingHandle):
-                item.setSelected(False)
-
-    def isAnyHandleSelected(self):
-        """Checks whether any of the 8 handles is selected.
-        note: At most 1 handle can be selected at a time!"""
-        for item in self.childItems():
-            if isinstance(item, ResizingHandle):
-                if item.isSelected():
-                    return True
-
-        return False
-
-    def ensureHandlesUpdated(self):
-        """Makes sure handles are updated (if possible).
-        Updating handles while resizing would mess things up big times, so we just ignore the
-        update in that circumstance
-        """
-
-        if self.handlesDirty and not self.resizeInProgress:
-            self.updateHandles()
-
-    def absoluteXToRelative(self, value, transform):
-        xScale = transform.m11()
-
-        # this works in this special case, not in generic case!
-        # I would have to undo rotation for this to work generically
-        return value / xScale if xScale != 0 else 1
-
-    def absoluteYToRelative(self, value, transform):
-        yScale = transform.m22()
-
-        # this works in this special case, not in generic case!
-        # I would have to undo rotation for this to work generically
-        return value / yScale if yScale != 0 else 1
-
-    def updateHandles(self):
-        """Updates all the handles according to geometry"""
-
         absoluteWidth = self.currentScaleX * self.rect().width()
         absoluteHeight = self.currentScaleY * self.rect().height()
 
@@ -406,6 +240,145 @@ void ResizableRectItem::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
                                        self.outerHandleSize,
                                        self.outerHandleSize)
             self.topLeftCornerHandle.ignoreGeometryChanges = False
+*/
 
-        self.handlesDirty = False
+    _handlesDirty = false;
+}
+
+QVariant ResizableRectItem::itemChange(GraphicsItemChange change, const QVariant& value)
+{
+    if (change == ItemSelectedHasChanged)
+    {
+        if (value.toBool())
+            unselectAllHandles();
+        else
+            hideAllHandles();
+    }
+    else if (change == ItemPositionChange)
+    {
+        auto point = constrainMovePoint(value.toPointF());
+        if (!_moveInProgress && !_ignoreGeometryChanges)
+        {
+            _moveInProgress = true;
+            moveOldPos = pos();
+
+            /*
+                setPen(self.getPenWhileMoving())
+            */
+
+            hideAllHandles();
+
+            notifyMoveStarted();
+        }
+
+        if (_moveInProgress)
+        {
+            // 'point' is the new position, self.pos() is the old position,
+            // we use 'point' to avoid the 1 pixel lag
+            notifyMoveProgress(point);
+        }
+    }
+
+    return QGraphicsRectItem::itemChange(change, value);
+}
+
+void ResizableRectItem::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
+{
+    QGraphicsRectItem::hoverEnterEvent(event);
+    /*
+        setPen(self.getHoverPen())
+    */
+    _mouseOver = true;
+}
+
+void ResizableRectItem::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
+{
+    _mouseOver = false;
+    /*
+        setPen(self.getNormalPen())
+    */
+    QGraphicsRectItem::hoverLeaveEvent(event);
+}
+
+/*
+    def getNormalPen(self):
+        ret = QtGui.QPen()
+        ret.setColor(QtGui.QColor(255, 255, 255, 150))
+        ret.setStyle(QtCore.Qt.DotLine)
+
+        return ret
+
+    def getHoverPen(self):
+        ret = QtGui.QPen()
+        ret.setColor(QtGui.QColor(0, 255, 255, 255))
+
+        return ret
+
+    def getPenWhileResizing(self):
+        ret = QtGui.QPen(QtGui.QColor(255, 0, 255, 255))
+
+        return ret
+
+    def getPenWhileMoving(self):
+        ret = QtGui.QPen(QtGui.QColor(255, 0, 255, 255))
+
+        return ret
+
+    def setRect(self, rect):
+        super(ResizableRectItem, self).setRect(rect)
+
+        self.handlesDirty = True
+        self.updateHandles()
+
+    def hideAllHandles(self, excluding = None):
+        """Hides all handles. If a handle is given as the 'excluding' parameter, this handle is
+        skipped over when hiding
+        """
+
+        for item in self.childItems():
+            if isinstance(item, ResizingHandle) and item is not excluding:
+                if isinstance(item, EdgeResizingHandle):
+                    item.setPen(self.getEdgeResizingHandleHiddenPen())
+
+                elif isinstance(item, CornerResizingHandle):
+                    item.setPen(self.getCornerResizingHandleHiddenPen())
+
+    def setResizingEnabled(self, enabled = True):
+        """Makes it possible to disable or enable resizing
+        """
+
+        for item in self.childItems():
+            if isinstance(item, ResizingHandle):
+                item.setVisible(enabled)
+
+    def unselectAllHandles(self):
+        """Unselects all handles of this resizable"""
+
+        for item in self.childItems():
+            if isinstance(item, ResizingHandle):
+                item.setSelected(False)
+
+    def isAnyHandleSelected(self):
+        """Checks whether any of the 8 handles is selected.
+        note: At most 1 handle can be selected at a time!"""
+        for item in self.childItems():
+            if isinstance(item, ResizingHandle):
+                if item.isSelected():
+                    return True
+
+        return False
+
+    def absoluteXToRelative(self, value, transform):
+        xScale = transform.m11()
+
+        # this works in this special case, not in generic case!
+        # I would have to undo rotation for this to work generically
+        return value / xScale if xScale != 0 else 1
+
+    def absoluteYToRelative(self, value, transform):
+        yScale = transform.m22()
+
+        # this works in this special case, not in generic case!
+        # I would have to undo rotation for this to work generically
+        return value / yScale if yScale != 0 else 1
 */

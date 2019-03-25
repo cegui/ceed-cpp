@@ -23,6 +23,8 @@ public:
     virtual void performResizing(const ResizingHandle& handle, qreal& deltaLeft, qreal& deltaTop, qreal& deltaRight, qreal& deltaBottom);
     virtual QPointF constrainMovePoint(QPointF value) { return value; }
     virtual QRectF constrainResizeRect(QRectF rect, QRectF oldRect);
+    virtual QSizeF getMinSize() const { return QSizeF(1.0, 1.0); }
+    virtual QSizeF getMaxSize() const { return QSizeF(std::numeric_limits<qreal>().max(), std::numeric_limits<qreal>().max()); }
 
     void onScaleChanged(qreal scaleX, qreal scaleY);
     void mouseReleaseEventSelected(QMouseEvent* event);
@@ -37,16 +39,20 @@ public:
 
 protected:
 
+    void updateHandles();
+
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
     virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
 
-    QPointF moveOldPos;
-
     qreal _currentScaleX = 1.0;
     qreal _currentScaleY = 1.0;
 
+    int _outerHandleSize = 15;
+    int _innerHandleSize = 10;
     bool _handlesDirty = true;
+
+    QPointF moveOldPos;
     bool _mouseOver = false;
     bool _moveInProgress = false;
     bool _resizeInProgress = false;
