@@ -45,53 +45,103 @@ ImagesetEditorDockWidget::ImagesetEditorDockWidget(QWidget *parent) :
         return project ? project->getResourceFilePath("", "imagesets") : "";
     });
 
-    auto intValidator = new QIntValidator(0, 9999999, this);
-    ui->nativeHorzRes->setValidator(intValidator);
-    ui->nativeVertRes->setValidator(intValidator);
+    auto uintValidator = new QIntValidator(0, 9999999, this);
+    ui->nativeHorzRes->setValidator(uintValidator);
+    ui->nativeVertRes->setValidator(uintValidator);
+    ui->positionX->setValidator(uintValidator);
+    ui->positionY->setValidator(uintValidator);
+    ui->width->setValidator(uintValidator);
+    ui->height->setValidator(uintValidator);
+    ui->nativeVertRes->setValidator(uintValidator);
+    ui->nativeVertRes->setValidator(uintValidator);
+    ui->nativeHorzResPerImage->setValidator(uintValidator);
+    ui->nativeVertResPerImage->setValidator(uintValidator);
+
+    auto intValidator = new QIntValidator(-9999999, 9999999, this);
+    ui->offsetX->setValidator(intValidator);
+    ui->offsetY->setValidator(intValidator);
+
     connect(ui->nativeHorzRes, &QLineEdit::textEdited, this, &ImagesetEditorDockWidget::onNativeResolutionEdited);
     connect(ui->nativeVertRes, &QLineEdit::textEdited, this, &ImagesetEditorDockWidget::onNativeResolutionEdited);
+    connect(ui->nativeHorzResPerImage, &QLineEdit::textEdited, this, &ImagesetEditorDockWidget::onNativeResolutionPerImageEdited);
+    connect(ui->nativeVertResPerImage, &QLineEdit::textEdited, this, &ImagesetEditorDockWidget::onNativeResolutionPerImageEdited);
 
     ui->list->setItemDelegate(new ImageEntryItemDelegate());
 
-/*
-        self.list.itemSelectionChanged.connect(self.slot_itemSelectionChanged)
-        self.list.itemChanged.connect(self.slot_itemChanged)
-
-        self.positionX = self.findChild(QtGui.QLineEdit, "positionX")
-        self.positionX.setValidator(QtGui.QIntValidator(0, 9999999, self))
-        self.positionX.textChanged.connect(self.slot_positionXChanged)
-        self.positionY = self.findChild(QtGui.QLineEdit, "positionY")
-        self.positionY.setValidator(QtGui.QIntValidator(0, 9999999, self))
-        self.positionY.textChanged.connect(self.slot_positionYChanged)
-        self.width = self.findChild(QtGui.QLineEdit, "width")
-        self.width.setValidator(QtGui.QIntValidator(0, 9999999, self))
-        self.width.textChanged.connect(self.slot_widthChanged)
-        self.height = self.findChild(QtGui.QLineEdit, "height")
-        self.height.setValidator(QtGui.QIntValidator(0, 9999999, self))
-        self.height.textChanged.connect(self.slot_heightChanged)
-        self.offsetX = self.findChild(QtGui.QLineEdit, "offsetX")
-        self.offsetX.setValidator(QtGui.QIntValidator(-9999999, 9999999, self))
-        self.offsetX.textChanged.connect(self.slot_offsetXChanged)
-        self.offsetY = self.findChild(QtGui.QLineEdit, "offsetY")
-        self.offsetY.setValidator(QtGui.QIntValidator(-9999999, 9999999, self))
-        self.offsetY.textChanged.connect(self.slot_offsetYChanged)
-
-        self.autoScaledPerImage = self.findChild(QtGui.QComboBox, "autoScaledPerImage")
-        self.autoScaledPerImage.currentIndexChanged.connect(self.slot_autoScaledPerImageChanged)
-        self.nativeHorzResPerImage = self.findChild(QtGui.QLineEdit, "nativeHorzResPerImage")
-        self.nativeHorzResPerImage.setValidator(QtGui.QIntValidator(0, 9999999, self))
-        self.nativeHorzResPerImage.textEdited.connect(self.slot_nativeResolutionPerImageEdited)
-        self.nativeVertResPerImage = self.findChild(QtGui.QLineEdit, "nativeVertResPerImage")
-        self.nativeVertResPerImage.setValidator(QtGui.QIntValidator(0, 9999999, self))
-        self.nativeVertResPerImage.textEdited.connect(self.slot_nativeResolutionPerImageEdited)
-
-        self.setActiveImageEntry(None)
-*/
+    setActiveImageEntry(nullptr);
 }
 
 ImagesetEditorDockWidget::~ImagesetEditorDockWidget()
 {
     delete ui;
+}
+
+void ImagesetEditorDockWidget::setActiveImageEntry(ImageEntry *entry)
+{
+/*
+    def setActiveImageEntry(self, imageEntry):
+        """Active image entry is the image entry that is selected when there are no
+        other image entries selected. It's properties show in the property box.
+
+        Note: Imageset editing doesn't allow multi selection property editing because
+              IMO it doesn't make much sense.
+        """
+
+        self.activeImageEntry = imageEntry
+
+        self.refreshActiveImageEntry()
+*/
+}
+
+void ImagesetEditorDockWidget::refreshActiveImageEntry()
+{
+/*
+    def refreshActiveImageEntry(self):
+        """Refreshes the properties of active image entry (from image entry to the property box)
+        """
+
+        if not self.activeImageEntry:
+            self.positionX.setText("")
+            self.positionX.setEnabled(False)
+            self.positionY.setText("")
+            self.positionY.setEnabled(False)
+            self.width.setText("")
+            self.width.setEnabled(False)
+            self.height.setText("")
+            self.height.setEnabled(False)
+            self.offsetX.setText("")
+            self.offsetX.setEnabled(False)
+            self.offsetY.setText("")
+            self.offsetY.setEnabled(False)
+
+            self.autoScaledPerImage.setCurrentIndex(0)
+            self.autoScaledPerImage.setEnabled(False)
+            self.nativeHorzResPerImage.setText("")
+            self.nativeHorzResPerImage.setEnabled(False)
+            self.nativeVertResPerImage.setText("")
+            self.nativeVertResPerImage.setEnabled(False)
+
+        else:
+            self.positionX.setText(str(self.activeImageEntry.xpos))
+            self.positionX.setEnabled(True)
+            self.positionY.setText(str(self.activeImageEntry.ypos))
+            self.positionY.setEnabled(True)
+            self.width.setText(str(self.activeImageEntry.width))
+            self.width.setEnabled(True)
+            self.height.setText(str(self.activeImageEntry.height))
+            self.height.setEnabled(True)
+            self.offsetX.setText(str(self.activeImageEntry.xoffset))
+            self.offsetX.setEnabled(True)
+            self.offsetY.setText(str(self.activeImageEntry.yoffset))
+            self.offsetY.setEnabled(True)
+
+            self.autoScaledPerImage.setCurrentIndex(self.autoScaledPerImage.findText(self.activeImageEntry.autoScaled))
+            self.autoScaledPerImage.setEnabled(True)
+            self.nativeHorzResPerImage.setText(str(self.activeImageEntry.nativeHorzRes))
+            self.nativeHorzResPerImage.setEnabled(True)
+            self.nativeVertResPerImage.setText(str(self.activeImageEntry.nativeVertRes))
+            self.nativeVertResPerImage.setEnabled(True)
+*/
 }
 
 // Refreshes the whole list
@@ -107,9 +157,9 @@ void ImagesetEditorDockWidget::refresh()
     selectionSynchronizationUnderway = true;
     while (ui->list->takeItem(0)) ;
     selectionSynchronizationUnderway = false;
-/*
 
-        self.setActiveImageEntry(None)
+    setActiveImageEntry(nullptr);
+/*
 
         self.name.setText(self.imagesetEntry.name)
         self.image.setText(self.imagesetEntry.getAbsoluteImageFile())
@@ -158,6 +208,35 @@ void ImagesetEditorDockWidget::onNativeResolutionEdited()
 */
 }
 
+void ImagesetEditorDockWidget::onNativeResolutionPerImageEdited()
+{
+/*
+        oldHorzRes = self.activeImageEntry.nativeHorzRes
+        oldVertRes = self.activeImageEntry.nativeVertRes
+
+        newHorzRes = self.nativeHorzResPerImage.text()
+        newVertRes = self.nativeVertResPerImage.text()
+
+        if newHorzRes == "":
+            newHorzRes = 0
+        if newVertRes == "":
+            newVertRes = 0
+
+        try:
+            newHorzRes = int(newHorzRes)
+            newVertRes = int(newVertRes)
+
+        except ValueError:
+            return
+
+        if oldHorzRes == newHorzRes and oldVertRes == newVertRes:
+            return
+
+        cmd = undo.PropertyEditCommand(self.visual, self.activeImageEntry.name, "nativeRes", (oldHorzRes, oldVertRes), (newHorzRes, newVertRes))
+        self.visual.tabbedEditor.undoStack.push(cmd)
+*/
+}
+
 void ImagesetEditorDockWidget::on_name_textEdited(const QString& arg1)
 {
 /*
@@ -200,7 +279,21 @@ void ImagesetEditorDockWidget::on_autoScaled_currentIndexChanged(int index)
 */
 }
 
-void ImagesetEditorDockWidget::on_filterBox_textChanged(const QString &arg1)
+void ImagesetEditorDockWidget::on_autoScaledPerImage_currentIndexChanged(int index)
+{
+/*
+    def slot_autoScaledPerImageChanged(self, index):
+        if index == 0:
+            # first is the "default" / inheriting state
+            text = ""
+        else:
+            text = self.autoScaledPerImage.currentText()
+
+        self.metaslot_propertyChangedString("autoScaled", text)
+*/
+}
+
+void ImagesetEditorDockWidget::on_filterBox_textChanged(const QString& arg1)
 {
 /*
         # we append star at the beginning and at the end by default (makes property filtering much more practical)
@@ -217,7 +310,7 @@ void ImagesetEditorDockWidget::on_filterBox_textChanged(const QString &arg1)
 */
 }
 
-void ImagesetEditorDockWidget::on_list_itemChanged(QListWidgetItem *item)
+void ImagesetEditorDockWidget::on_list_itemChanged(QListWidgetItem* item)
 {
 /*
     def slot_itemChanged(self, item):
@@ -264,67 +357,57 @@ void ImagesetEditorDockWidget::on_list_itemSelectionChanged()
 */
 }
 
+void ImagesetEditorDockWidget::on_positionX_textChanged(const QString &arg1)
+{
 /*
+    def slot_positionXChanged(self, text):
+        self.metaslot_propertyChangedInt("xpos", text)
 
-    def setActiveImageEntry(self, imageEntry):
-        """Active image entry is the image entry that is selected when there are no
-        other image entries selected. It's properties show in the property box.
+    def slot_positionYChanged(self, text):
+        self.metaslot_propertyChangedInt("ypos", text)
 
-        Note: Imageset editing doesn't allow multi selection property editing because
-              IMO it doesn't make much sense.
-        """
+    def slot_widthChanged(self, text):
+        self.metaslot_propertyChangedInt("width", text)
 
-        self.activeImageEntry = imageEntry
+    def slot_heightChanged(self, text):
+        self.metaslot_propertyChangedInt("height", text)
 
-        self.refreshActiveImageEntry()
+    def slot_offsetXChanged(self, text):
+        self.metaslot_propertyChangedInt("xoffset", text)
 
-    def refreshActiveImageEntry(self):
-        """Refreshes the properties of active image entry (from image entry to the property box)
-        """
+    def slot_offsetYChanged(self, text):
+        self.metaslot_propertyChangedInt("yoffset", text)
+*/
+}
 
-        if not self.activeImageEntry:
-            self.positionX.setText("")
-            self.positionX.setEnabled(False)
-            self.positionY.setText("")
-            self.positionY.setEnabled(False)
-            self.width.setText("")
-            self.width.setEnabled(False)
-            self.height.setText("")
-            self.height.setEnabled(False)
-            self.offsetX.setText("")
-            self.offsetX.setEnabled(False)
-            self.offsetY.setText("")
-            self.offsetY.setEnabled(False)
+void ImagesetEditorDockWidget::on_positionY_textChanged(const QString &arg1)
+{
 
-            self.autoScaledPerImage.setCurrentIndex(0)
-            self.autoScaledPerImage.setEnabled(False)
-            self.nativeHorzResPerImage.setText("")
-            self.nativeHorzResPerImage.setEnabled(False)
-            self.nativeVertResPerImage.setText("")
-            self.nativeVertResPerImage.setEnabled(False)
+}
 
-        else:
-            self.positionX.setText(str(self.activeImageEntry.xpos))
-            self.positionX.setEnabled(True)
-            self.positionY.setText(str(self.activeImageEntry.ypos))
-            self.positionY.setEnabled(True)
-            self.width.setText(str(self.activeImageEntry.width))
-            self.width.setEnabled(True)
-            self.height.setText(str(self.activeImageEntry.height))
-            self.height.setEnabled(True)
-            self.offsetX.setText(str(self.activeImageEntry.xoffset))
-            self.offsetX.setEnabled(True)
-            self.offsetY.setText(str(self.activeImageEntry.yoffset))
-            self.offsetY.setEnabled(True)
+void ImagesetEditorDockWidget::on_width_textChanged(const QString &arg1)
+{
 
-            self.autoScaledPerImage.setCurrentIndex(self.autoScaledPerImage.findText(self.activeImageEntry.autoScaled))
-            self.autoScaledPerImage.setEnabled(True)
-            self.nativeHorzResPerImage.setText(str(self.activeImageEntry.nativeHorzRes))
-            self.nativeHorzResPerImage.setEnabled(True)
-            self.nativeVertResPerImage.setText(str(self.activeImageEntry.nativeVertRes))
-            self.nativeVertResPerImage.setEnabled(True)
+}
 
-    def keyReleaseEvent(self, event):
+void ImagesetEditorDockWidget::on_height_textChanged(const QString &arg1)
+{
+
+}
+
+void ImagesetEditorDockWidget::on_offsetX_textChanged(const QString &arg1)
+{
+
+}
+
+void ImagesetEditorDockWidget::on_offsetY_textChanged(const QString &arg1)
+{
+
+}
+
+void ImagesetEditorDockWidget::keyReleaseEvent(QKeyEvent* event)
+{
+/*
         # if we are editing, we should discard key events
         # (delete means delete character, not delete image entry in this context)
 
@@ -338,7 +421,10 @@ void ImagesetEditorDockWidget::on_list_itemSelectionChanged()
                     return True
 
         return super(ImagesetEditorDockWidget, self).keyReleaseEvent(event)
+*/
+}
 
+/*
     def metaslot_propertyChangedInt(self, propertyName, newTextValue):
         if not self.activeImageEntry:
             return
@@ -370,55 +456,5 @@ void ImagesetEditorDockWidget::on_list_itemSelectionChanged()
         cmd = undo.PropertyEditCommand(self.visual, self.activeImageEntry.name, propertyName, oldValue, newValue)
         self.visual.tabbedEditor.undoStack.push(cmd)
 
-    def slot_positionXChanged(self, text):
-        self.metaslot_propertyChangedInt("xpos", text)
 
-    def slot_positionYChanged(self, text):
-        self.metaslot_propertyChangedInt("ypos", text)
-
-    def slot_widthChanged(self, text):
-        self.metaslot_propertyChangedInt("width", text)
-
-    def slot_heightChanged(self, text):
-        self.metaslot_propertyChangedInt("height", text)
-
-    def slot_offsetXChanged(self, text):
-        self.metaslot_propertyChangedInt("xoffset", text)
-
-    def slot_offsetYChanged(self, text):
-        self.metaslot_propertyChangedInt("yoffset", text)
-
-    def slot_autoScaledPerImageChanged(self, index):
-        if index == 0:
-            # first is the "default" / inheriting state
-            text = ""
-        else:
-            text = self.autoScaledPerImage.currentText()
-
-        self.metaslot_propertyChangedString("autoScaled", text)
-
-    def slot_nativeResolutionPerImageEdited(self, newValue):
-        oldHorzRes = self.activeImageEntry.nativeHorzRes
-        oldVertRes = self.activeImageEntry.nativeVertRes
-
-        newHorzRes = self.nativeHorzResPerImage.text()
-        newVertRes = self.nativeVertResPerImage.text()
-
-        if newHorzRes == "":
-            newHorzRes = 0
-        if newVertRes == "":
-            newVertRes = 0
-
-        try:
-            newHorzRes = int(newHorzRes)
-            newVertRes = int(newVertRes)
-
-        except ValueError:
-            return
-
-        if oldHorzRes == newHorzRes and oldVertRes == newVertRes:
-            return
-
-        cmd = undo.PropertyEditCommand(self.visual, self.activeImageEntry.name, "nativeRes", (oldHorzRes, oldVertRes), (newHorzRes, newVertRes))
-        self.visual.tabbedEditor.undoStack.push(cmd)
 */
