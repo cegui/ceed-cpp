@@ -1,32 +1,15 @@
-##############################################################################
-#   CEED - Unified CEGUI asset editor
-#
-#   Copyright (C) 2011-2012   Martin Preisler <martin@preisler.me>
-#                             and contributing authors (see AUTHORS file)
-#
-#   This program is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation, either version 3 of the License, or
-#   (at your option) any later version.
-#
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-##############################################################################
+#include "src/editors/imageset/ImagesetUndoCommands.h"
 
-from ceed import commands
-from ceed.editors.imageset import elements
+ImagesetUndoCommands::ImagesetUndoCommands()
+{
 
-import math
+}
+
+/*
 
 idbase = 1100
 
-# undo commands in this file intentionally use Qt's primitives because
-# it's easier to work with and avoids unnecessary conversions all the time
+# u
 # you should however always use the ImageEntry's properties (xpos, ypos, ...)!
 
 class MoveCommand(commands.UndoCommand):
@@ -740,3 +723,4 @@ class PasteCommand(commands.UndoCommand):
         self.visual.dockWidget.refresh()
 
         super(PasteCommand, self).redo()
+*/

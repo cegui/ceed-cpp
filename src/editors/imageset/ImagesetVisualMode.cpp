@@ -49,7 +49,7 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
 
     connect(scene(), &QGraphicsScene::selectionChanged, this, &ImagesetVisualMode::slot_selectionChanged);
 
-    dockWidget = new ImagesetEditorDockWidget(this);
+    dockWidget = new ImagesetEditorDockWidget(*this);
 
     setupActions();
 }

@@ -82,7 +82,9 @@ SOURCES += \
     src/ui/imageset/ImagesetEntry.cpp \
     src/util/Utils.cpp \
     src/ui/ResizableRectItem.cpp \
-    src/ui/ResizingHandle.cpp
+    src/ui/ResizingHandle.cpp \
+    src/editors/imageset/ImagesetUndoCommands.cpp \
+    src/ui/widgets/LineEditWithClearButton.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -139,7 +141,9 @@ HEADERS += \
     src/ui/imageset/ImagesetEntry.h \
     src/util/Utils.h \
     src/ui/ResizableRectItem.h \
-    src/ui/ResizingHandle.h
+    src/ui/ResizingHandle.h \
+    src/editors/imageset/ImagesetUndoCommands.h \
+    src/ui/widgets/LineEditWithClearButton.h
 
 FORMS += \
     ui/MainWindow.ui \
