@@ -1,6 +1,8 @@
 #include "src/ui/imageset/ImagesetEditorDockWidget.h"
 #include "src/cegui/CEGUIProjectManager.h"
 #include "src/cegui/CEGUIProject.h"
+#include "src/ui/imageset/ImagesetEntry.h"
+#include "src/ui/imageset/ImageEntry.h"
 #include "ui_ImagesetEditorDockWidget.h"
 #include "qitemdelegate.h"
 #include "qvalidator.h"
@@ -76,72 +78,39 @@ ImagesetEditorDockWidget::~ImagesetEditorDockWidget()
     delete ui;
 }
 
-void ImagesetEditorDockWidget::setActiveImageEntry(ImageEntry *entry)
+// Active image entry is the image entry that is selected when there are no
+// other image entries selected. It's properties show in the property box.
+// NB: Imageset editing doesn't allow multi selection property editing because IMO it doesn't make much sense.
+void ImagesetEditorDockWidget::setActiveImageEntry(ImageEntry* entry)
 {
-/*
-    def setActiveImageEntry(self, imageEntry):
-        """Active image entry is the image entry that is selected when there are no
-        other image entries selected. It's properties show in the property box.
-
-        Note: Imageset editing doesn't allow multi selection property editing because
-              IMO it doesn't make much sense.
-        """
-
-        self.activeImageEntry = imageEntry
-
-        self.refreshActiveImageEntry()
-*/
+    activeImageEntry = entry;
+    refreshActiveImageEntry();
 }
 
+// Refreshes the properties of active image entry (from image entry to the property box)
 void ImagesetEditorDockWidget::refreshActiveImageEntry()
 {
-/*
-    def refreshActiveImageEntry(self):
-        """Refreshes the properties of active image entry (from image entry to the property box)
-        """
+    const bool entryIsValid = !!activeImageEntry;
 
-        if not self.activeImageEntry:
-            self.positionX.setText("")
-            self.positionX.setEnabled(False)
-            self.positionY.setText("")
-            self.positionY.setEnabled(False)
-            self.width.setText("")
-            self.width.setEnabled(False)
-            self.height.setText("")
-            self.height.setEnabled(False)
-            self.offsetX.setText("")
-            self.offsetX.setEnabled(False)
-            self.offsetY.setText("")
-            self.offsetY.setEnabled(False)
+    ui->positionX->setEnabled(entryIsValid);
+    ui->positionY->setEnabled(entryIsValid);
+    ui->width->setEnabled(entryIsValid);
+    ui->height->setEnabled(entryIsValid);
+    ui->offsetX->setEnabled(entryIsValid);
+    ui->offsetY->setEnabled(entryIsValid);
+    ui->autoScaledPerImage->setEnabled(entryIsValid);
+    ui->nativeHorzResPerImage->setEnabled(entryIsValid);
+    ui->nativeVertResPerImage->setEnabled(entryIsValid);
 
-            self.autoScaledPerImage.setCurrentIndex(0)
-            self.autoScaledPerImage.setEnabled(False)
-            self.nativeHorzResPerImage.setText("")
-            self.nativeHorzResPerImage.setEnabled(False)
-            self.nativeVertResPerImage.setText("")
-            self.nativeVertResPerImage.setEnabled(False)
-
-        else:
-            self.positionX.setText(str(self.activeImageEntry.xpos))
-            self.positionX.setEnabled(True)
-            self.positionY.setText(str(self.activeImageEntry.ypos))
-            self.positionY.setEnabled(True)
-            self.width.setText(str(self.activeImageEntry.width))
-            self.width.setEnabled(True)
-            self.height.setText(str(self.activeImageEntry.height))
-            self.height.setEnabled(True)
-            self.offsetX.setText(str(self.activeImageEntry.xoffset))
-            self.offsetX.setEnabled(True)
-            self.offsetY.setText(str(self.activeImageEntry.yoffset))
-            self.offsetY.setEnabled(True)
-
-            self.autoScaledPerImage.setCurrentIndex(self.autoScaledPerImage.findText(self.activeImageEntry.autoScaled))
-            self.autoScaledPerImage.setEnabled(True)
-            self.nativeHorzResPerImage.setText(str(self.activeImageEntry.nativeHorzRes))
-            self.nativeHorzResPerImage.setEnabled(True)
-            self.nativeVertResPerImage.setText(str(self.activeImageEntry.nativeVertRes))
-            self.nativeVertResPerImage.setEnabled(True)
-*/
+    ui->positionX->setText(activeImageEntry ? QString::number(activeImageEntry->pos().x()) : "");
+    ui->positionY->setText(activeImageEntry ? QString::number(activeImageEntry->pos().y()) : "");
+    ui->width->setText(activeImageEntry ? QString::number(activeImageEntry->rect().width()) : "");
+    ui->height->setText(activeImageEntry ? QString::number(activeImageEntry->rect().height()) : "");
+    ui->offsetX->setText(activeImageEntry ? QString::number(activeImageEntry->offsetX()) : "");
+    ui->offsetY->setText(activeImageEntry ? QString::number(activeImageEntry->offsetY()) : "");
+    ui->autoScaledPerImage->setCurrentIndex(activeImageEntry ? ui->autoScaledPerImage->findText(activeImageEntry->getAutoScaled()) : 0);
+    ui->nativeHorzResPerImage->setText(activeImageEntry ? QString::number(activeImageEntry->getNativeHorzRes()) : "");
+    ui->nativeVertResPerImage->setText(activeImageEntry ? QString::number(activeImageEntry->getNativeVertRes()) : "");
 }
 
 // Refreshes the whole list
@@ -159,32 +128,31 @@ void ImagesetEditorDockWidget::refresh()
     selectionSynchronizationUnderway = false;
 
     setActiveImageEntry(nullptr);
-/*
 
-        self.name.setText(self.imagesetEntry.name)
-        self.image.setText(self.imagesetEntry.getAbsoluteImageFile())
-        self.autoScaled.setCurrentIndex(self.autoScaled.findText(self.imagesetEntry.autoScaled))
-        self.nativeHorzRes.setText(str(self.imagesetEntry.nativeHorzRes))
-        self.nativeVertRes.setText(str(self.imagesetEntry.nativeVertRes))
+    assert(imagesetEntry);
 
-        for imageEntry in self.imagesetEntry.imageEntries:
-            item = QtGui.QListWidgetItem()
-            item.dockWidget = self
-            item.setFlags(QtCore.Qt.ItemIsSelectable |
-                          QtCore.Qt.ItemIsEditable |
-                          QtCore.Qt.ItemIsEnabled)
+    ui->name->setText(imagesetEntry->name());
+    ui->image->setText(imagesetEntry->getAbsoluteImageFile());
+    ui->autoScaled->setCurrentIndex(ui->autoScaled->findText(imagesetEntry->getAutoScaled()));
+    ui->nativeHorzRes->setText(QString::number(imagesetEntry->getNativeHorzRes()));
+    ui->nativeVertRes->setText(QString::number(imagesetEntry->getNativeVertRes()));
 
-            item.imageEntry = imageEntry
+    for (ImageEntry* imageEntry : imagesetEntry->getImageEntries())
+    {
+        auto item = new QListWidgetItem();
+        item->setData(Qt::UserRole + 1, QVariant::fromValue(this));
+        item->setData(Qt::UserRole + 2, QVariant::fromValue(imageEntry));
+        item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsEnabled);
+        /*
             imageEntry.listItem = item
-            # nothing is selected (list was cleared) so we don't need to call
-            #  the whole updateDockWidget here
-            imageEntry.updateListItem()
+        */
+        // Nothing is selected (list was cleared) so we don't need to call the whole updateDockWidget here
+        imageEntry->updateListItem();
+        ui->list->addItem(item);
+    }
 
-            self.list.addItem(item)
-
-        # explicitly call the filtering again to make sure it's in sync
-        self.filterChanged(self.filterBox.text())
-*/
+    // Explicitly call the filtering again to make sure it's in sync
+    on_filterBox_textChanged(ui->filterBox->text());
 }
 
 void ImagesetEditorDockWidget::onNativeResolutionEdited()
@@ -281,23 +249,18 @@ void ImagesetEditorDockWidget::on_autoScaled_currentIndexChanged(int index)
 
 void ImagesetEditorDockWidget::on_autoScaledPerImage_currentIndexChanged(int index)
 {
+    // First is the "default" / inheriting state
+    QString text = (index == 0) ? "" : ui->autoScaledPerImage->currentText();
 /*
-    def slot_autoScaledPerImageChanged(self, index):
-        if index == 0:
-            # first is the "default" / inheriting state
-            text = ""
-        else:
-            text = self.autoScaledPerImage.currentText()
-
         self.metaslot_propertyChangedString("autoScaled", text)
 */
 }
 
 void ImagesetEditorDockWidget::on_filterBox_textChanged(const QString& arg1)
 {
+    // We append star at the beginning and at the end by default (makes property filtering much more practical)
+    QString filter = "*" + arg1 + "*";
 /*
-        # we append star at the beginning and at the end by default (makes property filtering much more practical)
-        filter = "*" + filter + "*"
         regex = re.compile(fnmatch.translate(filter), re.IGNORECASE)
 
         i = 0
@@ -328,20 +291,14 @@ void ImagesetEditorDockWidget::on_list_itemChanged(QListWidgetItem* item)
 
 void ImagesetEditorDockWidget::on_list_itemSelectionChanged()
 {
-/*
-    def slot_itemSelectionChanged(self):
-        imageEntryNames = self.list.selectedItems()
-        if len(imageEntryNames) == 1:
-            imageEntry = imageEntryNames[0].imageEntry
-            self.setActiveImageEntry(imageEntry)
-        else:
-            self.setActiveImageEntry(None)
+    auto imageEntryNames = ui->list->selectedItems();
+    setActiveImageEntry(imageEntryNames.empty() ? nullptr : imageEntryNames[0]->data(Qt::UserRole + 1).value<ImageEntry*>());
 
-        # we are getting synchronised with the visual editing pane, do not interfere
-        if self.selectionSynchronizationUnderway:
-            return
+    // We are getting synchronised with the visual editing pane, do not interfere
+    if (selectionSynchronizationUnderway) return;
 
-        self.selectionUnderway = True
+    selectionUnderway = true;
+ /*
         self.visual.scene().clearSelection()
 
         imageEntryNames = self.list.selectedItems()
@@ -352,9 +309,8 @@ void ImagesetEditorDockWidget::on_list_itemSelectionChanged()
         if len(imageEntryNames) == 1:
             imageEntry = imageEntryNames[0].imageEntry
             self.visual.centerOn(imageEntry)
-
-        self.selectionUnderway = False
 */
+    selectionUnderway = false;
 }
 
 void ImagesetEditorDockWidget::on_positionX_textChanged(const QString &arg1)

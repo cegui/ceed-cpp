@@ -22,7 +22,14 @@ public:
     void loadFromElement(const QDomElement& xml);
     void saveToElement(QDomElement& xml);
 
+    QString name() const { return _name; }
+    QString getAutoScaled() const { return autoScaled; }
+    int getNativeHorzRes() const { return nativeHorzRes; }
+    int getNativeVertRes() const { return nativeVertRes; }
+
     ImageEntry* getImageEntry(const QString& name) const;
+    const std::vector<ImageEntry*>& getImageEntries() const { return imageEntries; }
+
     bool showOffsets() const { return _showOffsets; }
     void setShowOffsets(bool value) { _showOffsets = value; }
 

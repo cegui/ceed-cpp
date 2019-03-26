@@ -65,6 +65,7 @@ private:
 
     Ui::ImagesetEditorDockWidget *ui;
     ImagesetEntry* imagesetEntry = nullptr;
+    ImageEntry* activeImageEntry = nullptr;
 
     bool selectionUnderway = false;
     bool selectionSynchronizationUnderway = false;

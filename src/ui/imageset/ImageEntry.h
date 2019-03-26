@@ -31,6 +31,9 @@ public:
     void setOffsetX(int value);
     int offsetY() const;
     void setOffsetY(int value);
+    QString getAutoScaled() const { return autoScaled; }
+    int getNativeHorzRes() const { return nativeHorzRes; }
+    int getNativeVertRes() const { return nativeVertRes; }
 
 protected:
 
@@ -55,5 +58,7 @@ protected:
     QPointF oldPosition;
     bool resized = false;
 };
+
+Q_DECLARE_METATYPE(ImageEntry*); // For storing in list items of the ImagesetEditorDockWidget
 
 #endif // IMAGEENTRY_H
