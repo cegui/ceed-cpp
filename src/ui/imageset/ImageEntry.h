@@ -6,6 +6,7 @@
 // Represents the image of the imageset, can be drag moved, selected, resized, ...
 
 class QDomElement;
+class QListWidgetItem;
 class ImageLabel;
 class ImageOffsetMark;
 
@@ -24,6 +25,7 @@ public:
 
     void updateDockWidget();
     void updateListItem();
+    void setListItem(QListWidgetItem* newItem) { listItem = newItem; }
 
     QString name() const;
     void setName(const QString& newName);
@@ -47,6 +49,7 @@ protected:
 
     ImageLabel* label = nullptr;
     ImageOffsetMark* offset = nullptr;
+    QListWidgetItem* listItem = nullptr; // This allows fast updates of the list item without looking it up
 
     QString autoScaled = "";
     int nativeHorzRes = 0;

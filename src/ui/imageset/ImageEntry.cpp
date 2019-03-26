@@ -2,6 +2,7 @@
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/imageset/ImageLabel.h"
 #include "src/ui/imageset/ImageOffsetMark.h"
+#include "src/ui/imageset/ImagesetEditorDockWidget.h"
 #include "src/ui/MainWindow.h" // for status bar
 #include "src/util/Utils.h"
 #include "src/util/Settings.h"
@@ -9,6 +10,7 @@
 #include "qstatusbar.h"
 #include "qdom.h"
 #include "qpainter.h"
+#include "qlistwidget.h"
 
 ImageEntry::ImageEntry(QGraphicsItem* parent)
     : ResizableRectItem(parent)
@@ -23,13 +25,6 @@ ImageEntry::ImageEntry(QGraphicsItem* parent)
 
     label = new ImageLabel(this);
     offset = new ImageOffsetMark(this);
-
-    // List item in the dock widget's ListWidget.
-    // This allows fast updates of the list item without looking it up.
-    // It is safe to assume that this is None or a valid QListWidgetItem.
-/*
-        self.listItem = None
-*/
 }
 
 // We simply round the rectangle because we only support "full" pixels
@@ -109,26 +104,23 @@ void ImageEntry::saveToElement(QDomElement& xml)
 // If we are selected in the dock widget, this updates the property box
 void ImageEntry::updateDockWidget()
 {
-    updateListItem();
-/*
-        if not self.listItem:
-            return
+    if (!listItem) return;
 
-        dockWidget = self.listItem.dockWidget
-        if dockWidget.activeImageEntry == self:
-            dockWidget.refreshActiveImageEntry()
-*/
+    updateListItem();
+
+    // TODO: redesign?
+    auto dockWidget = listItem->data(Qt::UserRole + 1).value<ImagesetEditorDockWidget*>();
+    if (dockWidget->getActiveImageEntry() == this)
+        dockWidget->refreshActiveImageEntry();
 }
 
 // Updates the list item associated with this image entry in the dock widget
 void ImageEntry::updateListItem()
 {
-/*
-        if not self.listItem:
-            return
+    if (!listItem) return;
 
-        self.listItem.setText(self.name)
-*/
+    listItem->setText(name());
+
     constexpr int previewWidth = 24;
     constexpr int previewHeight = 24;
 
@@ -140,9 +132,7 @@ void ImageEntry::updateListItem()
     painter.drawPixmap((previewWidth - scaledPixmap.width()) / 2, (previewHeight - scaledPixmap.height()) / 2, scaledPixmap);
     painter.end();
 
-/*
-        self.listItem.setIcon(QtGui.QIcon(preview))
-*/
+    listItem->setIcon(QIcon(preview));
 }
 
 QString ImageEntry::name() const
@@ -299,25 +289,16 @@ QPixmap ImageEntry::getPixmap()
 // this item the list sets the selection to this item as well.
 void ImageEntry::updateListItemSelection()
 {
-/*
-        if not self.listItem:
-            return
+    if (!listItem) return;
 
-        dockWidget = self.listItem.dockWidget
+    auto dockWidget = listItem->data(Qt::UserRole + 1).value<ImagesetEditorDockWidget*>();
 
-        # the dock widget itself is performing a selection, we shall not interfere
-        if dockWidget.selectionUnderway:
-            return
+    // The dock widget itself is performing a selection, we shall not interfere
+    if (dockWidget->isSelectionUnderway()) return;
 
-        dockWidget.selectionSynchronisationUnderway = True
-
-        if self.isSelected() or self.isAnyHandleSelected() or self.offset.isSelected():
-            self.listItem.setSelected(True)
-        else:
-            self.listItem.setSelected(False)
-
-        dockWidget.selectionSynchronisationUnderway = False
-*/
+    dockWidget->setSelectionSynchronizationUnderway(true);
+    listItem->setSelected(isSelected() || isAnyHandleSelected() || offset->isSelected());
+    dockWidget->setSelectionSynchronizationUnderway(false);
 }
 
 /*

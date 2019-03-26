@@ -7,6 +7,7 @@
 
 class ImagesetEntry;
 class ImageEntry;
+class ImagesetVisualMode;
 class QListWidgetItem;
 
 namespace Ui {
@@ -19,14 +20,17 @@ class ImagesetEditorDockWidget : public QDockWidget
 
 public:
 
-    explicit ImagesetEditorDockWidget(QWidget *parent = nullptr);
+    explicit ImagesetEditorDockWidget(ImagesetVisualMode& visualMode, QWidget *parent = nullptr);
     ~ImagesetEditorDockWidget();
 
     void setImagesetEntry(ImagesetEntry* entry) { imagesetEntry = entry; }
     void setActiveImageEntry(ImageEntry* entry);
+    ImageEntry* getActiveImageEntry() const { return activeImageEntry; }
     void refreshActiveImageEntry();
-
     void refresh();
+
+    bool isSelectionUnderway() const { return selectionUnderway; }
+    void setSelectionSynchronizationUnderway(bool on) { selectionSynchronizationUnderway = on; }
 
 private slots:
 
@@ -64,6 +68,7 @@ private:
     virtual void keyReleaseEvent(QKeyEvent* event) override;
 
     Ui::ImagesetEditorDockWidget *ui;
+    ImagesetVisualMode& _visualMode;
     ImagesetEntry* imagesetEntry = nullptr;
     ImageEntry* activeImageEntry = nullptr;
 

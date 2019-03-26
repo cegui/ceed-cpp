@@ -1,8 +1,9 @@
 #include "src/ui/imageset/ImagesetEditorDockWidget.h"
-#include "src/cegui/CEGUIProjectManager.h"
-#include "src/cegui/CEGUIProject.h"
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/imageset/ImageEntry.h"
+#include "src/cegui/CEGUIProjectManager.h"
+#include "src/cegui/CEGUIProject.h"
+#include "src/editors/imageset/ImagesetVisualMode.h"
 #include "ui_ImagesetEditorDockWidget.h"
 #include "qitemdelegate.h"
 #include "qvalidator.h"
@@ -31,15 +32,12 @@ protected:
       mutable bool editing = false;
 };
 
-ImagesetEditorDockWidget::ImagesetEditorDockWidget(QWidget *parent) :
-    QDockWidget(parent),
-    ui(new Ui::ImagesetEditorDockWidget)
+ImagesetEditorDockWidget::ImagesetEditorDockWidget(ImagesetVisualMode& visualMode, QWidget* parent)
+    : QDockWidget(parent)
+    , ui(new Ui::ImagesetEditorDockWidget)
+    , _visualMode(visualMode)
 {
     ui->setupUi(this);
-
-    /*
-        self.visual = visual
-    */
 
     ui->image->setInitialDirectoryDelegate([]()
     {
@@ -143,11 +141,8 @@ void ImagesetEditorDockWidget::refresh()
         item->setData(Qt::UserRole + 1, QVariant::fromValue(this));
         item->setData(Qt::UserRole + 2, QVariant::fromValue(imageEntry));
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsEnabled);
-        /*
-            imageEntry.listItem = item
-        */
-        // Nothing is selected (list was cleared) so we don't need to call the whole updateDockWidget here
-        imageEntry->updateListItem();
+        imageEntry->setListItem(item);
+        imageEntry->updateListItem(); // Nothing is selected (list was cleared) so we don't need to call the whole updateDockWidget here
         ui->list->addItem(item);
     }
 
@@ -276,7 +271,6 @@ void ImagesetEditorDockWidget::on_filterBox_textChanged(const QString& arg1)
 void ImagesetEditorDockWidget::on_list_itemChanged(QListWidgetItem* item)
 {
 /*
-    def slot_itemChanged(self, item):
         oldName = item.imageEntry.name
         newName = item.text()
 
@@ -298,18 +292,22 @@ void ImagesetEditorDockWidget::on_list_itemSelectionChanged()
     if (selectionSynchronizationUnderway) return;
 
     selectionUnderway = true;
- /*
-        self.visual.scene().clearSelection()
 
-        imageEntryNames = self.list.selectedItems()
-        for imageEntryName in imageEntryNames:
-            imageEntry = imageEntryName.imageEntry
-            imageEntry.setSelected(True)
+    _visualMode.scene()->clearSelection();
 
-        if len(imageEntryNames) == 1:
-            imageEntry = imageEntryNames[0].imageEntry
-            self.visual.centerOn(imageEntry)
-*/
+    auto imageEntryItems = ui->list->selectedItems();
+    for (auto&& imageEntryItem : imageEntryItems)
+    {
+        auto imageEntry = imageEntryItem->data(Qt::UserRole + 1).value<ImageEntry*>();
+        imageEntry->setSelected(true);
+    }
+
+    if (imageEntryItems.size() == 1)
+    {
+        auto imageEntry = imageEntryItems[0]->data(Qt::UserRole + 1).value<ImageEntry*>();
+        _visualMode.centerOn(imageEntry);
+    }
+
     selectionUnderway = false;
 }
 
@@ -375,9 +373,8 @@ void ImagesetEditorDockWidget::keyReleaseEvent(QKeyEvent* event)
 
                 if handled:
                     return True
-
-        return super(ImagesetEditorDockWidget, self).keyReleaseEvent(event)
 */
+    QDockWidget::keyReleaseEvent(event);
 }
 
 /*
