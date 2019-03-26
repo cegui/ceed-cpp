@@ -1,6 +1,9 @@
 #include "src/ui/imageset/ImagesetEditorDockWidget.h"
+#include "src/cegui/CEGUIProjectManager.h"
+#include "src/cegui/CEGUIProject.h"
 #include "ui_ImagesetEditorDockWidget.h"
 #include "qitemdelegate.h"
+#include "qvalidator.h"
 
 // The only reason for this is to track when we are editing.
 // We need this to discard key events when editor is open.
@@ -32,36 +35,27 @@ ImagesetEditorDockWidget::ImagesetEditorDockWidget(QWidget *parent) :
 {
     ui->setupUi(this);
 
-/*
+    /*
         self.visual = visual
+    */
 
-        self.name = self.findChild(QtGui.QLineEdit, "name")
-        self.name.textEdited.connect(self.slot_nameEdited)
-        self.image = self.findChild(qtwidgets.FileLineEdit, "image")
-        # nasty, but at this point tabbedEditor.mainWindow isn't set yet
-        project = mainwindow.MainWindow.instance.project
-        self.image.startDirectory = lambda: project.getResourceFilePath("", "imagesets") if project is not None else ""
-        self.imageLoad = self.findChild(QtGui.QPushButton, "imageLoad")
-        self.imageLoad.clicked.connect(self.slot_imageLoadClicked)
-        self.autoScaled = self.findChild(QtGui.QComboBox, "autoScaled")
-        self.autoScaled.currentIndexChanged.connect(self.slot_autoScaledChanged)
-        self.nativeHorzRes = self.findChild(QtGui.QLineEdit, "nativeHorzRes")
-        self.nativeHorzRes.setValidator(QtGui.QIntValidator(0, 9999999, self))
-        self.nativeHorzRes.textEdited.connect(self.slot_nativeResolutionEdited)
-        self.nativeVertRes = self.findChild(QtGui.QLineEdit, "nativeVertRes")
-        self.nativeVertRes.setValidator(QtGui.QIntValidator(0, 9999999, self))
-        self.nativeVertRes.textEdited.connect(self.slot_nativeResolutionEdited)
+    ui->image->setInitialDirectoryDelegate([]()
+    {
+        auto project = CEGUIProjectManager::Instance().getCurrentProject();
+        return project ? project->getResourceFilePath("", "imagesets") : "";
+    });
 
-        self.filterBox = self.findChild(QtGui.QLineEdit, "filterBox")
-        self.filterBox.textChanged.connect(self.filterChanged)
+    auto intValidator = new QIntValidator(0, 9999999, this);
+    ui->nativeHorzRes->setValidator(intValidator);
+    ui->nativeVertRes->setValidator(intValidator);
+    connect(ui->nativeHorzRes, &QLineEdit::textEdited, this, &ImagesetEditorDockWidget::onNativeResolutionEdited);
+    connect(ui->nativeVertRes, &QLineEdit::textEdited, this, &ImagesetEditorDockWidget::onNativeResolutionEdited);
 
-        self.list = self.findChild(QtGui.QListWidget, "list")
-        self.list.setItemDelegate(ImageEntryItemDelegate())
+    ui->list->setItemDelegate(new ImageEntryItemDelegate());
+
+/*
         self.list.itemSelectionChanged.connect(self.slot_itemSelectionChanged)
         self.list.itemChanged.connect(self.slot_itemChanged)
-
-        self.selectionUnderway = False
-        self.selectionSynchronisationUnderway = False
 
         self.positionX = self.findChild(QtGui.QLineEdit, "positionX")
         self.positionX.setValidator(QtGui.QIntValidator(0, 9999999, self))
@@ -110,9 +104,9 @@ void ImagesetEditorDockWidget::refresh()
     //        If I remove items one by one via takeItem, everything works :-/
     ui->list->clear();
 
-    selectionSynchronisationUnderway = true;
+    selectionSynchronizationUnderway = true;
     while (ui->list->takeItem(0)) ;
-    selectionSynchronisationUnderway = false;
+    selectionSynchronizationUnderway = false;
 /*
 
         self.setActiveImageEntry(None)
@@ -140,6 +134,133 @@ void ImagesetEditorDockWidget::refresh()
 
         # explicitly call the filtering again to make sure it's in sync
         self.filterChanged(self.filterBox.text())
+*/
+}
+
+void ImagesetEditorDockWidget::onNativeResolutionEdited()
+{
+/*
+        oldHorzRes = self.imagesetEntry.nativeHorzRes
+        oldVertRes = self.imagesetEntry.nativeVertRes
+
+        try:
+            newHorzRes = int(self.nativeHorzRes.text())
+            newVertRes = int(self.nativeVertRes.text())
+
+        except ValueError:
+            return
+
+        if oldHorzRes == newHorzRes and oldVertRes == newVertRes:
+            return
+
+        cmd = undo.ImagesetChangeNativeResolutionCommand(self.visual, oldHorzRes, oldVertRes, newHorzRes, newVertRes)
+        self.visual.tabbedEditor.undoStack.push(cmd)
+*/
+}
+
+void ImagesetEditorDockWidget::on_name_textEdited(const QString& arg1)
+{
+/*
+        oldName = self.imagesetEntry.name
+        newName = self.name.text()
+
+        if oldName == newName:
+            return
+
+        cmd = undo.ImagesetRenameCommand(self.visual, oldName, newName)
+        self.visual.tabbedEditor.undoStack.push(cmd)
+*/
+}
+
+void ImagesetEditorDockWidget::on_imageLoad_clicked()
+{
+/*
+        oldImageFile = self.imagesetEntry.imageFile
+        newImageFile = self.imagesetEntry.convertToRelativeImageFile(self.image.text())
+
+        if oldImageFile == newImageFile:
+            return
+
+        cmd = undo.ImagesetChangeImageCommand(self.visual, oldImageFile, newImageFile)
+        self.visual.tabbedEditor.undoStack.push(cmd)
+*/
+}
+
+void ImagesetEditorDockWidget::on_autoScaled_currentIndexChanged(int index)
+{
+/*
+        oldAutoScaled = self.imagesetEntry.autoScaled
+        newAutoScaled = self.autoScaled.currentText()
+
+        if oldAutoScaled == newAutoScaled:
+            return
+
+        cmd = undo.ImagesetChangeAutoScaledCommand(self.visual, oldAutoScaled, newAutoScaled)
+        self.visual.tabbedEditor.undoStack.push(cmd)
+*/
+}
+
+void ImagesetEditorDockWidget::on_filterBox_textChanged(const QString &arg1)
+{
+/*
+        # we append star at the beginning and at the end by default (makes property filtering much more practical)
+        filter = "*" + filter + "*"
+        regex = re.compile(fnmatch.translate(filter), re.IGNORECASE)
+
+        i = 0
+        while i < self.list.count():
+            listItem = self.list.item(i)
+            match = re.match(regex, listItem.text()) is not None
+            listItem.setHidden(not match)
+
+            i += 1
+*/
+}
+
+void ImagesetEditorDockWidget::on_list_itemChanged(QListWidgetItem *item)
+{
+/*
+    def slot_itemChanged(self, item):
+        oldName = item.imageEntry.name
+        newName = item.text()
+
+        if oldName == newName:
+            # most likely caused by RenameCommand doing it's work or is bogus anyways
+            return
+
+        cmd = undo.RenameCommand(self.visual, oldName, newName)
+        self.visual.tabbedEditor.undoStack.push(cmd)
+*/
+}
+
+void ImagesetEditorDockWidget::on_list_itemSelectionChanged()
+{
+/*
+    def slot_itemSelectionChanged(self):
+        imageEntryNames = self.list.selectedItems()
+        if len(imageEntryNames) == 1:
+            imageEntry = imageEntryNames[0].imageEntry
+            self.setActiveImageEntry(imageEntry)
+        else:
+            self.setActiveImageEntry(None)
+
+        # we are getting synchronised with the visual editing pane, do not interfere
+        if self.selectionSynchronizationUnderway:
+            return
+
+        self.selectionUnderway = True
+        self.visual.scene().clearSelection()
+
+        imageEntryNames = self.list.selectedItems()
+        for imageEntryName in imageEntryNames:
+            imageEntry = imageEntryName.imageEntry
+            imageEntry.setSelected(True)
+
+        if len(imageEntryNames) == 1:
+            imageEntry = imageEntryNames[0].imageEntry
+            self.visual.centerOn(imageEntry)
+
+        self.selectionUnderway = False
 */
 }
 
@@ -217,103 +338,6 @@ void ImagesetEditorDockWidget::refresh()
                     return True
 
         return super(ImagesetEditorDockWidget, self).keyReleaseEvent(event)
-
-    def slot_itemSelectionChanged(self):
-        imageEntryNames = self.list.selectedItems()
-        if len(imageEntryNames) == 1:
-            imageEntry = imageEntryNames[0].imageEntry
-            self.setActiveImageEntry(imageEntry)
-        else:
-            self.setActiveImageEntry(None)
-
-        # we are getting synchronised with the visual editing pane, do not interfere
-        if self.selectionSynchronisationUnderway:
-            return
-
-        self.selectionUnderway = True
-        self.visual.scene().clearSelection()
-
-        imageEntryNames = self.list.selectedItems()
-        for imageEntryName in imageEntryNames:
-            imageEntry = imageEntryName.imageEntry
-            imageEntry.setSelected(True)
-
-        if len(imageEntryNames) == 1:
-            imageEntry = imageEntryNames[0].imageEntry
-            self.visual.centerOn(imageEntry)
-
-        self.selectionUnderway = False
-
-    def slot_itemChanged(self, item):
-        oldName = item.imageEntry.name
-        newName = item.text()
-
-        if oldName == newName:
-            # most likely caused by RenameCommand doing it's work or is bogus anyways
-            return
-
-        cmd = undo.RenameCommand(self.visual, oldName, newName)
-        self.visual.tabbedEditor.undoStack.push(cmd)
-
-    def filterChanged(self, filter):
-        # we append star at the beginning and at the end by default (makes property filtering much more practical)
-        filter = "*" + filter + "*"
-        regex = re.compile(fnmatch.translate(filter), re.IGNORECASE)
-
-        i = 0
-        while i < self.list.count():
-            listItem = self.list.item(i)
-            match = re.match(regex, listItem.text()) is not None
-            listItem.setHidden(not match)
-
-            i += 1
-
-    def slot_nameEdited(self, newValue):
-        oldName = self.imagesetEntry.name
-        newName = self.name.text()
-
-        if oldName == newName:
-            return
-
-        cmd = undo.ImagesetRenameCommand(self.visual, oldName, newName)
-        self.visual.tabbedEditor.undoStack.push(cmd)
-
-    def slot_imageLoadClicked(self):
-        oldImageFile = self.imagesetEntry.imageFile
-        newImageFile = self.imagesetEntry.convertToRelativeImageFile(self.image.text())
-
-        if oldImageFile == newImageFile:
-            return
-
-        cmd = undo.ImagesetChangeImageCommand(self.visual, oldImageFile, newImageFile)
-        self.visual.tabbedEditor.undoStack.push(cmd)
-
-    def slot_autoScaledChanged(self, index):
-        oldAutoScaled = self.imagesetEntry.autoScaled
-        newAutoScaled = self.autoScaled.currentText()
-
-        if oldAutoScaled == newAutoScaled:
-            return
-
-        cmd = undo.ImagesetChangeAutoScaledCommand(self.visual, oldAutoScaled, newAutoScaled)
-        self.visual.tabbedEditor.undoStack.push(cmd)
-
-    def slot_nativeResolutionEdited(self, newValue):
-        oldHorzRes = self.imagesetEntry.nativeHorzRes
-        oldVertRes = self.imagesetEntry.nativeVertRes
-
-        try:
-            newHorzRes = int(self.nativeHorzRes.text())
-            newVertRes = int(self.nativeVertRes.text())
-
-        except ValueError:
-            return
-
-        if oldHorzRes == newHorzRes and oldVertRes == newVertRes:
-            return
-
-        cmd = undo.ImagesetChangeNativeResolutionCommand(self.visual, oldHorzRes, oldVertRes, newHorzRes, newVertRes)
-        self.visual.tabbedEditor.undoStack.push(cmd)
 
     def metaslot_propertyChangedInt(self, propertyName, newTextValue):
         if not self.activeImageEntry:

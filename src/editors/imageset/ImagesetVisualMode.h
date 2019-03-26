@@ -20,7 +20,7 @@ public:
 
     void refreshSceneRect();
 
-    //ImagesetEditorDockWidget* getDockWidget() const { return dockWidget; }
+    ImagesetEditorDockWidget* getDockWidget() const { return dockWidget; }
 
 protected slots:
 

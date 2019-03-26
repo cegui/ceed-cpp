@@ -113,10 +113,8 @@ void ImagesetVisualMode::loadImagesetEntryFromElement(const QDomElement& xmlRoot
 
     refreshSceneRect();
 
-/*
-    self.dockWidget.setImagesetEntry(self.imagesetEntry)
-    self.dockWidget.refresh()
-*/
+    dockWidget->setImagesetEntry(imagesetEntry);
+    dockWidget->refresh();
 }
 
 void ImagesetVisualMode::refreshSceneRect()

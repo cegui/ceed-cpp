@@ -24,12 +24,29 @@ public:
 
     void refresh();
 
+private slots:
+
+    void onNativeResolutionEdited();
+
+    void on_name_textEdited(const QString &arg1);
+
+    void on_imageLoad_clicked();
+
+    void on_autoScaled_currentIndexChanged(int index);
+
+    void on_filterBox_textChanged(const QString &arg1);
+
+    void on_list_itemChanged(QListWidgetItem *item);
+
+    void on_list_itemSelectionChanged();
+
 private:
 
     Ui::ImagesetEditorDockWidget *ui;
     ImagesetEntry* imagesetEntry = nullptr;
 
-    bool selectionSynchronisationUnderway = false;
+    bool selectionUnderway = false;
+    bool selectionSynchronizationUnderway = false;
 };
 
 #endif // IMAGESETEDITORDOCKWIDGET_H

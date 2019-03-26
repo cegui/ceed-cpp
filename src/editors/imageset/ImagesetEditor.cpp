@@ -5,6 +5,7 @@
 #include "src/util/SettingsCategory.h"
 #include "src/util/SettingsSection.h"
 #include "src/util/SettingsEntry.h"
+#include "src/ui/imageset/ImagesetEditorDockWidget.h"
 #include "src/ui/MainWindow.h"
 #include "qmenu.h"
 #include "qdom.h"
@@ -93,10 +94,9 @@ void ImagesetEditor::activate(MainWindow& mainWindow)
 /*
         self.mainWindow.addToolBar(QtCore.Qt.ToolBarArea.TopToolBarArea, self.visual.toolBar)
         self.visual.toolBar.show()
-
-        self.mainWindow.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.visual.dockWidget)
-        self.visual.dockWidget.setVisible(True)
 */
+    mainWindow.addDockWidget(Qt::RightDockWidgetArea, visualMode->getDockWidget());
+    visualMode->getDockWidget()->setVisible(true);
 
     auto editorMenu = mainWindow.getEditorMenu();
     editorMenu->setTitle("&Imageset");
@@ -109,8 +109,8 @@ void ImagesetEditor::activate(MainWindow& mainWindow)
 
 void ImagesetEditor::deactivate(MainWindow& mainWindow)
 {
+    mainWindow.removeDockWidget(visualMode->getDockWidget());
     /*
-        self.mainWindow.removeDockWidget(self.visual.dockWidget)
         self.mainWindow.removeToolBar(self.visual.toolBar)
     */
     MultiModeEditor::deactivate(mainWindow);
