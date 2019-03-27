@@ -425,12 +425,14 @@ void MainWindow::on_actionStatusbar_toggled(bool isChecked)
 
 void MainWindow::on_actionQuickstartGuide_triggered()
 {
-    //QDesktopServices::openUrl(QUrl("file://%s" % (os.path.join(paths.DOC_DIR, "quickstart-guide.pdf")), QUrl::TolerantMode));
+    QDir docDir(qobject_cast<Application*>(qApp)->getDocumentationPath());
+    QDesktopServices::openUrl(QUrl("file://" + docDir.absoluteFilePath("quickstart-guide.pdf"), QUrl::TolerantMode));
 }
 
 void MainWindow::on_actionUserManual_triggered()
 {
-    //QDesktopServices::openUrl(QUrl("file://%s" % (os.path.join(paths.DOC_DIR, "user-manual.pdf")), QUrl::TolerantMode));
+    QDir docDir(qobject_cast<Application*>(qApp)->getDocumentationPath());
+    QDesktopServices::openUrl(QUrl("file://" + docDir.absoluteFilePath("user-manual.pdf"), QUrl::TolerantMode));
 }
 
 void MainWindow::on_actionWikiPage_triggered()

@@ -7,6 +7,7 @@
 #include "src/editors/layout/LayoutEditor.h"
 #include "qsplashscreen.h"
 #include "qsettings.h"
+#include "qdir.h"
 
 Application::Application(int& argc, char** argv, bool debug)
     : QApplication(argc, argv)
@@ -61,6 +62,31 @@ Application::Application(int& argc, char** argv, bool debug)
         self.errorHandler = ceed.error.ErrorHandler(self.mainWindow)
         self.errorHandler.installExceptionHook()
     */
+}
+
+// The absolute path to the doc directory
+QString Application::getDocumentationPath() const
+{
+    /*
+    # Potential system doc dir, we check it's existence and set
+    # DOC_DIR as system_data_dir if it exists
+    SYSTEM_DOC_DIR = "/usr/share/doc/ceed-%s" % (version.CEED)
+    SYSTEM_DOC_DIR_EXISTS = False
+    try:
+        if os.path.exists(SYSTEM_DOC_DIR):
+            DOC_DIR = SYSTEM_DOC_DIR
+            SYSTEM_DOC_DIR_EXISTS = True
+
+        else:
+            SYSTEM_DOC_DIR = "/usr/share/doc/ceed"
+            if os.path.exists(SYSTEM_DOC_DIR):
+                DOC_DIR = SYSTEM_DOC_DIR
+                SYSTEM_DOC_DIR_EXISTS = True
+    */
+
+    //!!!must be a working directory, not exe path! or move exe to ROOT/bin & add '../' to the doc subpath?
+    //!!!need to determine package path. On windows it can be built from exe path, like EXE_PATH/../ (given exe is in ROOT/bin)
+    return QDir::current().absoluteFilePath("doc");
 }
 
 // Creates general application settings plus some subsystem settings

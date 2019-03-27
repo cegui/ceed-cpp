@@ -53,33 +53,6 @@ except:
 if not SYSTEM_DATA_DIR_EXISTS:
     DATA_DIR = os.path.join(os.path.dirname(PACKAGE_DIR), "data")
 
-# What's the absolute path to the doc directory
-DOC_DIR = ""
-
-# Potential system doc dir, we check it's existence and set
-# DOC_DIR as system_data_dir if it exists
-SYSTEM_DOC_DIR = "/usr/share/doc/ceed-%s" % (version.CEED)
-SYSTEM_DOC_DIR_EXISTS = False
-try:
-    if os.path.exists(SYSTEM_DOC_DIR):
-        DOC_DIR = SYSTEM_DOC_DIR
-        SYSTEM_DOC_DIR_EXISTS = True
-
-    else:
-        SYSTEM_DOC_DIR = "/usr/share/doc/ceed"
-        if os.path.exists(SYSTEM_DOC_DIR):
-            DOC_DIR = SYSTEM_DOC_DIR
-            SYSTEM_DOC_DIR_EXISTS = True
-
-except:
-    pass
-
-if not SYSTEM_DOC_DIR_EXISTS:
-    DOC_DIR = os.path.join(os.path.dirname(PACKAGE_DIR), "doc")
-
-# What's the absolute path to the ui directory
-UI_DIR = os.path.join(PACKAGE_DIR, "ui")
-
 # We don't need this locally, we don't even need it to exist
 # This is where we install our icons
 SYSTEM_PIXMAPS_DIR = "/usr/share/pixmaps"
@@ -92,6 +65,5 @@ SYSTEM_APPDATA_DIR = "/usr/share/appdata"
 if not FROZEN:
     # these two checks will always fail in a frozen instance
     assert(os.path.exists(PACKAGE_DIR))
-    assert(os.path.exists(UI_DIR))
 
 assert(os.path.exists(DATA_DIR))

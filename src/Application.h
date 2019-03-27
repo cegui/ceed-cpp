@@ -19,6 +19,8 @@ public:
     MainWindow* getMainWindow() { return mainWindow; }
     Settings* getSettings() const { return settings; }
 
+    QString getDocumentationPath() const;
+
 private:
 
     void createSettingsEntries();
