@@ -1,9 +1,10 @@
 #include "src/editors/imageset/ImagesetVisualMode.h"
-#include "src/Application.h"
+#include "src/editors/imageset/ImagesetUndoCommands.h"
 #include "src/util/Settings.h"
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/imageset/ImageEntry.h"
 #include "src/ui/imageset/ImagesetEditorDockWidget.h"
+#include "src/Application.h"
 #include "qopenglwidget.h"
 #include "qdom.h"
 
@@ -129,24 +130,24 @@ void ImagesetVisualMode::refreshSceneRect()
 
 bool ImagesetVisualMode::moveImageEntries(const std::vector<ImageEntry*>& imageEntries, QPointF delta)
 {
+    if (imageEntries.empty() || delta.manhattanLength() <= 0.0)) return false;
+
+    //
+
 /*
-        if delta.manhattanLength() > 0 and len(imageEntries) > 0:
-            imageNames = []
-            oldPositions = {}
-            newPositions = {}
+        imageNames = []
+        oldPositions = {}
+        newPositions = {}
 
-            for imageEntry in imageEntries:
-                imageNames.append(imageEntry.name)
-                oldPositions[imageEntry.name] = imageEntry.pos()
-                newPositions[imageEntry.name] = imageEntry.pos() + delta
+        for imageEntry in imageEntries:
+            imageNames.append(imageEntry.name)
+            oldPositions[imageEntry.name] = imageEntry.pos()
+            newPositions[imageEntry.name] = imageEntry.pos() + delta
 
-            cmd = undo.MoveCommand(self, imageNames, oldPositions, newPositions)
-            self.tabbedEditor.undoStack.push(cmd)
-
-            // we handled this
-            return True
+        cmd = undo.MoveCommand(self, imageNames, oldPositions, newPositions)
+        self.tabbedEditor.undoStack.push(cmd)
 */
-    return false;
+    return true;
 }
 
 /*

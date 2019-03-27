@@ -2,6 +2,7 @@
 #define IMAGESETUNDOCOMMANDS_H
 
 #include "qundostack.h"
+#include "qpoint.h"
 
 constexpr int ImagesetUndoCommandBase = 1100;
 
@@ -17,7 +18,14 @@ class ImagesetMoveCommand : public QUndoCommand
 {
 public:
 
-    ImagesetMoveCommand(ImagesetVisualMode& visualMode, const QStringList& imageNames);
+    struct Record
+    {
+        QString name;
+        QPointF oldPos;
+        QPointF newPos;
+    };
+
+    ImagesetMoveCommand(ImagesetVisualMode& visualMode, std::vector<Record>&& imageRecords);
 
     virtual void undo() override;
     virtual void redo() override;
@@ -27,8 +35,10 @@ public:
 
 protected:
 
+    qreal biggestDelta = 0.0;
+
     ImagesetVisualMode& _visualMode;
-    QStringList _imageNames;
+    std::vector<Record> _imageRecords;
 };
 
 #endif // IMAGESETUNDOCOMMANDS_H

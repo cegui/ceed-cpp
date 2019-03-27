@@ -3,26 +3,16 @@
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/imageset/ImageEntry.h"
 
-/*
-    , oldPositions, newPositions
-*/
-ImagesetMoveCommand::ImagesetMoveCommand(ImagesetVisualMode& visualMode, const QStringList& imageNames)
+ImagesetMoveCommand::ImagesetMoveCommand(ImagesetVisualMode& visualMode, std::vector<Record>&& imageRecords)
     : _visualMode(visualMode)
-    , _imageNames(imageNames)
+    , _imageRecords(std::move(imageRecords))
 {
-/*
-        self.oldPositions = oldPositions
-        self.newPositions = newPositions
-
-        self.biggestDelta = 0
-
-        for (imageName, oldPosition) in self.oldPositions.iteritems():
-            positionDelta = oldPosition - self.newPositions[imageName]
-
-            delta = math.sqrt(positionDelta.x() * positionDelta.x() + positionDelta.y() * positionDelta.y())
-            if delta > self.biggestDelta:
-                self.biggestDelta = delta
-*/
+    for (const auto& rec : _imageRecords)
+    {
+        auto positionDelta = rec.oldPos - rec.newPos;
+        auto delta = sqrt(positionDelta.x() * positionDelta.x() + positionDelta.y() * positionDelta.y());
+        if (delta > biggestDelta) biggestDelta = delta;
+    }
 
     refreshText();
 }
@@ -31,24 +21,20 @@ void ImagesetMoveCommand::undo()
 {
     QUndoCommand::undo();
 
-    for (const auto& imageName : _imageNames)
+    for (const auto& rec : _imageRecords)
     {
-        auto image = _visualMode.getImagesetEntry()->getImageEntry(imageName);
-        /*
-            image.setPos(self.oldPositions[imageName])
-        */
+        auto image = _visualMode.getImagesetEntry()->getImageEntry(rec.name);
+        image->setPos(rec.oldPos);
         image->updateDockWidget();
     }
 }
 
 void ImagesetMoveCommand::redo()
 {
-    for (const auto& imageName : _imageNames)
+    for (const auto& rec : _imageRecords)
     {
-        auto image = _visualMode.getImagesetEntry()->getImageEntry(imageName);
-        /*
-            image.setPos(self.newPositions[imageName])
-        */
+        auto image = _visualMode.getImagesetEntry()->getImageEntry(rec.name);
+        image->setPos(rec.newPos);
         image->updateDockWidget();
     }
 
@@ -57,31 +43,43 @@ void ImagesetMoveCommand::redo()
 
 bool ImagesetMoveCommand::mergeWith(const QUndoCommand* other)
 {
-/*
-        if self.imageNames == cmd.imageNames:
-            # good, images match
+    const ImagesetMoveCommand* otherCmd = dynamic_cast<const ImagesetMoveCommand*>(other);
+    if (!otherCmd) return false;
 
-            combinedBiggestDelta = self.biggestDelta + cmd.biggestDelta
-            # TODO: 50 used just for testing!
-            if combinedBiggestDelta < 50:
-                # if the combined delta is reasonably small, we can merge the commands
-                self.newPositions = cmd.newPositions
-                self.biggestDelta = combinedBiggestDelta
+    if (_imageRecords.size() != otherCmd->_imageRecords.size()) return false;
 
-                self.refreshText()
+    // TODO: 50 used just for testing!
+    auto combinedBiggestDelta = biggestDelta + otherCmd->biggestDelta;
+    if (combinedBiggestDelta >= 50) return false;
 
-                return True
+    QStringList names;
+    for (const auto& rec : _imageRecords)
+        names.push_back(rec.name);
 
-        return False
-*/
+    for (const auto& rec : otherCmd->_imageRecords)
+        if (!names.contains(rec.name)) return false;
+
+    // The same set of images, can merge
+
+    for (const auto& rec : _imageRecords)
+    {
+        //
+    }
+    /*
+        self.newPositions = cmd.newPositions
+    */
+
+    biggestDelta = combinedBiggestDelta;
+    refreshText();
+    return true;
 }
 
 void ImagesetMoveCommand::refreshText()
 {
-    if (_imageNames.size() == 1)
-        setText(QString("Move '%1'").arg(_imageNames[0]));
+    if (_imageRecords.size() == 1)
+        setText(QString("Move '%1'").arg(_imageRecords[0].name));
     else
-        setText(QString("Move %1 images'").arg(_imageNames.size()));
+        setText(QString("Move %1 images'").arg(_imageRecords.size()));
 }
 
 /*
