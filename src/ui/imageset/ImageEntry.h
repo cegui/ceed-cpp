@@ -26,7 +26,7 @@ public:
     void updateDockWidget();
     void updateListItem();
     void setListItem(QListWidgetItem* newItem) { listItem = newItem; }
-
+    QListWidgetItem* getListItem() const { return listItem; }
     ImageOffsetMark* getOffsetMark() const { return offset; }
 
     QString name() const;
@@ -39,12 +39,13 @@ public:
     int getNativeHorzRes() const { return nativeHorzRes; }
     int getNativeVertRes() const { return nativeVertRes; }
 
+    virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
+    virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
+
 protected:
 
     virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
-    virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
-    virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
 
     QPixmap getPixmap();
     void updateListItemSelection();

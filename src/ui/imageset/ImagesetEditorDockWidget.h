@@ -21,13 +21,15 @@ class ImagesetEditorDockWidget : public QDockWidget
 public:
 
     explicit ImagesetEditorDockWidget(ImagesetVisualMode& visualMode, QWidget *parent = nullptr);
-    ~ImagesetEditorDockWidget();
+    ~ImagesetEditorDockWidget() override;
 
     void setImagesetEntry(ImagesetEntry* entry) { imagesetEntry = entry; }
     void setActiveImageEntry(ImageEntry* entry);
     ImageEntry* getActiveImageEntry() const { return activeImageEntry; }
     void refreshActiveImageEntry();
     void refresh();
+    void scrollToEntry(ImageEntry* entry);
+    void focusImageListFilterBox();
 
     bool isSelectionUnderway() const { return selectionUnderway; }
     void setSelectionSynchronizationUnderway(bool on) { selectionSynchronizationUnderway = on; }

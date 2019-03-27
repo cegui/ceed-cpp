@@ -269,51 +269,44 @@ void ImagesetOffsetMoveCommand::refreshText()
 
 //---------------------------------------------------------------------
 
+ImagesetRenameCommand::ImagesetRenameCommand(ImagesetVisualMode& visualMode, const QString& oldName, const QString& newName)
+    : _visualMode(visualMode)
+    , _oldName(oldName)
+    , _newName(newName)
+{
+    setText(QString("Rename '%1' to '%2'").arg(_oldName, _newName));
+}
+
+void ImagesetRenameCommand::undo()
+{
+    QUndoCommand::undo();
+    auto image = _visualMode.getImagesetEntry()->getImageEntry(_newName);
+    image->setName(_oldName);
+    image->updateListItem();
+}
+
+void ImagesetRenameCommand::redo()
+{
+    auto image = _visualMode.getImagesetEntry()->getImageEntry(_oldName);
+    image->setName(_newName);
+    image->updateListItem();
+    QUndoCommand::redo();
+}
+
+bool ImagesetRenameCommand::mergeWith(const QUndoCommand* other)
+{
+    const ImagesetRenameCommand* otherCmd = dynamic_cast<const ImagesetRenameCommand*>(other);
+    if (!otherCmd || _newName != otherCmd->_oldName) return false;
+
+    // If our old newName is the same as oldName of the command that comes after this command, we can merge them
+    _newName = otherCmd->_newName;
+    setText(QString("Rename '%1' to '%2'").arg(_oldName, _newName));
+    return true;
+}
+
+//---------------------------------------------------------------------
+
 /*
-class RenameCommand(commands.UndoCommand):
-    """Changes name of one image (always just one image!)
-    """
-
-    def __init__(self, visual, oldName, newName):
-        super(RenameCommand, self).__init__()
-
-        self.visual = visual
-
-        self.oldName = oldName
-        self.newName = newName
-
-        self.refreshText()
-
-    def refreshText(self):
-        self.setText("Rename '%s' to '%s'" % (self.oldName, self.newName))
-
-    def id(self):
-        return idbase + 4
-
-    def mergeWith(self, cmd):
-        if self.newName == cmd.oldName:
-            # if our old newName is the same as oldName of the command that
-            # comes after this command, we can merge them
-            self.newName = cmd.newName
-            self.refreshText()
-
-            return True
-
-        return False
-
-    def undo(self):
-        super(RenameCommand, self).undo()
-
-        imageEntry = self.visual.imagesetEntry.getImageEntry(self.newName)
-        imageEntry.name = self.oldName
-        imageEntry.updateListItem()
-
-    def redo(self):
-        imageEntry = self.visual.imagesetEntry.getImageEntry(self.oldName)
-        imageEntry.name = self.newName
-        imageEntry.updateListItem()
-
-        super(RenameCommand, self).redo()
 
 class PropertyEditCommand(commands.UndoCommand):
     """Changes one property of the image.

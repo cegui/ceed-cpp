@@ -22,12 +22,14 @@ public:
     void refreshSceneRect();
 
     bool moveImageEntries(const std::vector<ImageEntry*>& imageEntries, QPointF delta);
+    bool resizeImageEntries(const std::vector<ImageEntry*>& imageEntries, QPointF topLeftDelta, QPointF bottomRightDelta);
 
     ImagesetEntry* getImagesetEntry() const { return imagesetEntry; }
     ImagesetEditorDockWidget* getDockWidget() const { return dockWidget; }
 
 protected slots:
 
+    bool cycleOverlappingImages();
     void slot_selectionChanged();
 
 protected:

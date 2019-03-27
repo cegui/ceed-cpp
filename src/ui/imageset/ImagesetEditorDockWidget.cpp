@@ -150,6 +150,21 @@ void ImagesetEditorDockWidget::refresh()
     on_filterBox_textChanged(ui->filterBox->text());
 }
 
+void ImagesetEditorDockWidget::scrollToEntry(ImageEntry* entry)
+{
+    if (entry) ui->list->scrollToItem(entry->getListItem());
+}
+
+// Focuses into image list filter. This potentially allows the user to just press a shortcut to find images,
+// instead of having to reach for a mouse.
+void ImagesetEditorDockWidget::focusImageListFilterBox()
+{
+    // Selects all contents of the filter so that user can replace that with their search phrase
+    ui->filterBox->selectAll();
+    // Sets focus so that typing puts text into the filter box without clicking
+    ui->filterBox->setFocus();
+}
+
 void ImagesetEditorDockWidget::onNativeResolutionEdited()
 {
 /*

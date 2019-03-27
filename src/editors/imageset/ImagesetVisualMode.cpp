@@ -73,7 +73,7 @@ void ImagesetVisualMode::setupActions()
         self.connectionGroup.add(self.duplicateSelectedImagesAction, receiver = self.duplicateSelectedImageEntries)
 
         self.focusImageListFilterBoxAction = action.getAction("imageset/focus_image_list_filter_box")
-        self.connectionGroup.add(self.focusImageListFilterBoxAction, receiver = lambda: self.focusImageListFilterBox())
+        self.connectionGroup.add(self.focusImageListFilterBoxAction, receiver = lambda: self.dockWidget.focusImageListFilterBox())
 
         self.toolBar = QtGui.QToolBar("Imageset")
         self.toolBar.setObjectName("ImagesetToolbar")
@@ -146,6 +146,85 @@ bool ImagesetVisualMode::moveImageEntries(const std::vector<ImageEntry*>& imageE
     return true;
 }
 
+bool ImagesetVisualMode::resizeImageEntries(const std::vector<ImageEntry*>& imageEntries, QPointF topLeftDelta, QPointF bottomRightDelta)
+{
+    if (imageEntries.empty() || (topLeftDelta.manhattanLength() <= 0.0 && bottomRightDelta.manhattanLength() <= 0.0)) return false;
+
+    std::vector<ImagesetGeometryChangeCommand::Record> undo;
+    for (ImageEntry* imageEntry : imageEntries)
+    {
+        ImagesetGeometryChangeCommand::Record rec;
+        rec.name = imageEntry->name();
+        rec.oldPos = imageEntry->pos();
+        rec.newPos = imageEntry->pos() - topLeftDelta;
+        rec.oldRect = imageEntry->rect();
+        rec.newRect = imageEntry->rect();
+        rec.newRect.setBottomRight(rec.newRect.bottomRight() - topLeftDelta + bottomRightDelta);
+        if (rec.newRect.width() < 1.0) rec.newRect.setWidth(1.0);
+        if (rec.newRect.height() < 1.0) rec.newRect.setHeight(1.0);
+        undo.push_back(std::move(rec));
+    }
+
+    _editor.getUndoStack()->push(new ImagesetGeometryChangeCommand(*this, std::move(undo)));
+    return true;
+}
+
+bool ImagesetVisualMode::cycleOverlappingImages()
+{
+    auto selection = scene()->selectedItems();
+    if (selection.size() != 1) return false;
+
+    auto rect = selection[0]->boundingRect();
+    rect.translate(selection[0]->pos());
+
+    auto overlappingItems = scene()->items(rect);
+
+    // First we stack everything before our current selection
+    ImageEntry* successor = nullptr;
+    for (QGraphicsItem* item : overlappingItems)
+    {
+        if (item == selection[0] || item->parentItem() != selection[0]->parentItem())
+            continue;
+
+        if (!successor) successor = dynamic_cast<ImageEntry*>(item);
+    }
+
+    if (successor)
+    {
+        for (QGraphicsItem* item : overlappingItems)
+        {
+            if (item == successor || item->parentItem() != successor->parentItem())
+                continue;
+
+            successor->stackBefore(item);
+        }
+
+        // We deselect current
+        selection[0]->setSelected(false);
+        auto selectedImage = dynamic_cast<ImageEntry*>(selection[0]);
+        if (selectedImage) selectedImage->hoverLeaveEvent(nullptr);
+
+        // And select what was at the bottom (thus getting this to the top)
+        successor->setSelected(true);
+        successor->hoverEnterEvent(nullptr);
+    }
+
+    return true;
+}
+
+void ImagesetVisualMode::slot_selectionChanged()
+{
+    // If dockWidget is changing the selection, back off
+    if (dockWidget->isSelectionUnderway()) return;
+
+    auto selectedItems = scene()->selectedItems();
+    if (selectedItems.size() == 1)
+    {
+        ImageEntry* entry = dynamic_cast<ImageEntry*>(selectedItems[0]);
+        dockWidget->scrollToEntry(entry);
+    }
+}
+
 /*
     def rebuildEditorMenu(self, editorMenu):
         """Adds actions to the editor menu"""
@@ -158,78 +237,6 @@ bool ImagesetVisualMode::moveImageEntries(const std::vector<ImageEntry*>& imageE
         editorMenu.addAction(self.editOffsetsAction)
         editorMenu.addSeparator() // ---------------------------
         editorMenu.addAction(self.focusImageListFilterBoxAction)
-
-    def resizeImageEntries(self, imageEntries, topLeftDelta, bottomRightDelta):
-        if (topLeftDelta.manhattanLength() > 0 or bottomRightDelta.manhattanLength() > 0) and len(imageEntries) > 0:
-            imageNames = []
-            oldPositions = {}
-            oldRects = {}
-            newPositions = {}
-            newRects = {}
-
-            for imageEntry in imageEntries:
-
-                imageNames.append(imageEntry.name)
-                oldPositions[imageEntry.name] = imageEntry.pos()
-                newPositions[imageEntry.name] = imageEntry.pos() - topLeftDelta
-                oldRects[imageEntry.name] = imageEntry.rect()
-
-                newRect = imageEntry.rect()
-                newRect.setBottomRight(newRect.bottomRight() - topLeftDelta + bottomRightDelta)
-
-                if newRect.width() < 1:
-                    newRect.setWidth(1)
-                if newRect.height() < 1:
-                    newRect.setHeight(1)
-
-                newRects[imageEntry.name] = newRect
-
-            cmd = undo.GeometryChangeCommand(self, imageNames, oldPositions, oldRects, newPositions, newRects)
-            self.tabbedEditor.undoStack.push(cmd)
-
-            // we handled this
-            return True
-
-        // we didn't handle this
-        return False
-
-    def cycleOverlappingImages(self):
-        selection = self.scene().selectedItems()
-
-        if len(selection) == 1:
-            rect = selection[0].boundingRect()
-            rect.translate(selection[0].pos())
-
-            overlappingItems = self.scene().items(rect)
-
-            // first we stack everything before our current selection
-            successor = None
-            for item in overlappingItems:
-                if item == selection[0] or item.parentItem() != selection[0].parentItem():
-                    continue
-
-                if not successor and isinstance(item, elements.ImageEntry):
-                    successor = item
-
-            if successor:
-                for item in overlappingItems:
-                    if item == successor or item.parentItem() != successor.parentItem():
-                        continue
-
-                    successor.stackBefore(item)
-
-                // we deselect current
-                selection[0].setSelected(False)
-                selection[0].hoverLeaveEvent(None)
-                // and select what was at the bottom (thus getting this to the top)
-                successor.setSelected(True)
-                successor.hoverEnterEvent(None)
-
-            // we handled this
-            return True
-
-        // we didn't handle this
-        return False
 
     def createImage(self, centrePositionX, centrePositionY):
         """Centre position is the position of the centre of the newly created image,
@@ -558,19 +565,6 @@ bool ImagesetVisualMode::moveImageEntries(const std::vector<ImageEntry*>& imageE
     def slot_customContextMenu(self, point):
         self.contextMenu.exec_(self.mapToGlobal(point))
 
-    def focusImageListFilterBox(self):
-        """Focuses into image list filter
-
-        This potentially allows the user to just press a shortcut to find images,
-        instead of having to reach for a mouse.
-        """
-
-        filterBox = self.dockWidget.filterBox
-        // selects all contents of the filter so that user can replace that with their search phrase
-        filterBox.selectAll()
-        // sets focus so that typing puts text into the filter box without clicking
-        filterBox.setFocus()
-
     def performCut(self):
         if self.performCopy():
             self.deleteSelectedImageEntries()
@@ -643,22 +637,3 @@ bool ImagesetVisualMode::moveImageEntries(const std::vector<ImageEntry*>& imageE
     def performDelete(self):
         return self.deleteSelectedImageEntries()
 */
-
-void ImagesetVisualMode::slot_selectionChanged()
-{
-/*
-        // if dockWidget is changing the selection, back off
-        if self.dockWidget.selectionUnderway:
-            return
-*/
-
-    auto selectedItems = scene()->selectedItems();
-    if (selectedItems.size() == 1)
-    {
-        ImageEntry* entry = dynamic_cast<ImageEntry*>(selectedItems[0]);
-        /*
-        if (entry)
-            dockWidget.list.scrollToItem(selectedItems[0].listItem);
-        */
-    }
-}

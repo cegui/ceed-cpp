@@ -102,4 +102,23 @@ protected:
     std::vector<Record> _imageRecords;
 };
 
+// Changes name of one image (always just one image!)
+class ImagesetRenameCommand : public QUndoCommand
+{
+public:
+
+    ImagesetRenameCommand(ImagesetVisualMode& visualMode, const QString& oldName, const QString& newName);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return ImagesetUndoCommandBase + 4; }
+    virtual bool mergeWith(const QUndoCommand* other) override;
+
+protected:
+
+    ImagesetVisualMode& _visualMode;
+    QString _oldName;
+    QString _newName;
+};
+
 #endif // IMAGESETUNDOCOMMANDS_H
