@@ -127,20 +127,9 @@ void ImagesetVisualMode::refreshSceneRect()
     scene()->setSceneRect(boundingRect);
 }
 
+bool ImagesetVisualMode::moveImageEntries(const std::vector<ImageEntry*>& imageEntries, QPointF delta)
+{
 /*
-    def rebuildEditorMenu(self, editorMenu):
-        """Adds actions to the editor menu"""
-        // similar to the toolbar, includes the focus filter box action
-        editorMenu.addAction(self.createImageAction)
-        editorMenu.addAction(self.duplicateSelectedImagesAction)
-        editorMenu.addSeparator() // ---------------------------
-        editorMenu.addAction(self.cycleOverlappingAction)
-        editorMenu.addSeparator() // ---------------------------
-        editorMenu.addAction(self.editOffsetsAction)
-        editorMenu.addSeparator() // ---------------------------
-        editorMenu.addAction(self.focusImageListFilterBoxAction)
-
-    def moveImageEntries(self, imageEntries, delta):
         if delta.manhattanLength() > 0 and len(imageEntries) > 0:
             imageNames = []
             oldPositions = {}
@@ -156,9 +145,22 @@ void ImagesetVisualMode::refreshSceneRect()
 
             // we handled this
             return True
+*/
+    return false;
+}
 
-        // we didn't handle this
-        return False
+/*
+    def rebuildEditorMenu(self, editorMenu):
+        """Adds actions to the editor menu"""
+        // similar to the toolbar, includes the focus filter box action
+        editorMenu.addAction(self.createImageAction)
+        editorMenu.addAction(self.duplicateSelectedImagesAction)
+        editorMenu.addSeparator() // ---------------------------
+        editorMenu.addAction(self.cycleOverlappingAction)
+        editorMenu.addSeparator() // ---------------------------
+        editorMenu.addAction(self.editOffsetsAction)
+        editorMenu.addSeparator() // ---------------------------
+        editorMenu.addAction(self.focusImageListFilterBoxAction)
 
     def resizeImageEntries(self, imageEntries, topLeftDelta, bottomRightDelta):
         if (topLeftDelta.manhattanLength() > 0 or bottomRightDelta.manhattanLength() > 0) and len(imageEntries) > 0:

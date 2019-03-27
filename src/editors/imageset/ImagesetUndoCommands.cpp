@@ -1,29 +1,16 @@
 #include "src/editors/imageset/ImagesetUndoCommands.h"
-
-ImagesetUndoCommands::ImagesetUndoCommands()
-{
-
-}
+#include "src/editors/imageset/ImagesetVisualMode.h"
+#include "src/ui/imageset/ImagesetEntry.h"
+#include "src/ui/imageset/ImageEntry.h"
 
 /*
-
-idbase = 1100
-
-# u
-# you should however always use the ImageEntry's properties (xpos, ypos, ...)!
-
-class MoveCommand(commands.UndoCommand):
-    """This command simply moves given images from old position to the new
-    You can use GeometryChangeCommand instead and use the same rects as old new as current rects,
-    this is there just to save memory.
-    """
-
-    def __init__(self, visual, imageNames, oldPositions, newPositions):
-        super(MoveCommand, self).__init__()
-
-        self.visual = visual
-
-        self.imageNames = imageNames
+    , oldPositions, newPositions
+*/
+ImagesetMoveCommand::ImagesetMoveCommand(ImagesetVisualMode& visualMode, const QStringList& imageNames)
+    : _visualMode(visualMode)
+    , _imageNames(imageNames)
+{
+/*
         self.oldPositions = oldPositions
         self.newPositions = newPositions
 
@@ -35,19 +22,42 @@ class MoveCommand(commands.UndoCommand):
             delta = math.sqrt(positionDelta.x() * positionDelta.x() + positionDelta.y() * positionDelta.y())
             if delta > self.biggestDelta:
                 self.biggestDelta = delta
+*/
 
-        self.refreshText()
+    refreshText();
+}
 
-    def refreshText(self):
-        if len(self.imageNames) == 1:
-            self.setText("Move '%s'" % (self.imageNames[0]))
-        else:
-            self.setText("Move %i images" % (len(self.imageNames)))
+void ImagesetMoveCommand::undo()
+{
+    QUndoCommand::undo();
 
-    def id(self):
-        return idbase + 1
+    for (const auto& imageName : _imageNames)
+    {
+        auto image = _visualMode.getImagesetEntry()->getImageEntry(imageName);
+        /*
+            image.setPos(self.oldPositions[imageName])
+        */
+        image->updateDockWidget();
+    }
+}
 
-    def mergeWith(self, cmd):
+void ImagesetMoveCommand::redo()
+{
+    for (const auto& imageName : _imageNames)
+    {
+        auto image = _visualMode.getImagesetEntry()->getImageEntry(imageName);
+        /*
+            image.setPos(self.newPositions[imageName])
+        */
+        image->updateDockWidget();
+    }
+
+    QUndoCommand::redo();
+}
+
+bool ImagesetMoveCommand::mergeWith(const QUndoCommand* other)
+{
+/*
         if self.imageNames == cmd.imageNames:
             # good, images match
 
@@ -63,25 +73,18 @@ class MoveCommand(commands.UndoCommand):
                 return True
 
         return False
+*/
+}
 
-    def undo(self):
-        super(MoveCommand, self).undo()
+void ImagesetMoveCommand::refreshText()
+{
+    if (_imageNames.size() == 1)
+        setText(QString("Move '%1'").arg(_imageNames[0]));
+    else
+        setText(QString("Move %1 images'").arg(_imageNames.size()));
+}
 
-        for imageName in self.imageNames:
-            image = self.visual.imagesetEntry.getImageEntry(imageName)
-            image.setPos(self.oldPositions[imageName])
-
-            image.updateDockWidget()
-
-    def redo(self):
-        for imageName in self.imageNames:
-            image = self.visual.imagesetEntry.getImageEntry(imageName)
-            image.setPos(self.newPositions[imageName])
-
-            image.updateDockWidget()
-
-        super(MoveCommand, self).redo()
-
+/*
 class GeometryChangeCommand(commands.UndoCommand):
     """Changes geometry of given images, that means that positions as well as rects might change
     Can even implement MoveCommand as a special case but would eat more RAM.

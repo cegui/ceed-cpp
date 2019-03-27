@@ -6,6 +6,7 @@
 
 // This is the "Visual" tab for imageset editing
 
+class ImageEntry;
 class ImagesetEntry;
 class ImagesetEditorDockWidget;
 class QDomElement;
@@ -20,6 +21,9 @@ public:
 
     void refreshSceneRect();
 
+    bool moveImageEntries(const std::vector<ImageEntry*>& imageEntries, QPointF delta);
+
+    ImagesetEntry* getImagesetEntry() const { return imagesetEntry; }
     ImagesetEditorDockWidget* getDockWidget() const { return dockWidget; }
 
 protected slots:
