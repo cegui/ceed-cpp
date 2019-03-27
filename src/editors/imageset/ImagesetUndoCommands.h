@@ -103,11 +103,11 @@ protected:
 };
 
 // Changes name of one image (always just one image!)
-class ImagesetRenameCommand : public QUndoCommand
+class ImageRenameCommand : public QUndoCommand
 {
 public:
 
-    ImagesetRenameCommand(ImagesetVisualMode& visualMode, const QString& oldName, const QString& newName);
+    ImageRenameCommand(ImagesetVisualMode& visualMode, const QString& oldName, const QString& newName);
 
     virtual void undo() override;
     virtual void redo() override;

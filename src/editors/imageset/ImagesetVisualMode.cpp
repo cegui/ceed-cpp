@@ -169,6 +169,43 @@ bool ImagesetVisualMode::resizeImageEntries(const std::vector<ImageEntry*>& imag
     return true;
 }
 
+bool ImagesetVisualMode::deleteImageEntries(const std::vector<ImageEntry*>& imageEntries)
+{
+    if (imageEntries.empty()) return false;
+/*
+            oldNames = []
+
+            oldPositions = {}
+            oldRects = {}
+            oldOffsets = {}
+
+            for imageEntry in imageEntries:
+                oldNames.append(imageEntry.name)
+
+                oldPositions[imageEntry.name] = imageEntry.pos()
+                oldRects[imageEntry.name] = imageEntry.rect()
+                oldOffsets[imageEntry.name] = imageEntry.offset.pos()
+
+            cmd = undo.DeleteCommand(self, oldNames, oldPositions, oldRects, oldOffsets)
+            self.tabbedEditor.undoStack.push(cmd)
+*/
+    return true;
+}
+
+bool ImagesetVisualMode::deleteSelectedImageEntries()
+{
+    auto selection = scene()->selectedItems();
+
+    std::vector<ImageEntry*> imageEntries;
+    for (QGraphicsItem* item : selection)
+    {
+        auto entry = dynamic_cast<ImageEntry*>(item);
+        if (entry) imageEntries.push_back(entry);
+    }
+
+    return deleteImageEntries(imageEntries);
+}
+
 bool ImagesetVisualMode::cycleOverlappingImages()
 {
     auto selection = scene()->selectedItems();
@@ -341,40 +378,6 @@ void ImagesetVisualMode::slot_selectionChanged()
                 imageEntries.append(item)
 
         return self.duplicateImageEntries(imageEntries)
-
-    def deleteImageEntries(self, imageEntries):
-        if len(imageEntries) > 0:
-            oldNames = []
-
-            oldPositions = {}
-            oldRects = {}
-            oldOffsets = {}
-
-            for imageEntry in imageEntries:
-                oldNames.append(imageEntry.name)
-
-                oldPositions[imageEntry.name] = imageEntry.pos()
-                oldRects[imageEntry.name] = imageEntry.rect()
-                oldOffsets[imageEntry.name] = imageEntry.offset.pos()
-
-            cmd = undo.DeleteCommand(self, oldNames, oldPositions, oldRects, oldOffsets)
-            self.tabbedEditor.undoStack.push(cmd)
-
-            return True
-
-        else:
-            // we didn't handle this
-            return False
-
-    def deleteSelectedImageEntries(self):
-        selection = self.scene().selectedItems()
-
-        imageEntries = []
-        for item in selection:
-            if isinstance(item, elements.ImageEntry):
-                imageEntries.append(item)
-
-        return self.deleteImageEntries(imageEntries)
 
     def showEvent(self, event):
         self.dockWidget.setEnabled(True)

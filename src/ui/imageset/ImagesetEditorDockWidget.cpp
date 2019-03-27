@@ -4,9 +4,12 @@
 #include "src/cegui/CEGUIProjectManager.h"
 #include "src/cegui/CEGUIProject.h"
 #include "src/editors/imageset/ImagesetVisualMode.h"
+#include "src/editors/imageset/ImagesetUndoCommands.h"
+#include "src/editors/imageset/ImagesetEditor.h"
 #include "ui_ImagesetEditorDockWidget.h"
 #include "qitemdelegate.h"
 #include "qvalidator.h"
+#include "qevent.h"
 
 // The only reason for this is to track when we are editing.
 // We need this to discard key events when editor is open.
@@ -26,8 +29,6 @@ public:
         QItemDelegate::setModelData(editor, model, index);
         editing = false;
     }
-
-protected:
 
       mutable bool editing = false;
 };
@@ -285,17 +286,13 @@ void ImagesetEditorDockWidget::on_filterBox_textChanged(const QString& arg1)
 
 void ImagesetEditorDockWidget::on_list_itemChanged(QListWidgetItem* item)
 {
-/*
-        oldName = item.imageEntry.name
-        newName = item.text()
+    auto oldName = item->data(Qt::UserRole + 1).value<ImageEntry*>()->name();
+    auto newName = item->text();
 
-        if oldName == newName:
-            # most likely caused by RenameCommand doing it's work or is bogus anyways
-            return
+    // Most likely caused by RenameCommand doing it's work or is bogus anyways
+    if (oldName == newName) return;
 
-        cmd = undo.RenameCommand(self.visual, oldName, newName)
-        self.visual.tabbedEditor.undoStack.push(cmd)
-*/
+    _visualMode.getEditor().getUndoStack()->push(new ImageRenameCommand(_visualMode, oldName, newName));
 }
 
 void ImagesetEditorDockWidget::on_list_itemSelectionChanged()
@@ -376,19 +373,16 @@ void ImagesetEditorDockWidget::on_offsetY_textChanged(const QString &arg1)
 
 void ImagesetEditorDockWidget::keyReleaseEvent(QKeyEvent* event)
 {
-/*
-        # if we are editing, we should discard key events
-        # (delete means delete character, not delete image entry in this context)
+    // If we are editing, we should discard key events
+    // (delete means delete character, not delete image entry in this context)
+    if (!static_cast<ImageEntryItemDelegate*>(ui->list->itemDelegate())->editing)
+    {
+        if (event->key() == Qt::Key_Delete)
+        {
+            if (_visualMode.deleteSelectedImageEntries()) return;
+        }
+    }
 
-        if not self.list.itemDelegate().editing:
-            if event.key() == QtCore.Qt.Key_Delete:
-                selection = self.visual.scene().selectedItems()
-
-                handled = self.visual.deleteImageEntries(selection)
-
-                if handled:
-                    return True
-*/
     QDockWidget::keyReleaseEvent(event);
 }
 

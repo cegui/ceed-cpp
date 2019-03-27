@@ -269,7 +269,7 @@ void ImagesetOffsetMoveCommand::refreshText()
 
 //---------------------------------------------------------------------
 
-ImagesetRenameCommand::ImagesetRenameCommand(ImagesetVisualMode& visualMode, const QString& oldName, const QString& newName)
+ImageRenameCommand::ImageRenameCommand(ImagesetVisualMode& visualMode, const QString& oldName, const QString& newName)
     : _visualMode(visualMode)
     , _oldName(oldName)
     , _newName(newName)
@@ -277,7 +277,7 @@ ImagesetRenameCommand::ImagesetRenameCommand(ImagesetVisualMode& visualMode, con
     setText(QString("Rename '%1' to '%2'").arg(_oldName, _newName));
 }
 
-void ImagesetRenameCommand::undo()
+void ImageRenameCommand::undo()
 {
     QUndoCommand::undo();
     auto image = _visualMode.getImagesetEntry()->getImageEntry(_newName);
@@ -285,7 +285,7 @@ void ImagesetRenameCommand::undo()
     image->updateListItem();
 }
 
-void ImagesetRenameCommand::redo()
+void ImageRenameCommand::redo()
 {
     auto image = _visualMode.getImagesetEntry()->getImageEntry(_oldName);
     image->setName(_newName);
@@ -293,9 +293,9 @@ void ImagesetRenameCommand::redo()
     QUndoCommand::redo();
 }
 
-bool ImagesetRenameCommand::mergeWith(const QUndoCommand* other)
+bool ImageRenameCommand::mergeWith(const QUndoCommand* other)
 {
-    const ImagesetRenameCommand* otherCmd = dynamic_cast<const ImagesetRenameCommand*>(other);
+    const ImageRenameCommand* otherCmd = dynamic_cast<const ImageRenameCommand*>(other);
     if (!otherCmd || _newName != otherCmd->_oldName) return false;
 
     // If our old newName is the same as oldName of the command that comes after this command, we can merge them

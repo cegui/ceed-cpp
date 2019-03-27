@@ -23,6 +23,8 @@ public:
 
     bool moveImageEntries(const std::vector<ImageEntry*>& imageEntries, QPointF delta);
     bool resizeImageEntries(const std::vector<ImageEntry*>& imageEntries, QPointF topLeftDelta, QPointF bottomRightDelta);
+    bool deleteImageEntries(const std::vector<ImageEntry*>& imageEntries);
+    bool deleteSelectedImageEntries();
 
     ImagesetEntry* getImagesetEntry() const { return imagesetEntry; }
     ImagesetEditorDockWidget* getDockWidget() const { return dockWidget; }
