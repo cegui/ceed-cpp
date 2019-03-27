@@ -130,23 +130,19 @@ void ImagesetVisualMode::refreshSceneRect()
 
 bool ImagesetVisualMode::moveImageEntries(const std::vector<ImageEntry*>& imageEntries, QPointF delta)
 {
-    if (imageEntries.empty() || delta.manhattanLength() <= 0.0)) return false;
+    if (imageEntries.empty() || delta.manhattanLength() <= 0.0) return false;
 
-    //
+    std::vector<ImagesetMoveCommand::Record> undo;
+    for (ImageEntry* imageEntry : imageEntries)
+    {
+        ImagesetMoveCommand::Record rec;
+        rec.name = imageEntry->name();
+        rec.oldPos = imageEntry->pos();
+        rec.newPos = imageEntry->pos() + delta;
+        undo.push_back(std::move(rec));
+    }
 
-/*
-        imageNames = []
-        oldPositions = {}
-        newPositions = {}
-
-        for imageEntry in imageEntries:
-            imageNames.append(imageEntry.name)
-            oldPositions[imageEntry.name] = imageEntry.pos()
-            newPositions[imageEntry.name] = imageEntry.pos() + delta
-
-        cmd = undo.MoveCommand(self, imageNames, oldPositions, newPositions)
-        self.tabbedEditor.undoStack.push(cmd)
-*/
+    _editor.getUndoStack()->push(new ImagesetMoveCommand(*this, std::move(undo)));
     return true;
 }
 

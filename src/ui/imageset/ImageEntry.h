@@ -27,6 +27,8 @@ public:
     void updateListItem();
     void setListItem(QListWidgetItem* newItem) { listItem = newItem; }
 
+    ImageOffsetMark* getOffsetMark() const { return offset; }
+
     QString name() const;
     void setName(const QString& newName);
     int offsetX() const;

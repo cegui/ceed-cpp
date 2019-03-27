@@ -2,6 +2,7 @@
 #include "src/editors/imageset/ImagesetVisualMode.h"
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/imageset/ImageEntry.h"
+#include "src/ui/imageset/ImageOffsetMark.h"
 
 ImagesetMoveCommand::ImagesetMoveCommand(ImagesetVisualMode& visualMode, std::vector<Record>&& imageRecords)
     : _visualMode(visualMode)
@@ -61,13 +62,17 @@ bool ImagesetMoveCommand::mergeWith(const QUndoCommand* other)
 
     // The same set of images, can merge
 
-    for (const auto& rec : _imageRecords)
+    for (auto& rec : _imageRecords)
     {
-        //
+        const QString& name = rec.name;
+        auto it = std::find_if(otherCmd->_imageRecords.begin(), otherCmd->_imageRecords.end(), [&name](const Record& otherRec)
+        {
+            return otherRec.name == name;
+        });
+        assert(it != otherCmd->_imageRecords.end());
+
+        rec.newPos = it->newPos;
     }
-    /*
-        self.newPositions = cmd.newPositions
-    */
 
     biggestDelta = combinedBiggestDelta;
     refreshText();
@@ -82,155 +87,189 @@ void ImagesetMoveCommand::refreshText()
         setText(QString("Move %1 images'").arg(_imageRecords.size()));
 }
 
+//---------------------------------------------------------------------
+
+ImagesetGeometryChangeCommand::ImagesetGeometryChangeCommand(ImagesetVisualMode& visualMode, std::vector<Record>&& imageRecords)
+    : _visualMode(visualMode)
+    , _imageRecords(std::move(imageRecords))
+{
+    for (const auto& rec : _imageRecords)
+    {
+        auto positionDelta = rec.oldPos - rec.newPos;
+        auto delta = sqrt(positionDelta.x() * positionDelta.x() + positionDelta.y() * positionDelta.y());
+        if (delta > biggestMoveDelta) biggestMoveDelta = delta;
+
+        auto resizeDelta = rec.oldRect.bottomRight() - rec.newRect.bottomRight();
+        delta = sqrt(resizeDelta.x() * resizeDelta.x() + resizeDelta.y() * resizeDelta.y());
+        if (delta > biggestResizeDelta) biggestResizeDelta = delta;
+    }
+
+    refreshText();
+}
+
+void ImagesetGeometryChangeCommand::undo()
+{
+    QUndoCommand::undo();
+
+    for (const auto& rec : _imageRecords)
+    {
+        auto image = _visualMode.getImagesetEntry()->getImageEntry(rec.name);
+        image->setPos(rec.oldPos);
+        image->setRect(rec.oldRect);
+        image->updateDockWidget();
+    }
+}
+
+void ImagesetGeometryChangeCommand::redo()
+{
+    for (const auto& rec : _imageRecords)
+    {
+        auto image = _visualMode.getImagesetEntry()->getImageEntry(rec.name);
+        image->setPos(rec.newPos);
+        image->setRect(rec.newRect);
+        image->updateDockWidget();
+    }
+
+    QUndoCommand::redo();
+}
+
+bool ImagesetGeometryChangeCommand::mergeWith(const QUndoCommand* other)
+{
+    const ImagesetGeometryChangeCommand* otherCmd = dynamic_cast<const ImagesetGeometryChangeCommand*>(other);
+    if (!otherCmd) return false;
+
+    if (_imageRecords.size() != otherCmd->_imageRecords.size()) return false;
+
+    // TODO: 50 used just for testing!
+    auto combinedBiggestMoveDelta = biggestMoveDelta + otherCmd->biggestMoveDelta;
+    if (combinedBiggestMoveDelta >= 50) return false;
+
+    // TODO: 20 used just for testing!
+    auto combinedBiggestResizeDelta = biggestResizeDelta + otherCmd->biggestResizeDelta;
+    if (combinedBiggestResizeDelta >= 20) return false;
+
+    QStringList names;
+    for (const auto& rec : _imageRecords)
+        names.push_back(rec.name);
+
+    for (const auto& rec : otherCmd->_imageRecords)
+        if (!names.contains(rec.name)) return false;
+
+    // The same set of images, can merge
+
+    for (auto& rec : _imageRecords)
+    {
+        const QString& name = rec.name;
+        auto it = std::find_if(otherCmd->_imageRecords.begin(), otherCmd->_imageRecords.end(), [&name](const Record& otherRec)
+        {
+            return otherRec.name == name;
+        });
+        assert(it != otherCmd->_imageRecords.end());
+
+        rec.newPos = it->newPos;
+        rec.newRect = it->newRect;
+    }
+
+    biggestMoveDelta = combinedBiggestMoveDelta;
+    biggestResizeDelta = combinedBiggestResizeDelta;
+    refreshText();
+    return true;
+}
+
+void ImagesetGeometryChangeCommand::refreshText()
+{
+    if (_imageRecords.size() == 1)
+        setText(QString("Change geometry of '%1'").arg(_imageRecords[0].name));
+    else
+        setText(QString("Change geometry of %1 images'").arg(_imageRecords.size()));
+}
+
+//---------------------------------------------------------------------
+
+ImagesetOffsetMoveCommand::ImagesetOffsetMoveCommand(ImagesetVisualMode& visualMode, std::vector<Record>&& imageRecords)
+    : _visualMode(visualMode)
+    , _imageRecords(std::move(imageRecords))
+{
+    for (const auto& rec : _imageRecords)
+    {
+        auto positionDelta = rec.oldPos - rec.newPos;
+        auto delta = sqrt(positionDelta.x() * positionDelta.x() + positionDelta.y() * positionDelta.y());
+        if (delta > biggestDelta) biggestDelta = delta;
+    }
+
+    refreshText();
+}
+
+void ImagesetOffsetMoveCommand::undo()
+{
+    QUndoCommand::undo();
+
+    for (const auto& rec : _imageRecords)
+    {
+        auto image = _visualMode.getImagesetEntry()->getImageEntry(rec.name);
+        image->getOffsetMark()->setPos(rec.oldPos);
+    }
+}
+
+void ImagesetOffsetMoveCommand::redo()
+{
+    for (const auto& rec : _imageRecords)
+    {
+        auto image = _visualMode.getImagesetEntry()->getImageEntry(rec.name);
+        image->getOffsetMark()->setPos(rec.newPos);
+    }
+
+    QUndoCommand::redo();
+}
+
+bool ImagesetOffsetMoveCommand::mergeWith(const QUndoCommand* other)
+{
+    const ImagesetOffsetMoveCommand* otherCmd = dynamic_cast<const ImagesetOffsetMoveCommand*>(other);
+    if (!otherCmd) return false;
+
+    if (_imageRecords.size() != otherCmd->_imageRecords.size()) return false;
+
+    // TODO: 10 used just for testing!
+    auto combinedBiggestDelta = biggestDelta + otherCmd->biggestDelta;
+    if (combinedBiggestDelta >= 10) return false;
+
+    QStringList names;
+    for (const auto& rec : _imageRecords)
+        names.push_back(rec.name);
+
+    for (const auto& rec : otherCmd->_imageRecords)
+        if (!names.contains(rec.name)) return false;
+
+    // The same set of images, can merge
+
+    for (auto& rec : _imageRecords)
+    {
+        const QString& name = rec.name;
+        auto it = std::find_if(otherCmd->_imageRecords.begin(), otherCmd->_imageRecords.end(), [&name](const Record& otherRec)
+        {
+            return otherRec.name == name;
+        });
+        assert(it != otherCmd->_imageRecords.end());
+
+        rec.newPos = it->newPos;
+    }
+
+    biggestDelta = combinedBiggestDelta;
+    refreshText();
+    return true;
+}
+
+void ImagesetOffsetMoveCommand::refreshText()
+{
+    if (_imageRecords.size() == 1)
+        setText(QString("Move offset of '%1'").arg(_imageRecords[0].name));
+    else
+        setText(QString("Move offset of %1 images'").arg(_imageRecords.size()));
+}
+
+//---------------------------------------------------------------------
+
 /*
-class GeometryChangeCommand(commands.UndoCommand):
-    """Changes geometry of given images, that means that positions as well as rects might change
-    Can even implement MoveCommand as a special case but would eat more RAM.
-    """
-
-    def __init__(self, visual, imageNames, oldPositions, oldRects, newPositions, newRects):
-        super(GeometryChangeCommand, self).__init__()
-
-        self.visual = visual
-
-        self.imageNames = imageNames
-        self.oldPositions = oldPositions
-        self.oldRects = oldRects
-        self.newPositions = newPositions
-        self.newRects = newRects
-
-        self.biggestMoveDelta = 0
-
-        for (imageName, oldPosition) in self.oldPositions.iteritems():
-            moveDelta = oldPosition - self.newPositions[imageName]
-
-            delta = math.sqrt(moveDelta.x() * moveDelta.x() + moveDelta.y() * moveDelta.y())
-            if delta > self.biggestMoveDelta:
-                self.biggestMoveDelta = delta
-
-        self.biggestResizeDelta = 0
-
-        for (imageName, oldRect) in self.oldRects.iteritems():
-            resizeDelta = oldRect.bottomRight() - self.newRects[imageName].bottomRight()
-
-            delta = math.sqrt(resizeDelta.x() * resizeDelta.x() + resizeDelta.y() * resizeDelta.y())
-            if delta > self.biggestResizeDelta:
-                self.biggestResizeDelta = delta
-
-        self.refreshText()
-
-    def refreshText(self):
-        if len(self.imageNames) == 1:
-            self.setText("Change geometry of '%s'" % (self.imageNames[0]))
-        else:
-            self.setText("Change geometry of %i images" % (len(self.imageNames)))
-
-    def id(self):
-        return idbase + 2
-
-    def mergeWith(self, cmd):
-        if self.imageNames == cmd.imageNames:
-            # good, images match
-
-            combinedBiggestMoveDelta = self.biggestMoveDelta + cmd.biggestMoveDelta
-            combinedBiggestResizeDelta = self.biggestResizeDelta + cmd.biggestResizeDelta
-
-            # TODO: 50 and 20 are used just for testing!
-            if combinedBiggestMoveDelta < 50 and combinedBiggestResizeDelta < 20:
-                # if the combined deltas area reasonably small, we can merge the commands
-                self.newPositions = cmd.newPositions
-                self.newRects = cmd.newRects
-
-                self.biggestMoveDelta = combinedBiggestMoveDelta
-                self.biggestResizeDelta = combinedBiggestResizeDelta
-
-                self.refreshText()
-
-                return True
-
-        return False
-
-    def undo(self):
-        super(GeometryChangeCommand, self).undo()
-
-        for imageName in self.imageNames:
-            image = self.visual.imagesetEntry.getImageEntry(imageName)
-            image.setPos(self.oldPositions[imageName])
-            image.setRect(self.oldRects[imageName])
-
-            image.updateDockWidget()
-
-    def redo(self):
-        for imageName in self.imageNames:
-            image = self.visual.imagesetEntry.getImageEntry(imageName)
-            image.setPos(self.newPositions[imageName])
-            image.setRect(self.newRects[imageName])
-
-            image.updateDockWidget()
-
-        super(GeometryChangeCommand, self).redo()
-
-class OffsetMoveCommand(commands.UndoCommand):
-    def __init__(self, visual, imageNames, oldPositions, newPositions):
-        super(OffsetMoveCommand, self).__init__()
-
-        self.visual = visual
-
-        self.imageNames = imageNames
-        self.oldPositions = oldPositions
-        self.newPositions = newPositions
-
-        self.biggestDelta = 0
-
-        for (imageName, oldPosition) in self.oldPositions.iteritems():
-            positionDelta = oldPosition - self.newPositions[imageName]
-
-            delta = math.sqrt(positionDelta.x() * positionDelta.x() + positionDelta.y() * positionDelta.y())
-            if delta > self.biggestDelta:
-                self.biggestDelta = delta
-
-        self.refreshText()
-
-    def refreshText(self):
-        if len(self.imageNames) == 1:
-            self.setText("Move offset of '%s'" % (self.imageNames[0]))
-        else:
-            self.setText("Move offset of %i images" % (len(self.imageNames)))
-
-    def id(self):
-        return idbase + 3
-
-    def mergeWith(self, cmd):
-        if self.imageNames == cmd.imageNames:
-            # good, images match
-
-            combinedBiggestDelta = self.biggestDelta + cmd.biggestDelta
-            # TODO: 10 used just for testing!
-            if combinedBiggestDelta < 10:
-                # if the combined delta is reasonably small, we can merge the commands
-                self.newPositions = cmd.newPositions
-                self.biggestDelta = combinedBiggestDelta
-
-                self.refreshText()
-
-                return True
-
-        return False
-
-    def undo(self):
-        super(OffsetMoveCommand, self).undo()
-
-        for imageName in self.imageNames:
-            image = self.visual.imagesetEntry.getImageEntry(imageName)
-            image.offset.setPos(self.oldPositions[imageName])
-
-    def redo(self):
-        for imageName in self.imageNames:
-            image = self.visual.imagesetEntry.getImageEntry(imageName)
-            image.offset.setPos(self.newPositions[imageName])
-
-        super(OffsetMoveCommand, self).redo()
-
 class RenameCommand(commands.UndoCommand):
     """Changes name of one image (always just one image!)
     """
