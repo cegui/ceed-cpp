@@ -380,104 +380,81 @@ void ImagesetCreateCommand::redo()
     QUndoCommand::redo();
 }
 
+//---------------------------------------------------------------------
+
+ImagesetDeleteCommand::ImagesetDeleteCommand(ImagesetVisualMode& visualMode, std::vector<ImagesetDeleteCommand::Record>&& imageRecords)
+    : _visualMode(visualMode)
+    , _imageRecords(std::move(imageRecords))
+{
+    if (_imageRecords.size() == 1)
+        setText(QString("Delete '%1'").arg(_imageRecords[0].name));
+    else
+        setText(QString("Delete %1 images'").arg(_imageRecords.size()));
+}
+
+void ImagesetDeleteCommand::undo()
+{
+    QUndoCommand::undo();
+
+    for (auto& rec : _imageRecords)
+    {
+        auto image = _visualMode.getImagesetEntry()->createImageEntry();
+        image->setName(rec.name);
+        image->setPos(rec.pos);
+        image->setRect(0.0, 0.0, rec.size.width(), rec.size.height());
+        image->setOffsetX(rec.offset.x());
+        image->setOffsetY(rec.offset.y());
+    }
+
+    _visualMode.getDockWidget()->refresh();
+}
+
+void ImagesetDeleteCommand::redo()
+{
+    for (auto& rec : _imageRecords)
+        _visualMode.getImagesetEntry()->removeImageEntry(rec.name);
+
+    _visualMode.getDockWidget()->refresh();
+
+    QUndoCommand::redo();
+}
+
+//---------------------------------------------------------------------
+
+ImagesetRenameCommand::ImagesetRenameCommand(ImagesetVisualMode& visualMode, const QString& oldName, const QString& newName)
+    : _visualMode(visualMode)
+    , _oldName(oldName)
+    , _newName(newName)
+{
+    setText(QString("Rename imageset from '%1' to '%2'").arg(_oldName, _newName));
+}
+
+void ImagesetRenameCommand::undo()
+{
+    QUndoCommand::undo();
+    _visualMode.getImagesetEntry()->setName(_oldName);
+    _visualMode.getDockWidget()->onImagesetNameChanged();
+}
+
+void ImagesetRenameCommand::redo()
+{
+    _visualMode.getImagesetEntry()->setName(_newName);
+    _visualMode.getDockWidget()->onImagesetNameChanged();
+    QUndoCommand::redo();
+}
+
+bool ImagesetRenameCommand::mergeWith(const QUndoCommand* other)
+{
+    const ImagesetRenameCommand* otherCmd = dynamic_cast<const ImagesetRenameCommand*>(other);
+    if (!otherCmd || _newName != otherCmd->_oldName) return false;
+
+    // If our old newName is the same as oldName of the command that comes after this command, we can merge them
+    _newName = otherCmd->_newName;
+    setText(QString("Rename imageset from '%1' to '%2'").arg(_oldName, _newName));
+    return true;
+}
+
 /*
-class DeleteCommand(commands.UndoCommand):
-    """Deletes given image entries
-    """
-
-    def __init__(self, visual, imageNames, oldPositions, oldRects, oldOffsets):
-        super(DeleteCommand, self).__init__()
-
-        self.visual = visual
-
-        self.imageNames = imageNames
-
-        self.oldPositions = oldPositions
-        self.oldRects = oldRects
-        self.oldOffsets = oldOffsets
-
-        if len(self.imageNames) == 1:
-            self.setText("Delete '%s'" % (self.imageNames[0]))
-        else:
-            self.setText("Delete %i images" % (len(self.imageNames)))
-
-    def id(self):
-        return idbase + 7
-
-    def undo(self):
-        super(DeleteCommand, self).undo()
-
-        for imageName in self.imageNames:
-            image = elements.ImageEntry(self.visual.imagesetEntry)
-            self.visual.imagesetEntry.imageEntries.append(image)
-
-            image.name = imageName
-            image.setPos(self.oldPositions[imageName])
-            image.setRect(self.oldRects[imageName])
-            image.offset.setPos(self.oldOffsets[imageName])
-
-        self.visual.dockWidget.refresh()
-
-    def redo(self):
-        for imageName in self.imageNames:
-            image = self.visual.imagesetEntry.getImageEntry(imageName)
-            self.visual.imagesetEntry.imageEntries.remove(image)
-
-            image.listItem.imageEntry = None
-            image.listItem = None
-
-            image.setParentItem(None)
-            self.visual.scene().removeItem(image)
-
-            del image
-
-        self.visual.dockWidget.refresh()
-
-        super(DeleteCommand, self).redo()
-
-class ImagesetRenameCommand(commands.UndoCommand):
-    """Changes name of the imageset
-    """
-
-    def __init__(self, visual, oldName, newName):
-        super(ImagesetRenameCommand, self).__init__()
-
-        self.visual = visual
-
-        self.oldName = oldName
-        self.newName = newName
-
-        self.refreshText()
-
-    def refreshText(self):
-        self.setText("Rename imageset from '%s' to '%s'" % (self.oldName, self.newName))
-
-    def id(self):
-        return idbase + 8
-
-    def mergeWith(self, cmd):
-        if self.newName == cmd.oldName:
-            self.newName = cmd.newName
-            self.refreshText()
-
-            return True
-
-        return False
-
-    def undo(self):
-        super(ImagesetRenameCommand, self).undo()
-
-        imagesetEntry = self.visual.imagesetEntry
-        imagesetEntry.name = self.oldName
-        self.visual.dockWidget.name.setText(self.oldName)
-
-    def redo(self):
-        imagesetEntry = self.visual.imagesetEntry
-        imagesetEntry.name = self.newName
-        if self.visual.dockWidget.name.text() != self.newName:
-            self.visual.dockWidget.name.setText(self.newName)
-
-        super(ImagesetRenameCommand, self).redo()
 
 class ImagesetChangeImageCommand(commands.UndoCommand):
     """Changes the underlying image of the imageset

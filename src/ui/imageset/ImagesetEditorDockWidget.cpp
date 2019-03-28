@@ -77,6 +77,11 @@ ImagesetEditorDockWidget::~ImagesetEditorDockWidget()
     delete ui;
 }
 
+void ImagesetEditorDockWidget::onImagesetNameChanged()
+{
+    ui->name->setText(imagesetEntry ? imagesetEntry->name() : "");
+}
+
 // Active image entry is the image entry that is selected when there are no
 // other image entries selected. It's properties show in the property box.
 // NB: Imageset editing doesn't allow multi selection property editing because IMO it doesn't make much sense.

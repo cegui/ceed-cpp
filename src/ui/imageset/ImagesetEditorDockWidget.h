@@ -24,6 +24,7 @@ public:
     ~ImagesetEditorDockWidget() override;
 
     void setImagesetEntry(ImagesetEntry* entry) { imagesetEntry = entry; }
+    void onImagesetNameChanged();
     void setActiveImageEntry(ImageEntry* entry);
     ImageEntry* getActiveImageEntry() const { return activeImageEntry; }
     void refreshActiveImageEntry();

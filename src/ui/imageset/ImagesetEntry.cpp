@@ -98,14 +98,14 @@ void ImagesetEntry::removeImageEntry(const QString& name)
 
     if (it == imageEntries.end()) return;
 
-    assert(false && "TODO: test deletion, image entry destructor must be called!");
-
     ImageEntry* image = (*it);
 
     imageEntries.erase(it);
 
     image->setParentItem(nullptr);
     _visualMode.scene()->removeItem(image);
+
+    delete image;
 }
 
 //Returns an absolute (OS specific!) path of the underlying image

@@ -163,4 +163,48 @@ protected:
     QPoint _offset;
 };
 
+// Deletes given image entries
+class ImagesetDeleteCommand : public QUndoCommand
+{
+public:
+
+    struct Record
+    {
+        QString name;
+        QPointF pos;
+        QSizeF size;
+        QPoint offset;
+    };
+
+    ImagesetDeleteCommand(ImagesetVisualMode& visualMode, std::vector<Record>&& imageRecords);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return ImagesetUndoCommandBase + 7; }
+
+protected:
+
+    ImagesetVisualMode& _visualMode;
+    std::vector<Record> _imageRecords;
+};
+
+// Changes name of the imageset
+class ImagesetRenameCommand : public QUndoCommand
+{
+public:
+
+    ImagesetRenameCommand(ImagesetVisualMode& visualMode, const QString& oldName, const QString& newName);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return ImagesetUndoCommandBase + 8; }
+    virtual bool mergeWith(const QUndoCommand* other) override;
+
+protected:
+
+    ImagesetVisualMode& _visualMode;
+    QString _oldName;
+    QString _newName;
+};
+
 #endif // IMAGESETUNDOCOMMANDS_H

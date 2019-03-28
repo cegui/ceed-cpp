@@ -23,6 +23,7 @@ public:
     void saveToElement(QDomElement& xml);
 
     QString name() const { return _name; }
+    void setName(const QString& newName) { _name = newName; }
     QString getAutoScaled() const { return autoScaled; }
     int getNativeHorzRes() const { return nativeHorzRes; }
     int getNativeVertRes() const { return nativeVertRes; }
