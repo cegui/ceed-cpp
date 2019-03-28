@@ -128,6 +128,37 @@ void ImagesetVisualMode::refreshSceneRect()
     scene()->setSceneRect(boundingRect);
 }
 
+// Centre position is the position of the centre of the newly created image,
+// the newly created image will then 'encapsulate' the centrepoint
+void ImagesetVisualMode::createImageEntry(QPointF pos)
+{
+    // Find an unique image name
+    QString name = "NewImage";
+    int index = 1;
+
+    while (true)
+    {
+        ImageEntry* imageEntry = imagesetEntry->getImageEntry(name);
+        if (!imageEntry) break;
+        name = QString("NewImage_%i").arg(index++);
+    }
+
+    constexpr qreal halfSize = 25.0;
+
+/*
+    xpos = centrePositionX - halfSize
+    ypos = centrePositionY - halfSize
+    width = 2 * halfSize
+    height = 2 * halfSize
+    xoffset = 0
+    yoffset = 0
+
+    cmd = undo.CreateCommand(self, name, xpos, ypos, width, height, xoffset, yoffset)
+    self.tabbedEditor.undoStack.push(cmd)
+*/
+    _editor.getUndoStack()->push(new ImagesetCreateCommand(*this, name, imgPos, imgSize, imgOffset));
+}
+
 bool ImagesetVisualMode::moveImageEntries(const std::vector<ImageEntry*>& imageEntries, QPointF delta)
 {
     if (imageEntries.empty() || delta.manhattanLength() <= 0.0) return false;
@@ -172,23 +203,19 @@ bool ImagesetVisualMode::resizeImageEntries(const std::vector<ImageEntry*>& imag
 bool ImagesetVisualMode::deleteImageEntries(const std::vector<ImageEntry*>& imageEntries)
 {
     if (imageEntries.empty()) return false;
-/*
-            oldNames = []
 
-            oldPositions = {}
-            oldRects = {}
-            oldOffsets = {}
+    std::vector<ImagesetDeleteCommand::Record> undo;
+    for (ImageEntry* imageEntry : imageEntries)
+    {
+        ImagesetDeleteCommand::Record rec;
+        rec.name = imageEntry->name();
+        rec.pos = imageEntry->pos();
+        rec.size = imageEntry->rect().size();
+        rec.offset = QPoint(imageEntry->offsetX(), imageEntry->offsetY());
+        undo.push_back(std::move(rec));
+    }
 
-            for imageEntry in imageEntries:
-                oldNames.append(imageEntry.name)
-
-                oldPositions[imageEntry.name] = imageEntry.pos()
-                oldRects[imageEntry.name] = imageEntry.rect()
-                oldOffsets[imageEntry.name] = imageEntry.offset.pos()
-
-            cmd = undo.DeleteCommand(self, oldNames, oldPositions, oldRects, oldOffsets)
-            self.tabbedEditor.undoStack.push(cmd)
-*/
+    _editor.getUndoStack()->push(new ImagesetDeleteCommand(*this, std::move(undo)));
     return true;
 }
 
@@ -276,38 +303,6 @@ void ImagesetVisualMode::slot_selectionChanged()
         editorMenu.addAction(self.focusImageListFilterBoxAction)
 
     def createImage(self, centrePositionX, centrePositionY):
-        """Centre position is the position of the centre of the newly created image,
-        the newly created image will then 'encapsulate' the centrepoint
-        """
-
-        // find a unique image name
-        name = "NewImage"
-        index = 1
-
-        while True:
-            found = False
-            for imageEntry in self.imagesetEntry.imageEntries:
-                if imageEntry.name == name:
-                    found = True
-                    break
-
-            if found:
-                name = "NewImage_%i" % (index)
-                index += 1
-            else:
-                break
-
-        halfSize = 25
-
-        xpos = centrePositionX - halfSize
-        ypos = centrePositionY - halfSize
-        width = 2 * halfSize
-        height = 2 * halfSize
-        xoffset = 0
-        yoffset = 0
-
-        cmd = undo.CreateCommand(self, name, xpos, ypos, width, height, xoffset, yoffset)
-        self.tabbedEditor.undoStack.push(cmd)
 
     def createImageAtCursor(self):
         assert(self.lastMousePosition is not None)

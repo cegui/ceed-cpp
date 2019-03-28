@@ -85,7 +85,7 @@ ImageEntry* ImagesetEntry::getImageEntry(const QString& name) const
         return ent->name() == name;
     });
 
-    assert(it != imageEntries.end());
+    //assert(it != imageEntries.end());
     return (it != imageEntries.end()) ? (*it) : nullptr;
 }
 

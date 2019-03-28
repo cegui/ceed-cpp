@@ -26,6 +26,7 @@ void ImagesetMoveCommand::undo()
     for (const auto& rec : _imageRecords)
     {
         auto image = _visualMode.getImagesetEntry()->getImageEntry(rec.name);
+        assert(image);
         image->setPos(rec.oldPos);
         image->updateDockWidget();
     }
@@ -36,6 +37,7 @@ void ImagesetMoveCommand::redo()
     for (const auto& rec : _imageRecords)
     {
         auto image = _visualMode.getImagesetEntry()->getImageEntry(rec.name);
+        assert(image);
         image->setPos(rec.newPos);
         image->updateDockWidget();
     }
@@ -115,6 +117,7 @@ void ImagesetGeometryChangeCommand::undo()
     for (const auto& rec : _imageRecords)
     {
         auto image = _visualMode.getImagesetEntry()->getImageEntry(rec.name);
+        assert(image);
         image->setPos(rec.oldPos);
         image->setRect(rec.oldRect);
         image->updateDockWidget();
@@ -126,6 +129,7 @@ void ImagesetGeometryChangeCommand::redo()
     for (const auto& rec : _imageRecords)
     {
         auto image = _visualMode.getImagesetEntry()->getImageEntry(rec.name);
+        assert(image);
         image->setPos(rec.newPos);
         image->setRect(rec.newRect);
         image->updateDockWidget();
@@ -208,6 +212,7 @@ void ImagesetOffsetMoveCommand::undo()
     for (const auto& rec : _imageRecords)
     {
         auto image = _visualMode.getImagesetEntry()->getImageEntry(rec.name);
+        assert(image);
         image->getOffsetMark()->setPos(rec.oldPos);
     }
 }
@@ -217,6 +222,7 @@ void ImagesetOffsetMoveCommand::redo()
     for (const auto& rec : _imageRecords)
     {
         auto image = _visualMode.getImagesetEntry()->getImageEntry(rec.name);
+        assert(image);
         image->getOffsetMark()->setPos(rec.newPos);
     }
 
@@ -282,6 +288,7 @@ void ImageRenameCommand::undo()
 {
     QUndoCommand::undo();
     auto image = _visualMode.getImagesetEntry()->getImageEntry(_newName);
+    assert(image);
     image->setName(_oldName);
     image->updateListItem();
 }
@@ -289,6 +296,7 @@ void ImageRenameCommand::undo()
 void ImageRenameCommand::redo()
 {
     auto image = _visualMode.getImagesetEntry()->getImageEntry(_oldName);
+    assert(image);
     image->setName(_newName);
     image->updateListItem();
     QUndoCommand::redo();
@@ -322,6 +330,7 @@ void ImagePropertyEditCommand::undo()
 {
     QUndoCommand::undo();
     auto image = _visualMode.getImagesetEntry()->getImageEntry(_imageName);
+    assert(image);
     image->setProperty(_propertyName, _oldValue);
     image->updateDockWidget();
 }
@@ -329,6 +338,7 @@ void ImagePropertyEditCommand::undo()
 void ImagePropertyEditCommand::redo()
 {
     auto image = _visualMode.getImagesetEntry()->getImageEntry(_imageName);
+    assert(image);
     image->setProperty(_propertyName, _newValue);
     image->updateDockWidget();
     QUndoCommand::redo();
