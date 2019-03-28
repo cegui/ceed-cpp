@@ -21,12 +21,14 @@ public:
 
     void loadFromElement(const QDomElement& xml);
     void saveToElement(QDomElement& xml);
+    void loadImage(const QString& relPath);
 
     QString name() const { return _name; }
     void setName(const QString& newName) { _name = newName; }
     QString getAutoScaled() const { return autoScaled; }
     int getNativeHorzRes() const { return nativeHorzRes; }
     int getNativeVertRes() const { return nativeVertRes; }
+    void setNativeRes(int horz, int vert) { nativeHorzRes = horz; nativeVertRes = vert; }
 
     ImageEntry* createImageEntry();
     ImageEntry* getImageEntry(const QString& name) const;
@@ -44,8 +46,6 @@ protected:// slots:
     void onImageChangedByExternalProgram();
 
 protected:
-
-    void loadImage(const QString& relPath);
 
     ImagesetVisualMode& _visualMode;
 

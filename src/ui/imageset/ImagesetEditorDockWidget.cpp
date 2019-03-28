@@ -77,11 +77,6 @@ ImagesetEditorDockWidget::~ImagesetEditorDockWidget()
     delete ui;
 }
 
-void ImagesetEditorDockWidget::onImagesetNameChanged()
-{
-    ui->name->setText(imagesetEntry ? imagesetEntry->name() : "");
-}
-
 // Active image entry is the image entry that is selected when there are no
 // other image entries selected. It's properties show in the property box.
 // NB: Imageset editing doesn't allow multi selection property editing because IMO it doesn't make much sense.
@@ -117,6 +112,17 @@ void ImagesetEditorDockWidget::refreshActiveImageEntry()
     ui->nativeVertResPerImage->setText(activeImageEntry ? QString::number(activeImageEntry->getNativeVertRes()) : "");
 }
 
+void ImagesetEditorDockWidget::refreshImagesetInfo()
+{
+    if (!imagesetEntry) return;
+
+    ui->name->setText(imagesetEntry->name());
+    ui->image->setText(imagesetEntry->getAbsoluteImageFile());
+    ui->autoScaled->setCurrentIndex(ui->autoScaled->findText(imagesetEntry->getAutoScaled()));
+    ui->nativeHorzRes->setText(QString::number(imagesetEntry->getNativeHorzRes()));
+    ui->nativeVertRes->setText(QString::number(imagesetEntry->getNativeVertRes()));
+}
+
 // Refreshes the whole list
 // Note: User potentially loses selection when this is called!
 void ImagesetEditorDockWidget::refresh()
@@ -135,11 +141,7 @@ void ImagesetEditorDockWidget::refresh()
 
     assert(imagesetEntry);
 
-    ui->name->setText(imagesetEntry->name());
-    ui->image->setText(imagesetEntry->getAbsoluteImageFile());
-    ui->autoScaled->setCurrentIndex(ui->autoScaled->findText(imagesetEntry->getAutoScaled()));
-    ui->nativeHorzRes->setText(QString::number(imagesetEntry->getNativeHorzRes()));
-    ui->nativeVertRes->setText(QString::number(imagesetEntry->getNativeVertRes()));
+    refreshImagesetInfo();
 
     for (ImageEntry* imageEntry : imagesetEntry->getImageEntries())
     {

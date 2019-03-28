@@ -207,4 +207,42 @@ protected:
     QString _newName;
 };
 
+// Changes the underlying image of the imageset
+class ImagesetChangeImageCommand : public QUndoCommand
+{
+public:
+
+    ImagesetChangeImageCommand(ImagesetVisualMode& visualMode, const QString& oldName, const QString& newName);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return ImagesetUndoCommandBase + 9; }
+    virtual bool mergeWith(const QUndoCommand* other) override;
+
+protected:
+
+    ImagesetVisualMode& _visualMode;
+    QString _oldName;
+    QString _newName;
+};
+
+// Changes native resolution of the imageset
+class ImagesetChangeNativeResolutionCommand : public QUndoCommand
+{
+public:
+
+    ImagesetChangeNativeResolutionCommand(ImagesetVisualMode& visualMode, QPoint oldResolution, QPoint newResolution);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return ImagesetUndoCommandBase + 10; }
+    virtual bool mergeWith(const QUndoCommand* other) override;
+
+protected:
+
+    ImagesetVisualMode& _visualMode;
+    QPoint _oldResolution;
+    QPoint _newResolution;
+};
+
 #endif // IMAGESETUNDOCOMMANDS_H
