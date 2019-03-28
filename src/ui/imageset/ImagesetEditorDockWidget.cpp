@@ -247,25 +247,22 @@ void ImagesetEditorDockWidget::on_autoScaled_currentIndexChanged(int index)
 void ImagesetEditorDockWidget::on_autoScaledPerImage_currentIndexChanged(int index)
 {
     // First is the "default" / inheriting state
-    QString text = (index == 0) ? "" : ui->autoScaledPerImage->currentText();
+    const QString text = (index == 0) ? "" : ui->autoScaledPerImage->currentText();
     onStringPropertyChanged("autoScaled", text);
 }
 
 void ImagesetEditorDockWidget::on_filterBox_textChanged(const QString& arg1)
 {
     // We append star at the beginning and at the end by default (makes property filtering much more practical)
-    QString filter = "*" + arg1 + "*";
-/*
-        regex = re.compile(fnmatch.translate(filter), re.IGNORECASE)
+    const QString pattern = QRegularExpression::wildcardToRegularExpression("*" + arg1 + "*");
+    QRegularExpression regex(pattern, QRegularExpression::CaseInsensitiveOption);
 
-        i = 0
-        while i < self.list.count():
-            listItem = self.list.item(i)
-            match = re.match(regex, listItem.text()) is not None
-            listItem.setHidden(not match)
-
-            i += 1
-*/
+    for (int i = 0; i < ui->list->count(); ++i)
+    {
+        auto listItem = ui->list->item(i);
+        auto matchResult = regex.match(listItem->text());
+        listItem->setHidden(!matchResult.hasMatch());
+    }
 }
 
 void ImagesetEditorDockWidget::on_list_itemChanged(QListWidgetItem* item)
