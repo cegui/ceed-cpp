@@ -279,7 +279,7 @@ void ImagesetEditorDockWidget::on_filterBox_textChanged(const QString& arg1)
 
 void ImagesetEditorDockWidget::on_list_itemChanged(QListWidgetItem* item)
 {
-    auto oldName = item->data(Qt::UserRole + 1).value<ImageEntry*>()->name();
+    auto oldName = item->data(Qt::UserRole + 2).value<ImageEntry*>()->name();
     auto newName = item->text();
 
     // Most likely caused by RenameCommand doing it's work or is bogus anyways
@@ -291,7 +291,7 @@ void ImagesetEditorDockWidget::on_list_itemChanged(QListWidgetItem* item)
 void ImagesetEditorDockWidget::on_list_itemSelectionChanged()
 {
     auto imageEntryNames = ui->list->selectedItems();
-    setActiveImageEntry(imageEntryNames.empty() ? nullptr : imageEntryNames[0]->data(Qt::UserRole + 1).value<ImageEntry*>());
+    setActiveImageEntry(imageEntryNames.empty() ? nullptr : imageEntryNames[0]->data(Qt::UserRole + 2).value<ImageEntry*>());
 
     // We are getting synchronised with the visual editing pane, do not interfere
     if (selectionSynchronizationUnderway) return;
@@ -303,13 +303,13 @@ void ImagesetEditorDockWidget::on_list_itemSelectionChanged()
     auto imageEntryItems = ui->list->selectedItems();
     for (auto&& imageEntryItem : imageEntryItems)
     {
-        auto imageEntry = imageEntryItem->data(Qt::UserRole + 1).value<ImageEntry*>();
+        auto imageEntry = imageEntryItem->data(Qt::UserRole + 2).value<ImageEntry*>();
         imageEntry->setSelected(true);
     }
 
     if (imageEntryItems.size() == 1)
     {
-        auto imageEntry = imageEntryItems[0]->data(Qt::UserRole + 1).value<ImageEntry*>();
+        auto imageEntry = imageEntryItems[0]->data(Qt::UserRole + 2).value<ImageEntry*>();
         _visualMode.centerOn(imageEntry);
     }
 

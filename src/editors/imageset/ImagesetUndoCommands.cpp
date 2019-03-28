@@ -3,6 +3,7 @@
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/imageset/ImageEntry.h"
 #include "src/ui/imageset/ImageOffsetMark.h"
+#include "src/ui/imageset/ImagesetEditorDockWidget.h"
 
 ImagesetMoveCommand::ImagesetMoveCommand(ImagesetVisualMode& visualMode, std::vector<Record>&& imageRecords)
     : _visualMode(visualMode)
@@ -348,59 +349,38 @@ bool ImagePropertyEditCommand::mergeWith(const QUndoCommand* other)
     return false;
 }
 
+//---------------------------------------------------------------------
+
+ImagesetCreateCommand::ImagesetCreateCommand(ImagesetVisualMode& visualMode, const QString& name, QPointF pos, QSizeF size, QPoint offset)
+    : _visualMode(visualMode)
+    , _name(name)
+    , _pos(pos)
+    , _size(size)
+    , _offset(offset)
+{
+    setText(QString("Create '%1'").arg(_name));
+}
+
+void ImagesetCreateCommand::undo()
+{
+    QUndoCommand::undo();
+    _visualMode.getImagesetEntry()->removeImageEntry(_name);
+    _visualMode.getDockWidget()->refresh();
+}
+
+void ImagesetCreateCommand::redo()
+{
+    auto image = _visualMode.getImagesetEntry()->createImageEntry();
+    image->setName(_name);
+    image->setPos(_pos);
+    image->setRect(0.0, 0.0, _size.width(), _size.height());
+    image->setOffsetX(_offset.x());
+    image->setOffsetY(_offset.y());
+    _visualMode.getDockWidget()->refresh();
+    QUndoCommand::redo();
+}
+
 /*
-class CreateCommand(commands.UndoCommand):
-    """Creates one image with given parameters
-    """
-
-    def __init__(self, visual, name, xpos, ypos, width, height, xoffset, yoffset):
-        super(CreateCommand, self).__init__()
-
-        self.visual = visual
-
-        self.name = name
-
-        self.xpos = xpos
-        self.ypos = ypos
-        self.width = width
-        self.height = height
-        self.xoffset = xoffset
-        self.yoffset = yoffset
-
-        self.setText("Create '%s'" % (self.name))
-
-    def id(self):
-        return idbase + 6
-
-    def undo(self):
-        super(CreateCommand, self).undo()
-
-        image = self.visual.imagesetEntry.getImageEntry(self.name)
-        self.visual.imagesetEntry.imageEntries.remove(image)
-
-        image.listItem.imageEntry = None
-        image.listItem = None
-
-        image.setParentItem(None)
-        self.visual.scene().removeItem(image)
-
-        self.visual.dockWidget.refresh()
-
-    def redo(self):
-        image = elements.ImageEntry(self.visual.imagesetEntry)
-        self.visual.imagesetEntry.imageEntries.append(image)
-
-        image.name = self.name
-        image.xpos = self.xpos
-        image.ypos = self.ypos
-        image.width = self.width
-        image.height = self.height
-        image.xoffset = self.xoffset
-        image.yoffset = self.yoffset
-        self.visual.dockWidget.refresh()
-
-        super(CreateCommand, self).redo()
-
 class DeleteCommand(commands.UndoCommand):
     """Deletes given image entries
     """

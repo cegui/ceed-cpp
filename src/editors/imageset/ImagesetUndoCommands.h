@@ -143,4 +143,24 @@ protected:
     QVariant _newValue;
 };
 
+// Creates one image with given parameters
+class ImagesetCreateCommand : public QUndoCommand
+{
+public:
+
+    ImagesetCreateCommand(ImagesetVisualMode& visualMode, const QString& name, QPointF pos, QSizeF size, QPoint offset);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return ImagesetUndoCommandBase + 6; }
+
+protected:
+
+    ImagesetVisualMode& _visualMode;
+    QString _name;
+    QPointF _pos;
+    QSizeF _size;
+    QPoint _offset;
+};
+
 #endif // IMAGESETUNDOCOMMANDS_H

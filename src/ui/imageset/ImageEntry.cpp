@@ -27,6 +27,16 @@ ImageEntry::ImageEntry(QGraphicsItem* parent)
     offset = new ImageOffsetMark(this);
 }
 
+ImageEntry::~ImageEntry()
+{
+    if (listItem)
+    {
+        listItem->setData(Qt::UserRole + 2, QVariant());
+        listItem = nullptr;
+        //???or delete list item?
+    }
+}
+
 // We simply round the rectangle because we only support "full" pixels
 // NOTE: Imageset as such might support floating point pixels but it's never what you really want, image quality deteriorates a lot
 QRectF ImageEntry::constrainResizeRect(QRectF rect, QRectF oldRect)

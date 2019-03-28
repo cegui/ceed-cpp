@@ -71,6 +71,13 @@ void ImagesetEntry::saveToElement(QDomElement& xml)
     }
 }
 
+ImageEntry*ImagesetEntry::createImageEntry()
+{
+    ImageEntry* image = new ImageEntry(this);
+    imageEntries.push_back(image);
+    return image;
+}
+
 ImageEntry* ImagesetEntry::getImageEntry(const QString& name) const
 {
     auto it = std::find_if(imageEntries.begin(), imageEntries.end(), [&name](ImageEntry* ent)
@@ -80,6 +87,25 @@ ImageEntry* ImagesetEntry::getImageEntry(const QString& name) const
 
     assert(it != imageEntries.end());
     return (it != imageEntries.end()) ? (*it) : nullptr;
+}
+
+void ImagesetEntry::removeImageEntry(const QString& name)
+{
+    auto it = std::find_if(imageEntries.begin(), imageEntries.end(), [&name](ImageEntry* ent)
+    {
+        return ent->name() == name;
+    });
+
+    if (it == imageEntries.end()) return;
+
+    assert(false && "TODO: test deletion, image entry destructor must be called!");
+
+    ImageEntry* image = (*it);
+
+    imageEntries.erase(it);
+
+    image->setParentItem(nullptr);
+    _visualMode.scene()->removeItem(image);
 }
 
 //Returns an absolute (OS specific!) path of the underlying image

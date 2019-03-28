@@ -27,7 +27,9 @@ public:
     int getNativeHorzRes() const { return nativeHorzRes; }
     int getNativeVertRes() const { return nativeVertRes; }
 
+    ImageEntry* createImageEntry();
     ImageEntry* getImageEntry(const QString& name) const;
+    void removeImageEntry(const QString& name);
     const std::vector<ImageEntry*>& getImageEntries() const { return imageEntries; }
 
     bool showOffsets() const { return _showOffsets; }
