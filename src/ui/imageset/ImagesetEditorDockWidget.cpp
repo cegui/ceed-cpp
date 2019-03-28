@@ -175,23 +175,25 @@ void ImagesetEditorDockWidget::focusImageListFilterBox()
 
 void ImagesetEditorDockWidget::onNativeResolutionEdited()
 {
-/*
-        oldHorzRes = self.imagesetEntry.nativeHorzRes
-        oldVertRes = self.imagesetEntry.nativeVertRes
+    auto oldHorzRes = imagesetEntry->getNativeHorzRes();
+    auto oldVertRes = imagesetEntry->getNativeVertRes();
 
-        try:
-            newHorzRes = int(self.nativeHorzRes.text())
-            newVertRes = int(self.nativeVertRes.text())
+    auto newHorzResStr = ui->nativeHorzRes->text();
+    auto newVertResStr = ui->nativeVertRes->text();
+    if (newHorzResStr.isEmpty()) newHorzResStr = "0";
+    if (newVertResStr.isEmpty()) newVertResStr = "0";
 
-        except ValueError:
-            return
+    bool ok = false;
+    auto newHorzRes = newHorzResStr.toInt(&ok);
+    if (!ok) return;
+    auto newVertRes = newVertResStr.toInt(&ok);
+    if (!ok) return;
 
-        if oldHorzRes == newHorzRes and oldVertRes == newVertRes:
-            return
+    if (oldHorzRes == newHorzRes && oldVertRes == newVertRes) return;
 
-        cmd = undo.ImagesetChangeNativeResolutionCommand(self.visual, oldHorzRes, oldVertRes, newHorzRes, newVertRes)
-        self.visual.tabbedEditor.undoStack.push(cmd)
-*/
+    _visualMode.getEditor().getUndoStack()->push(new ImagesetChangeNativeResolutionCommand(_visualMode,
+                                                                              QPoint(oldHorzRes, oldVertRes),
+                                                                              QPoint(newHorzRes, newVertRes)));
 }
 
 void ImagesetEditorDockWidget::onNativeResolutionPerImageEdited()
@@ -220,44 +222,26 @@ void ImagesetEditorDockWidget::onNativeResolutionPerImageEdited()
 
 void ImagesetEditorDockWidget::on_name_textEdited(const QString& arg1)
 {
-/*
-        oldName = self.imagesetEntry.name
-        newName = self.name.text()
-
-        if oldName == newName:
-            return
-
-        cmd = undo.ImagesetRenameCommand(self.visual, oldName, newName)
-        self.visual.tabbedEditor.undoStack.push(cmd)
-*/
+    auto oldName = imagesetEntry->name();
+    auto newName = ui->name->text();
+    if (oldName == newName) return;
+    _visualMode.getEditor().getUndoStack()->push(new ImagesetRenameCommand(_visualMode, oldName, newName));
 }
 
 void ImagesetEditorDockWidget::on_imageLoad_clicked()
 {
-/*
-        oldImageFile = self.imagesetEntry.imageFile
-        newImageFile = self.imagesetEntry.convertToRelativeImageFile(self.image.text())
-
-        if oldImageFile == newImageFile:
-            return
-
-        cmd = undo.ImagesetChangeImageCommand(self.visual, oldImageFile, newImageFile)
-        self.visual.tabbedEditor.undoStack.push(cmd)
-*/
+    auto oldName = imagesetEntry->getImageFile();
+    auto newName = imagesetEntry->convertToRelativeImageFile(ui->image->text());
+    if (oldName == newName) return;
+    _visualMode.getEditor().getUndoStack()->push(new ImagesetChangeImageCommand(_visualMode, oldName, newName));
 }
 
 void ImagesetEditorDockWidget::on_autoScaled_currentIndexChanged(int index)
 {
-/*
-        oldAutoScaled = self.imagesetEntry.autoScaled
-        newAutoScaled = self.autoScaled.currentText()
-
-        if oldAutoScaled == newAutoScaled:
-            return
-
-        cmd = undo.ImagesetChangeAutoScaledCommand(self.visual, oldAutoScaled, newAutoScaled)
-        self.visual.tabbedEditor.undoStack.push(cmd)
-*/
+    auto oldAutoScaled = imagesetEntry->getAutoScaled();
+    auto newAutoScaled = ui->autoScaled->currentText();
+    if (oldAutoScaled == newAutoScaled) return;
+    _visualMode.getEditor().getUndoStack()->push(new ImagesetChangeAutoScaledCommand(_visualMode, oldAutoScaled, newAutoScaled));
 }
 
 void ImagesetEditorDockWidget::on_autoScaledPerImage_currentIndexChanged(int index)

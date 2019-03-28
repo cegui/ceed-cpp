@@ -39,6 +39,7 @@ public:
     bool showOffsets() const { return _showOffsets; }
     void setShowOffsets(bool value) { _showOffsets = value; }
 
+    const QString& getImageFile() const { return imageFile; }
     QString getAbsoluteImageFile() const;
     QString convertToRelativeImageFile(const QString& absPath) const;
 
