@@ -1,5 +1,5 @@
 #include "src/util/ActionCategory.h"
-#include "src/util/Action.h"
+#include "src/util/ConfigurableAction.h"
 
 ActionCategory::ActionCategory(const QString& name, const QString& label)
     : _name(name)

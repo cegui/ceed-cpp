@@ -66,7 +66,6 @@ SOURCES += \
     src/editors/MultiModeEditor.cpp \
     src/editors/CodeEditMode.cpp \
     src/util/ActionManager.cpp \
-    src/util/Action.cpp \
     src/util/ActionCategory.cpp \
     src/editors/layout/LayoutEditor.cpp \
     src/editors/imageset/ImagesetEditor.cpp \
@@ -84,7 +83,8 @@ SOURCES += \
     src/ui/ResizableRectItem.cpp \
     src/ui/ResizingHandle.cpp \
     src/editors/imageset/ImagesetUndoCommands.cpp \
-    src/ui/widgets/LineEditWithClearButton.cpp
+    src/ui/widgets/LineEditWithClearButton.cpp \
+    src/util/ConfigurableAction.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -125,7 +125,6 @@ HEADERS += \
     src/editors/MultiModeEditor.h \
     src/editors/CodeEditMode.h \
     src/util/ActionManager.h \
-    src/util/Action.h \
     src/util/ActionCategory.h \
     src/editors/layout/LayoutEditor.h \
     src/editors/imageset/ImagesetEditor.h \
@@ -143,7 +142,8 @@ HEADERS += \
     src/ui/ResizableRectItem.h \
     src/ui/ResizingHandle.h \
     src/editors/imageset/ImagesetUndoCommands.h \
-    src/ui/widgets/LineEditWithClearButton.h
+    src/ui/widgets/LineEditWithClearButton.h \
+    src/util/ConfigurableAction.h
 
 FORMS += \
     ui/MainWindow.ui \
