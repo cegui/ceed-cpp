@@ -6,17 +6,19 @@
 #include "src/ui/imageset/ImagesetEditorDockWidget.h"
 #include "src/Application.h"
 #include "qopenglwidget.h"
+#include "qclipboard.h"
+#include "qmimedata.h"
+#include "qevent.h"
 #include "qdom.h"
+
+constexpr qreal newImageHalfSize = 25.0;
 
 ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
     : IEditMode(editor)
+    , lastCursorPosition(newImageHalfSize, newImageHalfSize)
 {
     wheelZoomEnabled = true;
     middleButtonDragScrollEnabled = true;
-
-    // Reset to unreachable value
-    lastMousePosition.setX(-10000);
-    lastMousePosition.setY(-10000);
 
     setScene(new QGraphicsScene());
 
@@ -143,19 +145,9 @@ void ImagesetVisualMode::createImageEntry(QPointF pos)
         name = QString("NewImage_%i").arg(index++);
     }
 
-    constexpr qreal halfSize = 25.0;
-
-/*
-    xpos = centrePositionX - halfSize
-    ypos = centrePositionY - halfSize
-    width = 2 * halfSize
-    height = 2 * halfSize
-    xoffset = 0
-    yoffset = 0
-
-    cmd = undo.CreateCommand(self, name, xpos, ypos, width, height, xoffset, yoffset)
-    self.tabbedEditor.undoStack.push(cmd)
-*/
+    QPointF imgPos = pos - QPointF(newImageHalfSize, newImageHalfSize);
+    QSizeF imgSize(2.0 * newImageHalfSize, 2.0 * newImageHalfSize);
+    QPoint imgOffset(0, 0);
     _editor.getUndoStack()->push(new ImagesetCreateCommand(*this, name, imgPos, imgSize, imgOffset));
 }
 
@@ -233,6 +225,127 @@ bool ImagesetVisualMode::deleteSelectedImageEntries()
     return deleteImageEntries(imageEntries);
 }
 
+bool ImagesetVisualMode::duplicateImageEntries(const std::vector<ImageEntry*>& imageEntries)
+{
+    if (imageEntries.empty()) return false;
+
+    std::vector<ImagesetDuplicateCommand::Record> undo;
+    for (ImageEntry* imageEntry : imageEntries)
+    {
+        ImagesetDuplicateCommand::Record rec;
+        rec.name = getNewImageName(imageEntry->name());
+        rec.pos = imageEntry->pos();
+        rec.size = imageEntry->rect().size();
+        rec.offset = QPoint(imageEntry->offsetX(), imageEntry->offsetY());
+        undo.push_back(std::move(rec));
+    }
+
+    _editor.getUndoStack()->push(new ImagesetDuplicateCommand(*this, std::move(undo)));
+    return true;
+}
+
+bool ImagesetVisualMode::duplicateSelectedImageEntries()
+{
+    auto selection = scene()->selectedItems();
+
+    std::vector<ImageEntry*> imageEntries;
+    for (QGraphicsItem* item : selection)
+    {
+        auto entry = dynamic_cast<ImageEntry*>(item);
+        if (entry) imageEntries.push_back(entry);
+    }
+
+    return duplicateImageEntries(imageEntries);
+}
+
+bool ImagesetVisualMode::cut()
+{
+    if (!copy()) return false;
+    deleteSelectedImageEntries();
+    return true;
+}
+
+bool ImagesetVisualMode::copy()
+{
+    auto selection = scene()->selectedItems();
+
+    QByteArray bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    for (QGraphicsItem* item : selection)
+    {
+        auto entry = dynamic_cast<ImageEntry*>(item);
+        if (!entry) continue;
+
+        stream << entry->name();
+        stream << entry->pos();
+        stream << entry->rect();
+        stream << QPoint(entry->offsetX(), entry->offsetY());
+    }
+
+    if (!bytes.size()) return false;
+
+    QMimeData* mimeData = new QMimeData;
+    mimeData->setData("application/x-ceed-imageset-image-list", bytes);
+    QApplication::clipboard()->setMimeData(mimeData);
+    return true;
+}
+
+bool ImagesetVisualMode::paste()
+{
+    const QMimeData* mimeData = QApplication::clipboard()->mimeData();
+    if (!mimeData->hasFormat("application/x-ceed-imageset-image-list")) return false;
+
+    std::vector<ImagesetPasteCommand::Record> undo;
+    std::vector<QString> newNames;
+
+    QByteArray bytes = mimeData->data("application/x-ceed-imageset-image-list");
+    QDataStream stream(&bytes, QIODevice::ReadOnly);
+    while (!stream.atEnd())
+    {
+        QString name;
+        stream >> name;
+
+        ImagesetPasteCommand::Record rec;
+        rec.name = getNewImageName(name);
+
+        newNames.push_back(rec.name);
+
+        stream >> rec.pos;
+        stream >> rec.size;
+        stream >> rec.offset;
+        undo.push_back(std::move(rec));
+    }
+
+    _editor.getUndoStack()->push(new ImagesetPasteCommand(*this, std::move(undo)));
+
+    // Select just the pasted image definitions for convenience
+    scene()->clearSelection();
+    for (const auto& name : newNames)
+        imagesetEntry->getImageEntry(name)->setSelected(true);
+
+    return true;
+}
+
+// Returns an image name that is not used in this imageset
+QString ImagesetVisualMode::getNewImageName(const QString& desiredName, QString copyPrefix, QString copySuffix)
+{
+    // Try the desired name exactly
+    if (!imagesetEntry->getImageEntry(desiredName)) return desiredName;
+
+    // Try with prefix and suffix
+    QString name = copyPrefix + desiredName + copySuffix;
+    if (!imagesetEntry->getImageEntry(name)) return name;
+
+    // We're forced to append a counter, start with number 2 (_copy2, copy3, etc.)
+    int counter = 2;
+    while (true)
+    {
+        QString indexedName = name + QString::number(counter);
+        if (!imagesetEntry->getImageEntry(indexedName)) return indexedName;
+        ++counter;
+    }
+}
+
 bool ImagesetVisualMode::cycleOverlappingImages()
 {
     auto selection = scene()->selectedItems();
@@ -289,6 +402,12 @@ void ImagesetVisualMode::slot_selectionChanged()
     }
 }
 
+void ImagesetVisualMode::mouseMoveEvent(QMouseEvent* event)
+{
+    lastCursorPosition = mapToScene(event->pos());
+    ResizableGraphicsView::mouseMoveEvent(event);
+}
+
 /*
     def rebuildEditorMenu(self, editorMenu):
         """Adds actions to the editor menu"""
@@ -301,78 +420,6 @@ void ImagesetVisualMode::slot_selectionChanged()
         editorMenu.addAction(self.editOffsetsAction)
         editorMenu.addSeparator() // ---------------------------
         editorMenu.addAction(self.focusImageListFilterBoxAction)
-
-    def createImage(self, centrePositionX, centrePositionY):
-
-    def createImageAtCursor(self):
-        assert(self.lastMousePosition is not None)
-        sceneCoordinates = self.mapToScene(self.lastMousePosition)
-
-        self.createImage(int(sceneCoordinates.x()), int(sceneCoordinates.y()))
-
-    def getImageByName(self, name):
-        for imageEntry in self.imagesetEntry.imageEntries:
-            if imageEntry.name == name:
-                return imageEntry
-        return None
-
-    def getNewImageName(self, desiredName, copyPrefix = "", copySuffix = "_copy"):
-        """Returns an image name that is not used in this imageset
-
-        TODO: Can be used for the copy-paste functionality too
-        """
-
-        // Try the desired name exactly
-        if self.getImageByName(desiredName) is None:
-            return desiredName
-
-        // Try with prefix and suffix
-        desiredName = copyPrefix + desiredName + copySuffix
-        if self.getImageByName(desiredName) is None:
-            return desiredName
-
-        // We're forced to append a counter, start with number 2 (_copy2, copy3, etc.)
-        counter = 2
-        while True:
-            tmpName = desiredName + str(counter)
-            if self.getImageByName(tmpName) is None:
-                return tmpName
-            counter += 1
-
-    def duplicateImageEntries(self, imageEntries):
-        if len(imageEntries) > 0:
-            newNames = []
-
-            newPositions = {}
-            newRects = {}
-            newOffsets = {}
-
-            for imageEntry in imageEntries:
-                newName = self.getNewImageName(imageEntry.name)
-                newNames.append(newName)
-
-                newPositions[newName] = imageEntry.pos()
-                newRects[newName] = imageEntry.rect()
-                newOffsets[newName] = imageEntry.offset.pos()
-
-            cmd = undo.DuplicateCommand(self, newNames, newPositions, newRects, newOffsets)
-            self.tabbedEditor.undoStack.push(cmd)
-
-            return True
-
-        else:
-            // we didn't handle this
-            return False
-
-    def duplicateSelectedImageEntries(self):
-        selection = self.scene().selectedItems()
-
-        imageEntries = []
-        for item in selection:
-            if isinstance(item, elements.ImageEntry):
-                imageEntries.append(item)
-
-        return self.duplicateImageEntries(imageEntries)
 
     def showEvent(self, event):
         self.dockWidget.setEnabled(True)
@@ -496,11 +543,6 @@ void ImagesetVisualMode::slot_selectionChanged()
             cmd = undo.GeometryChangeCommand(self, resizeImageNames, resizeImageOldPositions, resizeImageOldRects, resizeImageNewPositions, resizeImageNewRects)
             self.tabbedEditor.undoStack.push(cmd)
 
-    def mouseMoveEvent(self, event):
-        self.lastMousePosition = event.pos()
-
-        super(VisualEditing, self).mouseMoveEvent(event)
-
     def keyReleaseEvent(self, event):
         // TODO: offset keyboard handling
 
@@ -562,76 +604,4 @@ void ImagesetVisualMode::slot_selectionChanged()
 
     def slot_customContextMenu(self, point):
         self.contextMenu.exec_(self.mapToGlobal(point))
-
-    def performCut(self):
-        if self.performCopy():
-            self.deleteSelectedImageEntries()
-            return True
-
-        return False
-
-    def performCopy(self):
-        selection = self.scene().selectedItems()
-        if len(selection) == 0:
-            return False
-
-        copyNames = []
-        copyPositions = {}
-        copyRects = {}
-        copyOffsets = {}
-        for item in selection:
-            if isinstance(item, elements.ImageEntry):
-                copyNames.append(item.name)
-                copyPositions[item.name] = item.pos()
-                copyRects    [item.name] = item.rect()
-                copyOffsets  [item.name] = item.offset.pos()
-        if len(copyNames) == 0:
-            return False
-
-        imageData = []
-        imageData.append(copyNames)
-        imageData.append(copyPositions)
-        imageData.append(copyRects)
-        imageData.append(copyOffsets)
-
-        data = QtCore.QMimeData()
-        data.setData("application/x-ceed-imageset-image-list", QtCore.QByteArray(cPickle.dumps(imageData)))
-        QtGui.QApplication.clipboard().setMimeData(data)
-
-        return True
-
-    def performPaste(self):
-        data = QtGui.QApplication.clipboard().mimeData()
-        if not data.hasFormat("application/x-ceed-imageset-image-list"):
-            return False
-
-        imageData = cPickle.loads(data.data("application/x-ceed-imageset-image-list").data())
-        if len(imageData) != 4:
-            return False
-
-        newNames = []
-        newPositions = {}
-        newRects = {}
-        newOffsets = {}
-        for copyName in imageData[0]:
-            newName = self.getNewImageName(copyName)
-            newNames.append(newName)
-            newPositions[newName] = imageData[1][copyName]
-            newRects    [newName] = imageData[2][copyName]
-            newOffsets  [newName] = imageData[3][copyName]
-        if len(newNames) == 0:
-            return False
-
-        cmd = undo.PasteCommand(self, newNames, newPositions, newRects, newOffsets)
-        self.tabbedEditor.undoStack.push(cmd)
-
-        // select just the pasted image definitions for convenience
-        self.scene().clearSelection()
-        for name in newNames:
-            self.imagesetEntry.getImageEntry(name).setSelected(True)
-
-        return True
-
-    def performDelete(self):
-        return self.deleteSelectedImageEntries()
 */

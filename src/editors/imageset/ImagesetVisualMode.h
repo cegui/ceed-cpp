@@ -22,10 +22,17 @@ public:
     void refreshSceneRect();
 
     void createImageEntry(QPointF pos);
+    void createImageEntryAtCursor() { createImageEntry(lastCursorPosition); }
     bool moveImageEntries(const std::vector<ImageEntry*>& imageEntries, QPointF delta);
     bool resizeImageEntries(const std::vector<ImageEntry*>& imageEntries, QPointF topLeftDelta, QPointF bottomRightDelta);
     bool deleteImageEntries(const std::vector<ImageEntry*>& imageEntries);
     bool deleteSelectedImageEntries();
+    bool duplicateImageEntries(const std::vector<ImageEntry*>& imageEntries);
+    bool duplicateSelectedImageEntries();
+
+    bool cut();
+    bool copy();
+    bool paste();
 
     ImagesetEntry* getImagesetEntry() const { return imagesetEntry; }
     ImagesetEditorDockWidget* getDockWidget() const { return dockWidget; }
@@ -37,9 +44,12 @@ protected slots:
 
 protected:
 
-    void setupActions();
+    virtual void mouseMoveEvent(QMouseEvent* event) override;
 
-    QPoint lastMousePosition;
+    void setupActions();
+    QString getNewImageName(const QString& desiredName, QString copyPrefix = "", QString copySuffix = "_copy");
+
+    QPointF lastCursorPosition;
     ImagesetEntry* imagesetEntry = nullptr;
     ImagesetEditorDockWidget* dockWidget = nullptr;
 };
