@@ -10,6 +10,8 @@ class ImageEntry;
 class ImagesetEntry;
 class ImagesetEditorDockWidget;
 class QDomElement;
+class QMenu;
+class QToolBar;
 
 class ImagesetVisualMode : public ResizableGraphicsView, public IEditMode
 {
@@ -18,6 +20,7 @@ public:
     ImagesetVisualMode(MultiModeEditor& editor);
 
     void loadImagesetEntryFromElement(const QDomElement& xmlRoot);
+    void rebuildEditorMenu(QMenu* editorMenu);
 
     void refreshSceneRect();
 
@@ -41,10 +44,17 @@ protected slots:
 
     bool cycleOverlappingImages();
     void slot_selectionChanged();
+    void slot_toggleEditOffsets(bool enabled);
+    void slot_customContextMenu(QPoint point);
 
 protected:
 
+    virtual void showEvent(QShowEvent* event) override;
+    virtual void hideEvent(QHideEvent* event) override;
     virtual void mouseMoveEvent(QMouseEvent* event) override;
+    virtual void mousePressEvent(QMouseEvent* event) override;
+    virtual void mouseReleaseEvent(QMouseEvent* event) override;
+    virtual void keyReleaseEvent(QKeyEvent* event) override;
 
     void setupActions();
     QString getNewImageName(const QString& desiredName, QString copyPrefix = "", QString copySuffix = "_copy");
@@ -52,6 +62,8 @@ protected:
     QPointF lastCursorPosition;
     ImagesetEntry* imagesetEntry = nullptr;
     ImagesetEditorDockWidget* dockWidget = nullptr;
+    QMenu* menu = nullptr;
+    QToolBar* toolBar = nullptr;
 };
 
 #endif // IMAGESETVISUALMODE_H

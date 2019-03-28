@@ -4,11 +4,14 @@
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/imageset/ImageEntry.h"
 #include "src/ui/imageset/ImagesetEditorDockWidget.h"
+#include "src/ui/ResizingHandle.h"
 #include "src/Application.h"
 #include "qopenglwidget.h"
 #include "qclipboard.h"
 #include "qmimedata.h"
+#include "qtoolbar.h"
 #include "qevent.h"
+#include "qmenu.h"
 #include "qdom.h"
 
 constexpr qreal newImageHalfSize = 25.0;
@@ -118,6 +121,21 @@ void ImagesetVisualMode::loadImagesetEntryFromElement(const QDomElement& xmlRoot
 
     dockWidget->setImagesetEntry(imagesetEntry);
     dockWidget->refresh();
+}
+
+void ImagesetVisualMode::rebuildEditorMenu(QMenu* editorMenu)
+{
+/*
+    // Similar to the toolbar, includes the focus filter box action
+    editorMenu->addAction(createImageAction);
+    editorMenu->addAction(duplicateSelectedImagesAction);
+    editorMenu->addSeparator();
+    editorMenu->addAction(cycleOverlappingAction);
+    editorMenu->addSeparator();
+    editorMenu->addAction(editOffsetsAction);
+    editorMenu->addSeparator();
+    editorMenu->addAction(focusImageListFilterBoxAction);
+*/
 }
 
 void ImagesetVisualMode::refreshSceneRect()
@@ -402,28 +420,23 @@ void ImagesetVisualMode::slot_selectionChanged()
     }
 }
 
-void ImagesetVisualMode::mouseMoveEvent(QMouseEvent* event)
+void ImagesetVisualMode::slot_toggleEditOffsets(bool enabled)
 {
-    lastCursorPosition = mapToScene(event->pos());
-    ResizableGraphicsView::mouseMoveEvent(event);
+    scene()->clearSelection();
+    if (imagesetEntry) imagesetEntry->setShowOffsets(enabled);
 }
 
-/*
-    def rebuildEditorMenu(self, editorMenu):
-        """Adds actions to the editor menu"""
-        // similar to the toolbar, includes the focus filter box action
-        editorMenu.addAction(self.createImageAction)
-        editorMenu.addAction(self.duplicateSelectedImagesAction)
-        editorMenu.addSeparator() // ---------------------------
-        editorMenu.addAction(self.cycleOverlappingAction)
-        editorMenu.addSeparator() // ---------------------------
-        editorMenu.addAction(self.editOffsetsAction)
-        editorMenu.addSeparator() // ---------------------------
-        editorMenu.addAction(self.focusImageListFilterBoxAction)
+void ImagesetVisualMode::slot_customContextMenu(QPoint point)
+{
+    menu->exec(mapToGlobal(point));
+}
 
-    def showEvent(self, event):
-        self.dockWidget.setEnabled(True)
-        self.toolBar.setEnabled(True)
+void ImagesetVisualMode::showEvent(QShowEvent* event)
+{
+    dockWidget->setEnabled(true);
+    toolBar->setEnabled(true);
+/*
+        //???signal from editor to main window?
         if self.tabbedEditor.editorMenu() is not None:
             self.tabbedEditor.editorMenu().menuAction().setEnabled(True)
 
@@ -431,37 +444,59 @@ void ImagesetVisualMode::mouseMoveEvent(QMouseEvent* event)
         self.connectionGroup.connectAll()
         // call this every time the visual editing is shown to sync all entries up
         self.slot_toggleEditOffsets(self.editOffsetsAction.isChecked())
+*/
 
-        super(VisualEditing, self).showEvent(event)
+    ResizableGraphicsView::showEvent(event);
+}
 
-    def hideEvent(self, event):
+void ImagesetVisualMode::hideEvent(QHideEvent* event)
+{
+/*
         // disconnected all our actions
         self.connectionGroup.disconnectAll()
 
-        self.dockWidget.setEnabled(False)
-        self.toolBar.setEnabled(False)
+        //???signal from editor to main window?
         if self.tabbedEditor.editorMenu() is not None:
             self.tabbedEditor.editorMenu().menuAction().setEnabled(False)
+*/
+    dockWidget->setEnabled(false);
+    toolBar->setEnabled(false);
 
-        super(VisualEditing, self).hideEvent(event)
+    ResizableGraphicsView::hideEvent(event);
+}
 
-    def mousePressEvent(self, event):
-        super(VisualEditing, self).mousePressEvent(event)
+void ImagesetVisualMode::mouseMoveEvent(QMouseEvent* event)
+{
+    lastCursorPosition = mapToScene(event->pos());
+    ResizableGraphicsView::mouseMoveEvent(event);
+}
 
+void ImagesetVisualMode::mousePressEvent(QMouseEvent* event)
+{
+    ResizableGraphicsView::mousePressEvent(event);
+
+    if (event->buttons() & Qt::LeftButton)
+    {
+        for (QGraphicsItem* selectedItem : scene()->selectedItems())
+        {
+        }
+    }
+    /*
         if event.buttons() & QtCore.Qt.LeftButton:
             for selectedItem in self.scene().selectedItems():
                 // selectedItem could be ImageEntry or ImageOffset!
                 selectedItem.potentialMove = True
                 selectedItem.oldPosition = None
+    */
+}
 
-    def mouseReleaseEvent(self, event):
-        """When mouse is released, we have to check what items were moved and resized.
+// When mouse is released, we have to check what items were moved and resized.
+// AFAIK Qt doesn't give us any move finished notification so I do this manually
+void ImagesetVisualMode::mouseReleaseEvent(QMouseEvent* event)
+{
+    ResizableGraphicsView::mouseReleaseEvent(event);
 
-        AFAIK Qt doesn't give us any move finished notification so I do this manually
-        """
-
-        super(VisualEditing, self).mouseReleaseEvent(event)
-
+/*
         // moving
         moveImageNames = []
         moveImageOldPositions = {}
@@ -542,66 +577,76 @@ void ImagesetVisualMode::mouseMoveEvent(QMouseEvent* event)
         if len(resizeImageNames) > 0:
             cmd = undo.GeometryChangeCommand(self, resizeImageNames, resizeImageOldPositions, resizeImageOldRects, resizeImageNewPositions, resizeImageNewRects)
             self.tabbedEditor.undoStack.push(cmd)
-
-    def keyReleaseEvent(self, event):
-        // TODO: offset keyboard handling
-
-        handled = False
-
-        if event.key() in [QtCore.Qt.Key_A, QtCore.Qt.Key_D, QtCore.Qt.Key_W, QtCore.Qt.Key_S]:
-            selection = []
-
-            for item in self.scene().selectedItems():
-                if item in selection:
-                    continue
-
-                if isinstance(item, elements.ImageEntry):
-                    selection.append(item)
-
-                elif isinstance(item, resizable.ResizingHandle):
-                    parent = item.parentItem()
-                    if not parent in selection:
-                        selection.append(parent)
-
-            if len(selection) > 0:
-                delta = QtCore.QPointF()
-
-                if event.key() == QtCore.Qt.Key_A:
-                    delta += QtCore.QPointF(-1, 0)
-                elif event.key() == QtCore.Qt.Key_D:
-                    delta += QtCore.QPointF(1, 0)
-                elif event.key() == QtCore.Qt.Key_W:
-                    delta += QtCore.QPointF(0, -1)
-                elif event.key() == QtCore.Qt.Key_S:
-                    delta += QtCore.QPointF(0, 1)
-
-                if event.modifiers() & QtCore.Qt.ControlModifier:
-                    delta *= 10
-
-                if event.modifiers() & QtCore.Qt.ShiftModifier:
-                    handled = self.resizeImageEntries(selection, QtCore.QPointF(0, 0), delta)
-                else:
-                    handled = self.moveImageEntries(selection, delta)
-
-        elif event.key() == QtCore.Qt.Key_Q:
-            handled = self.cycleOverlappingImages()
-
-        elif event.key() == QtCore.Qt.Key_Delete:
-            handled = self.deleteSelectedImageEntries()
-
-        if not handled:
-            super(VisualEditing, self).keyReleaseEvent(event)
-
-        else:
-            event.accept()
-
-
-    def slot_toggleEditOffsets(self, enabled):
-        self.scene().clearSelection()
-
-        if self.imagesetEntry is not None:
-            self.imagesetEntry.showOffsets = enabled
-
-    def slot_customContextMenu(self, point):
-        self.contextMenu.exec_(self.mapToGlobal(point))
 */
+}
+
+// TODO: offset keyboard handling
+void ImagesetVisualMode::keyReleaseEvent(QKeyEvent* event)
+{
+    bool handled = false;
+
+    switch (event->key())
+    {
+        case Qt::Key_Q:
+        {
+            handled = cycleOverlappingImages();
+            break;
+        }
+        case Qt::Key_Delete:
+        {
+            handled = deleteSelectedImageEntries();
+            break;
+        }
+        case Qt::Key_A:
+        case Qt::Key_D:
+        case Qt::Key_W:
+        case Qt::Key_S:
+        {
+            std::vector<ImageEntry*> selection;
+            for (QGraphicsItem* item : scene()->selectedItems())
+            {
+                if (std::find(selection.begin(), selection.end(), item) != selection.end()) continue;
+
+                ImageEntry* entry = dynamic_cast<ImageEntry*>(item);
+                if (entry)
+                {
+                    selection.push_back(entry);
+                    continue;
+                }
+
+                ResizingHandle* handle = dynamic_cast<ResizingHandle*>(item);
+                if (handle && std::find(selection.begin(), selection.end(), handle->parentItem()) == selection.end())
+                {
+                    selection.push_back(static_cast<ImageEntry*>(handle->parentItem()));
+                    continue;
+                }
+            }
+
+            if (!selection.empty())
+            {
+                QPointF delta(0.0, 0.0);
+                switch (event->key())
+                {
+                    case Qt::Key_A: delta.setX(-1.0); break;
+                    case Qt::Key_D: delta.setX(1.0); break;
+                    case Qt::Key_W: delta.setY(-1.0); break;
+                    case Qt::Key_S: delta.setY(1.0); break;
+                }
+
+                if (event->modifiers() & Qt::ControlModifier) delta *= 10.0;
+
+                if (event->modifiers() & Qt::ShiftModifier)
+                    handled = resizeImageEntries(selection, QPointF(0.0, 0.0), delta);
+                else
+                    handled = moveImageEntries(selection, delta);
+            }
+
+            break;
+        }
+    }
+
+    if (handled)
+        event->accept();
+    else
+        ResizableGraphicsView::keyReleaseEvent(event);
+}
