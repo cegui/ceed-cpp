@@ -23,6 +23,7 @@ public:
     void setRect(QRectF newRect);
     void setRect(qreal ax, qreal ay, qreal w, qreal h) { setRect(QRectF(ax, ay, w, h)); }
     bool isAnyHandleSelected() const;
+    bool resizeInProgress() const { return _resizeInProgress; }
 
     virtual void performResizing(const ResizingHandle& handle, qreal& deltaLeft, qreal& deltaTop, qreal& deltaRight, qreal& deltaBottom);
     virtual QPointF constrainMovePoint(QPointF value) { return value; }
@@ -30,16 +31,11 @@ public:
     virtual QSizeF getMinSize() const { return QSizeF(1.0, 1.0); }
     virtual QSizeF getMaxSize() const { return QSizeF(std::numeric_limits<qreal>().max(), std::numeric_limits<qreal>().max()); }
 
-    virtual QPen getNormalPen() const;
-    virtual QPen getHoverPen() const;
-    virtual QPen getPenWhileResizing() const;
-    virtual QPen getPenWhileMoving() const;
-
     void onScaleChanged(qreal scaleX, qreal scaleY);
     void mouseReleaseEventSelected(QMouseEvent* event);
 
     virtual void notifyHandleSelected(ResizingHandle* /*handle*/) {}
-    virtual void notifyResizeStarted() {}
+    virtual void notifyResizeStarted(ResizingHandle* handle);
     virtual void notifyResizeProgress(QPointF /*newPos*/, QRectF /*newRect*/) {}
     virtual void notifyResizeFinished(QPointF newPos, QRectF newRect);
     virtual void notifyMoveStarted() {}
@@ -49,6 +45,11 @@ public:
 protected:
 
     void updateHandles();
+
+    virtual QPen getNormalPen() const;
+    virtual QPen getHoverPen() const;
+    virtual QPen getPenWhileResizing() const;
+    virtual QPen getPenWhileMoving() const;
 
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
     virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;

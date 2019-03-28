@@ -74,20 +74,15 @@ void ResizingHandle::onScaleChanged(qreal scaleX, qreal scaleY)
 }
 
 // Called when mouse is released whilst this was selected. This notifies us that resizing might have ended.
-void ResizingHandle::mouseReleaseEventSelected(QMouseEvent* event)
+void ResizingHandle::mouseReleaseEventSelected(QMouseEvent* /*event*/)
 {
     ResizableRectItem* parentResizable = static_cast<ResizableRectItem*>(parentItem());
-/*
-    if parentResizable->resizeInProgress:
-        # resize was in progress and just ended
-        parentResizable->resizeInProgress = False
-        parentResizable->setPen(parentResizable->getHoverPen() if parentResizable->mouseOver else parentResizable->getNormalPen())
+    if (!parentResizable->resizeInProgress()) return;
 
-        newPos = parentResizable->pos() + parentResizable->rect().topLeft()
-        newRect = QtCore.QRectF(0, 0, parentResizable->rect().width(), parentResizable->rect().height())
-
-        parentResizable->notifyResizeFinished(newPos, newRect)
-*/
+    // Resize was in progress and just ended
+    QPointF newPos = parentResizable->pos() + parentResizable->rect().topLeft();
+    QRectF newRect(0.0, 0.0, parentResizable->rect().width(), parentResizable->rect().height());
+    parentResizable->notifyResizeFinished(newPos, newRect);
 }
 
 void ResizingHandle::showHandle(bool show)
@@ -129,35 +124,25 @@ QVariant ResizingHandle::itemChange(GraphicsItemChange change, const QVariant& v
             if (handle && handle != this) handle->setSelected(false);
         }
 
-        /*
-            parentResizable->notifyHandleSelected(self)
-        */
+        parentResizable->notifyHandleSelected(this);
     }
     else if (change == ItemPositionChange)
     {
         // This is the money code
         // Changing position of the handle resizes the whole resizable
-        /*
-        if not parentResizable->resizeInProgress and not _ignoreGeometryChanges:
-            parentResizable->resizeInProgress = True
-            parentResizable->resizeOldPos = parentResizable->pos()
-            parentResizable->resizeOldRect = parentResizable->rect()
+        if (!_ignoreGeometryChanges && !parentResizable->resizeInProgress())
+            parentResizable->notifyResizeStarted(this);
 
-            parentResizable->setPen(parentResizable->getPenWhileResizing())
-            parentResizable->hideAllHandles(excluding = self)
+        if (parentResizable->resizeInProgress())
+        {
+            QPointF ret = performResizing(value.toPointF());
 
-            parentResizable->notifyResizeStarted()
+            QPointF newPos = parentResizable->pos() + parentResizable->rect().topLeft();
+            QRectF newRect(0.0, 0.0, parentResizable->rect().width(), parentResizable->rect().height());
+            parentResizable->notifyResizeProgress(newPos, newRect);
 
-        if parentResizable->resizeInProgress:
-            ret = self.performResizing(value)
-
-            newPos = parentResizable->pos() + parentResizable->rect().topLeft()
-            newRect = QtCore.QRectF(0, 0, parentResizable->rect().width(), parentResizable->rect().height())
-
-            parentResizable->notifyResizeProgress(newPos, newRect)
-
-            return ret
-        */
+            return ret;
+        }
     }
 
     return QGraphicsRectItem::itemChange(change, value);

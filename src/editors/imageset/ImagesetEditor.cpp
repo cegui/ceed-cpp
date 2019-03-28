@@ -6,11 +6,13 @@
 #include "src/util/SettingsSection.h"
 #include "src/util/SettingsEntry.h"
 #include "src/ui/imageset/ImagesetEditorDockWidget.h"
+#include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/MainWindow.h"
 #include "qmenu.h"
 #include "qdom.h"
 #include "qfile.h"
 #include "qmessagebox.h"
+#include "qtoolbar.h"
 
 ImagesetEditor::ImagesetEditor(const QString& filePath)
     : MultiModeEditor(/*imageset_compatibility.manager, */ filePath)
@@ -91,18 +93,16 @@ void ImagesetEditor::finalize()
 void ImagesetEditor::activate(MainWindow& mainWindow)
 {
     MultiModeEditor::activate(mainWindow);
-/*
-        self.mainWindow.addToolBar(QtCore.Qt.ToolBarArea.TopToolBarArea, self.visual.toolBar)
-        self.visual.toolBar.show()
-*/
+
+    mainWindow.addToolBar(Qt::ToolBarArea::TopToolBarArea, visualMode->getToolBar());
+    visualMode->getToolBar()->show();
+
     mainWindow.addDockWidget(Qt::RightDockWidgetArea, visualMode->getDockWidget());
     visualMode->getDockWidget()->setVisible(true);
 
     auto editorMenu = mainWindow.getEditorMenu();
     editorMenu->setTitle("&Imageset");
-/*
-        self.visual.rebuildEditorMenu(editorMenu)
-*/
+    visualMode->rebuildEditorMenu(editorMenu);
     editorMenu->setVisible(true);
     editorMenu->setEnabled(tabs.currentWidget() == visualMode);
 }
@@ -110,34 +110,32 @@ void ImagesetEditor::activate(MainWindow& mainWindow)
 void ImagesetEditor::deactivate(MainWindow& mainWindow)
 {
     mainWindow.removeDockWidget(visualMode->getDockWidget());
-    /*
-        self.mainWindow.removeToolBar(self.visual.toolBar)
-    */
+    mainWindow.removeToolBar(visualMode->getToolBar());
     MultiModeEditor::deactivate(mainWindow);
 }
 
 void ImagesetEditor::copy()
 {
     if (tabs.currentWidget() == visualMode)
-        ; //visualMode->copy();
+        visualMode->copy();
 }
 
 void ImagesetEditor::cut()
 {
     if (tabs.currentWidget() == visualMode)
-        ; //visualMode->cut();
+        visualMode->cut();
 }
 
 void ImagesetEditor::paste()
 {
     if (tabs.currentWidget() == visualMode)
-        ; //visualMode->paste();
+        visualMode->paste();
 }
 
 void ImagesetEditor::deleteSelected()
 {
     if (tabs.currentWidget() == visualMode)
-        ; //visualMode->deleteSelected();
+        visualMode->deleteSelectedImageEntries();
 }
 
 void ImagesetEditor::zoomIn()
@@ -165,14 +163,12 @@ void ImagesetEditor::getRawData(QByteArray& outRawData)
     if (tabs.currentWidget() == codeMode)
         codeMode->propagateToVisual();
 
-/*
-        rootElement = self.visual.imagesetEntry.saveToElement()
-        # we indent to make the resulting files as readable as possible
-        xmledit.indent(rootElement)
+    QDomDocument doc;
+    auto xmlRoot = doc.createElement("Imageset");
+    visualMode->getImagesetEntry()->saveToElement(xmlRoot);
+    doc.appendChild(xmlRoot);
 
-        self.nativeData = ElementTree.tostring(rootElement, "utf-8")
-*/
-    //outRawData = string.toUtf8();
+    outRawData = doc.toString(4).toUtf8();
 }
 
 void ImagesetEditor::createActions(ActionManager& mgr)

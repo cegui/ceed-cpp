@@ -164,8 +164,21 @@ void ResizableRectItem::mouseReleaseEventSelected(QMouseEvent* event)
     }
 }
 
+void ResizableRectItem::notifyResizeStarted(ResizingHandle* handle)
+{
+    _resizeInProgress = true;
+    //_resizeOldPos = pos();
+    //_resizeOldRect = rect();
+
+    setPen(getPenWhileResizing());
+    hideAllHandles(handle);
+}
+
 void ResizableRectItem::notifyResizeFinished(QPointF newPos, QRectF newRect)
 {
+    _resizeInProgress = false;
+    setPen(_mouseOver ? getHoverPen() : getNormalPen());
+
     _ignoreGeometryChanges = true;
     setRect(newRect);
     setPos(newPos);

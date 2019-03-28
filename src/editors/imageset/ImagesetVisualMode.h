@@ -39,6 +39,7 @@ public:
 
     ImagesetEntry* getImagesetEntry() const { return imagesetEntry; }
     ImagesetEditorDockWidget* getDockWidget() const { return dockWidget; }
+    QToolBar* getToolBar() const { return toolBar; }
 
 protected slots:
 

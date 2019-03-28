@@ -1,4 +1,6 @@
 #include "src/ui/ResizableGraphicsView.h"
+#include "src/ui/ResizableRectItem.h"
+#include "src/ui/ResizingHandle.h"
 #include "src/Application.h"
 #include "src/util/Settings.h"
 #include "qevent.h"
@@ -25,10 +27,8 @@ void ResizableGraphicsView::setTransform(const QTransform& transform)
     // Handle scale change
     for (auto& item : scene()->items())
     {
-        /*
-        if isinstance(item, ResizableRectItem):
-            item.scaleChanged(scaleX, scaleY)
-        */
+        auto rectItem = dynamic_cast<ResizableRectItem*>(item);
+        if (rectItem) rectItem->onScaleChanged(scaleX, scaleY);
     }
 }
 
@@ -83,12 +83,19 @@ void ResizableGraphicsView::mouseReleaseEvent(QMouseEvent *event)
     // Handle scale change
     for (auto& selectedItem : scene()->selectedItems())
     {
-        /*
-        if isinstance(selectedItem, ResizingHandle):
-            selectedItem.mouseReleaseEventSelected(event)
-        elif isinstance(selectedItem, ResizableRectItem):
-            selectedItem.mouseReleaseEventSelected(event)
-        */
+        auto rectItem = dynamic_cast<ResizableRectItem*>(selectedItem);
+        if (rectItem)
+        {
+            rectItem->mouseReleaseEventSelected(event);
+            continue;
+        }
+
+        auto handle = dynamic_cast<ResizingHandle*>(selectedItem);
+        if (handle)
+        {
+            handle->mouseReleaseEventSelected(event);
+            continue;
+        }
     }
 
     QGraphicsView::mouseReleaseEvent(event);

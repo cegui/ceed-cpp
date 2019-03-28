@@ -479,15 +479,13 @@ void ImagesetVisualMode::mousePressEvent(QMouseEvent* event)
     {
         for (QGraphicsItem* selectedItem : scene()->selectedItems())
         {
+            /*
+            // selectedItem could be ImageEntry or ImageOffset!
+            selectedItem.potentialMove = True
+            selectedItem.oldPosition = None
+            */
         }
     }
-    /*
-        if event.buttons() & QtCore.Qt.LeftButton:
-            for selectedItem in self.scene().selectedItems():
-                // selectedItem could be ImageEntry or ImageOffset!
-                selectedItem.potentialMove = True
-                selectedItem.oldPosition = None
-    */
 }
 
 // When mouse is released, we have to check what items were moved and resized.
