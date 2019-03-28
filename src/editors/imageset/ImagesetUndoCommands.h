@@ -245,4 +245,23 @@ protected:
     QPoint _newResolution;
 };
 
+// Changes auto scaled value of the imageset
+class ImagesetChangeAutoScaledCommand : public QUndoCommand
+{
+public:
+
+    ImagesetChangeAutoScaledCommand(ImagesetVisualMode& visualMode, const QString& oldAutoScaled, const QString& newAutoScaled);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return ImagesetUndoCommandBase + 11; }
+    virtual bool mergeWith(const QUndoCommand* other) override;
+
+protected:
+
+    ImagesetVisualMode& _visualMode;
+    QString _oldAutoScaled;
+    QString _newAutoScaled;
+};
+
 #endif // IMAGESETUNDOCOMMANDS_H

@@ -26,6 +26,7 @@ public:
     QString name() const { return _name; }
     void setName(const QString& newName) { _name = newName; }
     QString getAutoScaled() const { return autoScaled; }
+    void setAutoScaled(const QString& newAutoScaled) { autoScaled = newAutoScaled; }
     int getNativeHorzRes() const { return nativeHorzRes; }
     int getNativeVertRes() const { return nativeVertRes; }
     void setNativeRes(int horz, int vert) { nativeHorzRes = horz; nativeVertRes = vert; }

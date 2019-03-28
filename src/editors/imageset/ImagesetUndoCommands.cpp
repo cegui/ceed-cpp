@@ -518,55 +518,44 @@ bool ImagesetChangeNativeResolutionCommand::mergeWith(const QUndoCommand* other)
 
     _newResolution = otherCmd->_newResolution;
     setText(QString("Change imageset's native resolution to %1x%2").arg(_newResolution.x()).arg(_newResolution.y()));
+    return true;
+}
+
+//---------------------------------------------------------------------
+
+ImagesetChangeAutoScaledCommand::ImagesetChangeAutoScaledCommand(ImagesetVisualMode& visualMode, const QString& oldAutoScaled, const QString& newAutoScaled)
+    : _visualMode(visualMode)
+    , _oldAutoScaled(oldAutoScaled)
+    , _newAutoScaled(newAutoScaled)
+{
+    setText(QString("Imageset auto scaled changed to %s").arg(_newAutoScaled));
+}
+
+void ImagesetChangeAutoScaledCommand::undo()
+{
+    QUndoCommand::undo();
+    _visualMode.getImagesetEntry()->setAutoScaled(_oldAutoScaled);
+    _visualMode.getDockWidget()->refreshImagesetInfo();
+}
+
+void ImagesetChangeAutoScaledCommand::redo()
+{
+    _visualMode.getImagesetEntry()->setAutoScaled(_newAutoScaled);
+    _visualMode.getDockWidget()->refreshImagesetInfo();
+    QUndoCommand::redo();
+}
+
+bool ImagesetChangeAutoScaledCommand::mergeWith(const QUndoCommand* other)
+{
+    auto otherCmd = dynamic_cast<const ImagesetChangeAutoScaledCommand*>(other);
+    if (!otherCmd || _newAutoScaled != otherCmd->_oldAutoScaled) return false;
+
+    _newAutoScaled = otherCmd->_newAutoScaled;
+    setText(QString("Imageset auto scaled changed to %s").arg(_newAutoScaled));
+    return true;
 }
 
 /*
-class ImagesetChangeAutoScaledCommand(commands.UndoCommand):
-    """Changes auto scaled value
-    """
-
-    def __init__(self, visual, oldAutoScaled, newAutoScaled):
-        super(ImagesetChangeAutoScaledCommand, self).__init__()
-
-        self.visual = visual
-
-        self.oldAutoScaled = oldAutoScaled
-        self.newAutoScaled = newAutoScaled
-
-        self.refreshText()
-
-    def refreshText(self):
-        self.setText("Imageset auto scaled changed to %s" % (self.newAutoScaled))
-
-    def id(self):
-        return idbase + 11
-
-    def mergeWith(self, cmd):
-        if self.newAutoScaled == cmd.oldAutoScaled:
-            self.newAutoScaled = cmd.newAutoScaled
-            self.refreshText()
-
-            return True
-
-        return False
-
-    def undo(self):
-        super(ImagesetChangeAutoScaledCommand, self).undo()
-
-        imagesetEntry = self.visual.imagesetEntry
-        imagesetEntry.autoScaled = self.oldAutoScaled
-
-        index = self.visual.dockWidget.autoScaled.findText(imagesetEntry.autoScaled)
-        self.visual.dockWidget.autoScaled.setCurrentIndex(index)
-
-    def redo(self):
-        imagesetEntry = self.visual.imagesetEntry
-        imagesetEntry.autoScaled = self.newAutoScaled
-
-        index = self.visual.dockWidget.autoScaled.findText(imagesetEntry.autoScaled)
-        self.visual.dockWidget.autoScaled.setCurrentIndex(index)
-
-        super(ImagesetChangeAutoScaledCommand, self).redo()
 
 class DuplicateCommand(commands.UndoCommand):
     """Duplicates given image entries
