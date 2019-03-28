@@ -264,4 +264,55 @@ protected:
     QString _newAutoScaled;
 };
 
+// Duplicates given image entries
+class ImagesetDuplicateCommand : public QUndoCommand
+{
+public:
+
+    struct Record
+    {
+        QString name;
+        QPointF pos;
+        QSizeF size;
+        QPoint offset;
+    };
+
+    ImagesetDuplicateCommand(ImagesetVisualMode& visualMode, std::vector<Record>&& imageRecords);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return ImagesetUndoCommandBase + 12; }
+
+protected:
+
+    ImagesetVisualMode& _visualMode;
+    std::vector<Record> _imageRecords;
+};
+
+// This command pastes clipboard data to the given imageset. Based on ImagesetDuplicateCommand.
+// TODO: combine with ImagesetDuplicateCommand? Lots of similar code.
+class ImagesetPasteCommand : public QUndoCommand
+{
+public:
+
+    struct Record
+    {
+        QString name;
+        QPointF pos;
+        QSizeF size;
+        QPoint offset;
+    };
+
+    ImagesetPasteCommand(ImagesetVisualMode& visualMode, std::vector<Record>&& imageRecords);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return ImagesetUndoCommandBase + 13; }
+
+protected:
+
+    ImagesetVisualMode& _visualMode;
+    std::vector<Record> _imageRecords;
+};
+
 #endif // IMAGESETUNDOCOMMANDS_H

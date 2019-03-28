@@ -555,115 +555,82 @@ bool ImagesetChangeAutoScaledCommand::mergeWith(const QUndoCommand* other)
     return true;
 }
 
-/*
+//---------------------------------------------------------------------
 
-class DuplicateCommand(commands.UndoCommand):
-    """Duplicates given image entries
-    """
+ImagesetDuplicateCommand::ImagesetDuplicateCommand(ImagesetVisualMode& visualMode, std::vector<ImagesetDuplicateCommand::Record>&& imageRecords)
+    : _visualMode(visualMode)
+    , _imageRecords(std::move(imageRecords))
+{
+    if (_imageRecords.size() == 1)
+        setText(QString("Duplicate image '%1'").arg(_imageRecords[0].name));
+    else
+        setText(QString("Duplicate %1 images'").arg(_imageRecords.size()));
+}
 
-    def __init__(self, visual, newNames, newPositions, newRects, newOffsets):
-        super(DuplicateCommand, self).__init__()
+void ImagesetDuplicateCommand::undo()
+{
+    QUndoCommand::undo();
 
-        self.visual = visual
+    for (auto& rec : _imageRecords)
+        _visualMode.getImagesetEntry()->removeImageEntry(rec.name);
 
-        self.newNames = newNames
-        self.newPositions = newPositions
-        self.newRects = newRects
-        self.newOffsets = newOffsets
+    _visualMode.getDockWidget()->refresh();
+}
 
-        if len(self.newNames) == 1:
-            self.setText("Duplicate image")
-        else:
-            self.setText("Duplicate %i images" % (len(self.newNames)))
+void ImagesetDuplicateCommand::redo()
+{
+    for (auto& rec : _imageRecords)
+    {
+        auto image = _visualMode.getImagesetEntry()->createImageEntry();
+        image->setName(rec.name);
+        image->setPos(rec.pos);
+        image->setRect(0.0, 0.0, rec.size.width(), rec.size.height());
+        image->setOffsetX(rec.offset.x());
+        image->setOffsetY(rec.offset.y());
+    }
 
-    def id(self):
-        return idbase + 12
+    _visualMode.getDockWidget()->refresh();
 
-    def undo(self):
-        super(DuplicateCommand, self).undo()
+    QUndoCommand::redo();
+}
 
-        for imageName in self.newNames:
-            image = self.visual.imagesetEntry.getImageEntry(imageName)
-            self.visual.imagesetEntry.imageEntries.remove(image)
+//---------------------------------------------------------------------
 
-            image.listItem.imageEntry = None
-            image.listItem = None
+ImagesetPasteCommand::ImagesetPasteCommand(ImagesetVisualMode& visualMode, std::vector<ImagesetPasteCommand::Record>&& imageRecords)
+    : _visualMode(visualMode)
+    , _imageRecords(std::move(imageRecords))
+{
+    if (_imageRecords.size() == 1)
+        setText(QString("Paste image '%1'").arg(_imageRecords[0].name));
+    else
+        setText(QString("Paste %1 images'").arg(_imageRecords.size()));
+}
 
-            image.setParentItem(None)
-            self.visual.scene().removeItem(image)
+void ImagesetPasteCommand::undo()
+{
+    QUndoCommand::undo();
 
-            del image
+    for (auto& rec : _imageRecords)
+        _visualMode.getImagesetEntry()->removeImageEntry(rec.name);
 
-        self.visual.dockWidget.refresh()
+    _visualMode.getDockWidget()->refresh();
+}
 
-    def redo(self):
-        for imageName in self.newNames:
-            image = elements.ImageEntry(self.visual.imagesetEntry)
-            self.visual.imagesetEntry.imageEntries.append(image)
+void ImagesetPasteCommand::redo()
+{
+    for (auto& rec : _imageRecords)
+    {
+        auto image = _visualMode.getImagesetEntry()->createImageEntry();
+        image->setName(rec.name);
+        image->setPos(rec.pos);
+        image->setRect(0.0, 0.0, rec.size.width(), rec.size.height());
+        image->setOffsetX(rec.offset.x());
+        image->setOffsetY(rec.offset.y());
+    }
 
-            image.name = imageName
-            image.setPos(self.newPositions[imageName])
-            image.setRect(self.newRects[imageName])
-            image.offset.setPos(self.newOffsets[imageName])
+    _visualMode.getDockWidget()->refresh();
 
-        self.visual.dockWidget.refresh()
+    QUndoCommand::redo();
+}
 
-        super(DuplicateCommand, self).redo()
-
-class PasteCommand(commands.UndoCommand):
-    """This command pastes clipboard data to the given imageset.
-    Based on DuplicateCommand.
-    """
-
-    def __init__(self, visual, newNames, newPositions, newRects, newOffsets):
-        super(PasteCommand, self).__init__()
-
-        self.visual = visual
-
-        self.newNames = newNames
-        self.newPositions = newPositions
-        self.newRects = newRects
-        self.newOffsets = newOffsets
-
-        self.refreshText()
-
-    def refreshText(self):
-        if len(self.newNames) == 1:
-            self.setText("Paste image")
-        else:
-            self.setText("Paste %i images" % (len(self.newNames)))
-
-    def id(self):
-        return idbase + 13
-
-    def undo(self):
-        super(PasteCommand, self).undo()
-
-        for imageName in self.newNames:
-            image = self.visual.imagesetEntry.getImageEntry(imageName)
-            self.visual.imagesetEntry.imageEntries.remove(image)
-
-            image.listItem.imageEntry = None
-            image.listItem = None
-
-            image.setParentItem(None)
-            self.visual.scene().removeItem(image)
-
-            del image
-
-        self.visual.dockWidget.refresh()
-
-    def redo(self):
-        for imageName in self.newNames:
-            image = elements.ImageEntry(self.visual.imagesetEntry)
-            self.visual.imagesetEntry.imageEntries.append(image)
-
-            image.name = imageName
-            image.setPos(self.newPositions[imageName])
-            image.setRect(self.newRects[imageName])
-            image.offset.setPos(self.newOffsets[imageName])
-
-        self.visual.dockWidget.refresh()
-
-        super(PasteCommand, self).redo()
-*/
+//---------------------------------------------------------------------
