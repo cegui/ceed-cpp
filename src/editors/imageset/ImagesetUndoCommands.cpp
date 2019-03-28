@@ -306,56 +306,49 @@ bool ImageRenameCommand::mergeWith(const QUndoCommand* other)
 
 //---------------------------------------------------------------------
 
+ImagePropertyEditCommand::ImagePropertyEditCommand(ImagesetVisualMode& visualMode, const QString& imageName, const QString& propertyName,
+                                                   const QVariant& oldValue, const QVariant& newValue)
+    : _visualMode(visualMode)
+    , _imageName(imageName)
+    , _propertyName(propertyName)
+    , _oldValue(oldValue)
+    , _newValue(newValue)
+{
+    setText(QString("Change %1 of '%2' to '%3'").arg(_propertyName, _imageName, _newValue.toString()));
+}
+
+void ImagePropertyEditCommand::undo()
+{
+    QUndoCommand::undo();
+    auto image = _visualMode.getImagesetEntry()->getImageEntry(_imageName);
+    image->setProperty(_propertyName, _oldValue);
+    image->updateDockWidget();
+}
+
+void ImagePropertyEditCommand::redo()
+{
+    auto image = _visualMode.getImagesetEntry()->getImageEntry(_imageName);
+    image->setProperty(_propertyName, _newValue);
+    image->updateDockWidget();
+    QUndoCommand::redo();
+}
+
+bool ImagePropertyEditCommand::mergeWith(const QUndoCommand* other)
+{
+    const ImagePropertyEditCommand* otherCmd = dynamic_cast<const ImagePropertyEditCommand*>(other);
+    if (!otherCmd) return false;
+
+    if (_imageName == otherCmd->_imageName && _propertyName == otherCmd->_propertyName)
+    {
+        _newValue = otherCmd->_newValue;
+        setText(QString("Change %1 of '%2' to '%3'").arg(_propertyName, _imageName, _newValue.toString()));
+        return true;
+    }
+
+    return false;
+}
+
 /*
-
-class PropertyEditCommand(commands.UndoCommand):
-    """Changes one property of the image.
-
-    We do this separately from Move, OffsetMove, etc commands because we want to
-    always merge in this case.
-    """
-
-    def __init__(self, visual, imageName, propertyName, oldValue, newValue):
-        super(PropertyEditCommand, self).__init__()
-
-        self.visual = visual
-        self.imageName = imageName
-        self.propertyName = propertyName
-        self.oldValue = oldValue
-        self.newValue = newValue
-
-        self.refreshText()
-
-    def refreshText(self):
-        self.setText("Change %s of '%s' to '%s'" % (self.propertyName, self.imageName, self.newValue))
-
-    def id(self):
-        return idbase + 5
-
-    def mergeWith(self, cmd):
-        if self.imageName == cmd.imageName and self.propertyName == cmd.propertyName:
-            self.newValue = cmd.newValue
-
-            self.refreshText()
-
-            return True
-
-        return False
-
-    def undo(self):
-        super(PropertyEditCommand, self).undo()
-
-        imageEntry = self.visual.imagesetEntry.getImageEntry(self.imageName)
-        setattr(imageEntry, self.propertyName, self.oldValue)
-        imageEntry.updateDockWidget()
-
-    def redo(self):
-        imageEntry = self.visual.imagesetEntry.getImageEntry(self.imageName)
-        setattr(imageEntry, self.propertyName, self.newValue)
-        imageEntry.updateDockWidget()
-
-        super(PropertyEditCommand, self).redo()
-
 class CreateCommand(commands.UndoCommand):
     """Creates one image with given parameters
     """

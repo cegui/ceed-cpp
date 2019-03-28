@@ -67,6 +67,9 @@ private slots:
 
 private:
 
+    void onIntPropertyChanged(const QString& name, const QString& valueString);
+    void onStringPropertyChanged(const QString& name, const QString& newValue);
+
     virtual void keyReleaseEvent(QKeyEvent* event) override;
 
     Ui::ImagesetEditorDockWidget *ui;

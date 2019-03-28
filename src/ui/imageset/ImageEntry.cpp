@@ -165,6 +165,43 @@ void ImageEntry::setOffsetY(int value)
     offset->setY(-static_cast<qreal>(value) + 0.5);
 }
 
+// Python legacy. Some code used python properties with implicit setter & getter like this:
+// setattr(imageEntry, self.propertyName, self.oldValue)
+void ImageEntry::setProperty(const QString& name, const QVariant& value)
+{
+    if (name == "xpos") setPos(value.toReal(), pos().y());
+    else if (name == "ypos") setPos(pos().x(), value.toReal());
+    else if (name == "width") setRect(QRectF(0.0, 0.0, std::max(1.0, value.toReal()), rect().height()));
+    else if (name == "height") setRect(QRectF(0.0, 0.0, rect().width(), std::max(1.0, value.toReal())));
+    else if (name == "xoffset") setOffsetX(value.toInt());
+    else if (name == "yoffset") setOffsetY(value.toInt());
+    else if (name == "autoScaled") autoScaled = value.toString();
+    else if (name == "nativeRes")
+    {
+        QPoint val = value.toPoint();
+        nativeHorzRes = val.x();
+        nativeVertRes = val.y();
+    }
+    else assert(false && "Unsupported property");
+}
+
+QVariant ImageEntry::getProperty(const QString& name)
+{
+    if (name == "xpos") return pos().x();
+    else if (name == "ypos") return pos().y();
+    else if (name == "width") return rect().width();
+    else if (name == "height") return rect().height();
+    else if (name == "xoffset") return offsetX();
+    else if (name == "yoffset") return offsetY();
+    else if (name == "autoScaled") return autoScaled;
+    else if (name == "nativeRes") return QPoint(nativeHorzRes, nativeVertRes);
+    else
+    {
+        assert(false && "Unsupported property");
+        return QVariant();
+    }
+}
+
 void ImageEntry::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
     ResizableRectItem::paint(painter, option, widget);
@@ -300,16 +337,3 @@ void ImageEntry::updateListItemSelection()
     listItem->setSelected(isSelected() || isAnyHandleSelected() || offset->isSelected());
     dockWidget->setSelectionSynchronizationUnderway(false);
 }
-
-/*
-    # the image's "real parameters" are properties that directly access Qt's
-    # facilities, this is done to make the code cleaner and save a little memory
-
-    nativeRes = property(lambda self: (self.nativeHorzRes, self.nativeVertRes),
-                         lambda self, value: self.setNativeRes(value))
-
-
-    def setNativeRes(self, value):
-        # NB: This is just a wrapper to make the property setter lambda work
-        self.nativeHorzRes, self.nativeVertRes = value
-*/

@@ -189,31 +189,26 @@ void ImagesetEditorDockWidget::onNativeResolutionEdited()
 
 void ImagesetEditorDockWidget::onNativeResolutionPerImageEdited()
 {
-/*
-        oldHorzRes = self.activeImageEntry.nativeHorzRes
-        oldVertRes = self.activeImageEntry.nativeVertRes
+    auto oldHorzRes = activeImageEntry->getNativeHorzRes();
+    auto oldVertRes = activeImageEntry->getNativeVertRes();
 
-        newHorzRes = self.nativeHorzResPerImage.text()
-        newVertRes = self.nativeVertResPerImage.text()
+    auto newHorzResStr = ui->nativeHorzResPerImage->text();
+    auto newVertResStr = ui->nativeVertResPerImage->text();
+    if (newHorzResStr.isEmpty()) newHorzResStr = "0";
+    if (newVertResStr.isEmpty()) newVertResStr = "0";
 
-        if newHorzRes == "":
-            newHorzRes = 0
-        if newVertRes == "":
-            newVertRes = 0
+    bool ok = false;
+    auto newHorzRes = newHorzResStr.toInt(&ok);
+    if (!ok) return;
+    auto newVertRes = newVertResStr.toInt(&ok);
+    if (!ok) return;
 
-        try:
-            newHorzRes = int(newHorzRes)
-            newVertRes = int(newVertRes)
+    if (oldHorzRes == newHorzRes && oldVertRes == newVertRes) return;
 
-        except ValueError:
-            return
-
-        if oldHorzRes == newHorzRes and oldVertRes == newVertRes:
-            return
-
-        cmd = undo.PropertyEditCommand(self.visual, self.activeImageEntry.name, "nativeRes", (oldHorzRes, oldVertRes), (newHorzRes, newVertRes))
-        self.visual.tabbedEditor.undoStack.push(cmd)
-*/
+    _visualMode.getEditor().getUndoStack()->push(new ImagePropertyEditCommand(_visualMode, activeImageEntry->name(),
+                                                                              "nativeRes",
+                                                                              QPoint(oldHorzRes, oldVertRes),
+                                                                              QPoint(newHorzRes, newVertRes)));
 }
 
 void ImagesetEditorDockWidget::on_name_textEdited(const QString& arg1)
@@ -262,9 +257,7 @@ void ImagesetEditorDockWidget::on_autoScaledPerImage_currentIndexChanged(int ind
 {
     // First is the "default" / inheriting state
     QString text = (index == 0) ? "" : ui->autoScaledPerImage->currentText();
-/*
-        self.metaslot_propertyChangedString("autoScaled", text)
-*/
+    onStringPropertyChanged("autoScaled", text);
 }
 
 void ImagesetEditorDockWidget::on_filterBox_textChanged(const QString& arg1)
@@ -323,52 +316,60 @@ void ImagesetEditorDockWidget::on_list_itemSelectionChanged()
     selectionUnderway = false;
 }
 
-void ImagesetEditorDockWidget::on_positionX_textChanged(const QString &arg1)
+void ImagesetEditorDockWidget::on_positionX_textChanged(const QString& arg1)
 {
-/*
-    def slot_positionXChanged(self, text):
-        self.metaslot_propertyChangedInt("xpos", text)
-
-    def slot_positionYChanged(self, text):
-        self.metaslot_propertyChangedInt("ypos", text)
-
-    def slot_widthChanged(self, text):
-        self.metaslot_propertyChangedInt("width", text)
-
-    def slot_heightChanged(self, text):
-        self.metaslot_propertyChangedInt("height", text)
-
-    def slot_offsetXChanged(self, text):
-        self.metaslot_propertyChangedInt("xoffset", text)
-
-    def slot_offsetYChanged(self, text):
-        self.metaslot_propertyChangedInt("yoffset", text)
-*/
+    onIntPropertyChanged("xpos", arg1);
 }
 
-void ImagesetEditorDockWidget::on_positionY_textChanged(const QString &arg1)
+void ImagesetEditorDockWidget::on_positionY_textChanged(const QString& arg1)
 {
-
+    onIntPropertyChanged("ypos", arg1);
 }
 
-void ImagesetEditorDockWidget::on_width_textChanged(const QString &arg1)
+void ImagesetEditorDockWidget::on_width_textChanged(const QString& arg1)
 {
-
+    onIntPropertyChanged("width", arg1);
 }
 
-void ImagesetEditorDockWidget::on_height_textChanged(const QString &arg1)
+void ImagesetEditorDockWidget::on_height_textChanged(const QString& arg1)
 {
-
+    onIntPropertyChanged("height", arg1);
 }
 
-void ImagesetEditorDockWidget::on_offsetX_textChanged(const QString &arg1)
+void ImagesetEditorDockWidget::on_offsetX_textChanged(const QString& arg1)
 {
-
+    onIntPropertyChanged("xoffset", arg1);
 }
 
-void ImagesetEditorDockWidget::on_offsetY_textChanged(const QString &arg1)
+void ImagesetEditorDockWidget::on_offsetY_textChanged(const QString& arg1)
 {
+    onIntPropertyChanged("yoffset", arg1);
+}
 
+void ImagesetEditorDockWidget::onIntPropertyChanged(const QString& name, const QString& valueString)
+{
+    if (!activeImageEntry) return;
+
+    bool ok = false;
+    int newValue = valueString.toInt(&ok);
+    if (!ok) return; // If the string is not a valid integer literal, we allow user to edit some more
+
+    QVariant oldValue = activeImageEntry->getProperty(name);
+    if (oldValue.toInt() == newValue) return;
+
+    _visualMode.getEditor().getUndoStack()->push(new ImagePropertyEditCommand(_visualMode, activeImageEntry->name(),
+                                                                              name, oldValue, newValue));
+}
+
+void ImagesetEditorDockWidget::onStringPropertyChanged(const QString& name, const QString& newValue)
+{
+    if (!activeImageEntry) return;
+
+    QVariant oldValue = activeImageEntry->getProperty(name);
+    if (oldValue.toString() == newValue) return;
+
+    _visualMode.getEditor().getUndoStack()->push(new ImagePropertyEditCommand(_visualMode, activeImageEntry->name(),
+                                                                              name, oldValue, newValue));
 }
 
 void ImagesetEditorDockWidget::keyReleaseEvent(QKeyEvent* event)
@@ -385,38 +386,3 @@ void ImagesetEditorDockWidget::keyReleaseEvent(QKeyEvent* event)
 
     QDockWidget::keyReleaseEvent(event);
 }
-
-/*
-    def metaslot_propertyChangedInt(self, propertyName, newTextValue):
-        if not self.activeImageEntry:
-            return
-
-        oldValue = getattr(self.activeImageEntry, propertyName)
-        newValue = None
-
-        try:
-            newValue = int(newTextValue)
-        except ValueError:
-            # if the string is not a valid integer literal, we allow user to edit some more
-            return
-
-        if oldValue == newValue:
-            return
-
-        cmd = undo.PropertyEditCommand(self.visual, self.activeImageEntry.name, propertyName, oldValue, newValue)
-        self.visual.tabbedEditor.undoStack.push(cmd)
-
-    def metaslot_propertyChangedString(self, propertyName, newValue):
-        if not self.activeImageEntry:
-            return
-
-        oldValue = getattr(self.activeImageEntry, propertyName)
-
-        if oldValue == newValue:
-            return
-
-        cmd = undo.PropertyEditCommand(self.visual, self.activeImageEntry.name, propertyName, oldValue, newValue)
-        self.visual.tabbedEditor.undoStack.push(cmd)
-
-
-*/

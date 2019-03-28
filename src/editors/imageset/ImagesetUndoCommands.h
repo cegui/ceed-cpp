@@ -2,7 +2,7 @@
 #define IMAGESETUNDOCOMMANDS_H
 
 #include "qundostack.h"
-//#include "qpoint.h"
+#include "qvariant.h"
 #include "qrect.h"
 
 constexpr int ImagesetUndoCommandBase = 1100;
@@ -119,6 +119,28 @@ protected:
     ImagesetVisualMode& _visualMode;
     QString _oldName;
     QString _newName;
+};
+
+// Changes one property of the image. We do this separately from Move, OffsetMove, etc commands because
+// we want to always merge in this case.
+class ImagePropertyEditCommand : public QUndoCommand
+{
+public:
+
+    ImagePropertyEditCommand(ImagesetVisualMode& visualMode, const QString& imageName, const QString& propertyName, const QVariant& oldValue, const QVariant& newValue);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return ImagesetUndoCommandBase + 5; }
+    virtual bool mergeWith(const QUndoCommand* other) override;
+
+protected:
+
+    ImagesetVisualMode& _visualMode;
+    QString _imageName;
+    QString _propertyName;
+    QVariant _oldValue;
+    QVariant _newValue;
 };
 
 #endif // IMAGESETUNDOCOMMANDS_H

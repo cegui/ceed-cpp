@@ -38,6 +38,8 @@ public:
     QString getAutoScaled() const { return autoScaled; }
     int getNativeHorzRes() const { return nativeHorzRes; }
     int getNativeVertRes() const { return nativeVertRes; }
+    void setProperty(const QString& name, const QVariant& value);
+    QVariant getProperty(const QString& name);
 
     virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
