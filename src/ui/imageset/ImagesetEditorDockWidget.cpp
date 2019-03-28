@@ -223,7 +223,7 @@ void ImagesetEditorDockWidget::onNativeResolutionPerImageEdited()
 void ImagesetEditorDockWidget::on_name_textEdited(const QString& arg1)
 {
     auto oldName = imagesetEntry->name();
-    auto newName = ui->name->text();
+    auto newName = arg1;
     if (oldName == newName) return;
     _visualMode.getEditor().getUndoStack()->push(new ImagesetRenameCommand(_visualMode, oldName, newName));
 }
@@ -236,7 +236,7 @@ void ImagesetEditorDockWidget::on_imageLoad_clicked()
     _visualMode.getEditor().getUndoStack()->push(new ImagesetChangeImageCommand(_visualMode, oldName, newName));
 }
 
-void ImagesetEditorDockWidget::on_autoScaled_currentIndexChanged(int index)
+void ImagesetEditorDockWidget::on_autoScaled_currentIndexChanged(int /*index*/)
 {
     auto oldAutoScaled = imagesetEntry->getAutoScaled();
     auto newAutoScaled = ui->autoScaled->currentText();

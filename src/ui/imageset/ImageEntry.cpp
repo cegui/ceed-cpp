@@ -46,9 +46,9 @@ QRectF ImageEntry::constrainResizeRect(QRectF rect, QRectF oldRect)
     return ResizableRectItem::constrainResizeRect(rect, oldRect);
 }
 
-void ImageEntry::notifyResizeStarted()
+void ImageEntry::notifyResizeStarted(ResizingHandle* handle)
 {
-    ResizableRectItem::notifyResizeStarted();
+    ResizableRectItem::notifyResizeStarted(handle);
 
     // Hide label when resizing so user can see edges clearly
     label->setVisible(false);
