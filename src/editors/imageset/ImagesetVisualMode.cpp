@@ -91,7 +91,7 @@ void ImagesetVisualMode::setupActions()
         self.connectionGroup.add(self.focusImageListFilterBoxAction, receiver = lambda: self.dockWidget.focusImageListFilterBox())
 */
 
-    toolBar = new QToolBar("Imageset");
+    toolBar = new QToolBar("Imageset toolbar");
     toolBar->setObjectName("ImagesetToolbar");
     toolBar->setIconSize(QSize(32, 32));
 /*
