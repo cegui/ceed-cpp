@@ -14,14 +14,12 @@
 
 class ImagesetVisualMode;
 class ImagesetCodeMode;
-class ActionManager;
 class Settings;
 
 class ImagesetEditor : public MultiModeEditor
 {
 public:
 
-    static void createActions(ActionManager& mgr);
     static void createSettings(Settings& mgr);
 
     ImagesetEditor(const QString& filePath);
@@ -42,8 +40,6 @@ public:
     //virtual void zoomFit() {}
 
     virtual QWidget* getWidget() override { return &tabs; }
-    //virtual bool hasChanges() const;
-    //virtual bool requiresProject() const { return false; }
 
     ImagesetVisualMode* getVisualMode() const { return visualMode; }
     QString getSourceCode() const;
@@ -51,9 +47,6 @@ public:
 protected:
 
     virtual void getRawData(QByteArray& outRawData) override;
-
-    //virtual void getRawData(QByteArray& outRawData) {}
-    //virtual void markAsUnchanged();
 
     ImagesetVisualMode* visualMode = nullptr;
     ImagesetCodeMode* codeMode = nullptr;

@@ -176,30 +176,6 @@ void ImagesetEditor::getRawData(QByteArray& outRawData)
     outRawData = getSourceCode().toUtf8();
 }
 
-void ImagesetEditor::createActions(ActionManager& mgr)
-{
-/*
-
-    cat.createAction(name = "cycle_overlapping", label = "Cycle O&verlapping Image Definitions",
-                     help_ = "When images definition overlap in such a way that makes it hard/impossible to select the definition you want, this allows you to select on of them and then just cycle until the right one is selected.",
-                     icon = QtGui.QIcon("icons/imageset_editing/cycle_overlapping.png"),
-                     defaultShortcut = QtGui.QKeySequence(QtCore.Qt.Key_Q))
-
-    cat.createAction(name = "create_image", label = "&Create Image Definition",
-                     help_ = "Creates a new image definition at the current cursor position, sized 50x50 pixels.",
-                     icon = QtGui.QIcon("icons/imageset_editing/create_image.png"))
-
-    cat.createAction(name = "duplicate_image", label = "&Duplicate Image Definition",
-                     help_ = "Duplicates selected image definitions.",
-                     icon = QtGui.QIcon("icons/imageset_editing/duplicate_image.png"))
-
-    cat.createAction(name = "focus_image_list_filter_box", label = "&Focus Image Definition List Filter Box",
-                     help_ = "This allows you to easily press a shortcut and immediately search through image definitions without having to reach for a mouse.",
-                     icon = QtGui.QIcon("icons/imageset_editing/focus_image_list_filter_box.png"),
-                     defaultShortcut = QtGui.QKeySequence(QtGui.QKeySequence.Find))
-*/
-}
-
 void ImagesetEditor::createSettings(Settings& mgr)
 {
     auto catImageset = mgr.createCategory("imageset", "Imageset editing");
