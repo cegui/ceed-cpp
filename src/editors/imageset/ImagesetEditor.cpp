@@ -156,6 +156,16 @@ void ImagesetEditor::zoomReset()
         visualMode->zoomReset();
 }
 
+QString ImagesetEditor::getSourceCode() const
+{
+    QDomDocument doc;
+    auto xmlRoot = doc.createElement("Imageset");
+    visualMode->getImagesetEntry()->saveToElement(xmlRoot);
+    doc.appendChild(xmlRoot);
+
+    return doc.toString(4);
+}
+
 void ImagesetEditor::getRawData(QByteArray& outRawData)
 {
     // If user saved in code mode, we process the code by propagating it to visual
@@ -163,12 +173,7 @@ void ImagesetEditor::getRawData(QByteArray& outRawData)
     if (tabs.currentWidget() == codeMode)
         codeMode->propagateToVisual();
 
-    QDomDocument doc;
-    auto xmlRoot = doc.createElement("Imageset");
-    visualMode->getImagesetEntry()->saveToElement(xmlRoot);
-    doc.appendChild(xmlRoot);
-
-    outRawData = doc.toString(4).toUtf8();
+    outRawData = getSourceCode().toUtf8();
 }
 
 void ImagesetEditor::createActions(ActionManager& mgr)

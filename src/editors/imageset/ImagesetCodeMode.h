@@ -3,11 +3,13 @@
 
 #include "src/editors/CodeEditMode.h"
 
+class ImagesetEditor;
+
 class ImagesetCodeMode : public ViewRestoringCodeEditMode
 {
 public:
 
-    ImagesetCodeMode(MultiModeEditor& editor);
+    ImagesetCodeMode(ImagesetEditor& editor);
 
     virtual QString getNativeCode() override;
     virtual bool propagateNativeCode(const QString& code) override;

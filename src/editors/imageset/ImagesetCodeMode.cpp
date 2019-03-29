@@ -1,36 +1,22 @@
 #include "src/editors/imageset/ImagesetCodeMode.h"
+#include "src/editors/imageset/ImagesetEditor.h"
+#include "src/editors/imageset/ImagesetVisualMode.h"
+#include "qdom.h"
 
-ImagesetCodeMode::ImagesetCodeMode(MultiModeEditor& editor)
+ImagesetCodeMode::ImagesetCodeMode(ImagesetEditor& editor)
     : ViewRestoringCodeEditMode(editor)
 {
-
 }
 
 QString ImagesetCodeMode::getNativeCode()
 {
-/*
-        element = self.tabbedEditor.visual.imagesetEntry.saveToElement()
-        xmledit.indent(element)
-
-        return ElementTree.tostring(element, "utf-8")
-*/
-    return "";
+    return static_cast<ImagesetEditor&>(_editor).getSourceCode();
 }
 
 bool ImagesetCodeMode::propagateNativeCode(const QString& code)
 {
-    /*
-            element = None
-
-            try:
-                element = ElementTree.fromstring(code)
-
-            except:
-                return False
-
-            else:
-                self.tabbedEditor.visual.loadImagesetEntryFromElement(element)
-                return True
-    */
+    QDomDocument doc;
+    if (!doc.setContent(code)) return false;
+    static_cast<ImagesetEditor&>(_editor).getVisualMode()->loadImagesetEntryFromElement(doc.documentElement());
     return true;
 }

@@ -45,6 +45,9 @@ public:
     //virtual bool hasChanges() const;
     //virtual bool requiresProject() const { return false; }
 
+    ImagesetVisualMode* getVisualMode() const { return visualMode; }
+    QString getSourceCode() const;
+
 protected:
 
     virtual void getRawData(QByteArray& outRawData) override;
