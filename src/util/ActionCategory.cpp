@@ -15,11 +15,11 @@ ActionCategory::~ActionCategory()
 {
 }
 
-Action* ActionCategory::getAction(const QString& name) const
+ConfigurableAction* ActionCategory::getAction(const QString& name) const
 {
-    auto it = std::find_if(_actions.begin(), _actions.end(), [&name](const Action* action)
+    auto it = std::find_if(_actions.begin(), _actions.end(), [&name](const ConfigurableAction* action)
     {
-        return action->getName() == name;
+        return action->objectName() == name;
     });
 
     assert(it != _actions.end());

@@ -1,6 +1,7 @@
 #include "src/editors/imageset/ImagesetVisualMode.h"
 #include "src/editors/imageset/ImagesetUndoCommands.h"
 #include "src/util/Settings.h"
+#include "src/util/ConfigurableAction.h"
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/imageset/ImageEntry.h"
 #include "src/ui/imageset/ImagesetEditorDockWidget.h"
@@ -62,11 +63,19 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
 
 void ImagesetVisualMode::setupActions()
 {
-/*
-        self.connectionGroup = action.ConnectionGroup(action.ActionManager.instance)
+    //    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
 
-        self.editOffsetsAction = action.getAction("imageset/edit_offsets")
-        self.connectionGroup.add(self.editOffsetsAction, receiver = self.slot_toggleEditOffsets, signalName = "toggled")
+    editOffsetsAction = new ConfigurableAction(this, "edit_offsets", "Edit &Offsets",
+                                               "When you select an image definition, a crosshair will appear in it representing it's offset centrepoint.",
+                                               QIcon(":/icons/imageset_editing/edit_offsets.png"), QKeySequence(Qt::Key_Space));
+    editOffsetsAction->setEnabled(false);
+    editOffsetsAction->setCheckable(true);
+    connect(editOffsetsAction, &ConfigurableAction::toggled, this, &ImagesetVisualMode::slot_toggleEditOffsets);
+
+/*
+        cat = actionManager.createCategory(name = "imageset", label = "Imageset Editor")
+
+        self.connectionGroup = action.ConnectionGroup(action.ActionManager.instance)
 
         self.cycleOverlappingAction = action.getAction("imageset/cycle_overlapping")
         self.connectionGroup.add(self.cycleOverlappingAction, receiver = self.cycleOverlappingImages)
@@ -79,34 +88,39 @@ void ImagesetVisualMode::setupActions()
 
         self.focusImageListFilterBoxAction = action.getAction("imageset/focus_image_list_filter_box")
         self.connectionGroup.add(self.focusImageListFilterBoxAction, receiver = lambda: self.dockWidget.focusImageListFilterBox())
+*/
 
-        self.toolBar = QtGui.QToolBar("Imageset")
-        self.toolBar.setObjectName("ImagesetToolbar")
-        self.toolBar.setIconSize(QtCore.QSize(32, 32))
-
+    toolBar = new QToolBar("Imageset");
+    toolBar->setObjectName("ImagesetToolbar");
+    toolBar->setIconSize(QSize(32, 32));
+/*
         self.toolBar.addAction(self.createImageAction)
         self.toolBar.addAction(self.duplicateSelectedImagesAction)
         self.toolBar.addSeparator() // ---------------------------
-        self.toolBar.addAction(self.editOffsetsAction)
+*/
+    toolBar->addAction(editOffsetsAction);
+/*
         self.toolBar.addAction(self.cycleOverlappingAction)
 
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-
-        self.contextMenu = QtGui.QMenu(self)
-        self.customContextMenuRequested.connect(self.slot_customContextMenu)
-
-        self.contextMenu.addAction(self.createImageAction)
-        self.contextMenu.addAction(self.duplicateSelectedImagesAction)
-        self.contextMenu.addAction(action.getAction("all_editors/delete"))
-        self.contextMenu.addSeparator() // ----------------------
-        self.contextMenu.addAction(self.cycleOverlappingAction)
-        self.contextMenu.addSeparator() // ----------------------
-        self.contextMenu.addAction(action.getAction("all_editors/zoom_in"))
-        self.contextMenu.addAction(action.getAction("all_editors/zoom_out"))
-        self.contextMenu.addAction(action.getAction("all_editors/zoom_reset"))
-        self.contextMenu.addSeparator() // ----------------------
-        self.contextMenu.addAction(self.editOffsetsAction)
 */
+
+    menu = new QMenu(this);
+    /*
+            self.contextMenu.addAction(self.createImageAction)
+            self.contextMenu.addAction(self.duplicateSelectedImagesAction)
+            self.contextMenu.addAction(action.getAction("all_editors/delete"))
+            self.contextMenu.addSeparator() // ----------------------
+            self.contextMenu.addAction(self.cycleOverlappingAction)
+            self.contextMenu.addSeparator() // ----------------------
+            self.contextMenu.addAction(action.getAction("all_editors/zoom_in"))
+            self.contextMenu.addAction(action.getAction("all_editors/zoom_out"))
+            self.contextMenu.addAction(action.getAction("all_editors/zoom_reset"))
+    */
+    menu->addSeparator();
+    menu->addAction(editOffsetsAction);
+
+    connect(this, &ImagesetVisualMode::customContextMenuRequested, this, &ImagesetVisualMode::slot_customContextMenu);
 }
 
 void ImagesetVisualMode::loadImagesetEntryFromElement(const QDomElement& xmlRoot)
@@ -125,15 +139,17 @@ void ImagesetVisualMode::loadImagesetEntryFromElement(const QDomElement& xmlRoot
 
 void ImagesetVisualMode::rebuildEditorMenu(QMenu* editorMenu)
 {
-/*
     // Similar to the toolbar, includes the focus filter box action
+/*
     editorMenu->addAction(createImageAction);
     editorMenu->addAction(duplicateSelectedImagesAction);
     editorMenu->addSeparator();
     editorMenu->addAction(cycleOverlappingAction);
+*/
     editorMenu->addSeparator();
     editorMenu->addAction(editOffsetsAction);
     editorMenu->addSeparator();
+/*
     editorMenu->addAction(focusImageListFilterBoxAction);
 */
 }
@@ -436,26 +452,29 @@ void ImagesetVisualMode::showEvent(QShowEvent* event)
     dockWidget->setEnabled(true);
     toolBar->setEnabled(true);
 /*
-        //???signal from editor to main window?
+        //???signal from editor to main window? or store editor menu ptr while we control it?
         if self.tabbedEditor.editorMenu() is not None:
             self.tabbedEditor.editorMenu().menuAction().setEnabled(True)
 
         // connect all our actions
         self.connectionGroup.connectAll()
-        // call this every time the visual editing is shown to sync all entries up
-        self.slot_toggleEditOffsets(self.editOffsetsAction.isChecked())
 */
+    editOffsetsAction->setEnabled(true);
+
+    // Call this every time the visual editing is shown to sync all entries up
+    slot_toggleEditOffsets(editOffsetsAction->isChecked());
 
     ResizableGraphicsView::showEvent(event);
 }
 
 void ImagesetVisualMode::hideEvent(QHideEvent* event)
 {
+    editOffsetsAction->setEnabled(false);
 /*
         // disconnected all our actions
         self.connectionGroup.disconnectAll()
 
-        //???signal from editor to main window?
+        //???signal from editor to main window? or store editor menu ptr while we control it?
         if self.tabbedEditor.editorMenu() is not None:
             self.tabbedEditor.editorMenu().menuAction().setEnabled(False)
 */

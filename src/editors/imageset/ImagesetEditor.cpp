@@ -174,12 +174,6 @@ void ImagesetEditor::getRawData(QByteArray& outRawData)
 void ImagesetEditor::createActions(ActionManager& mgr)
 {
 /*
-    cat = actionManager.createCategory(name = "imageset", label = "Imageset Editor")
-
-    cat.createAction(name = "edit_offsets", label = "Edit &Offsets",
-                     help_ = "When you select an image definition, a crosshair will appear in it representing it's offset centrepoint.",
-                     icon = QtGui.QIcon("icons/imageset_editing/edit_offsets.png"),
-                     defaultShortcut = QtGui.QKeySequence(QtCore.Qt.Key_Space)).setCheckable(True)
 
     cat.createAction(name = "cycle_overlapping", label = "Cycle O&verlapping Image Definitions",
                      help_ = "When images definition overlap in such a way that makes it hard/impossible to select the definition you want, this allows you to select on of them and then just cycle until the right one is selected.",

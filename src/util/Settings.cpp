@@ -26,7 +26,7 @@ SettingsCategory* Settings::getCategory(const QString& name) const
         return cat->getName() == name;
     });
 
-    assert(it != categories.end());
+    //assert(it != categories.end());
     return (it != categories.end()) ? it->get() : nullptr;
 }
 

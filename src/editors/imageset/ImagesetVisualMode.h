@@ -12,6 +12,7 @@ class ImagesetEditorDockWidget;
 class QDomElement;
 class QMenu;
 class QToolBar;
+class ConfigurableAction;
 
 class ImagesetVisualMode : public ResizableGraphicsView, public IEditMode
 {
@@ -65,6 +66,8 @@ protected:
     ImagesetEditorDockWidget* dockWidget = nullptr;
     QMenu* menu = nullptr;
     QToolBar* toolBar = nullptr;
+
+    ConfigurableAction* editOffsetsAction = nullptr;
 };
 
 #endif // IMAGESETVISUALMODE_H

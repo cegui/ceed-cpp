@@ -62,5 +62,11 @@
         <file>icons/tabs/has_changes.png</file>
         <file>icons/imageset_editing/offset_crosshair.png</file>
         <file>icons/widgets/edit-clear.png</file>
+        <file>icons/imageset_editing/create_image.png</file>
+        <file>icons/imageset_editing/cycle_overlapping.png</file>
+        <file>icons/imageset_editing/duplicate_image.png</file>
+        <file>icons/imageset_editing/edit_offsets.png</file>
+        <file>icons/imageset_editing/filter_reset.png</file>
+        <file>icons/imageset_editing/focus_image_list_filter_box.png</file>
     </qresource>
 </RCC>

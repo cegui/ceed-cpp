@@ -6,7 +6,7 @@
 
 // A group of actions
 
-class Action;
+class ConfigurableAction;
 
 class ActionCategory
 {
@@ -15,7 +15,7 @@ public:
     ActionCategory(const QString& name, const QString& label = QString());
     ~ActionCategory();
 
-    Action* getAction(const QString& name) const;
+    ConfigurableAction* getAction(const QString& name) const;
     void setEnabled(bool enabled);
 
 protected:
@@ -23,7 +23,7 @@ protected:
     QString _name;
     QString _label;
 
-    std::vector<Action*> _actions;
+    std::vector<ConfigurableAction*> _actions;
 };
 
 #endif // ACTIONCATEGORY_H
