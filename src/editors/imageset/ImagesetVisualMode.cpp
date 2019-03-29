@@ -65,7 +65,8 @@ void ImagesetVisualMode::setupActions()
 {
     //    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
 
-    editOffsetsAction = new ConfigurableAction(this, "edit_offsets", "Edit &Offsets",
+    editOffsetsAction = new ConfigurableAction(qobject_cast<Application*>(qApp)->getMainWindow(),
+                                               "edit_offsets", "Edit &Offsets",
                                                "When you select an image definition, a crosshair will appear in it representing it's offset centrepoint.",
                                                QIcon(":/icons/imageset_editing/edit_offsets.png"), QKeySequence(Qt::Key_Space));
     editOffsetsAction->setEnabled(false);
@@ -101,11 +102,9 @@ void ImagesetVisualMode::setupActions()
     toolBar->addAction(editOffsetsAction);
 /*
         self.toolBar.addAction(self.cycleOverlappingAction)
-
-        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
 */
 
-    menu = new QMenu(this);
+    contextMenu = new QMenu(this);
     /*
             self.contextMenu.addAction(self.createImageAction)
             self.contextMenu.addAction(self.duplicateSelectedImagesAction)
@@ -117,9 +116,10 @@ void ImagesetVisualMode::setupActions()
             self.contextMenu.addAction(action.getAction("all_editors/zoom_out"))
             self.contextMenu.addAction(action.getAction("all_editors/zoom_reset"))
     */
-    menu->addSeparator();
-    menu->addAction(editOffsetsAction);
+    contextMenu->addSeparator();
+    contextMenu->addAction(editOffsetsAction);
 
+    setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, &ImagesetVisualMode::customContextMenuRequested, this, &ImagesetVisualMode::slot_customContextMenu);
 }
 
@@ -152,6 +152,7 @@ void ImagesetVisualMode::rebuildEditorMenu(QMenu* editorMenu)
 /*
     editorMenu->addAction(focusImageListFilterBoxAction);
 */
+    _editorMenu = editorMenu;
 }
 
 void ImagesetVisualMode::refreshSceneRect()
@@ -444,21 +445,21 @@ void ImagesetVisualMode::slot_toggleEditOffsets(bool enabled)
 
 void ImagesetVisualMode::slot_customContextMenu(QPoint point)
 {
-    menu->exec(mapToGlobal(point));
+    contextMenu->exec(mapToGlobal(point));
 }
 
 void ImagesetVisualMode::showEvent(QShowEvent* event)
 {
     dockWidget->setEnabled(true);
     toolBar->setEnabled(true);
-/*
-        //???signal from editor to main window? or store editor menu ptr while we control it?
-        if self.tabbedEditor.editorMenu() is not None:
-            self.tabbedEditor.editorMenu().menuAction().setEnabled(True)
 
+    //???signal from editor to main window instead of storing ptr here?
+    if (_editorMenu) _editorMenu->menuAction()->setEnabled(true);
+
+    /*
         // connect all our actions
         self.connectionGroup.connectAll()
-*/
+    */
     editOffsetsAction->setEnabled(true);
 
     // Call this every time the visual editing is shown to sync all entries up
@@ -469,15 +470,15 @@ void ImagesetVisualMode::showEvent(QShowEvent* event)
 
 void ImagesetVisualMode::hideEvent(QHideEvent* event)
 {
-    editOffsetsAction->setEnabled(false);
-/*
+    /*
         // disconnected all our actions
         self.connectionGroup.disconnectAll()
+    */
+    editOffsetsAction->setEnabled(false);
 
-        //???signal from editor to main window? or store editor menu ptr while we control it?
-        if self.tabbedEditor.editorMenu() is not None:
-            self.tabbedEditor.editorMenu().menuAction().setEnabled(False)
-*/
+    //???signal from editor to main window instead of storing ptr here?
+    if (_editorMenu) _editorMenu->menuAction()->setEnabled(false);
+
     dockWidget->setEnabled(false);
     toolBar->setEnabled(false);
 

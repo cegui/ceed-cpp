@@ -64,7 +64,8 @@ protected:
     QPointF lastCursorPosition;
     ImagesetEntry* imagesetEntry = nullptr;
     ImagesetEditorDockWidget* dockWidget = nullptr;
-    QMenu* menu = nullptr;
+    QMenu* _editorMenu = nullptr; // Not owned, just stored when we have control over its content
+    QMenu* contextMenu = nullptr;
     QToolBar* toolBar = nullptr;
 
     ConfigurableAction* editOffsetsAction = nullptr;

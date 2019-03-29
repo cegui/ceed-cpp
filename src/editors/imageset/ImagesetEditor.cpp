@@ -103,8 +103,8 @@ void ImagesetEditor::activate(MainWindow& mainWindow)
     auto editorMenu = mainWindow.getEditorMenu();
     editorMenu->setTitle("&Imageset");
     visualMode->rebuildEditorMenu(editorMenu);
-    editorMenu->setVisible(true);
-    editorMenu->setEnabled(tabs.currentWidget() == visualMode);
+    editorMenu->menuAction()->setVisible(true);
+    editorMenu->menuAction()->setEnabled(tabs.currentWidget() == visualMode);
 }
 
 void ImagesetEditor::deactivate(MainWindow& mainWindow)

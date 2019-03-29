@@ -211,7 +211,7 @@
             </property>
             <property name="icon">
              <iconset>
-              <normaloff>icons/imageset_editing/filter_reset.png</normaloff>icons/imageset_editing/filter_reset.png</iconset>
+              <normaloff>:/icons/imageset_editing/filter_reset.png</normaloff>:/icons/imageset_editing/filter_reset.png</iconset>
             </property>
             <property name="iconSize">
              <size>
