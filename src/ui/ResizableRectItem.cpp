@@ -155,7 +155,7 @@ void ResizableRectItem::onScaleChanged(qreal scaleX, qreal scaleY)
     updateHandles();
 }
 
-void ResizableRectItem::mouseReleaseEventSelected(QMouseEvent* event)
+void ResizableRectItem::mouseReleaseEventSelected(QMouseEvent* /*event*/)
 {
     if (_moveInProgress)
     {

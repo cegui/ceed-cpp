@@ -859,7 +859,8 @@ EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
     auto retPtr = ret.get();
     activeEditors.push_back(std::move(ret));
 
-    ui->tabs->addTab(retPtr->getWidget(), retPtr->getLabelText());
+    const int newTabIdx = ui->tabs->addTab(retPtr->getWidget(), retPtr->getLabelText());
+    ui->tabs->setTabToolTip(newTabIdx, retPtr->getFilePath());
 
     return retPtr;
 }
@@ -953,6 +954,7 @@ void MainWindow::onEditorLabelChanged()
 
     const int tabIndex = ui->tabs->indexOf(editor->getWidget());
     ui->tabs->setTabText(tabIndex, editor->getLabelText());
+    ui->tabs->setTabToolTip(tabIndex, editor->getFilePath());
 }
 
 void MainWindow::onEditorContentsChanged(bool isModified)

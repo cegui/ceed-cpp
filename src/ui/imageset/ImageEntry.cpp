@@ -247,7 +247,7 @@ QVariant ImageEntry::itemChange(GraphicsItemChange change, const QVariant& value
         }
         else
         {
-            if (!isHovered) label->setVisible(false);
+            if (!_isHovered) label->setVisible(false);
 
             if (!offset->isSelected() && !offset->isHovered())
                 offset->setVisible(false);
