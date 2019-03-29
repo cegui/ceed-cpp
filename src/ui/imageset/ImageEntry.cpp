@@ -145,6 +145,11 @@ void ImageEntry::updateListItem()
     listItem->setIcon(QIcon(preview));
 }
 
+void ImageEntry::showLabel(bool show)
+{
+    label->setVisible(show);
+}
+
 QString ImageEntry::name() const
 {
     return label->toPlainText();
@@ -304,12 +309,12 @@ void ImageEntry::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
     app->getMainWindow()->statusBar()->showMessage(QString("Image: '%1'\t\tXPos: %2, YPos: %3, Width: %4, Height: %5")
                                                    .arg(name()).arg(pos().x()).arg(pos().y()).arg(rect().width()).arg(rect().height()));
 
-    isHovered = true;
+    _isHovered = true;
 }
 
 void ImageEntry::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
 {
-    isHovered = false;
+    _isHovered = false;
 
     qobject_cast<Application*>(qApp)->getMainWindow()->statusBar()->clearMessage();
 
@@ -318,6 +323,16 @@ void ImageEntry::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
     setZValue(zValue() - 1);
 
     ResizableRectItem::hoverLeaveEvent(event);
+}
+
+void ImageEntry::onPotentialMove(bool move)
+{
+    potentialMove = move;
+    if (!move) resized = false;
+
+    // Reset to unreachable value
+    oldPosition.setX(-10000.0);
+    oldPosition.setY(-10000.0);
 }
 
 // Creates and returns a pixmap containing what's in the underlying image in the rectangle

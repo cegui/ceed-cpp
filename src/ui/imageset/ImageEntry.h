@@ -29,6 +29,7 @@ public:
     void setListItem(QListWidgetItem* newItem) { listItem = newItem; }
     QListWidgetItem* getListItem() const { return listItem; }
     ImageOffsetMark* getOffsetMark() const { return offset; }
+    void showLabel(bool show);
 
     QString name() const;
     void setName(const QString& newName);
@@ -41,9 +42,14 @@ public:
     int getNativeVertRes() const { return nativeVertRes; }
     void setProperty(const QString& name, const QVariant& value);
     QVariant getProperty(const QString& name);
+    QPointF getOldPos() const { return oldPosition; }
+    bool isHovered() const { return _isHovered; }
+    bool isResized() const { return resized; }
 
     virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
+
+    void onPotentialMove(bool move);
 
 protected:
 
@@ -60,7 +66,7 @@ protected:
     QString autoScaled = "";
     int nativeHorzRes = 0;
     int nativeVertRes = 0;
-    bool isHovered = false;
+    bool _isHovered = false;
 
     // Used for undo
     bool potentialMove = false;

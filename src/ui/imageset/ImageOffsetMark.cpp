@@ -27,6 +27,15 @@ ImageOffsetMark::ImageOffsetMark(QGraphicsItem* parent)
     oldPosition.setY(-10000.0);
 }
 
+void ImageOffsetMark::onPotentialMove(bool move)
+{
+    potentialMove = move;
+
+    // Reset to unreachable value
+    oldPosition.setX(-10000.0);
+    oldPosition.setY(-10000.0);
+}
+
 QVariant ImageOffsetMark::itemChange(GraphicsItemChange change, const QVariant& value)
 {
     if (change == ItemPositionChange)

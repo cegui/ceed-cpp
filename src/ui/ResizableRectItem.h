@@ -24,6 +24,8 @@ public:
     void setRect(qreal ax, qreal ay, qreal w, qreal h) { setRect(QRectF(ax, ay, w, h)); }
     bool isAnyHandleSelected() const;
     bool resizeInProgress() const { return _resizeInProgress; }
+    QPointF getResizeOldPos() const { return resizeOldPos; }
+    QRectF getResizeOldRect() const { return resizeOldRect; }
 
     virtual void performResizing(const ResizingHandle& handle, qreal& deltaLeft, qreal& deltaTop, qreal& deltaRight, qreal& deltaBottom);
     virtual QPointF constrainMovePoint(QPointF value) { return value; }
@@ -72,8 +74,8 @@ protected:
     bool _handlesDirty = true;
 
     QPointF moveOldPos;
-    //QPointF resizeOldPos;
-    //QRectF resizeOldRect;
+    QPointF resizeOldPos;
+    QRectF resizeOldRect;
 
     bool _mouseOver = false;
     bool _moveInProgress = false;

@@ -14,6 +14,9 @@ public:
     ImageOffsetMark(QGraphicsItem* parent = nullptr);
 
     bool isHovered() const { return _isHovered; }
+    QPointF getOldPos() const { return oldPosition; }
+
+    void onPotentialMove(bool move);
 
 protected:
 
@@ -23,7 +26,7 @@ protected:
 
     QPointF oldPosition;        // Used for undo
     bool potentialMove = false; // Used for undo
-    bool _isHovered = false;     // Internal attribute to help decide when to hide/show the offset crosshair
+    bool _isHovered = false;    // Internal attribute to help decide when to hide/show the offset crosshair
 };
 
 #endif // IMAGEOFFSETMARK_H

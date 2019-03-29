@@ -167,8 +167,8 @@ void ResizableRectItem::mouseReleaseEventSelected(QMouseEvent* event)
 void ResizableRectItem::notifyResizeStarted(ResizingHandle* handle)
 {
     _resizeInProgress = true;
-    //_resizeOldPos = pos();
-    //_resizeOldRect = rect();
+    resizeOldPos = pos();
+    resizeOldRect = rect();
 
     setPen(getPenWhileResizing());
     hideAllHandles(handle);

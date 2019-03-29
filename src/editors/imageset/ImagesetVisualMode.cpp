@@ -4,6 +4,7 @@
 #include "src/util/ConfigurableAction.h"
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/imageset/ImageEntry.h"
+#include "src/ui/imageset/ImageOffsetMark.h"
 #include "src/ui/imageset/ImagesetEditorDockWidget.h"
 #include "src/ui/ResizingHandle.h"
 #include "src/Application.h"
@@ -499,11 +500,19 @@ void ImagesetVisualMode::mousePressEvent(QMouseEvent* event)
     {
         for (QGraphicsItem* selectedItem : scene()->selectedItems())
         {
-            /*
-            // selectedItem could be ImageEntry or ImageOffset!
-            selectedItem.potentialMove = True
-            selectedItem.oldPosition = None
-            */
+            auto entry = dynamic_cast<ImageEntry*>(selectedItem);
+            if (entry)
+            {
+                entry->onPotentialMove(true);
+                continue;
+            }
+
+            auto offset = dynamic_cast<ImageOffsetMark*>(selectedItem);
+            if (offset)
+            {
+                offset->onPotentialMove(true);
+                continue;
+            }
         }
     }
 }
@@ -514,88 +523,105 @@ void ImagesetVisualMode::mouseReleaseEvent(QMouseEvent* event)
 {
     ResizableGraphicsView::mouseReleaseEvent(event);
 
-/*
-        // moving
-        moveImageNames = []
-        moveImageOldPositions = {}
-        moveImageNewPositions = {}
+    std::vector<ImageEntry*> imageEntries;
+    std::vector<ImageOffsetMark*> imageOffsets;
+    for (QGraphicsItem* selectedItem : scene()->selectedItems())
+    {
+        auto entry = dynamic_cast<ImageEntry*>(selectedItem);
+        if (entry)
+        {
+            imageEntries.push_back(entry);
+            continue;
+        }
 
-        moveOffsetNames = []
-        moveOffsetOldPositions = {}
-        moveOffsetNewPositions = {}
+        auto offset = dynamic_cast<ImageOffsetMark*>(selectedItem);
+        if (offset)
+        {
+            imageOffsets.push_back(offset);
+            continue;
+        }
 
-        // resizing
-        resizeImageNames = []
-        resizeImageOldPositions = {}
-        resizeImageOldRects = {}
-        resizeImageNewPositions = {}
-        resizeImageNewRects = {}
+        // We have to process parents of resizing handles instead of the handles themselves
+        auto handle = dynamic_cast<ResizingHandle*>(selectedItem);
+        if (handle)
+        {
+            imageEntries.push_back(static_cast<ImageEntry*>(handle->parentItem()));
+            continue;
+        }
+    }
 
-        // we have to "expand" the items, adding parents of resizing handles
-        // instead of the handles themselves
-        expandedSelectedItems = []
-        for selectedItem in self.scene().selectedItems():
-            if isinstance(selectedItem, elements.ImageEntry):
-                expandedSelectedItems.append(selectedItem)
-            elif isinstance(selectedItem, elements.ImageOffset):
-                expandedSelectedItems.append(selectedItem)
-            elif isinstance(selectedItem, resizable.ResizingHandle):
-                expandedSelectedItems.append(selectedItem.parentItem())
+    // NOTE: It should never happen that more than one of these sets is populated
+    //       User moves images XOR moves offsets XOR resizes images
+    //
+    //       I don't do elif for robustness though, who knows what can happen ;-)
+    std::vector<ImagesetGeometryChangeCommand::Record> resize;
+    std::vector<ImagesetMoveCommand::Record> move;
+    std::vector<ImagesetOffsetMoveCommand::Record> offsetMove;
 
-        for selectedItem in expandedSelectedItems:
-            if isinstance(selectedItem, elements.ImageEntry):
-                if selectedItem.oldPosition:
-                    if selectedItem.mouseOver:
-                        // show the label again if mouse is over because moving finished
-                        selectedItem.label.setVisible(True)
+    for (ImageEntry* imageEntry : imageEntries)
+    {
+        auto oldPos = imageEntry->getOldPos();
+        if (oldPos.x() > -9999.0) // FIXME: hack for 'not set' position
+        {
+            // Show the label again if mouse is over because moving finished
+            if (imageEntry->isHovered()) imageEntry->showLabel(true);
 
-                    // only include that if the position really changed
-                    if selectedItem.oldPosition != selectedItem.pos():
-                        moveImageNames.append(selectedItem.name)
-                        moveImageOldPositions[selectedItem.name] = selectedItem.oldPosition
-                        moveImageNewPositions[selectedItem.name] = selectedItem.pos()
+            // Only include that if the position really changed
+            if (oldPos != imageEntry->pos())
+            {
+                ImagesetMoveCommand::Record rec;
+                rec.name = imageEntry->name();
+                rec.oldPos = oldPos;
+                rec.newPos = imageEntry->pos();
+                move.push_back(std::move(rec));
+            }
+        }
 
-                if selectedItem.resized:
-                    // only include that if the position or rect really changed
-                    if selectedItem.resizeOldPos != selectedItem.pos() or selectedItem.resizeOldRect != selectedItem.rect():
-                        resizeImageNames.append(selectedItem.name)
-                        resizeImageOldPositions[selectedItem.name] = selectedItem.resizeOldPos
-                        resizeImageOldRects[selectedItem.name] = selectedItem.resizeOldRect
-                        resizeImageNewPositions[selectedItem.name] = selectedItem.pos()
-                        resizeImageNewRects[selectedItem.name] = selectedItem.rect()
+        if (imageEntry->isResized())
+        {
+            // Only include that if the position or rect really changed
+            if (imageEntry->getResizeOldPos() != imageEntry->pos() || imageEntry->getResizeOldRect() != imageEntry->rect())
+            {
+                ImagesetGeometryChangeCommand::Record rec;
+                rec.name = imageEntry->name();
+                rec.oldPos = imageEntry->getResizeOldPos();
+                rec.newPos = imageEntry->pos();
+                rec.oldRect = imageEntry->getResizeOldRect();
+                rec.newRect = imageEntry->rect();
+                resize.push_back(std::move(rec));
+            }
+        }
 
-                selectedItem.potentialMove = False
-                selectedItem.oldPosition = None
-                selectedItem.resized = False
+        imageEntry->onPotentialMove(false);
+    }
 
-            elif isinstance(selectedItem, elements.ImageOffset):
-                if selectedItem.oldPosition:
-                    // only include that if the position really changed
-                    if selectedItem.oldPosition != selectedItem.pos():
-                        moveOffsetNames.append(selectedItem.imageEntry.name)
-                        moveOffsetOldPositions[selectedItem.imageEntry.name] = selectedItem.oldPosition
-                        moveOffsetNewPositions[selectedItem.imageEntry.name] = selectedItem.pos()
+    for (ImageOffsetMark* imageOffset : imageOffsets)
+    {
+        auto oldPos = imageOffset->getOldPos();
+        if (oldPos.x() > -9999.0) // FIXME: hack for 'not set' position
+        {
+            // Only include that if the position really changed
+            if (oldPos != imageOffset->pos())
+            {
+                ImagesetOffsetMoveCommand::Record rec;
+                rec.name = static_cast<ImageEntry*>(imageOffset->parentItem())->name();
+                rec.oldPos = oldPos;
+                rec.newPos = imageOffset->pos();
+                offsetMove.push_back(std::move(rec));
+            }
+        }
 
-                selectedItem.potentialMove = False
-                selectedItem.oldPosition = None
+        imageOffset->onPotentialMove(false);
+    }
 
-        // NOTE: It should never happen that more than one of these sets is populated
-        //       User moves images XOR moves offsets XOR resizes images
-        //
-        //       I don't do elif for robustness though, who knows what can happen ;-)
+    if (!move.empty())
+        _editor.getUndoStack()->push(new ImagesetMoveCommand(*this, std::move(move)));
 
-        if len(moveImageNames) > 0:
-            cmd = undo.MoveCommand(self, moveImageNames, moveImageOldPositions, moveImageNewPositions)
-            self.tabbedEditor.undoStack.push(cmd)
+    if (!resize.empty())
+        _editor.getUndoStack()->push(new ImagesetGeometryChangeCommand(*this, std::move(resize)));
 
-        if len(moveOffsetNames) > 0:
-            cmd = undo.OffsetMoveCommand(self, moveOffsetNames, moveOffsetOldPositions, moveOffsetNewPositions)
-            self.tabbedEditor.undoStack.push(cmd)
-
-        if len(resizeImageNames) > 0:
-            cmd = undo.GeometryChangeCommand(self, resizeImageNames, resizeImageOldPositions, resizeImageOldRects, resizeImageNewPositions, resizeImageNewRects)
-            self.tabbedEditor.undoStack.push(cmd)
-*/
+    if (!offsetMove.empty())
+        _editor.getUndoStack()->push(new ImagesetOffsetMoveCommand(*this, std::move(offsetMove)));
 }
 
 // TODO: offset keyboard handling
