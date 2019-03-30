@@ -241,6 +241,26 @@ QToolBar* MainWindow::createToolbar(const QString& name)
     return toolBar;
 }
 
+QAction* MainWindow::getActionDeleteSelected() const
+{
+    return ui->actionDelete;
+}
+
+QAction* MainWindow::getActionZoomIn() const
+{
+    return ui->actionZoomIn;
+}
+
+QAction* MainWindow::getActionZoomOut() const
+{
+    return ui->actionZoomOut;
+}
+
+QAction* MainWindow::getActionZoomReset() const
+{
+    return ui->actionZoomReset;
+}
+
 void MainWindow::closeEvent(QCloseEvent* event)
 {
     if (!on_actionQuit_triggered())

@@ -66,12 +66,14 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
 
 void ImagesetVisualMode::setupActions()
 {
-    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    Application* app = qobject_cast<Application*>(qApp);
+
+    auto&& settings = app->getSettings();
     auto category = settings->getCategory("shortcuts");
     if (!category) category = settings->createCategory("shortcuts", "Shortcuts");
     auto section = category->createSection("imageset", "Imageset Editor");
 
-    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
+    auto mainWindow = app->getMainWindow();
 
     editOffsetsAction = new ConfigurableAction(mainWindow,
                                                *section, "edit_offsets", "Edit &Offsets",
@@ -120,17 +122,13 @@ void ImagesetVisualMode::setupActions()
     contextMenu = new QMenu(this);
     contextMenu->addAction(createImageAction);
     contextMenu->addAction(duplicateSelectedImagesAction);
-    /*
-        self.contextMenu.addAction(action.getAction("all_editors/delete"))
-    */
+    contextMenu->addAction(mainWindow->getActionDeleteSelected());
     contextMenu->addSeparator();
     contextMenu->addAction(cycleOverlappingAction);
     contextMenu->addSeparator();
-    /*
-        self.contextMenu.addAction(action.getAction("all_editors/zoom_in"))
-        self.contextMenu.addAction(action.getAction("all_editors/zoom_out"))
-        self.contextMenu.addAction(action.getAction("all_editors/zoom_reset"))
-    */
+    contextMenu->addAction(mainWindow->getActionZoomIn());
+    contextMenu->addAction(mainWindow->getActionZoomOut());
+    contextMenu->addAction(mainWindow->getActionZoomReset());
     contextMenu->addSeparator();
     contextMenu->addAction(editOffsetsAction);
 
@@ -563,7 +561,6 @@ void ImagesetVisualMode::mouseReleaseEvent(QMouseEvent* event)
 
     // NOTE: It should never happen that more than one of these sets is populated
     //       User moves images XOR moves offsets XOR resizes images
-    //
     //       I don't do elif for robustness though, who knows what can happen ;-)
     std::vector<ImagesetGeometryChangeCommand::Record> resize;
     std::vector<ImagesetMoveCommand::Record> move;

@@ -31,6 +31,13 @@ public:
     QMenu* getEditorMenu() const;
     QToolBar* createToolbar(const QString& name);
 
+    // Common actions
+    // TODO: redesign!
+    QAction* getActionDeleteSelected() const;
+    QAction* getActionZoomIn() const;
+    QAction* getActionZoomOut() const;
+    QAction* getActionZoomReset() const;
+
 private slots:
 
     void openEditorTab(const QString& absolutePath);
