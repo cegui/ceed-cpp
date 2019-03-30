@@ -22,17 +22,6 @@ ImagesetEditor::ImagesetEditor(const QString& filePath)
 
     codeMode = new ImagesetCodeMode(*this);
     tabs.addTab(codeMode, "Code");
-/*
-        # set the toolbar icon size according to the setting and subscribe to it
-        self.tbIconSizeEntry = settings.getEntry("global/ui/toolbar_icon_size")
-        self.updateToolbarSize(self.tbIconSizeEntry.value)
-        self.tbIconSizeCallback = lambda value: self.updateToolbarSize(value)
-        self.tbIconSizeEntry.subscribe(self.tbIconSizeCallback)
-    def updateToolbarSize(self, size):
-        if size < 16:
-            size = 16
-        self.visual.toolBar.setIconSize(QtCore.QSize(size, size))
-*/
 }
 
 void ImagesetEditor::initialize()
@@ -79,15 +68,6 @@ void ImagesetEditor::initialize()
     }
 
     visualMode->loadImagesetEntryFromElement(doc.documentElement());
-}
-
-void ImagesetEditor::finalize()
-{
-    // Unsubscribe from the toolbar icon size setting
-/*
-        self.tbIconSizeEntry.unsubscribe(self.tbIconSizeCallback)
-*/
-    MultiModeEditor::finalize();
 }
 
 void ImagesetEditor::activate(MainWindow& mainWindow)

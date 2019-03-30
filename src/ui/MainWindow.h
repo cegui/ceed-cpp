@@ -29,6 +29,7 @@ public:
 
     EditorBase* getCurrentEditor() const { return currentEditor; }
     QMenu* getEditorMenu() const;
+    QToolBar* createToolbar(const QString& name);
 
 private slots:
 
@@ -92,7 +93,6 @@ private:
     virtual void closeEvent(QCloseEvent* event) override;
 
     void setupToolbars();
-    QToolBar* createToolbar(const QString& name);
 
     void updateProjectDependentUI(CEGUIProject* newProject);
 

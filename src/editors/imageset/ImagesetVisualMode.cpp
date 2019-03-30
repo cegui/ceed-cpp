@@ -8,6 +8,7 @@
 #include "src/ui/imageset/ImageOffsetMark.h"
 #include "src/ui/imageset/ImagesetEditorDockWidget.h"
 #include "src/ui/ResizingHandle.h"
+#include "src/ui/MainWindow.h"
 #include "src/Application.h"
 #include "qopenglwidget.h"
 #include "qclipboard.h"
@@ -70,32 +71,34 @@ void ImagesetVisualMode::setupActions()
     if (!category) category = settings->createCategory("shortcuts", "Shortcuts");
     auto section = category->createSection("imageset", "Imageset Editor");
 
-    editOffsetsAction = new ConfigurableAction(qobject_cast<Application*>(qApp)->getMainWindow(),
+    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
+
+    editOffsetsAction = new ConfigurableAction(mainWindow,
                                                *section, "edit_offsets", "Edit &Offsets",
                                                "When you select an image definition, a crosshair will appear in it representing it's offset centrepoint.",
                                                QIcon(":/icons/imageset_editing/edit_offsets.png"), QKeySequence(Qt::Key_Space));
     editOffsetsAction->setCheckable(true);
     connect(editOffsetsAction, &ConfigurableAction::toggled, this, &ImagesetVisualMode::slot_toggleEditOffsets);
 
-    cycleOverlappingAction = new ConfigurableAction(qobject_cast<Application*>(qApp)->getMainWindow(),
+    cycleOverlappingAction = new ConfigurableAction(mainWindow,
                                                *section, "cycle_overlapping", "Cycle O&verlapping Image Definitions",
                                                "When images definition overlap in such a way that makes it hard/impossible to select the definition you want, this allows you to select on of them and then just cycle until the right one is selected.",
                                                QIcon(":/icons/imageset_editing/cycle_overlapping.png"), QKeySequence(Qt::Key_Q));
     connect(cycleOverlappingAction, &ConfigurableAction::triggered, this, &ImagesetVisualMode::cycleOverlappingImages);
 
-    createImageAction = new ConfigurableAction(qobject_cast<Application*>(qApp)->getMainWindow(),
+    createImageAction = new ConfigurableAction(mainWindow,
                                                *section, "create_image", "&Create Image Definition",
                                                "Creates a new image definition at the current cursor position, sized 50x50 pixels.",
                                                QIcon(":/icons/imageset_editing/create_image.png"));
     connect(createImageAction, &ConfigurableAction::triggered, this, &ImagesetVisualMode::createImageEntryAtCursor);
 
-    duplicateSelectedImagesAction = new ConfigurableAction(qobject_cast<Application*>(qApp)->getMainWindow(),
+    duplicateSelectedImagesAction = new ConfigurableAction(mainWindow,
                                                *section, "duplicate_image", "&Duplicate Image Definition",
                                                "Duplicates selected image definitions.",
                                                QIcon(":/icons/imageset_editing/duplicate_image.png"));
     connect(duplicateSelectedImagesAction, &ConfigurableAction::triggered, this, &ImagesetVisualMode::duplicateSelectedImageEntries);
 
-    focusImageListFilterBoxAction = new ConfigurableAction(qobject_cast<Application*>(qApp)->getMainWindow(),
+    focusImageListFilterBoxAction = new ConfigurableAction(mainWindow,
                                                *section, "focus_image_list_filter_box", "&Filter...",
                                                "This allows you to easily press a shortcut and immediately search through image definitions without having to reach for a mouse.",
                                                QIcon(":/icons/imageset_editing/focus_image_list_filter_box.png"),
@@ -107,9 +110,7 @@ void ImagesetVisualMode::setupActions()
 
     setActionsEnabled(false);
 
-    toolBar = new QToolBar("Imageset toolbar");
-    toolBar->setObjectName("ImagesetToolbar");
-    toolBar->setIconSize(QSize(32, 32));
+    toolBar = mainWindow->createToolbar("Imageset");
     toolBar->addAction(createImageAction);
     toolBar->addAction(duplicateSelectedImagesAction);
     toolBar->addSeparator();

@@ -25,7 +25,6 @@ public:
     ImagesetEditor(const QString& filePath);
 
     virtual void initialize() override;
-    virtual void finalize() override;
     virtual void activate(MainWindow& mainWindow) override;
     virtual void deactivate(MainWindow& mainWindow) override;
 
