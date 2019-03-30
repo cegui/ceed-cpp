@@ -1,8 +1,26 @@
 #include "src/editors/layout/LayoutVisualMode.h"
+#include "src/editors/layout/LayoutEditor.h"
 
-LayoutVisualMode::LayoutVisualMode()
+LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
+    : IEditMode(editor)
 {
+/*
+        self.hierarchyDockWidget = HierarchyDockWidget(self)
+        self.propertiesDockWidget = PropertiesDockWidget(self)
+        self.createWidgetDockWidget = CreateWidgetDockWidget(self)
 
+        layout = QtGui.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+
+        self.scene = EditingScene(self)
+
+        self.setupActions()
+        self.setupToolBar()
+        self.hierarchyDockWidget.treeView.setupContextMenu()
+
+        self.oldViewState = None
+*/
 }
 
 /*
@@ -115,71 +133,8 @@ class PropertiesDockWidget(QtGui.QDockWidget):
 
         self.setWidget(self.inspector)
 
-class CreateWidgetDockWidget(QtGui.QDockWidget):
-    """This lists available widgets you can create and allows their creation (by drag N drop)
-    """
-
-    def __init__(self, visual):
-        super(CreateWidgetDockWidget, self).__init__()
-
-        self.visual = visual
-
-        self.ui = ceed.ui.editors.layout.createwidgetdockwidget.Ui_CreateWidgetDockWidget()
-        self.ui.setupUi(self)
-
-        self.tree = self.findChild(WidgetTypeTreeWidget, "tree")
-        self.tree.setVisual(visual)
-
-    def populate(self):
-        self.tree.clear()
-
-        wl = mainwindow.MainWindow.instance.ceguiInstance.getAvailableWidgetsBySkin()
-
-        for skin, widgets in wl.iteritems():
-            skinItem = None
-
-            if skin == "__no_skin__":
-                skinItem = self.tree.invisibleRootItem()
-            else:
-                skinItem = QtGui.QTreeWidgetItem()
-                skinItem.setText(0, skin)
-                # this makes sure the skin item isn't draggable
-                skinItem.setFlags(QtCore.Qt.ItemIsEnabled)
-                self.tree.addTopLevelItem(skinItem)
-
-            # skinItem now represents the skin node, we add all widgets in that skin to it
-
-            for widget in widgets:
-                widgetItem = QtGui.QTreeWidgetItem()
-                widgetItem.setText(0, widget)
-                skinItem.addChild(widgetItem)
-
 class VisualEditing(QtGui.QWidget, multi.EditMode):
-    """This is the default visual editing mode
-
-    see ceed.editors.multi.EditMode
-    """
-
     def __init__(self, tabbedEditor):
-        super(VisualEditing, self).__init__()
-
-        self.tabbedEditor = tabbedEditor
-
-        self.hierarchyDockWidget = HierarchyDockWidget(self)
-        self.propertiesDockWidget = PropertiesDockWidget(self)
-        self.createWidgetDockWidget = CreateWidgetDockWidget(self)
-
-        layout = QtGui.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
-
-        self.scene = EditingScene(self)
-
-        self.setupActions()
-        self.setupToolBar()
-        self.hierarchyDockWidget.treeView.setupContextMenu()
-
-        self.oldViewState = None
 
     def setupActions(self):
         self.connectionGroup = action.ConnectionGroup(action.ActionManager.instance)

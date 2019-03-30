@@ -40,7 +40,7 @@
   <customwidget>
    <class>WidgetTypeTreeWidget</class>
    <extends>QTreeWidget</extends>
-   <header>ceed.editors.layout.visual</header>
+   <header>src/ui/layout/WidgetTypeTreeWidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

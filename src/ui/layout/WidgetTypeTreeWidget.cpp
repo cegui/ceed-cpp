@@ -13,7 +13,7 @@ WidgetTypeTreeWidget::WidgetTypeTreeWidget(QWidget* parent)
 }
 
 // Shamelessly stolen from CELE2 by Paul D Turner (GPLv3)
-void WidgetTypeTreeWidget::startDrag(Qt::DropActions supportedActions)
+void WidgetTypeTreeWidget::startDrag(Qt::DropActions /*supportedActions*/)
 {
     auto item = currentItem();
     QString widgetType = item->text(0);

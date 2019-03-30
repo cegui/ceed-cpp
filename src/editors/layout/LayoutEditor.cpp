@@ -1,20 +1,21 @@
 #include "src/editors/layout/LayoutEditor.h"
 #include "src/editors/layout/LayoutCodeMode.h"
+#include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutPreviewerMode.h"
 #include "src/util/Settings.h"
 #include "src/util/SettingsCategory.h"
 #include "src/util/SettingsSection.h"
 #include "src/util/SettingsEntry.h"
+#include "src/ui/MainWindow.h"
+#include "qmenu.h"
 
 LayoutEditor::LayoutEditor(const QString& filePath)
     : MultiModeEditor(/*layout_compatibility.manager, */ filePath)
 {
-/*
-        self.visual = visual.VisualEditing(self)
-        self.addTab(self.visual, "Visual")
+    visualMode = new LayoutVisualMode(*this);
+    tabs.addTab(visualMode, "Visual");
 
-*/
-    auto codeMode = new LayoutCodeMode(*this);
+    codeMode = new LayoutCodeMode(*this);
     tabs.addTab(codeMode, "Code");
 
     // Layout Previewer is not actually an edit mode, you can't edit the layout from it,
@@ -26,14 +27,6 @@ LayoutEditor::LayoutEditor(const QString& filePath)
     //       and if A = C it would eat the undo command entirely.
     auto previewer = new LayoutPreviewerMode(*this);
     tabs.addTab(previewer, "Live Preview");
-
-/*
-        # set the toolbar icon size according to the setting and subscribe to it
-        self.tbIconSizeEntry = settings.getEntry("global/ui/toolbar_icon_size")
-        self.updateToolbarSize(self.tbIconSizeEntry.value)
-        self.tbIconSizeCallback = lambda value: self.updateToolbarSize(value)
-        self.tbIconSizeEntry.subscribe(self.tbIconSizeCallback)
-*/
 }
 
 void LayoutEditor::initialize()
@@ -51,15 +44,6 @@ void LayoutEditor::initialize()
 */
 }
 
-void LayoutEditor::finalize()
-{
-/* was in destroy!
-        # unsubscribe from the toolbar icon size setting
-        self.tbIconSizeEntry.unsubscribe(self.tbIconSizeCallback)
-*/
-    MultiModeEditor::finalize();
-}
-
 void LayoutEditor::activate(MainWindow& mainWindow)
 {
     MultiModeEditor::activate(mainWindow);
@@ -74,13 +58,14 @@ void LayoutEditor::activate(MainWindow& mainWindow)
         self.mainWindow.addToolBar(QtCore.Qt.ToolBarArea.TopToolBarArea, self.visual.toolBar)
         self.visual.toolBar.show()
 */
-    /*
-            editorMenu.setTitle("&Layout")
-            self.visual.rebuildEditorMenu(editorMenu)
 
-            return True, self.currentWidget() == self.visual
-            // visible, enabled
+    auto editorMenu = mainWindow.getEditorMenu();
+    editorMenu->setTitle("&Layout");
+    /*
+    visualMode->rebuildEditorMenu(editorMenu);
     */
+    editorMenu->menuAction()->setVisible(true);
+    editorMenu->menuAction()->setEnabled(tabs.currentWidget() == visualMode);
 }
 
 void LayoutEditor::deactivate(MainWindow& mainWindow)
@@ -95,11 +80,6 @@ void LayoutEditor::deactivate(MainWindow& mainWindow)
 }
 
 /*
-    def updateToolbarSize(self, size):
-        if size < 16:
-            size = 16
-        self.visual.toolBar.setIconSize(QtCore.QSize(size, size))
-
     def saveAs(self, targetPath, updateCurrentPath = True):
         codeMode = self.currentWidget() is self.code
 

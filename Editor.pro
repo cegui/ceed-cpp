@@ -95,7 +95,8 @@ SOURCES += \
     src/ui/layout/WidgetHierarchyTreeModel.cpp \
     src/ui/layout/WidgetHierarchyDockWidget.cpp \
     src/ui/XMLSyntaxHighlighter.cpp \
-    src/ui/layout/WidgetTypeTreeWidget.cpp
+    src/ui/layout/WidgetTypeTreeWidget.cpp \
+    src/ui/layout/CreateWidgetDockWidget.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -165,7 +166,8 @@ HEADERS += \
     src/ui/layout/WidgetHierarchyTreeModel.h \
     src/ui/layout/WidgetHierarchyDockWidget.h \
     src/ui/XMLSyntaxHighlighter.h \
-    src/ui/layout/WidgetTypeTreeWidget.h
+    src/ui/layout/WidgetTypeTreeWidget.h \
+    src/ui/layout/CreateWidgetDockWidget.h
 
 FORMS += \
     ui/MainWindow.ui \
@@ -182,7 +184,8 @@ FORMS += \
     ui/dialogs/KeySequenceDialog.ui \
     ui/widgets/BitmapEditorWidget.ui \
     ui/imageset/ImagesetEditorDockWidget.ui \
-    ui/layout/WidgetHierarchyDockWidget.ui
+    ui/layout/WidgetHierarchyDockWidget.ui \
+    ui/layout/CreateWidgetDockWidget.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

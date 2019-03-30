@@ -36,7 +36,7 @@ public:
     QStringList getAvailableSkins() const;
     QStringList getAvailableFonts() const;
     QStringList getAvailableImages() const;
-    QStringList getAvailableWidgetsBySkin() const; //!!!map skin -> list!
+    void getAvailableWidgetsBySkin(std::map<QString, QStringList>& out) const;
     QImage getWidgetPreviewImage(const QString& widgetType, int previewWidth = 128, int previewHeight = 64);
 
     bool syncProjectToCEGUIInstance();

@@ -478,17 +478,13 @@ QStringList CEGUIProjectManager::getAvailableImages() const
 
 // Retrieves all mappings (string names) of all widgets that can be created
 // see syncProjectToCEGUIInstance
-QStringList CEGUIProjectManager::getAvailableWidgetsBySkin() const
+void CEGUIProjectManager::getAvailableWidgetsBySkin(std::map<QString, QStringList>& out) const
 {
-    // FIXME: return map<string, string list>!
-    QStringList ret;
-
+    QStringList& list = out["__no_skin__"];
+    list.append({ "DefaultWindow", "DragContainer",
+                "VerticalLayoutContainer", "HorizontalLayoutContainer",
+                "GridLayoutContainer" });
 /*
-        ret = {}
-        ret["__no_skin__"] = ["DefaultWindow", "DragContainer",
-                              "VerticalLayoutContainer", "HorizontalLayoutContainer",
-                              "GridLayoutContainer"]
-
         it = PyCEGUI.WindowFactoryManager.getSingleton().getFalagardMappingIterator()
         while not it.isAtEnd():
             #base = it.getCurrentValue().d_baseType
@@ -518,8 +514,6 @@ QStringList CEGUIProjectManager::getAvailableWidgetsBySkin() const
         for look in ret:
             ret[look].sort()
 */
-
-    return ret;
 }
 
 // Renders and retrieves a widget preview QImage. This is useful for various widget selection lists as a preview.

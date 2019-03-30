@@ -7,6 +7,8 @@
 
 class ActionManager;
 class Settings;
+class LayoutVisualMode;
+class LayoutCodeMode;
 
 class LayoutEditor : public MultiModeEditor
 {
@@ -18,7 +20,6 @@ public:
     LayoutEditor(const QString& filePath);
 
     virtual void initialize() override;
-    virtual void finalize() override;
     virtual void activate(MainWindow& mainWindow) override;
     virtual void deactivate(MainWindow& mainWindow) override;
 
@@ -43,6 +44,9 @@ protected:
 
     //virtual void getRawData(QByteArray& outRawData) {}
     //virtual void markAsUnchanged();
+
+    LayoutVisualMode* visualMode = nullptr;
+    LayoutCodeMode* codeMode = nullptr;
 };
 
 class LayoutEditorFactory : public EditorFactoryBase
