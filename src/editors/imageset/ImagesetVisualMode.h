@@ -22,6 +22,7 @@ public:
 
     void loadImagesetEntryFromElement(const QDomElement& xmlRoot);
     void rebuildEditorMenu(QMenu* editorMenu);
+    void setActionsEnabled(bool enabled);
 
     void refreshSceneRect();
 
@@ -69,6 +70,10 @@ protected:
     QToolBar* toolBar = nullptr;
 
     ConfigurableAction* editOffsetsAction = nullptr;
+    ConfigurableAction* cycleOverlappingAction = nullptr;
+    ConfigurableAction* createImageAction = nullptr;
+    ConfigurableAction* duplicateSelectedImagesAction = nullptr;
+    ConfigurableAction* focusImageListFilterBoxAction = nullptr;
 };
 
 #endif // IMAGESETVISUALMODE_H

@@ -1,6 +1,7 @@
 #include "src/editors/imageset/ImagesetVisualMode.h"
 #include "src/editors/imageset/ImagesetUndoCommands.h"
 #include "src/util/Settings.h"
+#include "src/util/SettingsCategory.h"
 #include "src/util/ConfigurableAction.h"
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/imageset/ImageEntry.h"
@@ -64,76 +65,70 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
 
 void ImagesetVisualMode::setupActions()
 {
-    //    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    auto category = settings->getCategory("shortcuts");
+    if (!category) category = settings->createCategory("shortcuts", "Shortcuts");
+    auto section = category->createSection("imageset", "Imageset Editor");
 
     editOffsetsAction = new ConfigurableAction(qobject_cast<Application*>(qApp)->getMainWindow(),
-                                               "edit_offsets", "Edit &Offsets",
+                                               *section, "edit_offsets", "Edit &Offsets",
                                                "When you select an image definition, a crosshair will appear in it representing it's offset centrepoint.",
                                                QIcon(":/icons/imageset_editing/edit_offsets.png"), QKeySequence(Qt::Key_Space));
-    editOffsetsAction->setEnabled(false);
     editOffsetsAction->setCheckable(true);
     connect(editOffsetsAction, &ConfigurableAction::toggled, this, &ImagesetVisualMode::slot_toggleEditOffsets);
 
-/*
-        cat = actionManager.createCategory(name = "imageset", label = "Imageset Editor")
+    cycleOverlappingAction = new ConfigurableAction(qobject_cast<Application*>(qApp)->getMainWindow(),
+                                               *section, "cycle_overlapping", "Cycle O&verlapping Image Definitions",
+                                               "When images definition overlap in such a way that makes it hard/impossible to select the definition you want, this allows you to select on of them and then just cycle until the right one is selected.",
+                                               QIcon(":/icons/imageset_editing/cycle_overlapping.png"), QKeySequence(Qt::Key_Q));
+    connect(cycleOverlappingAction, &ConfigurableAction::triggered, this, &ImagesetVisualMode::cycleOverlappingImages);
 
-    cat.createAction(name = "cycle_overlapping", label = "Cycle O&verlapping Image Definitions",
-                     help_ = "When images definition overlap in such a way that makes it hard/impossible to select the definition you want, this allows you to select on of them and then just cycle until the right one is selected.",
-                     icon = QtGui.QIcon("icons/imageset_editing/cycle_overlapping.png"),
-                     defaultShortcut = QtGui.QKeySequence(QtCore.Qt.Key_Q))
+    createImageAction = new ConfigurableAction(qobject_cast<Application*>(qApp)->getMainWindow(),
+                                               *section, "create_image", "&Create Image Definition",
+                                               "Creates a new image definition at the current cursor position, sized 50x50 pixels.",
+                                               QIcon(":/icons/imageset_editing/create_image.png"));
+    connect(createImageAction, &ConfigurableAction::triggered, this, &ImagesetVisualMode::createImageEntryAtCursor);
 
-    cat.createAction(name = "create_image", label = "&Create Image Definition",
-                     help_ = "Creates a new image definition at the current cursor position, sized 50x50 pixels.",
-                     icon = QtGui.QIcon("icons/imageset_editing/create_image.png"))
+    duplicateSelectedImagesAction = new ConfigurableAction(qobject_cast<Application*>(qApp)->getMainWindow(),
+                                               *section, "duplicate_image", "&Duplicate Image Definition",
+                                               "Duplicates selected image definitions.",
+                                               QIcon(":/icons/imageset_editing/duplicate_image.png"));
+    connect(duplicateSelectedImagesAction, &ConfigurableAction::triggered, this, &ImagesetVisualMode::duplicateSelectedImageEntries);
 
-    cat.createAction(name = "duplicate_image", label = "&Duplicate Image Definition",
-                     help_ = "Duplicates selected image definitions.",
-                     icon = QtGui.QIcon("icons/imageset_editing/duplicate_image.png"))
+    focusImageListFilterBoxAction = new ConfigurableAction(qobject_cast<Application*>(qApp)->getMainWindow(),
+                                               *section, "focus_image_list_filter_box", "&Filter...",
+                                               "This allows you to easily press a shortcut and immediately search through image definitions without having to reach for a mouse.",
+                                               QIcon(":/icons/imageset_editing/focus_image_list_filter_box.png"),
+                                               QKeySequence(QKeySequence::Find));
+    connect(focusImageListFilterBoxAction, &ConfigurableAction::triggered, [this]()
+    {
+        dockWidget->focusImageListFilterBox();
+    });
 
-    cat.createAction(name = "focus_image_list_filter_box", label = "&Focus Image Definition List Filter Box",
-                     help_ = "This allows you to easily press a shortcut and immediately search through image definitions without having to reach for a mouse.",
-                     icon = QtGui.QIcon("icons/imageset_editing/focus_image_list_filter_box.png"),
-                     defaultShortcut = QtGui.QKeySequence(QtGui.QKeySequence.Find))
-
-        self.connectionGroup = action.ConnectionGroup(action.ActionManager.instance)
-
-        self.cycleOverlappingAction = action.getAction("imageset/cycle_overlapping")
-        self.connectionGroup.add(self.cycleOverlappingAction, receiver = self.cycleOverlappingImages)
-
-        self.createImageAction = action.getAction("imageset/create_image")
-        self.connectionGroup.add(self.createImageAction, receiver = self.createImageAtCursor)
-
-        self.duplicateSelectedImagesAction = action.getAction("imageset/duplicate_image")
-        self.connectionGroup.add(self.duplicateSelectedImagesAction, receiver = self.duplicateSelectedImageEntries)
-
-        self.focusImageListFilterBoxAction = action.getAction("imageset/focus_image_list_filter_box")
-        self.connectionGroup.add(self.focusImageListFilterBoxAction, receiver = lambda: self.dockWidget.focusImageListFilterBox())
-*/
+    setActionsEnabled(false);
 
     toolBar = new QToolBar("Imageset toolbar");
     toolBar->setObjectName("ImagesetToolbar");
     toolBar->setIconSize(QSize(32, 32));
-/*
-        self.toolBar.addAction(self.createImageAction)
-        self.toolBar.addAction(self.duplicateSelectedImagesAction)
-        self.toolBar.addSeparator() // ---------------------------
-*/
+    toolBar->addAction(createImageAction);
+    toolBar->addAction(duplicateSelectedImagesAction);
+    toolBar->addSeparator();
     toolBar->addAction(editOffsetsAction);
-/*
-        self.toolBar.addAction(self.cycleOverlappingAction)
-*/
+    toolBar->addAction(cycleOverlappingAction);
 
     contextMenu = new QMenu(this);
+    contextMenu->addAction(createImageAction);
+    contextMenu->addAction(duplicateSelectedImagesAction);
     /*
-            self.contextMenu.addAction(self.createImageAction)
-            self.contextMenu.addAction(self.duplicateSelectedImagesAction)
-            self.contextMenu.addAction(action.getAction("all_editors/delete"))
-            self.contextMenu.addSeparator() // ----------------------
-            self.contextMenu.addAction(self.cycleOverlappingAction)
-            self.contextMenu.addSeparator() // ----------------------
-            self.contextMenu.addAction(action.getAction("all_editors/zoom_in"))
-            self.contextMenu.addAction(action.getAction("all_editors/zoom_out"))
-            self.contextMenu.addAction(action.getAction("all_editors/zoom_reset"))
+        self.contextMenu.addAction(action.getAction("all_editors/delete"))
+    */
+    contextMenu->addSeparator();
+    contextMenu->addAction(cycleOverlappingAction);
+    contextMenu->addSeparator();
+    /*
+        self.contextMenu.addAction(action.getAction("all_editors/zoom_in"))
+        self.contextMenu.addAction(action.getAction("all_editors/zoom_out"))
+        self.contextMenu.addAction(action.getAction("all_editors/zoom_reset"))
     */
     contextMenu->addSeparator();
     contextMenu->addAction(editOffsetsAction);
@@ -159,19 +154,24 @@ void ImagesetVisualMode::loadImagesetEntryFromElement(const QDomElement& xmlRoot
 void ImagesetVisualMode::rebuildEditorMenu(QMenu* editorMenu)
 {
     // Similar to the toolbar, includes the focus filter box action
-/*
     editorMenu->addAction(createImageAction);
     editorMenu->addAction(duplicateSelectedImagesAction);
     editorMenu->addSeparator();
     editorMenu->addAction(cycleOverlappingAction);
-*/
     editorMenu->addSeparator();
     editorMenu->addAction(editOffsetsAction);
     editorMenu->addSeparator();
-/*
     editorMenu->addAction(focusImageListFilterBoxAction);
-*/
     _editorMenu = editorMenu;
+}
+
+void ImagesetVisualMode::setActionsEnabled(bool enabled)
+{
+    editOffsetsAction->setEnabled(enabled);
+    createImageAction->setEnabled(enabled);
+    duplicateSelectedImagesAction->setEnabled(enabled);
+    cycleOverlappingAction->setEnabled(enabled);
+    focusImageListFilterBoxAction->setEnabled(enabled);
 }
 
 void ImagesetVisualMode::refreshSceneRect()
@@ -475,11 +475,7 @@ void ImagesetVisualMode::showEvent(QShowEvent* event)
     //???signal from editor to main window instead of storing ptr here?
     if (_editorMenu) _editorMenu->menuAction()->setEnabled(true);
 
-    /*
-        // connect all our actions
-        self.connectionGroup.connectAll()
-    */
-    editOffsetsAction->setEnabled(true);
+    setActionsEnabled(true);
 
     // Call this every time the visual editing is shown to sync all entries up
     slot_toggleEditOffsets(editOffsetsAction->isChecked());
@@ -489,11 +485,7 @@ void ImagesetVisualMode::showEvent(QShowEvent* event)
 
 void ImagesetVisualMode::hideEvent(QHideEvent* event)
 {
-    /*
-        // disconnected all our actions
-        self.connectionGroup.disconnectAll()
-    */
-    editOffsetsAction->setEnabled(false);
+    setActionsEnabled(false);
 
     //???signal from editor to main window instead of storing ptr here?
     if (_editorMenu) _editorMenu->menuAction()->setEnabled(false);

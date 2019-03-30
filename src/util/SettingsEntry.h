@@ -11,6 +11,7 @@
 
 class SettingsSection;
 typedef std::vector<std::pair<QVariant, QString>> SettingOptionList;
+typedef std::unique_ptr<class SettingsEntry> SettingsEntryPtr;
 
 class SettingsEntry : public QObject
 {

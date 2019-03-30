@@ -7,14 +7,14 @@
 // using CEED's settings API/interface.
 // While it isn't needed/required to use this everywhere where QAction is used, it is recommended.
 
-class ActionCategory;
+class SettingsSection;
 
 class ConfigurableAction : public QAction
 {
 public:
 
-    ConfigurableAction(QWidget* parent, const QString& name, QString label = QString(), const QString& help = QString(),
-                       QIcon icon = QIcon(), QKeySequence defaultShortcut = QKeySequence(), Qt::ShortcutContext shortcutContext = Qt::WidgetShortcut,
+    ConfigurableAction(QWidget* parent, SettingsSection& section, const QString& name, QString label = QString(), const QString& help = QString(),
+                       QIcon icon = QIcon(), QKeySequence defaultShortcut = QKeySequence(), Qt::ShortcutContext shortcutContext = Qt::WidgetWithChildrenShortcut,
                        QString settingsLabel = QString(), QAction::MenuRole menuRole = QAction::TextHeuristicRole);
 };
 
