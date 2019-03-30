@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>HierarchyDockWidget</class>
- <widget class="QDockWidget" name="HierarchyDockWidget">
+ <class>WidgetHierarchyDockWidget</class>
+ <widget class="QDockWidget" name="WidgetHierarchyDockWidget">
   <property name="enabled">
    <bool>false</bool>
   </property>
@@ -85,7 +85,7 @@ QTreeView::indicator:unchecked
   <customwidget>
    <class>WidgetHierarchyTreeView</class>
    <extends>QTreeView</extends>
-   <header>ceed.editors.layout.visual</header>
+   <header>src/ui/layout/WidgetHierarchyTreeView.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -9,6 +9,11 @@ CodeEditMode::CodeEditMode(MultiModeEditor& editor)
 {
     document()->setUndoRedoEnabled(false);
     connect(document(), &QTextDocument::contentsChange, this, &CodeEditMode::slot_contentsChange);
+
+    // TODO: unify with TextEditor?
+    QFont font("Courier New", 10);
+    font.setStyleHint(QFont::Monospace);
+    document()->setDefaultFont(font);
 }
 
 void CodeEditMode::activate()

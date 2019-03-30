@@ -4,6 +4,7 @@
 #include "src/editors/CodeEditMode.h"
 
 class ImagesetEditor;
+class XMLSyntaxHighlighter;
 
 class ImagesetCodeMode : public ViewRestoringCodeEditMode
 {
@@ -13,6 +14,10 @@ public:
 
     virtual QString getNativeCode() override;
     virtual bool propagateNativeCode(const QString& code) override;
+
+protected:
+
+    XMLSyntaxHighlighter* highlighter = nullptr;
 };
 
 #endif // IMAGESETCODEMODE_H

@@ -84,7 +84,17 @@ SOURCES += \
     src/ui/ResizingHandle.cpp \
     src/editors/imageset/ImagesetUndoCommands.cpp \
     src/ui/widgets/LineEditWithClearButton.cpp \
-    src/util/ConfigurableAction.cpp
+    src/util/ConfigurableAction.cpp \
+    src/editors/layout/LayoutUndoCommands.cpp \
+    src/editors/layout/LayoutVisualMode.cpp \
+    src/editors/layout/LayoutSerializationData.cpp \
+    src/cegui/CEGUIManipulator.cpp \
+    src/ui/layout/WidgetHierarchyTreeView.cpp \
+    src/ui/layout/LayoutManipulator.cpp \
+    src/editors/layout/LayoutScene.cpp \
+    src/ui/layout/WidgetHierarchyTreeModel.cpp \
+    src/ui/layout/WidgetHierarchyDockWidget.cpp \
+    src/ui/XMLSyntaxHighlighter.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -143,7 +153,17 @@ HEADERS += \
     src/ui/ResizingHandle.h \
     src/editors/imageset/ImagesetUndoCommands.h \
     src/ui/widgets/LineEditWithClearButton.h \
-    src/util/ConfigurableAction.h
+    src/util/ConfigurableAction.h \
+    src/editors/layout/LayoutUndoCommands.h \
+    src/editors/layout/LayoutVisualMode.h \
+    src/editors/layout/LayoutSerializationData.h \
+    src/cegui/CEGUIManipulator.h \
+    src/ui/layout/WidgetHierarchyTreeView.h \
+    src/ui/layout/LayoutManipulator.h \
+    src/editors/layout/LayoutScene.h \
+    src/ui/layout/WidgetHierarchyTreeModel.h \
+    src/ui/layout/WidgetHierarchyDockWidget.h \
+    src/ui/XMLSyntaxHighlighter.h
 
 FORMS += \
     ui/MainWindow.ui \
@@ -159,7 +179,8 @@ FORMS += \
     ui/dialogs/PenDialog.ui \
     ui/dialogs/KeySequenceDialog.ui \
     ui/widgets/BitmapEditorWidget.ui \
-    ui/imageset/ImagesetEditorDockWidget.ui
+    ui/imageset/ImagesetEditorDockWidget.ui \
+    ui/layout/WidgetHierarchyDockWidget.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

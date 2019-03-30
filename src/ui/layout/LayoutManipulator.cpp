@@ -1,29 +1,11 @@
-##############################################################################
-#   CEED - Unified CEGUI asset editor
-#
-#   Copyright (C) 2011-2012   Martin Preisler <martin@preisler.me>
-#                             and contributing authors (see AUTHORS file)
-#
-#   This program is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation, either version 3 of the License, or
-#   (at your option) any later version.
-#
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-##############################################################################
+#include "src/ui/layout/LayoutManipulator.h"
 
-from PySide import QtCore
-from PySide import QtGui
+LayoutManipulator::LayoutManipulator()
+{
 
-from ceed.cegui import widgethelpers as cegui_widgethelpers
+}
 
-import PyCEGUI
+/*
 
 class Manipulator(cegui_widgethelpers.Manipulator):
     """Layout editing specific widget manipulator"""
@@ -370,40 +352,4 @@ class Manipulator(cegui_widgethelpers.Manipulator):
         self.setResizingEnabled(not locked)
 
         self.update()
-
-class SerialisationData(cegui_widgethelpers.SerialisationData):
-    """See cegui.widgethelpers.SerialisationData
-
-    The only reason for this class is that we need to create the correct Manipulator (not it's base class!)
-    """
-
-    def __init__(self, visual, widget = None, serialiseChildren = True):
-        self.visual = visual
-
-        super(SerialisationData, self).__init__(widget, serialiseChildren)
-
-    def createChildData(self, widget = None, serialiseChildren = True):
-        return SerialisationData(self.visual, widget, serialiseChildren)
-
-    def createManipulator(self, parentManipulator, widget, recursive = True, skipAutoWidgets = True):
-        ret = Manipulator(self.visual, parentManipulator, widget, recursive, skipAutoWidgets)
-        ret.updateFromWidget()
-        return ret
-
-    def setVisual(self, visual):
-        self.visual = visual
-
-        for child in self.children:
-            child.setVisual(visual)
-
-    def reconstruct(self, rootManipulator):
-        ret = super(SerialisationData, self).reconstruct(rootManipulator)
-
-        if ret.parentItem() is None:
-            # this is a root widget being reconstructed, handle this accordingly
-            self.visual.setRootWidgetManipulator(ret)
-
-        return ret
-
-from ceed import settings
-from ceed import action
+*/

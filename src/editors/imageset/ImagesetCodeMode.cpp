@@ -1,11 +1,14 @@
 #include "src/editors/imageset/ImagesetCodeMode.h"
 #include "src/editors/imageset/ImagesetEditor.h"
 #include "src/editors/imageset/ImagesetVisualMode.h"
+#include "src/ui/XMLSyntaxHighlighter.h"
 #include "qdom.h"
 
 ImagesetCodeMode::ImagesetCodeMode(ImagesetEditor& editor)
     : ViewRestoringCodeEditMode(editor)
 {
+    setAcceptRichText(false);
+    highlighter = new XMLSyntaxHighlighter(this);
 }
 
 QString ImagesetCodeMode::getNativeCode()
