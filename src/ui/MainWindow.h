@@ -93,6 +93,7 @@ private:
     virtual void closeEvent(QCloseEvent* event) override;
 
     void setupToolbars();
+    void setupToolbar(QToolBar* toolBar);
 
     void updateProjectDependentUI(CEGUIProject* newProject);
 

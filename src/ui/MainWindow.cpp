@@ -196,9 +196,13 @@ QMenu *MainWindow::getEditorMenu() const
 
 void MainWindow::setupToolbars()
 {
-    // FIXME: here until I manage to create menu toolbutton in Qt Creator
+    setupToolbar(ui->toolBarStandard);
+    setupToolbar(ui->toolBarEdit);
+    setupToolbar(ui->toolBarView);
+    setupToolbar(ui->toolBarProject);
 
-    QToolBar* toolbar = ui->toolBarStandard; // createToolbar("Standard");
+    // FIXME: here until I manage to create menu toolbutton in Qt Creator
+    QToolBar* toolbar = ui->toolBarStandard;
     QToolButton* newMenuBtn = new QToolButton(this);
     newMenuBtn->setText("New");
     newMenuBtn->setToolTip("New file");
@@ -213,25 +217,28 @@ void MainWindow::setupToolbars()
     connect(toolbar, &QToolBar::iconSizeChanged, newMenuBtn, &QToolButton::setIconSize);
 }
 
-QToolBar* MainWindow::createToolbar(const QString& name)
+void MainWindow::setupToolbar(QToolBar* toolBar)
 {
     auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
     auto tbIconSizeEntry = settings->getEntry("global/ui/toolbar_icon_size");
     assert(tbIconSizeEntry);
 
-    QToolBar* toolbar = addToolBar(name);
-    toolbar->setObjectName(name + " toolbar");
-
     const int iconSize = std::max(16, tbIconSizeEntry->value().toInt());
-    toolbar->setIconSize(QSize(iconSize, iconSize));
+    toolBar->setIconSize(QSize(iconSize, iconSize));
 
-    connect(tbIconSizeEntry, &SettingsEntry::valueChanged, [toolbar](const QVariant& newValue)
+    connect(tbIconSizeEntry, &SettingsEntry::valueChanged, [toolBar](const QVariant& newValue)
     {
         const int iconSize = std::max(16, newValue.toInt());
-        toolbar->setIconSize(QSize(iconSize, iconSize));
+        toolBar->setIconSize(QSize(iconSize, iconSize));
     });
+}
 
-    return toolbar;
+QToolBar* MainWindow::createToolbar(const QString& name)
+{
+    QToolBar* toolBar = addToolBar(name);
+    toolBar->setObjectName(name + " toolbar");
+    setupToolbar(toolBar);
+    return toolBar;
 }
 
 void MainWindow::closeEvent(QCloseEvent* event)
