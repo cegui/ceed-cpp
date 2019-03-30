@@ -494,6 +494,7 @@ void CEGUIProjectManager::getAvailableWidgetsBySkin(std::map<QString, QStringLis
             look = mappedType[0]
             widget = mappedType[1]
 
+            //!!!make this method shared! store in CEGUIProjectManager.
             from ceed.editors.looknfeel.tabbed_editor import LookNFeelTabbedEditor
             ceedInternalEditingPrefix = LookNFeelTabbedEditor.getEditorIDStringPrefix()
             ceedInternalLNF = False

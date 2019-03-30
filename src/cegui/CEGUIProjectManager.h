@@ -8,7 +8,7 @@
 // future though, then CEGUI instance may be allocated per project.
 // TODO: support multiple projects (switchable on demand)
 
-//???rename to CEGUIManager & incorporate CEGUII instance?
+//???rename to CEGUIManager?
 
 class CEGUIProject;
 

@@ -1,28 +1,80 @@
 #include "src/editors/layout/LayoutScene.h"
 
-LayoutScene::LayoutScene()
+LayoutScene::LayoutScene(LayoutVisualMode& visualMode)
+    : _visualMode(visualMode)
 {
+/*
+        self.rootManipulator = None
+*/
+    connect(this, &LayoutScene::selectionChanged, this, &LayoutScene::slot_selectionChanged);
+}
 
+bool LayoutScene::deleteSelectedWidgets()
+{
+/*
+        widgetPaths = []
+
+        selection = self.selectedItems()
+        for item in selection:
+            if isinstance(item, widgethelpers.Manipulator):
+                widgetPaths.append(item.widget.getNamePath())
+
+        if len(widgetPaths) > 0:
+            cmd = undo.DeleteCommand(self.visual, widgetPaths)
+            self.visual.tabbedEditor.undoStack.push(cmd)
+*/
+    assert(false);
+    return false;
+}
+
+void LayoutScene::slot_selectionChanged()
+{
+/*
+        selection = self.selectedItems()
+
+        sets = []
+        for item in selection:
+            wdt = None
+
+            if isinstance(item, widgethelpers.Manipulator):
+                wdt = item.widget
+
+            elif isinstance(item, resizable.ResizingHandle):
+                if isinstance(item.parentResizable, widgethelpers.Manipulator):
+                    wdt = item.parentResizable.widget
+
+            if wdt is not None and wdt not in sets:
+                sets.append(wdt)
+
+        self.visual.propertiesDockWidget.inspector.setSource(sets)
+
+        def ensureParentIsExpanded(view, treeItem):
+            view.expand(treeItem.index())
+
+            if treeItem.parent():
+                ensureParentIsExpanded(view, treeItem.parent())
+
+        # we always sync the properties dock widget, we only ignore the hierarchy synchro if told so
+        if not self.ignoreSelectionChanges:
+            self.visual.hierarchyDockWidget.ignoreSelectionChanges = True
+
+            self.visual.hierarchyDockWidget.treeView.clearSelection()
+            lastTreeItem = None
+            for item in selection:
+                if isinstance(item, widgethelpers.Manipulator):
+                    if hasattr(item, "treeItem") and item.treeItem is not None:
+                        self.visual.hierarchyDockWidget.treeView.selectionModel().select(item.treeItem.index(), QtGui.QItemSelectionModel.Select)
+                        ensureParentIsExpanded(self.visual.hierarchyDockWidget.treeView, item.treeItem)
+                        lastTreeItem = item.treeItem
+
+            if lastTreeItem is not None:
+                self.visual.hierarchyDockWidget.treeView.scrollTo(lastTreeItem.index())
+
+            self.visual.hierarchyDockWidget.ignoreSelectionChanges = False
+*/
 }
 
 /*
-
-class EditingScene(cegui_widgethelpers.GraphicsScene):
-    """This scene contains all the manipulators users want to interact it. You can visualise it as the
-    visual editing centre screen where CEGUI is rendered.
-
-    It renders CEGUI on it's background and outlines (via Manipulators) in front of it.
-    """
-
-    def __init__(self, visual):
-        super(EditingScene, self).__init__(mainwindow.MainWindow.instance.ceguiInstance)
-
-        self.visual = visual
-        self.rootManipulator = None
-
-        self.ignoreSelectionChanges = False
-        self.selectionChanged.connect(self.slot_selectionChanged)
-
     def setRootWidgetManipulator(self, manipulator):
         self.clear()
 
@@ -55,18 +107,6 @@ class EditingScene(cegui_widgethelpers.GraphicsScene):
         # FIXME: this won't do much with lazyUpdate = False
         if hasattr(self, "rootManipulator") and self.rootManipulator is not None:
             self.rootManipulator.updateFromWidget()
-
-    def deleteSelectedWidgets(self):
-        widgetPaths = []
-
-        selection = self.selectedItems()
-        for item in selection:
-            if isinstance(item, widgethelpers.Manipulator):
-                widgetPaths.append(item.widget.getNamePath())
-
-        if len(widgetPaths) > 0:
-            cmd = undo.DeleteCommand(self.visual, widgetPaths)
-            self.visual.tabbedEditor.undoStack.push(cmd)
 
     def alignSelectionHorizontally(self, alignment):
         widgetPaths = []
@@ -208,49 +248,6 @@ class EditingScene(cegui_widgethelpers.GraphicsScene):
         if len(widgetPaths) == 1:
             cmd = undo.MoveInParentWidgetListCommand(self.visual, widgetPaths, delta)
             self.visual.tabbedEditor.undoStack.push(cmd)
-
-    def slot_selectionChanged(self):
-        selection = self.selectedItems()
-
-        sets = []
-        for item in selection:
-            wdt = None
-
-            if isinstance(item, widgethelpers.Manipulator):
-                wdt = item.widget
-
-            elif isinstance(item, resizable.ResizingHandle):
-                if isinstance(item.parentResizable, widgethelpers.Manipulator):
-                    wdt = item.parentResizable.widget
-
-            if wdt is not None and wdt not in sets:
-                sets.append(wdt)
-
-        self.visual.propertiesDockWidget.inspector.setSource(sets)
-
-        def ensureParentIsExpanded(view, treeItem):
-            view.expand(treeItem.index())
-
-            if treeItem.parent():
-                ensureParentIsExpanded(view, treeItem.parent())
-
-        # we always sync the properties dock widget, we only ignore the hierarchy synchro if told so
-        if not self.ignoreSelectionChanges:
-            self.visual.hierarchyDockWidget.ignoreSelectionChanges = True
-
-            self.visual.hierarchyDockWidget.treeView.clearSelection()
-            lastTreeItem = None
-            for item in selection:
-                if isinstance(item, widgethelpers.Manipulator):
-                    if hasattr(item, "treeItem") and item.treeItem is not None:
-                        self.visual.hierarchyDockWidget.treeView.selectionModel().select(item.treeItem.index(), QtGui.QItemSelectionModel.Select)
-                        ensureParentIsExpanded(self.visual.hierarchyDockWidget.treeView, item.treeItem)
-                        lastTreeItem = item.treeItem
-
-            if lastTreeItem is not None:
-                self.visual.hierarchyDockWidget.treeView.scrollTo(lastTreeItem.index())
-
-            self.visual.hierarchyDockWidget.ignoreSelectionChanges = False
 
     def mouseReleaseEvent(self, event):
         super(EditingScene, self).mouseReleaseEvent(event)
