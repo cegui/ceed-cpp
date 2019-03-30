@@ -127,15 +127,7 @@ void ImagesetEditorDockWidget::refreshImagesetInfo()
 // Note: User potentially loses selection when this is called!
 void ImagesetEditorDockWidget::refresh()
 {
-    // FIXME: This is really really weird!
-    //        If I call list.clear() it crashes when undoing image deletes for some reason
-    //        I already spent several hours tracking it down and I couldn't find anything
-    //        If I remove items one by one via takeItem, everything works :-/
     ui->list->clear();
-
-    selectionSynchronizationUnderway = true;
-    while (ui->list->takeItem(0)) ;
-    selectionSynchronizationUnderway = false;
 
     setActiveImageEntry(nullptr);
 
@@ -267,7 +259,10 @@ void ImagesetEditorDockWidget::on_filterBox_textChanged(const QString& arg1)
 
 void ImagesetEditorDockWidget::on_list_itemChanged(QListWidgetItem* item)
 {
-    auto oldName = item->data(Qt::UserRole + 2).value<ImageEntry*>()->name();
+    auto entry = item->data(Qt::UserRole + 2).value<ImageEntry*>();
+    if (!entry) return;
+
+    auto oldName = entry->name();
     auto newName = item->text();
 
     // Most likely caused by RenameCommand doing it's work or is bogus anyways
