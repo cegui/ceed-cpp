@@ -94,7 +94,8 @@ SOURCES += \
     src/editors/layout/LayoutScene.cpp \
     src/ui/layout/WidgetHierarchyTreeModel.cpp \
     src/ui/layout/WidgetHierarchyDockWidget.cpp \
-    src/ui/XMLSyntaxHighlighter.cpp
+    src/ui/XMLSyntaxHighlighter.cpp \
+    src/ui/layout/WidgetTypeTreeWidget.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -163,7 +164,8 @@ HEADERS += \
     src/editors/layout/LayoutScene.h \
     src/ui/layout/WidgetHierarchyTreeModel.h \
     src/ui/layout/WidgetHierarchyDockWidget.h \
-    src/ui/XMLSyntaxHighlighter.h
+    src/ui/XMLSyntaxHighlighter.h \
+    src/ui/layout/WidgetTypeTreeWidget.h
 
 FORMS += \
     ui/MainWindow.ui \

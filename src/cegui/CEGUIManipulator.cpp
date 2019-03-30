@@ -1,32 +1,15 @@
 #include "src/cegui/CEGUIManipulator.h"
 
-CEGUIManipulator::CEGUIManipulator()
+// widget - CEGUI::Widget to wrap
+// recursive - if true, even children of given widget are wrapped
+// skipAutoWidgets - if true, auto widgets are skipped (only applicable if recursive is True)
+CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent)
+    : ResizableRectItem(parent)
 {
-
-}
+    setFlags(ItemIsFocusable | ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
 
 /*
-
-class Manipulator(resizable.ResizableRectItem):
-    """This is a rectangle that is synchronised with given CEGUI widget,
-    it provides moving and resizing functionality
-    """
-
     def __init__(self, parent, widget, recursive = True, skipAutoWidgets = False):
-        """Constructor
-
-        widget - CEGUI::Widget to wrap
-        recursive - if true, even children of given widget are wrapped
-        skipAutoWidgets - if true, auto widgets are skipped (only applicable if recursive is True)
-        """
-
-        super(Manipulator, self).__init__(parent)
-
-        self.setFlags(QtGui.QGraphicsItem.ItemIsFocusable |
-                      QtGui.QGraphicsItem.ItemIsSelectable |
-                      QtGui.QGraphicsItem.ItemIsMovable |
-                      QtGui.QGraphicsItem.ItemSendsGeometryChanges)
-
         self.widget = widget
 
         if recursive:
@@ -39,6 +22,10 @@ class Manipulator(resizable.ResizableRectItem):
 
         self.preMovePos = None
         self.lastMoveNewPos = None
+*/
+}
+
+/*
 
     def getWidgetPath(self):
         return self.widget.getNamePath() if self.widget is not None else "<Unknown>"

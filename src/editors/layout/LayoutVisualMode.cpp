@@ -12,51 +12,6 @@ import ceed.propertytree as pt
 from ceed.propertytree.editors import PropertyEditorRegistry
 
 
-class HierarchyDockWidget(QtGui.QDockWidget):
-    """Displays and manages the widget hierarchy. Contains the WidgetHierarchyTreeWidget.
-    """
-
-    def __init__(self, visual):
-        super(HierarchyDockWidget, self).__init__()
-
-        self.visual = visual
-
-        self.ui = ceed.ui.editors.layout.hierarchydockwidget.Ui_HierarchyDockWidget()
-        self.ui.setupUi(self)
-
-        self.ignoreSelectionChanges = False
-
-        self.model = WidgetHierarchyTreeModel(self)
-        self.treeView = self.findChild(WidgetHierarchyTreeView, "treeView")
-        self.treeView.dockWidget = self
-        self.treeView.setModel(self.model)
-
-        self.rootWidgetManipulator = None
-
-    def setRootWidgetManipulator(self, root):
-        """Sets the widget manipulator that is at the root of our observed hierarchy.
-        Uses getTreeItemForManipulator to recursively populate the tree.
-        """
-
-        self.rootWidgetManipulator = root
-        self.model.setRootManipulator(root)
-        self.treeView.expandToDepth(0)
-
-    def refresh(self):
-        """Refreshes the entire hierarchy completely from scratch"""
-
-        # this will resynchronise the entire model
-        self.model.setRootManipulator(self.rootWidgetManipulator)
-
-    def keyReleaseEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Delete:
-            handled = self.visual.scene.deleteSelectedWidgets()
-
-            if handled:
-                return True
-
-        return super(HierarchyDockWidget, self).keyReleaseEvent(event)
-
 class WidgetMultiPropertyWrapper(pt.properties.MultiPropertyWrapper):
     """Overrides the default MultiPropertyWrapper to update the 'inner properties'
     and then create undo commands to update the CEGUI widgets.
@@ -159,87 +114,6 @@ class PropertiesDockWidget(QtGui.QDockWidget):
         self.inspector.ptree.setupRegistry(PropertyEditorRegistry(True))
 
         self.setWidget(self.inspector)
-
-class WidgetTypeTreeWidget(QtGui.QTreeWidget):
-    """Represents a single available widget for creation (it has a mapping in the scheme or is
-    a stock special widget - like DefaultWindow).
-
-    Also provides previews for the widgets
-    """
-
-    def __init__(self, parent = None):
-        super(WidgetTypeTreeWidget, self).__init__(parent)
-
-        self.setDragEnabled(True)
-
-    def setVisual(self, visual):
-        self.visual = visual
-
-    def startDrag(self, dropActions):
-        # shamelessly stolen from CELE2 by Paul D Turner (GPLv3)
-
-        item = self.currentItem()
-        widgetType = item.text(0)
-
-        if item.parent():
-            look = item.parent().text(0)
-        else:
-            look = ""
-
-        mimeData = QtCore.QMimeData()
-
-        mimeData.setData("application/x-ceed-widget-type", QtCore.QByteArray(str(look + "/" + widgetType if look else widgetType)))
-
-        pixmap = QtGui.QPixmap(75,40)
-        painter = QtGui.QPainter(pixmap)
-        painter.eraseRect(0, 0, 75, 40)
-        painter.setBrush(QtCore.Qt.DiagCrossPattern)
-        painter.drawRect(0, 0, 74, 39)
-        painter.end()
-
-        drag = QtGui.QDrag(self)
-        drag.setMimeData(mimeData)
-        drag.setPixmap(pixmap)
-        drag.setHotSpot(QtCore.QPoint(0, 0))
-
-        drag.exec_(QtCore.Qt.CopyAction)
-
-    def viewportEvent(self, event):
-        if event.type() == QtCore.QEvent.ToolTip:
-            # TODO: The big question is whether to reuse cached previews or always render them again.
-            #       I always render them again for now to avoid all sorts of caching issues
-            #       (when scheme/looknfeel editing is in place, etc...)
-
-            item = self.itemAt(event.pos())
-
-            if item is not None and item.childCount() == 0:
-                skin = item.parent().text(0) if item.parent() is not None else "__no_skin__"
-                widgetType = item.text(0)
-
-                fullWidgetType = widgetType if skin == "__no_skin__" else "%s/%s" % (skin, widgetType)
-                tooltipText = ""
-                try:
-                    if skin == "__no_skin__":
-                        tooltipText = "Unskinned widgetType"
-
-                    elif widgetType == "TabButton":
-                        tooltipText = "Can't render a preview as this is an auto widgetType, requires parent to be rendered."
-
-                    else:
-                        ba = QtCore.QByteArray()
-                        buffer = QtCore.QBuffer(ba)
-                        buffer.open(QtCore.QIODevice.WriteOnly)
-
-                        mainwindow.MainWindow.instance.ceguiInstance.getWidgetPreviewImage(fullWidgetType).save(buffer, "PNG")
-
-                        tooltipText = "<img src=\"data:image/png;base64,%s\" />" % (ba.toBase64())
-
-                except Exception as e:
-                    tooltipText = "Couldn't render a widgetType preview... (exception: %s)" % (e)
-
-                item.setToolTip(0, "<small>Drag to the layout to create!</small><br />%s" % (tooltipText))
-
-        return super(WidgetTypeTreeWidget, self).viewportEvent(event)
 
 class CreateWidgetDockWidget(QtGui.QDockWidget):
     """This lists available widgets you can create and allows their creation (by drag N drop)

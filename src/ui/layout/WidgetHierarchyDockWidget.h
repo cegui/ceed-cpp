@@ -3,6 +3,8 @@
 
 #include <QDockWidget>
 
+// Displays and manages the widget hierarchy. Contains the WidgetHierarchyTreeWidget.
+
 namespace Ui {
 class WidgetHierarchyDockWidget;
 }

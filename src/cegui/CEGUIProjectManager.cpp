@@ -563,5 +563,5 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
 
     return temporaryFBO.toImage()
 */
-    return QImage();
+    return QImage(previewWidth, previewHeight, QImage::Format_ARGB32);
 }

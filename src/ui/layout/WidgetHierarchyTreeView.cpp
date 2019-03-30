@@ -7,17 +7,8 @@ WidgetHierarchyTreeView::WidgetHierarchyTreeView(QWidget* parent)
 }
 
 /*
-
-class WidgetHierarchyTreeView(QtGui.QTreeView):
-    """The actual widget hierarchy tree widget - what a horrible name
-    This is a Qt widget that does exactly the same as QTreeWidget for now,
-    it is a placeholder that will be put to use once the need arises - and it will.
-    """
-
     def __init__(self, parent = None):
         super(WidgetHierarchyTreeView, self).__init__(parent)
-
-        self.dockWidget = None
 
     def selectionChanged(self, selected, deselected):
         """Synchronizes tree selection with scene selection.
@@ -26,10 +17,10 @@ class WidgetHierarchyTreeView(QtGui.QTreeView):
         super(WidgetHierarchyTreeView, self).selectionChanged(selected, deselected)
 
         # we are running synchronization the other way, this prevents infinite loops and recursion
-        if self.dockWidget.ignoreSelectionChanges:
+        if self.parentWidget.ignoreSelectionChanges:
             return
 
-        self.dockWidget.visual.scene.ignoreSelectionChanges = True
+        self.parentWidget.visual.scene.ignoreSelectionChanges = True
 
         for index in selected.indexes():
             item = self.model().itemFromIndex(index)
@@ -38,7 +29,7 @@ class WidgetHierarchyTreeView(QtGui.QTreeView):
                 manipulatorPath = item.data(QtCore.Qt.UserRole)
                 manipulator = None
                 if manipulatorPath is not None:
-                    manipulator = self.dockWidget.visual.scene.getManipulatorByPath(manipulatorPath)
+                    manipulator = self.parentWidget.visual.scene.getManipulatorByPath(manipulatorPath)
 
                 if manipulator is not None:
                     manipulator.setSelected(True)
@@ -50,12 +41,12 @@ class WidgetHierarchyTreeView(QtGui.QTreeView):
                 manipulatorPath = item.data(QtCore.Qt.UserRole)
                 manipulator = None
                 if manipulatorPath is not None:
-                    manipulator = self.dockWidget.visual.scene.getManipulatorByPath(manipulatorPath)
+                    manipulator = self.parentWidget.visual.scene.getManipulatorByPath(manipulatorPath)
 
                 if manipulator is not None:
                     manipulator.setSelected(False)
 
-        self.dockWidget.visual.scene.ignoreSelectionChanges = False
+        self.parentWidget.visual.scene.ignoreSelectionChanges = False
 
     def setupContextMenu(self):
         self.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
