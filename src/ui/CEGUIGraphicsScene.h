@@ -8,6 +8,8 @@
 // on top of the embedded CEGUI widget!
 // Interaction is also supported.
 
+class QOpenGLFramebufferObject;
+
 class CEGUIGraphicsScene : public QGraphicsScene
 {
 public:
@@ -21,10 +23,12 @@ public:
 
 protected:
 
+    QOpenGLFramebufferObject* fbo = nullptr;
+
     time_t lastDelta = 0;
     time_t timeOfLastRender;
 
-    float padding = 100.f;
+    qreal padding = 100.0;
     float contextWidth = 0.f;
     float contextHeight = 0.f;
 

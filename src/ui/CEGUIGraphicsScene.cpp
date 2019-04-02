@@ -1,18 +1,17 @@
 #include "src/ui/CEGUIGraphicsScene.h"
 #include "src/util/Settings.h"
 #include "src/util/Utils.h"
+#include "src/cegui/CEGUIProjectManager.h"
 #include "src/Application.h"
 #include "qpainter.h"
 #include "qpaintengine.h"
+#include "qopenglframebufferobject.h"
 
 CEGUIGraphicsScene::CEGUIGraphicsScene()
     : timeOfLastRender(time(nullptr))
 {
     setCEGUIDisplaySize(800, 600, true);
-/*
-    self.ceguiInstance = ceguiInstance
-    self.fbo = None
-*/
+
     auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
     checkerWidth = settings->getEntryValue("cegui/background/checker_width").toInt();
     checkerHeight = settings->getEntryValue("cegui/background/checker_height").toInt();
@@ -27,17 +26,18 @@ void CEGUIGraphicsScene::setCEGUIDisplaySize(float width, float height, bool laz
     contextWidth = width;
     contextHeight = height;
 
-    qreal qPadding = static_cast<qreal>(padding);
     qreal qWidth = static_cast<qreal>(width);
     qreal qHeight = static_cast<qreal>(height);
-    setSceneRect(QRectF(-qPadding, -qPadding, qWidth + 2.0 * qPadding, qHeight + 2.0 * qPadding));
+    setSceneRect(QRectF(-padding, -padding, qWidth + 2.0 * padding, qHeight + 2.0 * padding));
 
-    /*
     if (!lazyUpdate)
-        PyCEGUI.System.getSingleton().notifyDisplaySizeChanged(self.ceguiDisplaySize);
+        ; // PyCEGUI.System.getSingleton().notifyDisplaySizeChanged(self.ceguiDisplaySize);
 
-    self.fbo = None
-    */
+    if (fbo)
+    {
+        delete fbo;
+        fbo = nullptr;
+    }
 }
 
 // We override this and draw CEGUI instead of the whole background.
@@ -45,7 +45,7 @@ void CEGUIGraphicsScene::setCEGUIDisplaySize(float width, float height, bool laz
 // FBOs are therefore required by CEED and it won't run without a GPU that supports them.
 void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
 {
-    //???!!!use rect arg?!
+    //???!!!use const QRectF& rect arg?!
 
     // Be robust, this is usually caused by recursive repainting
     if (!painter->paintEngine())
@@ -79,9 +79,8 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
 
     painter->beginNativePainting();
 
+    CEGUIProjectManager::Instance().ensureCEGUIInitialized();
 /*
-    self.ceguiInstance.ensureIsInitialised()
-
     if self.ceguiDisplaySize != PyCEGUI.System.getSingleton().getRenderer().getDisplaySize():
         # FIXME: Change when multi root is in CEGUI core
         PyCEGUI.System.getSingleton().notifyDisplaySizeChanged(self.ceguiDisplaySize)
@@ -89,24 +88,26 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
     # markAsDirty is called on the default GUI context to work around potential issues with dangling
     # references in the rendering code for some versions of CEGUI.
     system.getDefaultGUIContext().markAsDirty()
+*/
+    // We have to render to FBO and then scale/translate that since CEGUI doesn't allow
+    // scaling the whole rendering root directly
 
-    # we have to render to FBO and then scale/translate that since CEGUI doesn't allow
-    # scaling the whole rendering root directly
+    // This makes sure the FBO is the correct size
+    if (!fbo)
+    {
+        QSize desiredSize(static_cast<int>(std::ceil(contextWidth)), static_cast<int>(std::ceil(contextHeight)));
+        fbo = new QOpenGLFramebufferObject(desiredSize, GL_TEXTURE_2D);
+    }
 
-    # this makes sure the FBO is the correct size
-    if not self.fbo:
-        desiredSize = QtCore.QSize(math.ceil(self.ceguiDisplaySize.d_width), math.ceil(self.ceguiDisplaySize.d_height))
-        self.fbo = QtOpenGL.QGLFramebufferObject(desiredSize, GL.GL_TEXTURE_2D)
-
-    self.fbo.bind()
-
+    fbo->bind();
+/*
     GL.glClearColor(0, 0, 0, 0)
     GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
     system.renderAllGUIContexts()
-
-    self.fbo.release()
-
+*/
+    fbo->release();
+/*
     # the stretch and translation should be done automatically by QPainter at this point so just
     # this code will do
     if bool(GL.glActiveTexture):

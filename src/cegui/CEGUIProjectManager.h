@@ -42,10 +42,10 @@ public:
     CEGUIWidget* getCEGUIWidget() const { return ceguiContainerWidget; }
 
     bool syncProjectToCEGUIInstance();
+    void ensureCEGUIInitialized();
 
 protected:
 
-    void ensureCEGUIInitialized();
     void cleanCEGUIResources();
 
     CEGUIWidget* ceguiContainerWidget = nullptr;
