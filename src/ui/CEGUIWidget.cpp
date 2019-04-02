@@ -1,5 +1,7 @@
 #include "src/ui/CEGUIWidget.h"
 #include "ui_CEGUIWidget.h"
+#include "src/cegui/CEGUIProjectManager.h"
+#include "src/cegui/CEGUIProject.h"
 
 CEGUIWidget::CEGUIWidget(QWidget *parent) :
     QWidget(parent),
@@ -7,23 +9,11 @@ CEGUIWidget::CEGUIWidget(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    ui->view->setBackgroundRole(QPalette::Dark);
+
     /*
-        self.ceguiInstance = ceguiInstance
-        self.mainWindow = mainWindow
-
-        self.currentParentWidget = None
-
+        ui->view->containerWidget = this;
         self.debugInfo = DebugInfo(self)
-        self.view = self.findChild(qtgraphics.GraphicsView, "view")
-        self.ceguiInstance.setGLContextProvider(self.view)
-        self.view.setBackgroundRole(QtGui.QPalette.Dark)
-        self.view.containerWidget = self
-
-        self.resolutionBox = self.findChild(QtGui.QComboBox, "resolutionBox")
-        self.resolutionBox.editTextChanged.connect(self.slot_resolutionBoxChanged)
-
-        self.debugInfoButton = self.findChild(QtGui.QPushButton, "debugInfoButton")
-        self.debugInfoButton.clicked.connect(self.slot_debugInfoButton)
     */
 }
 
@@ -38,6 +28,7 @@ void CEGUIWidget::makeOpenGLContextCurrent()
     assert(false);
 
     //???accept context as arg?
+    // In Qt4 was:
     //CEGUIGraphicsView* view = findChild<CEGUIGraphicsView*>("view");
     //view->viewport()->makeCurrent();
 }
@@ -54,6 +45,34 @@ void CEGUIWidget::setInputEnabled(bool enable)
 void CEGUIWidget::on_debugInfoButton_clicked()
 {
     //self.debugInfo.show()
+}
+
+void CEGUIWidget::on_resolutionBox_editTextChanged(const QString& arg1)
+{
+    auto text = ui->resolutionBox->currentText();
+    if (text == "Project default")
+    {
+        // Special case
+        auto project = CEGUIProjectManager::Instance().getCurrentProject();
+        if (!project) return;
+        text = project->defaultResolution;
+    }
+
+/*
+        res = text.split("x", 1)
+        if len(res) == 2:
+            try:
+                # clamp both to 1 - 4096, should suit 99% of all cases
+                width = max(1, min(4096, int(res[0])))
+                height = max(1, min(4096, int(res[1])))
+
+                makeOpenGLContextCurrent()
+                self.view.scene().setCEGUIDisplaySize(width, height, lazyUpdate = False)
+
+            except ValueError:
+                # ignore invalid literals
+                pass
+*/
 }
 
 /*
@@ -89,24 +108,25 @@ class ViewState(object):
         """
 
         # sometimes things get called in the opposite order, lets be forgiving and robust!
-        if self.currentParentWidget is not None:
-            self.deactivate(self.currentParentWidget)
+        currentParentWidget = self.parentWidget()
+        if currentParentWidget is not None:
+            self.deactivate(currentParentWidget)
 
-        self.currentParentWidget = parentWidget
+        currentParentWidget = parentWidget
 
         if scene is None:
             scene = qtgraphics.GraphicsScene(self.ceguiInstance)
 
-        self.currentParentWidget.setUpdatesEnabled(False)
+        currentParentWidget.setUpdatesEnabled(False)
         self.view.setScene(scene)
         # make sure the resolution is set right for the given scene
         self.slot_resolutionBoxChanged(self.resolutionBox.currentText())
 
-        if self.currentParentWidget.layout():
-            self.currentParentWidget.layout().addWidget(self)
+        if currentParentWidget.layout():
+            currentParentWidget.layout().addWidget(self)
         else:
-            self.setParent(self.currentParentWidget)
-        self.currentParentWidget.setUpdatesEnabled(True)
+            self.setParent(currentParentWidget)
+        currentParentWidget.setUpdatesEnabled(True)
 
         # cause full redraw of the default context to ensure that nothing gets stuck
         PyCEGUI.System.getSingleton().getDefaultGUIContext().markAsDirty()
@@ -115,7 +135,7 @@ class ViewState(object):
         self.view.update()
 
         # finally, set the OpenGL context for CEGUI as current as other code may rely on it
-        self.makeGLContextCurrent()
+        makeOpenGLContextCurrent()
 
     def deactivate(self, parentWidget):
         """Deactivates the widget from use in given parentWidget (QWidget derived class)
@@ -126,45 +146,22 @@ class ViewState(object):
         reason for the parentWidget parameter.
         """
 
-        if self.currentParentWidget != parentWidget:
+        currentParentWidget = self.parentWidget()
+        if currentParentWidget != parentWidget:
             return
 
-        self.currentParentWidget.setUpdatesEnabled(False)
+        currentParentWidget.setUpdatesEnabled(False)
         # back to the defaults
         self.setViewFeatures()
         self.view.setScene(None)
 
-        if self.currentParentWidget.layout():
-            self.currentParentWidget.layout().removeWidget(self)
+        if currentParentWidget.layout():
+            currentParentWidget.layout().removeWidget(self)
         else:
             self.setParent(None)
-        self.currentParentWidget.setUpdatesEnabled(True)
+        currentParentWidget.setUpdatesEnabled(True)
 
-        self.currentParentWidget = None
-
-    def updateResolution(self):
-        text = self.resolutionBox.currentText()
-
-        if text == "Project default":
-            # special case
-            project = self.mainWindow.project
-
-            if project is not None:
-                text = project.CEGUIDefaultResolution
-
-        res = text.split("x", 1)
-        if len(res) == 2:
-            try:
-                # clamp both to 1 - 4096, should suit 99% of all cases
-                width = max(1, min(4096, int(res[0])))
-                height = max(1, min(4096, int(res[1])))
-
-                self.ceguiInstance.makeGLContextCurrent()
-                self.view.scene().setCEGUIDisplaySize(width, height, lazyUpdate = False)
-
-            except ValueError:
-                # ignore invalid literals
-                pass
+        currentParentWidget = None
 
     def setViewState(self, viewState):
         self.view.setTransform(viewState.transform)
@@ -178,10 +175,4 @@ class ViewState(object):
         ret.verticalScroll = self.view.verticalScrollBar().value()
 
         return ret
-
-    def slot_resolutionBoxChanged(self, _):
-        self.updateResolution()
-
-    def slot_debugInfoButton(self):
-        self.debugInfo.show()
 */

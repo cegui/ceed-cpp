@@ -11,6 +11,7 @@
 //???rename to CEGUIManager?
 
 class CEGUIProject;
+class CEGUIWidget; // TODO: one CEGUI widget per editor instead of the global one?
 
 class CEGUIProjectManager
 {
@@ -38,6 +39,7 @@ public:
     QStringList getAvailableImages() const;
     void getAvailableWidgetsBySkin(std::map<QString, QStringList>& out) const;
     QImage getWidgetPreviewImage(const QString& widgetType, int previewWidth = 128, int previewHeight = 64);
+    CEGUIWidget* getCEGUIWidget() const { return ceguiContainerWidget; }
 
     bool syncProjectToCEGUIInstance();
 
@@ -46,6 +48,7 @@ protected:
     void ensureCEGUIInitialized();
     void cleanCEGUIResources();
 
+    CEGUIWidget* ceguiContainerWidget = nullptr;
     std::unique_ptr<CEGUIProject> currentProject;
     bool initialized = false;
 };

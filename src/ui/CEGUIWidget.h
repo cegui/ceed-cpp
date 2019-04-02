@@ -16,16 +16,21 @@ class CEGUIWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit CEGUIWidget(QWidget *parent = nullptr);
+
+    explicit CEGUIWidget(QWidget* parent = nullptr);
     ~CEGUIWidget();
 
     void makeOpenGLContextCurrent();
     void setInputEnabled(bool enable);
 
 private slots:
+
     void on_debugInfoButton_clicked();
 
+    void on_resolutionBox_editTextChanged(const QString& arg1);
+
 private:
+
     Ui::CEGUIWidget *ui;
 };
 

@@ -4,15 +4,25 @@
 #include "src/ui/layout/CreateWidgetDockWidget.h"
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
 #include "qboxlayout.h"
+#include "qgraphicsview.h"
 
 LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     : IEditMode(editor)
 {
     hierarchyDockWidget = new WidgetHierarchyDockWidget(this);
     createWidgetDockWidget = new CreateWidgetDockWidget(this);
-    /*
-        self.propertiesDockWidget = PropertiesDockWidget(self) //???need separate class?
-    */
+    propertiesDockWidget = new QDockWidget(this);
+
+    propertiesDockWidget->setObjectName("PropertiesDockWidget");
+    propertiesDockWidget->setWindowTitle("Selection Properties");
+    // Make the dock take as much space as it can vertically
+    propertiesDockWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+
+/*
+    inspector = PropertyInspectorWidget()
+    inspector.ptree.setupRegistry(PropertyEditorRegistry(True))
+    propertiesDockWidget->setWidget(inspector)
+*/
 
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -237,6 +247,27 @@ bool LayoutVisualMode::deleteSelected()
     return scene->deleteSelectedWidgets();
 }
 
+void LayoutVisualMode::zoomIn()
+{
+    /*
+        scene.views()[0].zoomIn()
+    */
+}
+
+void LayoutVisualMode::zoomOut()
+{
+    /*
+        scene.views()[0].zoomOut()
+    */
+}
+
+void LayoutVisualMode::zoomReset()
+{
+    /*
+        scene.views()[0].zoomOriginal()
+    */
+}
+
 void LayoutVisualMode::showEvent(QShowEvent* event)
 {
     /*
@@ -434,22 +465,4 @@ class CEGUIWidgetPropertyManager(CEGUIPropertyManager):
         categories = OrderedDict(sorted(categories.items(), key=getSortKey))
 
         return categories
-
-class PropertiesDockWidget(QtGui.QDockWidget):
-    """Lists and allows editing of properties of the selected widget(s).
-    """
-
-    def __init__(self, visual):
-        super(PropertiesDockWidget, self).__init__()
-        self.setObjectName("PropertiesDockWidget")
-        self.visual = visual
-
-        self.setWindowTitle("Selection Properties")
-        # Make the dock take as much space as it can vertically
-        self.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Maximum)
-
-        self.inspector = PropertyInspectorWidget()
-        self.inspector.ptree.setupRegistry(PropertyEditorRegistry(True))
-
-        self.setWidget(self.inspector)
 */

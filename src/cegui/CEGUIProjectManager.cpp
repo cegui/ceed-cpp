@@ -5,15 +5,18 @@
 #include "qprogressdialog.h"
 #include "qdiriterator.h"
 
+// TODO: one CEGUI widget per editor instead of the global one?
+#include "src/ui/CEGUIWidget.h"
+
 CEGUIProjectManager::CEGUIProjectManager()
 {
 /*
     self.logger = RedirectingCEGUILogger()
     self.lastRenderTimeDelta = 0
-
-    //!!!was created in a MainWindow!
-    self.ceguiContainerWidget = CEGUIWidget(self.ceguiInstance, self /*mainWnd/*)
 */
+
+    // TODO: one CEGUI widget per editor instead of the global one?
+    ceguiContainerWidget = new CEGUIWidget(qobject_cast<Application*>(qApp)->getMainWindow());
 }
 
 CEGUIProject* CEGUIProjectManager::createProject(const QString& filePath, bool createResourceDirs)
@@ -166,9 +169,7 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
     progress.show();
 
     ensureCEGUIInitialized();
-/*
-    ceguiContainerWidget->makeOpenGLContextCurrent();
-*/
+    //ceguiContainerWidget->makeOpenGLContextCurrent(); //???really need here?
 
     QStringList schemeFiles;
     auto absoluteSchemesPath = currentProject->getAbsolutePathOf(currentProject->schemesPath);
@@ -521,9 +522,9 @@ void CEGUIProjectManager::getAvailableWidgetsBySkin(std::map<QString, QStringLis
 QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int previewWidth, int previewHeight)
 {
     ensureCEGUIInitialized();
+    assert(false);
+    //ceguiContainerWidget->makeOpenGLContextCurrent(); //???really need here?
 /*
-    ceguiContainerWidget->makeOpenGLContextCurrent();
-
     system = PyCEGUI.System.getSingleton()
 
     renderer = system.getRenderer()

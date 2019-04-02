@@ -7,6 +7,8 @@
 #include "src/util/SettingsSection.h"
 #include "src/util/SettingsEntry.h"
 #include "src/ui/MainWindow.h"
+#include "src/ui/layout/WidgetHierarchyDockWidget.h"
+#include "src/ui/layout/CreateWidgetDockWidget.h"
 #include "qmenu.h"
 
 LayoutEditor::LayoutEditor(const QString& filePath)
@@ -48,39 +50,80 @@ void LayoutEditor::activate(MainWindow& mainWindow)
 {
     MultiModeEditor::activate(mainWindow);
 
+    mainWindow.addDockWidget(Qt::LeftDockWidgetArea, visualMode->getHierarchyDockWidget());
+    visualMode->getHierarchyDockWidget()->setVisible(true);
+    mainWindow.addDockWidget(Qt::LeftDockWidgetArea, visualMode->getCreateWidgetDockWidget());
+    visualMode->getCreateWidgetDockWidget()->setVisible(true);
+    mainWindow.addDockWidget(Qt::RightDockWidgetArea, visualMode->getPropertiesDockWidget());
+    visualMode->getPropertiesDockWidget()->setVisible(true);
 /*
-        self.mainWindow.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.visual.hierarchyDockWidget)
-        self.visual.hierarchyDockWidget.setVisible(True)
-        self.mainWindow.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.visual.propertiesDockWidget)
-        self.visual.propertiesDockWidget.setVisible(True)
-        self.mainWindow.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.visual.createWidgetDockWidget)
-        self.visual.createWidgetDockWidget.setVisible(True)
         self.mainWindow.addToolBar(QtCore.Qt.ToolBarArea.TopToolBarArea, self.visual.toolBar)
         self.visual.toolBar.show()
 */
 
     auto editorMenu = mainWindow.getEditorMenu();
     editorMenu->setTitle("&Layout");
-    /*
     visualMode->rebuildEditorMenu(editorMenu);
-    */
     editorMenu->menuAction()->setVisible(true);
     editorMenu->menuAction()->setEnabled(tabs.currentWidget() == visualMode);
 }
 
 void LayoutEditor::deactivate(MainWindow& mainWindow)
 {
+    mainWindow.removeDockWidget(visualMode->getHierarchyDockWidget());
+    mainWindow.removeDockWidget(visualMode->getCreateWidgetDockWidget());
+    mainWindow.removeDockWidget(visualMode->getPropertiesDockWidget());
 /*
-        self.mainWindow.removeDockWidget(self.visual.hierarchyDockWidget)
-        self.mainWindow.removeDockWidget(self.visual.propertiesDockWidget)
-        self.mainWindow.removeDockWidget(self.visual.createWidgetDockWidget)
         self.mainWindow.removeToolBar(self.visual.toolBar)
 */
     MultiModeEditor::deactivate(mainWindow);
 }
 
+void LayoutEditor::copy()
+{
+    if (tabs.currentWidget() == visualMode)
+        visualMode->copy();
+}
+
+void LayoutEditor::cut()
+{
+    if (tabs.currentWidget() == visualMode)
+        visualMode->cut();
+}
+
+void LayoutEditor::paste()
+{
+    if (tabs.currentWidget() == visualMode)
+        visualMode->paste();
+}
+
+void LayoutEditor::deleteSelected()
+{
+    if (tabs.currentWidget() == visualMode)
+        visualMode->deleteSelected();
+}
+
+void LayoutEditor::zoomIn()
+{
+    if (tabs.currentWidget() == visualMode)
+        visualMode->zoomIn();
+}
+
+void LayoutEditor::zoomOut()
+{
+    if (tabs.currentWidget() == visualMode)
+        visualMode->zoomOut();
+}
+
+void LayoutEditor::zoomReset()
+{
+    if (tabs.currentWidget() == visualMode)
+        visualMode->zoomReset();
+}
+
+void LayoutEditor::getRawData(QByteArray& outRawData)
+{
 /*
-    def saveAs(self, targetPath, updateCurrentPath = True):
         codeMode = self.currentWidget() is self.code
 
         # if user saved in code mode, we process the code by propagating it to visual
@@ -96,44 +139,8 @@ void LayoutEditor::deactivate(MainWindow& mainWindow)
             return False
 
         self.nativeData = PyCEGUI.WindowManager.getSingleton().getLayoutAsString(currentRootWidget)
-        return super(LayoutTabbedEditor, self).saveAs(targetPath, updateCurrentPath)
-
-    def performCut(self):
-        if self.currentWidget() is self.visual:
-            return self.visual.performCut()
-
-        return False
-
-    def performCopy(self):
-        if self.currentWidget() is self.visual:
-            return self.visual.performCopy()
-
-        return False
-
-    def performPaste(self):
-        if self.currentWidget() is self.visual:
-            return self.visual.performPaste()
-
-        return False
-
-    def performDelete(self):
-        if self.currentWidget() is self.visual:
-            return self.visual.performDelete()
-
-        return False
-
-    def zoomIn(self):
-        if self.currentWidget() is self.visual:
-            self.visual.scene.views()[0].zoomIn()
-
-    def zoomOut(self):
-        if self.currentWidget() is self.visual:
-            self.visual.scene.views()[0].zoomOut()
-
-    def zoomReset(self):
-        if self.currentWidget() is self.visual:
-            self.visual.scene.views()[0].zoomOriginal()
 */
+}
 
 void LayoutEditor::createActions(ActionManager& mgr)
 {
