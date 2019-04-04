@@ -1,5 +1,7 @@
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
 #include "ui_WidgetHierarchyDockWidget.h"
+#include "src/ui/layout/WidgetHierarchyTreeModel.h"
+#include "qevent.h"
 
 WidgetHierarchyDockWidget::WidgetHierarchyDockWidget(QWidget *parent) :
     QDockWidget(parent),
@@ -7,16 +9,10 @@ WidgetHierarchyDockWidget::WidgetHierarchyDockWidget(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    auto model = new WidgetHierarchyTreeModel(this);
+    ui->treeView->setModel(model);
 /*
         self.visual = visual
-
-        self.ignoreSelectionChanges = False
-
-        self.model = WidgetHierarchyTreeModel(self)
-        self.treeView = self.findChild(WidgetHierarchyTreeView, "treeView")
-        self.treeView.setModel(self.model)
-
-        self.rootWidgetManipulator = None
 */
 }
 
@@ -25,29 +21,37 @@ WidgetHierarchyDockWidget::~WidgetHierarchyDockWidget()
     delete ui;
 }
 
+// Sets the widget manipulator that is at the root of our observed hierarchy.
+// Uses getTreeItemForManipulator to recursively populate the tree.
+void WidgetHierarchyDockWidget::setRootWidgetManipulator(LayoutManipulator* root)
+{
+    _rootWidgetManipulator = root;
 /*
-
-    def setRootWidgetManipulator(self, root):
-        """Sets the widget manipulator that is at the root of our observed hierarchy.
-        Uses getTreeItemForManipulator to recursively populate the tree.
-        """
-
-        self.rootWidgetManipulator = root
         self.model.setRootManipulator(root)
-        self.treeView.expandToDepth(0)
-
-    def refresh(self):
-        """Refreshes the entire hierarchy completely from scratch"""
-
-        # this will resynchronise the entire model
-        self.model.setRootManipulator(self.rootWidgetManipulator)
-
-    def keyReleaseEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Delete:
-            handled = self.visual.scene.deleteSelectedWidgets()
-
-            if handled:
-                return True
-
-        return super(HierarchyDockWidget, self).keyReleaseEvent(event)
 */
+    ui->treeView->expandToDepth(0);
+}
+
+// Refreshes the entire hierarchy completely from scratch
+void WidgetHierarchyDockWidget::refresh()
+{
+    // This will resynchronise the entire model
+    /*
+            self.model.setRootManipulator(_rootWidgetManipulator)
+    */
+}
+
+void WidgetHierarchyDockWidget::keyReleaseEvent(QKeyEvent* event)
+{
+    if (event->key() == Qt::Key_Delete)
+    {
+        /*
+        handled = self.visual.scene.deleteSelectedWidgets()
+
+        if handled:
+            return True
+        */
+    }
+
+    return QDockWidget::keyReleaseEvent(event);
+}

@@ -12,6 +12,11 @@ class WidgetHierarchyTreeView : public QTreeView
 public:
 
     WidgetHierarchyTreeView(QWidget* parent = nullptr);
+
+protected:
+
+    virtual void selectionChanged(const QItemSelection& selected, const QItemSelection& deselected) override;
+
 };
 
 #endif // WIDGETHIERARCHYTREEVIEW_H

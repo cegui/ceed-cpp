@@ -1,129 +1,16 @@
 #include "src/ui/layout/WidgetHierarchyTreeModel.h"
+#include "src/ui/layout/WidgetHierarchyItem.h"
 
-WidgetHierarchyTreeModel::WidgetHierarchyTreeModel()
+WidgetHierarchyTreeModel::WidgetHierarchyTreeModel(WidgetHierarchyDockWidget* dockWidget)
+    : _dockWidget(dockWidget)
 {
-
+    setSortRole(Qt::UserRole + 1);
+    setItemPrototype(new WidgetHierarchyItem(nullptr));
 }
 
 /*
 
-class WidgetHierarchyItem(QtGui.QStandardItem):
-    def __init__(self, manipulator):
-        self.manipulator = manipulator
-
-        if manipulator is not None:
-            super(WidgetHierarchyItem, self).__init__(manipulator.widget.getName())
-
-            self.setToolTip("type: %s" % (manipulator.widget.getType()))
-
-            # interlink them so we can react on selection changes
-            manipulator.treeItem = self
-
-        else:
-            super(WidgetHierarchyItem, self).__init__("<No widget>")
-
-        self.refreshPathData(False)
-        self.refreshOrderingData(False, False)
-
-        self.setFlags(QtCore.Qt.ItemIsEnabled |
-                      QtCore.Qt.ItemIsSelectable |
-                      QtCore.Qt.ItemIsEditable |
-                      QtCore.Qt.ItemIsDropEnabled |
-                      QtCore.Qt.ItemIsDragEnabled |
-                      QtCore.Qt.ItemIsUserCheckable)
-
-        self.setData(QtCore.Qt.Unchecked, QtCore.Qt.CheckStateRole)
-
-    def clone(self):
-        ret = WidgetHierarchyItem(self.manipulator)
-        ret.setData(self.data(QtCore.Qt.CheckStateRole), QtCore.Qt.CheckStateRole)
-        return ret
-
-    def getWidgetIdxInParent(self):
-        # TODO: Move this to CEGUI::Window
-        widget = self.manipulator.widget
-        if widget is None:
-            return -1
-
-        parent = widget.getParent()
-        if parent is None:
-            return 0
-
-        for i in range(parent.getChildCount()):
-            if parent.getChildAtIdx(i).getNamePath() == widget.getNamePath():
-                return i
-
-        return -1
-
-    def refreshPathData(self, recursive = True):
-        """Updates the stored path data for the item and its children
-        """
-
-        # NOTE: We use widget path here because that's what QVariant can serialise and pass forth
-        #       I have had weird segfaults when storing manipulator directly here, perhaps they
-        #       are related to PySide, perhaps they were caused by my stupidity, we will never know!
-
-        if self.manipulator is not None:
-            self.setText(self.manipulator.widget.getName())
-            self.setData(self.manipulator.widget.getNamePath(), QtCore.Qt.UserRole)
-
-            if recursive:
-                for i in range(self.rowCount()):
-                    self.child(i).refreshPathData(True)
-
-    def refreshOrderingData(self, resort = True, recursive = True):
-        """Updates the stored ordering data for the item and its children
-        if resort is True the children are sorted according to their order in CEGUI::Window
-        """
-
-        # resort=True with recursive=False makes no sense and is a bug
-        assert(not resort or recursive)
-
-        if self.manipulator is not None:
-            self.setData(self.getWidgetIdxInParent(), QtCore.Qt.UserRole + 1)
-
-            if recursive:
-                for i in range(self.rowCount()):
-                    # we pass resort=False because sortChildren is recursive itself
-                    self.child(i).refreshOrderingData(False, True)
-
-            if resort:
-                self.sortChildren(0)
-
-    def setData(self, value, role):
-        if role == QtCore.Qt.CheckStateRole and self.manipulator is not None:
-            # synchronise the manipulator with the lock state
-            self.manipulator.setLocked(value == QtCore.Qt.Checked)
-
-        return super(WidgetHierarchyItem, self).setData(value, role)
-
-    def setLocked(self, locked, recursive = False):
-        """Locks or unlocks this item.
-
-        locked - if True this item gets locked = user won't be able to move it
-                 in the visual editing mode.
-        recursive - if True, all children of this item will also get affected
-                    They will get locked or unlocked depending on the "locked"
-                    argument, independent of their previous lock state.
-        """
-
-        # we do it this way around to make sure the checkbox's check state
-        # is always up to date
-        self.setData(QtCore.Qt.Checked if locked else QtCore.Qt.Unchecked,
-                     QtCore.Qt.CheckStateRole)
-
-        if recursive:
-            for i in range(self.rowCount()):
-                child = self.child(i)
-                child.setLocked(locked, True)
-
 class WidgetHierarchyTreeModel(QtGui.QStandardItemModel):
-    def __init__(self, dockWidget):
-        super(WidgetHierarchyTreeModel, self).__init__()
-
-        self.dockWidget = dockWidget
-        self.setSortRole(QtCore.Qt.UserRole + 1)
-        self.setItemPrototype(WidgetHierarchyItem(None))
 
     def data(self, index, role = QtCore.Qt.DisplayRole):
         return super(WidgetHierarchyTreeModel, self).data(index, role)

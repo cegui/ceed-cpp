@@ -1,25 +1,22 @@
 #include "src/ui/layout/WidgetHierarchyTreeView.h"
+#include "src/ui/layout/WidgetHierarchyDockWidget.h"
 
 WidgetHierarchyTreeView::WidgetHierarchyTreeView(QWidget* parent)
     : QTreeView(parent)
 {
-
 }
 
+// Synchronizes tree selection with scene selection
+void WidgetHierarchyTreeView::selectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
+{
+    QTreeView::selectionChanged(selected, deselected);
+
+    // We are running synchronization the other way, this prevents infinite loops and recursion
+    WidgetHierarchyDockWidget* widget = dynamic_cast<WidgetHierarchyDockWidget*>(parentWidget());
+    if (widget->isIgnoringSelectionChanges()) return;
+
+
 /*
-    def __init__(self, parent = None):
-        super(WidgetHierarchyTreeView, self).__init__(parent)
-
-    def selectionChanged(self, selected, deselected):
-        """Synchronizes tree selection with scene selection.
-        """
-
-        super(WidgetHierarchyTreeView, self).selectionChanged(selected, deselected)
-
-        # we are running synchronization the other way, this prevents infinite loops and recursion
-        if self.parentWidget.ignoreSelectionChanges:
-            return
-
         self.parentWidget.visual.scene.ignoreSelectionChanges = True
 
         for index in selected.indexes():
@@ -47,6 +44,10 @@ WidgetHierarchyTreeView::WidgetHierarchyTreeView(QWidget* parent)
                     manipulator.setSelected(False)
 
         self.parentWidget.visual.scene.ignoreSelectionChanges = False
+*/
+}
+
+/*
 
     def setupContextMenu(self):
         self.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)

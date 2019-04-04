@@ -1,11 +1,19 @@
 #ifndef WIDGETHIERARCHYTREEMODEL_H
 #define WIDGETHIERARCHYTREEMODEL_H
 
+#include "qstandarditemmodel.h"
 
-class WidgetHierarchyTreeModel
+class WidgetHierarchyDockWidget;
+
+class WidgetHierarchyTreeModel : public QStandardItemModel
 {
 public:
-    WidgetHierarchyTreeModel();
+
+    WidgetHierarchyTreeModel(WidgetHierarchyDockWidget* dockWidget);
+
+protected:
+
+    WidgetHierarchyDockWidget* _dockWidget = nullptr;
 };
 
 #endif // WIDGETHIERARCHYTREEMODEL_H
