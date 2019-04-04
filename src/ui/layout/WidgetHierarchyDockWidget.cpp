@@ -26,9 +26,7 @@ WidgetHierarchyDockWidget::~WidgetHierarchyDockWidget()
 void WidgetHierarchyDockWidget::setRootWidgetManipulator(LayoutManipulator* root)
 {
     _rootWidgetManipulator = root;
-/*
-        self.model.setRootManipulator(root)
-*/
+    static_cast<WidgetHierarchyTreeModel*>(ui->treeView->model())->setRootManipulator(root);
     ui->treeView->expandToDepth(0);
 }
 
@@ -36,9 +34,7 @@ void WidgetHierarchyDockWidget::setRootWidgetManipulator(LayoutManipulator* root
 void WidgetHierarchyDockWidget::refresh()
 {
     // This will resynchronise the entire model
-    /*
-            self.model.setRootManipulator(_rootWidgetManipulator)
-    */
+    static_cast<WidgetHierarchyTreeModel*>(ui->treeView->model())->setRootManipulator(_rootWidgetManipulator);
 }
 
 void WidgetHierarchyDockWidget::keyReleaseEvent(QKeyEvent* event)
@@ -46,10 +42,7 @@ void WidgetHierarchyDockWidget::keyReleaseEvent(QKeyEvent* event)
     if (event->key() == Qt::Key_Delete)
     {
         /*
-        handled = self.visual.scene.deleteSelectedWidgets()
-
-        if handled:
-            return True
+        if (visual.scene.deleteSelectedWidgets()) return true;
         */
     }
 

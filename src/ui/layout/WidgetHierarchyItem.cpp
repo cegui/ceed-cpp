@@ -10,15 +10,11 @@ WidgetHierarchyItem::WidgetHierarchyItem(LayoutManipulator* manipulator)
         setToolTip("type: " + manipulator->getWidgetType());
 
         // Interlink them so we can react on selection changes
-/*
-            manipulator.treeItem = self
-*/
+        manipulator->setTreeItem(this);
     }
 
-/*
-        self.refreshPathData(False)
-        self.refreshOrderingData(False, False)
-*/
+    refreshPathData(false);
+    refreshOrderingData(false, false);
 
     setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable |
              Qt::ItemIsDropEnabled | Qt::ItemIsDragEnabled | Qt::ItemIsUserCheckable);
@@ -38,9 +34,7 @@ void WidgetHierarchyItem::setData(const QVariant& value, int role)
     if (role == Qt::CheckStateRole && _manipulator)
     {
         // Synchronise the manipulator with the lock state
-/*
-            self.manipulator.setLocked(value == QtCore.Qt.Checked)
-*/
+        _manipulator->setLocked(value == Qt::Checked);
     }
 
     return QStandardItem::setData(value, role);
@@ -124,7 +118,6 @@ void WidgetHierarchyItem::setLocked(bool locked, bool recursive)
     {
         for (int i = 0; i < rowCount(); ++i)
         {
-            // We pass resort=False because sortChildren is recursive itself
             static_cast<WidgetHierarchyItem*>(child(i))->setLocked(locked, true);
         }
     }

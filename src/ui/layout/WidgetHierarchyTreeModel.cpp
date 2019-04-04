@@ -8,14 +8,9 @@ WidgetHierarchyTreeModel::WidgetHierarchyTreeModel(WidgetHierarchyDockWidget* do
     setItemPrototype(new WidgetHierarchyItem(nullptr));
 }
 
+bool WidgetHierarchyTreeModel::setData(const QModelIndex& index, const QVariant& value, int role)
+{
 /*
-
-class WidgetHierarchyTreeModel(QtGui.QStandardItemModel):
-
-    def data(self, index, role = QtCore.Qt.DisplayRole):
-        return super(WidgetHierarchyTreeModel, self).data(index, role)
-
-    def setData(self, index, value, role = QtCore.Qt.EditRole):
         if role == QtCore.Qt.EditRole:
             item = self.itemFromIndex(index)
 
@@ -49,96 +44,12 @@ class WidgetHierarchyTreeModel(QtGui.QStandardItemModel):
             return False
 
         return super(WidgetHierarchyTreeModel, self).setData(index, value, role)
+*/
+}
 
-    def flags(self, index):
-        return super(WidgetHierarchyTreeModel, self).flags(index)
-
-    def shouldManipulatorBeSkipped(self, manipulator):
-        return \
-           manipulator.widget.isAutoWindow() and \
-           settings.getEntry("layout/visual/hide_deadend_autowidgets").value and \
-           not manipulator.hasNonAutoWidgetDescendants()
-
-    def constructSubtree(self, manipulator):
-        ret = WidgetHierarchyItem(manipulator)
-
-        manipulatorChildren = []
-
-        for item in manipulator.childItems():
-            if isinstance(item, widgethelpers.Manipulator):
-                manipulatorChildren.append(item)
-
-        for item in manipulatorChildren:
-            if self.shouldManipulatorBeSkipped(item):
-                # skip this branch as per settings
-                continue
-
-            childSubtree = self.constructSubtree(item)
-            ret.appendRow(childSubtree)
-
-        return ret
-
-    def synchroniseSubtree(self, hierarchyItem, manipulator, recursive = True):
-        """Attempts to synchronise subtree with given widget manipulator.
-        If such a thing isn't possible it returns False.
-
-        recursive - If True the synchronisation will recurse, trying to
-                    unify child widget hierarchy items with child manipulators.
-                    (This is generally what you want to do)
-        """
-
-        if hierarchyItem is None or manipulator is None:
-            # no manipulator = no hierarchy item, we definitely can't synchronise
-            return False
-
-        if hierarchyItem.manipulator is not manipulator:
-            # this widget hierarchy item itself will need to be recreated
-            return False
-
-        hierarchyItem.refreshPathData(False)
-
-        if recursive:
-            manipulatorsToRecreate = manipulator.getChildManipulators()
-
-            i = 0
-            # we knowingly do NOT use range in here, the rowCount might change
-            # while we are processing!
-            while i < hierarchyItem.rowCount():
-                childHierarchyItem = hierarchyItem.child(i)
-
-                if childHierarchyItem.manipulator in manipulatorsToRecreate and \
-                   self.synchroniseSubtree(childHierarchyItem, childHierarchyItem.manipulator, True):
-                    manipulatorsToRecreate.remove(childHierarchyItem.manipulator)
-                    i += 1
-
-                else:
-                    hierarchyItem.removeRow(i)
-
-            for childManipulator in manipulatorsToRecreate:
-                if self.shouldManipulatorBeSkipped(childManipulator):
-                    # skip this branch as per settings
-                    continue
-
-                hierarchyItem.appendRow(self.constructSubtree(childManipulator))
-
-        hierarchyItem.refreshOrderingData(True, True)
-        return True
-
-    def getRootHierarchyItem(self):
-        if self.rowCount() > 0:
-            return self.item(0)
-
-        else:
-            return None
-
-    def setRootManipulator(self, rootManipulator):
-        if not self.synchroniseSubtree(self.getRootHierarchyItem(), rootManipulator):
-            self.clear()
-
-            if rootManipulator is not None:
-                self.appendRow(self.constructSubtree(rootManipulator))
-
-    def mimeData(self, indexes):
+QMimeData*WidgetHierarchyTreeModel::mimeData(const QModelIndexList& indexes) const
+{
+/*
         # if the selection contains children of something that is also selected, we don't include that
         # (it doesn't make sense to move it anyways, it will be moved with its parent)
 
@@ -185,9 +96,17 @@ class WidgetHierarchyTreeModel(QtGui.QStandardItemModel):
         ret.setData("application/x-ceed-widget-paths", cPickle.dumps(data))
 
         return ret
+*/
+}
 
-    def mimeTypes(self):
-        return ["application/x-ceed-widget-paths", "application/x-ceed-widget-type"]
+QStringList WidgetHierarchyTreeModel::mimeTypes() const
+{
+    return { "application/x-ceed-widget-paths", "application/x-ceed-widget-type" };
+}
+
+bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent)
+{
+/*
 
     def dropMimeData(self, data, action, row, column, parent):
         if data.hasFormat("application/x-ceed-widget-paths"):
@@ -285,6 +204,89 @@ class WidgetHierarchyTreeModel(QtGui.QStandardItemModel):
             self.dockWidget.visual.tabbedEditor.undoStack.push(cmd)
 
             return True
+*/
+    return false;
+}
 
-        return False
+void WidgetHierarchyTreeModel::setRootManipulator(LayoutManipulator* rootManipulator)
+{
+/*
+        if not self.synchroniseSubtree(self.getRootHierarchyItem(), rootManipulator):
+            self.clear()
+
+            if rootManipulator is not None:
+                self.appendRow(self.constructSubtree(rootManipulator))
+*/
+}
+
+WidgetHierarchyItem* WidgetHierarchyTreeModel::getRootHierarchyItem() const
+{
+    return rowCount() > 0 ? static_cast<WidgetHierarchyItem*>(item(0)) : nullptr;
+}
+
+// Attempts to synchronise subtree with given widget manipulator, returns false if impossible.
+// recursive - If True the synchronisation will recurse, trying to unify child widget hierarchy
+//             items with child manipulators (this is generally what you want to do).
+bool WidgetHierarchyTreeModel::synchroniseSubtree(WidgetHierarchyItem* item, LayoutManipulator* manipulator, bool recursive)
+{
+/*
+        if hierarchyItem is None or manipulator is None:
+            # no manipulator = no hierarchy item, we definitely can't synchronise
+            return False
+
+        if hierarchyItem.manipulator is not manipulator:
+            # this widget hierarchy item itself will need to be recreated
+            return False
+
+        hierarchyItem.refreshPathData(False)
+
+        if recursive:
+            manipulatorsToRecreate = manipulator.getChildManipulators()
+
+            i = 0
+            # we knowingly do NOT use range in here, the rowCount might change
+            # while we are processing!
+            while i < hierarchyItem.rowCount():
+                childHierarchyItem = hierarchyItem.child(i)
+
+                if childHierarchyItem.manipulator in manipulatorsToRecreate and \
+                   self.synchroniseSubtree(childHierarchyItem, childHierarchyItem.manipulator, True):
+                    manipulatorsToRecreate.remove(childHierarchyItem.manipulator)
+                    i += 1
+
+                else:
+                    hierarchyItem.removeRow(i)
+
+            for childManipulator in manipulatorsToRecreate:
+                if self.shouldManipulatorBeSkipped(childManipulator):
+                    # skip this branch as per settings
+                    continue
+
+                hierarchyItem.appendRow(self.constructSubtree(childManipulator))
+
+        hierarchyItem.refreshOrderingData(True, True)
+*/
+    return true;
+}
+
+/*
+
+    def constructSubtree(self, manipulator):
+        ret = WidgetHierarchyItem(manipulator)
+
+        manipulatorChildren = []
+
+        for item in manipulator.childItems():
+            if isinstance(item, widgethelpers.Manipulator):
+                manipulatorChildren.append(item)
+
+        for item in manipulatorChildren:
+            if self.shouldManipulatorBeSkipped(item):
+                # skip this branch as per settings
+                continue
+
+            childSubtree = self.constructSubtree(item)
+            ret.appendRow(childSubtree)
+
+        return ret
 */

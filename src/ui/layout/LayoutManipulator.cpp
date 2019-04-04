@@ -2,13 +2,46 @@
 
 LayoutManipulator::LayoutManipulator()
 {
+    setAcceptDrops(true);
+/*
+    def __init__(self, visual, parent, widget, recursive = True, skipAutoWidgets = False):
+        self.visual = visual
 
+        super(Manipulator, self).__init__(parent, widget, recursive, skipAutoWidgets)
+
+        self.drawSnapGrid = False
+        self.snapGridNonClientArea = False
+        self.ignoreSnapGrid = False
+
+        self.snapGridAction = action.getAction("layout/snap_grid")
+
+        self.absoluteModeAction = action.getAction("layout/absolute_mode")
+        self.absoluteModeAction.toggled.connect(self.slot_absoluteModeToggled)
+
+        self.absoluteIntegersOnlyModeAction = action.getAction("layout/abs_integers_mode")
+*/
+}
+
+LayoutManipulator::~LayoutManipulator()
+{
+/*
+    def __del__(self):
+        self.absoluteModeAction.toggled.disconnect(self.slot_absoluteModeToggled)
+*/
+}
+
+void LayoutManipulator::setLocked(bool locked)
+{
+    setFlag(ItemIsMovable, !locked);
+    setFlag(ItemIsSelectable, !locked);
+    setFlag(ItemIsFocusable, !locked);
+
+    setResizingEnabled(!locked);
+
+    update();
 }
 
 /*
-
-class Manipulator(cegui_widgethelpers.Manipulator):
-    """Layout editing specific widget manipulator"""
     snapGridBrush = None
 
     @classmethod
@@ -59,27 +92,6 @@ class Manipulator(cegui_widgethelpers.Manipulator):
             return None
         return name.replace("/", "_")
 
-    def __init__(self, visual, parent, widget, recursive = True, skipAutoWidgets = False):
-        self.visual = visual
-        self.showOutline = True
-
-        super(Manipulator, self).__init__(parent, widget, recursive, skipAutoWidgets)
-
-        self.setAcceptDrops(True)
-
-        self.drawSnapGrid = False
-        self.snapGridNonClientArea = False
-        self.ignoreSnapGrid = False
-
-        self.snapGridAction = action.getAction("layout/snap_grid")
-
-        self.absoluteModeAction = action.getAction("layout/absolute_mode")
-        self.absoluteModeAction.toggled.connect(self.slot_absoluteModeToggled)
-
-        self.absoluteIntegersOnlyModeAction = action.getAction("layout/abs_integers_mode")
-
-    def __del__(self):
-        self.absoluteModeAction.toggled.disconnect(self.slot_absoluteModeToggled)
 
     def slot_absoluteModeToggled(self, checked):
         # immediately update if possible
@@ -343,13 +355,4 @@ class Manipulator(cegui_widgethelpers.Manipulator):
         rect = super(Manipulator, self).constrainResizeRect(rect, oldRect)
 
         return rect
-
-    def setLocked(self, locked):
-        self.setFlag(QtGui.QGraphicsItem.ItemIsMovable, not locked)
-        self.setFlag(QtGui.QGraphicsItem.ItemIsSelectable, not locked)
-        self.setFlag(QtGui.QGraphicsItem.ItemIsFocusable, not locked)
-
-        self.setResizingEnabled(not locked)
-
-        self.update()
 */
