@@ -1,21 +1,39 @@
 #include "src/cegui/CEGUIManipulator.h"
 #include "qgraphicsscene.h"
+#include "qpainter.h"
 
 // widget - CEGUI::Widget to wrap
 // recursive - if true, even children of given widget are wrapped
 // skipAutoWidgets - if true, auto widgets are skipped (only applicable if recursive is True)
-CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent)
+CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent, bool recursive, bool skipAutoWidgets)
     : ResizableRectItem(parent)
 {
     setFlags(ItemIsFocusable | ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
 
 /*
-    def __init__(self, parent, widget, recursive = True, skipAutoWidgets = False):
+        //!!!arg: widget!
         self.widget = widget
+*/
+    if (recursive)
+    {
+        // Creates manipulators for child widgets of widget manipulated by this manipulator
+        // Special handling for widgets using children AutoWindows that act as  containers, such
+        // as TabControl and ScrollablePane is done.
+        // skipAutoWidgets - if true, auto widgets will be skipped over
 
-        if recursive:
-            self.createChildManipulators(True, skipAutoWidgets)
+        /*
+            countGetter, childGetter = self.getFunctionsChildCountAndChildGet()
 
+            for idx in range(0, countGetter()):
+                childWidget = childGetter(idx)
+
+                if not skipAutoWidgets or not childWidget.isAutoWindow():
+                    # note: we don't have to assign or attach the child manipulator here
+                    #       just passing parent to the constructor is enough
+                    self.createChildManipulator(childWidget, true, skipAutoWidgets)
+        */
+    }
+/*
         self.preResizePos = None
         self.preResizeSize = None
         self.lastResizeNewPos = None
@@ -23,6 +41,209 @@ CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent)
 
         self.preMovePos = None
         self.lastMoveNewPos = None
+*/
+}
+
+void CEGUIManipulator::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
+{
+    painter->save();
+
+    if (preventManipulatorOverlap())
+    {
+        // NOTE: This is just an option because it's very performance intensive, most people editing big layouts will
+        //       want this disabled. But it makes editing nicer and fancier :-)
+
+        // We are drawing the outlines after CEGUI has already been rendered so he have to clip overlapping parts
+        // we basically query all items colliding with ourselves and if that's a manipulator and is over us we subtract
+        // that from the clipped path.
+        QPainterPath clipPath;
+        clipPath.addRect(QRectF(-scenePos().x(), -scenePos().y(), scene()->sceneRect().width(), scene()->sceneRect().height()));
+
+        // FIXME: I used self.collidingItems() but that seems way way slower than just going over everything on the scene
+        //        in reality we need siblings of ancestors recursively up to the top
+        //
+        //        this just begs for optimisation in the future
+        auto collidingItems = scene()->items();
+        for (QGraphicsItem* item : collidingItems)
+        {
+            if (!item->isVisible() || item == this) continue;
+
+            CEGUIManipulator* manipulator = dynamic_cast<CEGUIManipulator*>(item);
+            if (!manipulator) continue;
+
+            // Check if the item is above us
+            // FIXME: nasty nasty way to do this
+            bool isAbove = false;
+            for (QGraphicsItem* itm : scene()->items())
+            {
+                if (itm == this)
+                {
+                    isAbove = true;
+                    break;
+                }
+                else if (itm == item) break;
+            }
+
+            if (isAbove)
+            {
+                QPainterPath boundingClipPath;
+                boundingClipPath.addRect(item->boundingRect());
+                clipPath = clipPath.subtracted(boundingClipPath.translated(item->scenePos() - scenePos()));
+            }
+        }
+
+        // We clip using stencil buffers to prevent overlapping outlines appearing
+        // FIXME: This could potentially get very slow for huge layouts
+        painter->setClipPath(clipPath);
+    }
+
+    impl_paint(painter, option, widget);
+
+    painter->restore();
+}
+
+void CEGUIManipulator::impl_paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
+{
+    ResizableRectItem::paint(painter, option, widget);
+
+    const bool drawGuides = (isSelected() || _resizeInProgress || isAnyHandleSelected());
+    if (!drawGuides) return;
+
+/*
+        baseSize = self.getBaseSize()
+        self.paintHorizontalGuides(baseSize, painter, option, widget)
+        self.paintVerticalGuides(baseSize, painter, option, widget)
+
+
+    def paintHorizontalGuides(self, baseSize, painter, option, widget):
+        """Paints horizontal dimension guides - position X and width guides"""
+
+        widgetPosition = self.widget.getPosition()
+        widgetSize = self.widget.getSize()
+
+        # x coordinate
+        scaleXInPixels = PyCEGUI.CoordConverter.asAbsolute(PyCEGUI.UDim(widgetPosition.d_x.d_scale, 0), baseSize.d_width)
+        offsetXInPixels = widgetPosition.d_x.d_offset
+
+        # width
+        scaleWidthInPixels = PyCEGUI.CoordConverter.asAbsolute(PyCEGUI.UDim(widgetSize.d_width.d_scale, 0), baseSize.d_width)
+        offsetWidthInPixels = widgetSize.d_width.d_offset
+
+        hAlignment = self.widget.getHorizontalAlignment()
+        startXPoint = 0
+        if hAlignment == PyCEGUI.HorizontalAlignment.HA_LEFT:
+            startXPoint = (self.rect().topLeft() + self.rect().bottomLeft()) / 2
+        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_CENTRE:
+            startXPoint = self.rect().center()
+        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_RIGHT:
+            startXPoint = (self.rect().topRight() + self.rect().bottomRight()) / 2
+        else:
+            assert(False)
+
+        midXPoint = startXPoint - QtCore.QPointF(offsetXInPixels, 0)
+        endXPoint = midXPoint - QtCore.QPointF(scaleXInPixels, 0)
+        xOffset = QtCore.QPointF(0, 1) if scaleXInPixels * offsetXInPixels < 0 else QtCore.QPointF(0, 0)
+
+        pen = QtGui.QPen()
+        # 0 means 1px size no matter the transformation
+        pen.setWidth(0)
+        pen.setColor(QtGui.QColor(0, 255, 0, 255))
+        painter.setPen(pen)
+        painter.drawLine(startXPoint, midXPoint)
+        pen.setColor(QtGui.QColor(255, 0, 0, 255))
+        painter.setPen(pen)
+        painter.drawLine(midXPoint + xOffset, endXPoint + xOffset)
+
+        vAlignment = self.widget.getVerticalAlignment()
+        startWPoint = 0
+        if vAlignment == PyCEGUI.VerticalAlignment.VA_TOP:
+            startWPoint = self.rect().bottomLeft()
+        elif vAlignment == PyCEGUI.VerticalAlignment.VA_CENTRE:
+            startWPoint = self.rect().bottomLeft()
+        elif vAlignment == PyCEGUI.VerticalAlignment.VA_BOTTOM:
+            startWPoint = self.rect().topLeft()
+        else:
+            assert(False)
+
+        midWPoint = startWPoint + QtCore.QPointF(scaleWidthInPixels, 0)
+        endWPoint = midWPoint + QtCore.QPointF(offsetWidthInPixels, 0)
+        # FIXME: epicly unreadable
+        wOffset = QtCore.QPointF(0, -1 if vAlignment == PyCEGUI.VerticalAlignment.VA_BOTTOM else 1) if scaleWidthInPixels * offsetWidthInPixels < 0 else QtCore.QPointF(0, 0)
+
+        pen = QtGui.QPen()
+        # 0 means 1px size no matter the transformation
+        pen.setWidth(0)
+        pen.setColor(QtGui.QColor(255, 0, 0, 255))
+        painter.setPen(pen)
+        painter.drawLine(startWPoint, midWPoint)
+        pen.setColor(QtGui.QColor(0, 255, 0, 255))
+        painter.setPen(pen)
+        painter.drawLine(midWPoint + wOffset, endWPoint + wOffset)
+
+    def paintVerticalGuides(self, baseSize, painter, option, widget):
+        """Paints vertical dimension guides - position Y and height guides"""
+
+        widgetPosition = self.widget.getPosition()
+        widgetSize = self.widget.getSize()
+
+        # y coordinate
+        scaleYInPixels = PyCEGUI.CoordConverter.asAbsolute(PyCEGUI.UDim(widgetPosition.d_y.d_scale, 0), baseSize.d_height)
+        offsetYInPixels = widgetPosition.d_y.d_offset
+
+        # height
+        scaleHeightInPixels = PyCEGUI.CoordConverter.asAbsolute(PyCEGUI.UDim(widgetSize.d_height.d_scale, 0), baseSize.d_height)
+        offsetHeightInPixels = widgetSize.d_height.d_offset
+
+        vAlignment = self.widget.getVerticalAlignment()
+        startYPoint = 0
+        if vAlignment == PyCEGUI.VerticalAlignment.VA_TOP:
+            startYPoint = (self.rect().topLeft() + self.rect().topRight()) / 2
+        elif vAlignment == PyCEGUI.VerticalAlignment.VA_CENTRE:
+            startYPoint = self.rect().center()
+        elif vAlignment == PyCEGUI.VerticalAlignment.VA_BOTTOM:
+            startYPoint = (self.rect().bottomLeft() + self.rect().bottomRight()) / 2
+        else:
+            assert(False)
+
+        midYPoint = startYPoint - QtCore.QPointF(0, offsetYInPixels)
+        endYPoint = midYPoint - QtCore.QPointF(0, scaleYInPixels)
+        yOffset = QtCore.QPointF(1, 0) if scaleYInPixels * offsetYInPixels < 0 else QtCore.QPointF(0, 0)
+
+        pen = QtGui.QPen()
+        # 0 means 1px size no matter the transformation
+        pen.setWidth(0)
+        pen.setColor(QtGui.QColor(0, 255, 0, 255))
+        painter.setPen(pen)
+        painter.drawLine(startYPoint, midYPoint)
+        pen.setColor(QtGui.QColor(255, 0, 0, 255))
+        painter.setPen(pen)
+        painter.drawLine(midYPoint + yOffset, endYPoint + yOffset)
+
+        hAlignment = self.widget.getHorizontalAlignment()
+        startHPoint = 0
+        if hAlignment == PyCEGUI.HorizontalAlignment.HA_LEFT:
+            startHPoint = self.rect().topRight()
+        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_CENTRE:
+            startHPoint = self.rect().topRight()
+        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_RIGHT:
+            startHPoint = self.rect().topLeft()
+        else:
+            assert(False)
+
+        midHPoint = startHPoint + QtCore.QPointF(0, scaleHeightInPixels)
+        endHPoint = midHPoint + QtCore.QPointF(0, offsetHeightInPixels)
+        # FIXME: epicly unreadable
+        hOffset = QtCore.QPointF(-1 if hAlignment == PyCEGUI.HorizontalAlignment.HA_RIGHT else 1, 0) if scaleHeightInPixels * offsetHeightInPixels < 0 else QtCore.QPointF(0, 0)
+
+        pen = QtGui.QPen()
+        # 0 means 1px size no matter the transformation
+        pen.setWidth(0)
+        pen.setColor(QtGui.QColor(255, 0, 0, 255))
+        painter.setPen(pen)
+        painter.drawLine(startHPoint, midHPoint)
+        pen.setColor(QtGui.QColor(0, 255, 0, 255))
+        painter.setPen(pen)
+        painter.drawLine(midHPoint + hOffset, endHPoint + hOffset)
 */
 }
 
@@ -355,15 +576,12 @@ void CEGUIManipulator::triggerPropertyManagerCallback(QStringList propertyNames)
 
 QVariant CEGUIManipulator::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value)
 {
-/*
+    if (change == ItemSelectedHasChanged)
+    {
+        if (value.toBool()) moveToFront();
+    }
 
-    def itemChange(self, change, value):
-        if change == QtGui.QGraphicsItem.ItemSelectedHasChanged:
-            if value:
-                self.moveToFront()
-
-        return super(Manipulator, self).itemChange(change, value)
-*/
+    ResizableRectItem::itemChange(change, value);
 }
 
 /*
@@ -404,25 +622,6 @@ QVariant CEGUIManipulator::itemChange(QGraphicsItem::GraphicsItemChange change, 
             childGetter = self.widget.getChildAtIdx
 
         return countGetter, childGetter
-
-    def createChildManipulators(self, recursive = True, skipAutoWidgets = False):
-        """Creates manipulators for child widgets of widget manipulated by this manipulator
-        Special handling for widgets using children AutoWindows that act as  containers, such
-        as TabControl and ScrollablePane is done.
-
-        recursive - recurse into children?
-        skipAutoWidgets - if true, auto widgets will be skipped over
-        """
-
-        countGetter, childGetter = self.getFunctionsChildCountAndChildGet()
-
-        for idx in range(0, countGetter()):
-            childWidget = childGetter(idx)
-
-            if not skipAutoWidgets or not childWidget.isAutoWindow():
-                # note: we don't have to assign or attach the child manipulator here
-                #       just passing parent to the constructor is enough
-                self.createChildManipulator(childWidget, recursive, skipAutoWidgets)
 
     def createMissingChildManipulators(self, recursive = True, skipAutoWidgets = False):
         """Goes through child widgets of the manipulated widget and creates manipulator
@@ -527,213 +726,6 @@ QVariant CEGUIManipulator::itemChange(QGraphicsItem::GraphicsItemChange change, 
         else:
             return self.widget.getParentPixelSize()
 
-    def useAbsoluteCoordsForMove(self):
-        return False
-
-    def useAbsoluteCoordsForResize(self):
-        return False
-
-    def useIntegersForAbsoluteMove(self):
-        return False
-
-    def useIntegersForAbsoluteResize(self):
-        return False
-
-    def boundingClipPath(self):
-        """Retrieves clip path containing the bounding rectangle"""
-
-        ret = QtGui.QPainterPath()
-        ret.addRect(self.boundingRect())
-
-        return ret
-
-    def isAboveItem(self, item):
-        # undecidable otherwise
-        assert(item.scene() == self.scene())
-
-        # FIXME: nasty nasty way to do this
-        for i in self.scene().items():
-            if i is self:
-                return True
-            if i is item:
-                return False
-
-        assert(False)
-
-    def paintHorizontalGuides(self, baseSize, painter, option, widget):
-        """Paints horizontal dimension guides - position X and width guides"""
-
-        widgetPosition = self.widget.getPosition()
-        widgetSize = self.widget.getSize()
-
-        # x coordinate
-        scaleXInPixels = PyCEGUI.CoordConverter.asAbsolute(PyCEGUI.UDim(widgetPosition.d_x.d_scale, 0), baseSize.d_width)
-        offsetXInPixels = widgetPosition.d_x.d_offset
-
-        # width
-        scaleWidthInPixels = PyCEGUI.CoordConverter.asAbsolute(PyCEGUI.UDim(widgetSize.d_width.d_scale, 0), baseSize.d_width)
-        offsetWidthInPixels = widgetSize.d_width.d_offset
-
-        hAlignment = self.widget.getHorizontalAlignment()
-        startXPoint = 0
-        if hAlignment == PyCEGUI.HorizontalAlignment.HA_LEFT:
-            startXPoint = (self.rect().topLeft() + self.rect().bottomLeft()) / 2
-        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_CENTRE:
-            startXPoint = self.rect().center()
-        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_RIGHT:
-            startXPoint = (self.rect().topRight() + self.rect().bottomRight()) / 2
-        else:
-            assert(False)
-
-        midXPoint = startXPoint - QtCore.QPointF(offsetXInPixels, 0)
-        endXPoint = midXPoint - QtCore.QPointF(scaleXInPixels, 0)
-        xOffset = QtCore.QPointF(0, 1) if scaleXInPixels * offsetXInPixels < 0 else QtCore.QPointF(0, 0)
-
-        pen = QtGui.QPen()
-        # 0 means 1px size no matter the transformation
-        pen.setWidth(0)
-        pen.setColor(QtGui.QColor(0, 255, 0, 255))
-        painter.setPen(pen)
-        painter.drawLine(startXPoint, midXPoint)
-        pen.setColor(QtGui.QColor(255, 0, 0, 255))
-        painter.setPen(pen)
-        painter.drawLine(midXPoint + xOffset, endXPoint + xOffset)
-
-        vAlignment = self.widget.getVerticalAlignment()
-        startWPoint = 0
-        if vAlignment == PyCEGUI.VerticalAlignment.VA_TOP:
-            startWPoint = self.rect().bottomLeft()
-        elif vAlignment == PyCEGUI.VerticalAlignment.VA_CENTRE:
-            startWPoint = self.rect().bottomLeft()
-        elif vAlignment == PyCEGUI.VerticalAlignment.VA_BOTTOM:
-            startWPoint = self.rect().topLeft()
-        else:
-            assert(False)
-
-        midWPoint = startWPoint + QtCore.QPointF(scaleWidthInPixels, 0)
-        endWPoint = midWPoint + QtCore.QPointF(offsetWidthInPixels, 0)
-        # FIXME: epicly unreadable
-        wOffset = QtCore.QPointF(0, -1 if vAlignment == PyCEGUI.VerticalAlignment.VA_BOTTOM else 1) if scaleWidthInPixels * offsetWidthInPixels < 0 else QtCore.QPointF(0, 0)
-
-        pen = QtGui.QPen()
-        # 0 means 1px size no matter the transformation
-        pen.setWidth(0)
-        pen.setColor(QtGui.QColor(255, 0, 0, 255))
-        painter.setPen(pen)
-        painter.drawLine(startWPoint, midWPoint)
-        pen.setColor(QtGui.QColor(0, 255, 0, 255))
-        painter.setPen(pen)
-        painter.drawLine(midWPoint + wOffset, endWPoint + wOffset)
-
-    def paintVerticalGuides(self, baseSize, painter, option, widget):
-        """Paints vertical dimension guides - position Y and height guides"""
-
-        widgetPosition = self.widget.getPosition()
-        widgetSize = self.widget.getSize()
-
-        # y coordinate
-        scaleYInPixels = PyCEGUI.CoordConverter.asAbsolute(PyCEGUI.UDim(widgetPosition.d_y.d_scale, 0), baseSize.d_height)
-        offsetYInPixels = widgetPosition.d_y.d_offset
-
-        # height
-        scaleHeightInPixels = PyCEGUI.CoordConverter.asAbsolute(PyCEGUI.UDim(widgetSize.d_height.d_scale, 0), baseSize.d_height)
-        offsetHeightInPixels = widgetSize.d_height.d_offset
-
-        vAlignment = self.widget.getVerticalAlignment()
-        startYPoint = 0
-        if vAlignment == PyCEGUI.VerticalAlignment.VA_TOP:
-            startYPoint = (self.rect().topLeft() + self.rect().topRight()) / 2
-        elif vAlignment == PyCEGUI.VerticalAlignment.VA_CENTRE:
-            startYPoint = self.rect().center()
-        elif vAlignment == PyCEGUI.VerticalAlignment.VA_BOTTOM:
-            startYPoint = (self.rect().bottomLeft() + self.rect().bottomRight()) / 2
-        else:
-            assert(False)
-
-        midYPoint = startYPoint - QtCore.QPointF(0, offsetYInPixels)
-        endYPoint = midYPoint - QtCore.QPointF(0, scaleYInPixels)
-        yOffset = QtCore.QPointF(1, 0) if scaleYInPixels * offsetYInPixels < 0 else QtCore.QPointF(0, 0)
-
-        pen = QtGui.QPen()
-        # 0 means 1px size no matter the transformation
-        pen.setWidth(0)
-        pen.setColor(QtGui.QColor(0, 255, 0, 255))
-        painter.setPen(pen)
-        painter.drawLine(startYPoint, midYPoint)
-        pen.setColor(QtGui.QColor(255, 0, 0, 255))
-        painter.setPen(pen)
-        painter.drawLine(midYPoint + yOffset, endYPoint + yOffset)
-
-        hAlignment = self.widget.getHorizontalAlignment()
-        startHPoint = 0
-        if hAlignment == PyCEGUI.HorizontalAlignment.HA_LEFT:
-            startHPoint = self.rect().topRight()
-        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_CENTRE:
-            startHPoint = self.rect().topRight()
-        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_RIGHT:
-            startHPoint = self.rect().topLeft()
-        else:
-            assert(False)
-
-        midHPoint = startHPoint + QtCore.QPointF(0, scaleHeightInPixels)
-        endHPoint = midHPoint + QtCore.QPointF(0, offsetHeightInPixels)
-        # FIXME: epicly unreadable
-        hOffset = QtCore.QPointF(-1 if hAlignment == PyCEGUI.HorizontalAlignment.HA_RIGHT else 1, 0) if scaleHeightInPixels * offsetHeightInPixels < 0 else QtCore.QPointF(0, 0)
-
-        pen = QtGui.QPen()
-        # 0 means 1px size no matter the transformation
-        pen.setWidth(0)
-        pen.setColor(QtGui.QColor(255, 0, 0, 255))
-        painter.setPen(pen)
-        painter.drawLine(startHPoint, midHPoint)
-        pen.setColor(QtGui.QColor(0, 255, 0, 255))
-        painter.setPen(pen)
-        painter.drawLine(midHPoint + hOffset, endHPoint + hOffset)
-
-    def getPreventManipulatorOverlap(self):
-        """Returns whether the painting code should strive to prevent manipulator overlap (crossing outlines and possibly other things)
-        Override to change the behavior
-        """
-
-        return False
-
-    def paint(self, painter, option, widget):
-        painter.save()
-
-        if self.getPreventManipulatorOverlap():
-            # NOTE: This is just an option because it's very performance intensive, most people editing big layouts will
-            #       want this disabled. But it makes editing nicer and fancier :-)
-
-            # We are drawing the outlines after CEGUI has already been rendered so he have to clip overlapping parts
-            # we basically query all items colliding with ourselves and if that's a manipulator and is over us we subtract
-            # that from the clipped path.
-            clipPath = QtGui.QPainterPath()
-            clipPath.addRect(QtCore.QRectF(-self.scenePos().x(), -self.scenePos().y(), self.scene().sceneRect().width(), self.scene().sceneRect().height()))
-            # FIXME: I used self.collidingItems() but that seems way way slower than just going over everything on the scene
-            #        in reality we need siblings of ancestors recursively up to the top
-            #
-            #        this just begs for optimisation in the future
-            collidingItems = self.scene().items()
-            for item in collidingItems:
-                if item.isVisible() and item is not self and isinstance(item, Manipulator):
-                    if item.isAboveItem(self):
-                        clipPath = clipPath.subtracted(item.boundingClipPath().translated(item.scenePos() - self.scenePos()))
-
-            # we clip using stencil buffers to prevent overlapping outlines appearing
-            # FIXME: This could potentially get very slow for huge layouts
-            painter.setClipPath(clipPath)
-
-        self.impl_paint(painter, option, widget)
-
-        painter.restore()
-
-    def impl_paint(self, painter, option, widget):
-        super(Manipulator, self).paint(painter, option, widget)
-
-        if self.isSelected() or self.resizeInProgress or self.isAnyHandleSelected():
-            baseSize = self.getBaseSize()
-            self.paintHorizontalGuides(baseSize, painter, option, widget)
-            self.paintVerticalGuides(baseSize, painter, option, widget)
 
     def hasNonAutoWidgetDescendants(self):
         """Checks whether there are non-auto widgets nested in this widget
