@@ -1,12 +1,54 @@
-#include "src/editors/layout/LayoutScene.h"
+#include "src/ui/layout/LayoutScene.h"
+#include "src/ui/layout/LayoutManipulator.h"
+#include "qgraphicssceneevent.h"
+#include "qevent.h"
+#include "qmimedata.h"
 
 LayoutScene::LayoutScene(LayoutVisualMode& visualMode)
     : _visualMode(visualMode)
 {
-/*
-        self.rootManipulator = None
-*/
     connect(this, &LayoutScene::selectionChanged, this, &LayoutScene::slot_selectionChanged);
+}
+
+// Overridden to keep the manipulators in sync
+void LayoutScene::setCEGUIDisplaySize(float width, float height, bool lazyUpdate)
+{
+    CEGUIGraphicsScene::setCEGUIDisplaySize(width, height, lazyUpdate);
+
+    // FIXME: this won't do much with lazyUpdate = False
+    if (rootManipulator) rootManipulator->updateFromWidget();
+}
+
+void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
+{
+    clear();
+
+    rootManipulator = manipulator;
+
+    if (rootManipulator)
+    {
+        // Root manipulator changed, perform a full update
+        rootManipulator->updateFromWidget(true);
+        addItem(rootManipulator);
+    }
+}
+
+LayoutManipulator* LayoutScene::getManipulatorByPath(const QString& widgetPath) const
+{
+    /*
+    path = widgetPath.split("/", 1)
+    assert(len(path) >= 1)
+
+    if len(path) == 1:
+        assert(path[0] == self.rootManipulator.widget.getName())
+
+        return self.rootManipulator
+
+    else:
+        # path[1] is the remainder of the path
+        return self.rootManipulator.getManipulatorByPath(path[1])
+    */
+return nullptr;
 }
 
 bool LayoutScene::deleteSelectedWidgets()
@@ -74,40 +116,141 @@ void LayoutScene::slot_selectionChanged()
 */
 }
 
+void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
+{
 /*
-    def setRootWidgetManipulator(self, manipulator):
-        self.clear()
-
-        self.rootManipulator = manipulator
-
+        # if the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
+        # the graphics items (manipulators in fact) have that implemented already
         if self.rootManipulator is not None:
-            # root manipulator changed, perform a full update
-            self.rootManipulator.updateFromWidget(True)
-
-            self.addItem(self.rootManipulator)
-
-    def getManipulatorByPath(self, widgetPath):
-        path = widgetPath.split("/", 1)
-        assert(len(path) >= 1)
-
-        if len(path) == 1:
-            assert(path[0] == self.rootManipulator.widget.getName())
-
-            return self.rootManipulator
+            super(EditingScene, self).dragEnterEvent(event)
 
         else:
-            # path[1] is the remainder of the path
-            return self.rootManipulator.getManipulatorByPath(path[1])
+            # otherwise we should accept a new root widget to the empty layout if it's a new widget
+            if event.mimeData().hasFormat("application/x-ceed-widget-type"):
+                event.acceptProposedAction()
+*/
+}
 
-    def setCEGUIDisplaySize(self, width, height, lazyUpdate = True):
-        # overridden to keep the manipulators in sync
+void LayoutScene::dragLeaveEvent(QGraphicsSceneDragDropEvent* event)
+{
+    // If the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
+    // the graphics items (manipulators in fact) have that implemented already
+    if (rootManipulator)
+        CEGUIGraphicsScene::dragEnterEvent(event);
+}
 
-        super(EditingScene, self).setCEGUIDisplaySize(width, height, lazyUpdate)
+void LayoutScene::dragMoveEvent(QGraphicsSceneDragDropEvent* event)
+{
+    // If the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
+    // the graphics items (manipulators in fact) have that implemented already
+    if (rootManipulator)
+        CEGUIGraphicsScene::dragMoveEvent(event);
+    else
+    {
+        // Otherwise we should accept a new root widget to the empty layout if it's a new widget
+        if (event->mimeData()->hasFormat("application/x-ceed-widget-type"))
+            event->acceptProposedAction();
+    }
+}
 
-        # FIXME: this won't do much with lazyUpdate = False
-        if hasattr(self, "rootManipulator") and self.rootManipulator is not None:
-            self.rootManipulator.updateFromWidget()
+void LayoutScene::dropEvent(QGraphicsSceneDragDropEvent* event)
+{
+    // If the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
+    // the graphics items (manipulators in fact) have that implemented already
+    if (rootManipulator)
+        CEGUIGraphicsScene::dropEvent(event);
+    else
+    {
+        auto data = event->mimeData()->data("application/x-ceed-widget-type");
+        if (data.size() > 0)
+        {
+            QString widgetType = data.data();
+            /*
+                    cmd = undo.CreateCommand(self.visual, "", widgetType, widgetType.rsplit("/", 1)[-1])
+                    self.visual.tabbedEditor.undoStack.push(cmd)
+            */
+            event->acceptProposedAction();
+        }
+        else
+        {
+            event->ignore();
+        }
+    }
+}
 
+void LayoutScene::keyReleaseEvent(QKeyEvent* event)
+{
+    bool handled = false;
+
+    if (event->key() == Qt::Key_Delete)
+    {
+        handled = deleteSelectedWidgets();
+    }
+
+    if (handled)
+        event->accept();
+    else
+        CEGUIGraphicsScene::keyReleaseEvent(event);
+}
+
+void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
+{
+    CEGUIGraphicsScene::mouseReleaseEvent(event);
+/*
+        movedWidgetPaths = []
+        movedOldPositions = {}
+        movedNewPositions = {}
+
+        resizedWidgetPaths = []
+        resizedOldPositions = {}
+        resizedOldSizes = {}
+        resizedNewPositions = {}
+        resizedNewSizes = {}
+
+        # we have to "expand" the items, adding parents of resizing handles
+        # instead of the handles themselves
+        expandedSelectedItems = []
+        for selectedItem in self.selectedItems():
+            if isinstance(selectedItem, widgethelpers.Manipulator):
+                expandedSelectedItems.append(selectedItem)
+            elif isinstance(selectedItem, resizable.ResizingHandle):
+                if isinstance(selectedItem.parentItem(), widgethelpers.Manipulator):
+                    expandedSelectedItems.append(selectedItem.parentItem())
+
+        for item in expandedSelectedItems:
+            if isinstance(item, widgethelpers.Manipulator):
+                if item.preMovePos is not None:
+                    widgetPath = item.widget.getNamePath()
+                    movedWidgetPaths.append(widgetPath)
+                    movedOldPositions[widgetPath] = item.preMovePos
+                    movedNewPositions[widgetPath] = item.widget.getPosition()
+
+                    # it won't be needed anymore so we use this to mark we picked this item up
+                    item.preMovePos = None
+
+                if item.preResizePos is not None and item.preResizeSize is not None:
+                    widgetPath = item.widget.getNamePath()
+                    resizedWidgetPaths.append(widgetPath)
+                    resizedOldPositions[widgetPath] = item.preResizePos
+                    resizedOldSizes[widgetPath] = item.preResizeSize
+                    resizedNewPositions[widgetPath] = item.widget.getPosition()
+                    resizedNewSizes[widgetPath] = item.widget.getSize()
+
+                    # it won't be needed anymore so we use this to mark we picked this item up
+                    item.preResizePos = None
+                    item.preResizeSize = None
+
+        if len(movedWidgetPaths) > 0:
+            cmd = undo.MoveCommand(self.visual, movedWidgetPaths, movedOldPositions, movedNewPositions)
+            self.visual.tabbedEditor.undoStack.push(cmd)
+
+        if len(resizedWidgetPaths) > 0:
+            cmd = undo.ResizeCommand(self.visual, resizedWidgetPaths, resizedOldPositions, resizedOldSizes, resizedNewPositions, resizedNewSizes)
+            self.visual.tabbedEditor.undoStack.push(cmd)
+*/
+}
+
+/*
     def alignSelectionHorizontally(self, alignment):
         widgetPaths = []
         oldAlignments = {}
@@ -248,121 +391,4 @@ void LayoutScene::slot_selectionChanged()
         if len(widgetPaths) == 1:
             cmd = undo.MoveInParentWidgetListCommand(self.visual, widgetPaths, delta)
             self.visual.tabbedEditor.undoStack.push(cmd)
-
-    def mouseReleaseEvent(self, event):
-        super(EditingScene, self).mouseReleaseEvent(event)
-
-        movedWidgetPaths = []
-        movedOldPositions = {}
-        movedNewPositions = {}
-
-        resizedWidgetPaths = []
-        resizedOldPositions = {}
-        resizedOldSizes = {}
-        resizedNewPositions = {}
-        resizedNewSizes = {}
-
-        # we have to "expand" the items, adding parents of resizing handles
-        # instead of the handles themselves
-        expandedSelectedItems = []
-        for selectedItem in self.selectedItems():
-            if isinstance(selectedItem, widgethelpers.Manipulator):
-                expandedSelectedItems.append(selectedItem)
-            elif isinstance(selectedItem, resizable.ResizingHandle):
-                if isinstance(selectedItem.parentItem(), widgethelpers.Manipulator):
-                    expandedSelectedItems.append(selectedItem.parentItem())
-
-        for item in expandedSelectedItems:
-            if isinstance(item, widgethelpers.Manipulator):
-                if item.preMovePos is not None:
-                    widgetPath = item.widget.getNamePath()
-                    movedWidgetPaths.append(widgetPath)
-                    movedOldPositions[widgetPath] = item.preMovePos
-                    movedNewPositions[widgetPath] = item.widget.getPosition()
-
-                    # it won't be needed anymore so we use this to mark we picked this item up
-                    item.preMovePos = None
-
-                if item.preResizePos is not None and item.preResizeSize is not None:
-                    widgetPath = item.widget.getNamePath()
-                    resizedWidgetPaths.append(widgetPath)
-                    resizedOldPositions[widgetPath] = item.preResizePos
-                    resizedOldSizes[widgetPath] = item.preResizeSize
-                    resizedNewPositions[widgetPath] = item.widget.getPosition()
-                    resizedNewSizes[widgetPath] = item.widget.getSize()
-
-                    # it won't be needed anymore so we use this to mark we picked this item up
-                    item.preResizePos = None
-                    item.preResizeSize = None
-
-        if len(movedWidgetPaths) > 0:
-            cmd = undo.MoveCommand(self.visual, movedWidgetPaths, movedOldPositions, movedNewPositions)
-            self.visual.tabbedEditor.undoStack.push(cmd)
-
-        if len(resizedWidgetPaths) > 0:
-            cmd = undo.ResizeCommand(self.visual, resizedWidgetPaths, resizedOldPositions, resizedOldSizes, resizedNewPositions, resizedNewSizes)
-            self.visual.tabbedEditor.undoStack.push(cmd)
-
-    def keyReleaseEvent(self, event):
-        handled = False
-
-        if event.key() == QtCore.Qt.Key_Delete:
-            handled = self.deleteSelectedWidgets()
-
-        if not handled:
-            super(EditingScene, self).keyReleaseEvent(event)
-
-        else:
-            event.accept()
-
-    def dragEnterEvent(self, event):
-        # if the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
-        # the graphics items (manipulators in fact) have that implemented already
-        if self.rootManipulator is not None:
-            super(EditingScene, self).dragEnterEvent(event)
-
-        else:
-            # otherwise we should accept a new root widget to the empty layout if it's a new widget
-            if event.mimeData().hasFormat("application/x-ceed-widget-type"):
-                event.acceptProposedAction()
-
-    def dragMoveEvent(self, event):
-        # if the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
-        # the graphics items (manipulators in fact) have that implemented already
-        if self.rootManipulator is not None:
-            super(EditingScene, self).dragMoveEvent(event)
-
-        else:
-            # otherwise we should accept a new root widget to the empty layout if it's a new widget
-            if event.mimeData().hasFormat("application/x-ceed-widget-type"):
-                event.acceptProposedAction()
-
-    def dragLeaveEvent(self, event):
-        # if the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
-        # the graphics items (manipulators in fact) have that implemented already
-        if self.rootManipulator is not None:
-            super(EditingScene, self).dragEnterEvent(event)
-
-        else:
-            pass
-
-    def dropEvent(self, event):
-        # if the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
-        # the graphics items (manipulators in fact) have that implemented already
-        if self.rootManipulator is not None:
-            super(EditingScene, self).dropEvent(event)
-
-        else:
-            data = event.mimeData().data("application/x-ceed-widget-type")
-
-            if data:
-                widgetType = data.data()
-
-                cmd = undo.CreateCommand(self.visual, "", widgetType, widgetType.rsplit("/", 1)[-1])
-                self.visual.tabbedEditor.undoStack.push(cmd)
-
-                event.acceptProposedAction()
-
-            else:
-                event.ignore()
 */

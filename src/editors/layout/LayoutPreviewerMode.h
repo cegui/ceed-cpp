@@ -15,9 +15,17 @@ public:
 
     explicit LayoutPreviewerMode(MultiModeEditor& editor, QWidget *parent = nullptr);
 
+    virtual void activate() override;
+    virtual bool deactivate() override;
+
 signals:
 
 public slots:
+
+protected:
+
+    virtual void showEvent(QShowEvent* event) override;
+    virtual void hideEvent(QHideEvent* event) override;
 };
 
 #endif // LAYOUTPREVIEWERMODE_H

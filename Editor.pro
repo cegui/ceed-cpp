@@ -91,7 +91,7 @@ SOURCES += \
     src/cegui/CEGUIManipulator.cpp \
     src/ui/layout/WidgetHierarchyTreeView.cpp \
     src/ui/layout/LayoutManipulator.cpp \
-    src/editors/layout/LayoutScene.cpp \
+    src/ui/layout/LayoutScene.cpp \
     src/ui/layout/WidgetHierarchyTreeModel.cpp \
     src/ui/layout/WidgetHierarchyDockWidget.cpp \
     src/ui/XMLSyntaxHighlighter.cpp \
@@ -163,7 +163,7 @@ HEADERS += \
     src/cegui/CEGUIManipulator.h \
     src/ui/layout/WidgetHierarchyTreeView.h \
     src/ui/layout/LayoutManipulator.h \
-    src/editors/layout/LayoutScene.h \
+    src/ui/layout/LayoutScene.h \
     src/ui/layout/WidgetHierarchyTreeModel.h \
     src/ui/layout/WidgetHierarchyDockWidget.h \
     src/ui/XMLSyntaxHighlighter.h \

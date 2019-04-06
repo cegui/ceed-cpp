@@ -17,7 +17,7 @@ public:
     CEGUIGraphicsScene();
 
     time_t getLastDelta() const { return lastDelta; }
-    void setCEGUIDisplaySize(float width, float height, bool lazyUpdate = true);
+    virtual void setCEGUIDisplaySize(float width, float height, bool lazyUpdate = true);
 
     virtual void drawBackground(QPainter* painter, const QRectF& rect) override;
 

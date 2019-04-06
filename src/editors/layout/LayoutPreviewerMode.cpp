@@ -13,10 +13,11 @@ LayoutPreviewerMode::LayoutPreviewerMode(MultiModeEditor& editor, QWidget* paren
     setLayout(layout);
 }
 
-/*
-    def activate(self):
-        super(LayoutPreviewer, self).activate()
+void LayoutPreviewerMode::activate()
+{
+    IEditMode::activate();
 
+/*
         assert(self.rootWidget is None)
 
         # we have to make the context the current context to ensure textures are fine
@@ -31,31 +32,42 @@ LayoutPreviewerMode::LayoutPreviewerMode(MultiModeEditor& editor, QWidget* paren
             self.rootWidget = currentRootWidget.clone()
 
         PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(self.rootWidget)
+*/
+}
 
-    def deactivate(self):
+bool LayoutPreviewerMode::deactivate()
+{
+/*
         if self.rootWidget is not None:
             PyCEGUI.WindowManager.getSingleton().destroyWindow(self.rootWidget)
             self.rootWidget = None
+*/
+    return IEditMode::deactivate();
+}
 
-        return super(LayoutPreviewer, self).deactivate()
+void LayoutPreviewerMode::showEvent(QShowEvent* event)
+{
+    QWidget::showEvent(event);
 
-    def showEvent(self, event):
-        super(LayoutPreviewer, self).showEvent(event)
-
+/*
         mainwindow.MainWindow.instance.ceguiContainerWidget.activate(self)
-        # we always want continuous rendering in live preview
+        // We always want continuous rendering in live preview
         mainwindow.MainWindow.instance.ceguiContainerWidget.setViewFeatures(continuousRendering = True)
         mainwindow.MainWindow.instance.ceguiContainerWidget.enableInput()
 
         if self.rootWidget:
             PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(self.rootWidget)
+*/
+}
 
-    def hideEvent(self, event):
+void LayoutPreviewerMode::hideEvent(QHideEvent* event)
+{
+/*
         mainwindow.MainWindow.instance.ceguiContainerWidget.disableInput()
         mainwindow.MainWindow.instance.ceguiContainerWidget.deactivate(self)
 
         if self.rootWidget:
             PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(None)
-
-        super(LayoutPreviewer, self).hideEvent(event)
 */
+    QWidget::hideEvent(event);
+}
