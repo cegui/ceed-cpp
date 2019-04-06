@@ -1,4 +1,6 @@
 #include "src/cegui/CEGUIManipulator.h"
+#include "src/util/Settings.h"
+#include "src/Application.h"
 #include "qgraphicsscene.h"
 #include "qpainter.h"
 
@@ -574,6 +576,38 @@ void CEGUIManipulator::triggerPropertyManagerCallback(QStringList propertyNames)
 */
 }
 
+bool CEGUIManipulator::shouldBeSkipped() const
+{
+    /*
+        if (!self.widget.isAutoWindow()) return false;
+    */
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    const bool hideDeadEndAutoWidgets = settings->getEntryValue("layout/visual/hide_deadend_autowidgets").toBool();
+    return hideDeadEndAutoWidgets && !hasNonAutoWidgetDescendants();
+}
+
+// Checks whether there are non-auto widgets nested in this widget.
+// Self is a descendant of self in this context!
+bool CEGUIManipulator::hasNonAutoWidgetDescendants() const
+{
+/*
+        def impl_hasNonAutoWidgetDescendants(widget):
+            if not widget.isAutoWindow():
+                return True
+
+            for i in xrange(widget.getChildCount()):
+                child = widget.getChildAtIdx(i)
+
+                if impl_hasNonAutoWidgetDescendants(child):
+                    return True
+
+            return False
+
+        return impl_hasNonAutoWidgetDescendants(self.widget)
+*/
+return false;
+}
+
 QVariant CEGUIManipulator::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value)
 {
     if (change == ItemSelectedHasChanged)
@@ -726,24 +760,4 @@ QVariant CEGUIManipulator::itemChange(QGraphicsItem::GraphicsItemChange change, 
         else:
             return self.widget.getParentPixelSize()
 
-
-    def hasNonAutoWidgetDescendants(self):
-        """Checks whether there are non-auto widgets nested in this widget
-
-        Self is a descendant of self in this context!
-        """
-
-        def impl_hasNonAutoWidgetDescendants(widget):
-            if not widget.isAutoWindow():
-                return True
-
-            for i in xrange(widget.getChildCount()):
-                child = widget.getChildAtIdx(i)
-
-                if impl_hasNonAutoWidgetDescendants(child):
-                    return True
-
-            return False
-
-        return impl_hasNonAutoWidgetDescendants(self.widget)
 */

@@ -38,6 +38,8 @@ public:
 
     void moveToFront();
     void triggerPropertyManagerCallback(QStringList propertyNames);
+    bool shouldBeSkipped() const;
+    bool hasNonAutoWidgetDescendants() const;
 
 protected:
 

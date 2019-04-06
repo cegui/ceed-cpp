@@ -26,15 +26,6 @@ public:
     virtual void notifyMoveProgress(QPointF newPos) override;
     virtual void notifyMoveFinished(QPointF newPos) override;
 
-    //??? or in CEGUIManipulator?
-    /*
-    def shouldManipulatorBeSkipped(self, manipulator):
-        return \
-           manipulator.widget.isAutoWindow() and \
-           settings.getEntry("layout/visual/hide_deadend_autowidgets").value and \
-           not manipulator.hasNonAutoWidgetDescendants()
-    */
-
     virtual void updateFromWidget(bool callUpdate = false, bool updateAncestorLCs = false) override;
     virtual void detach(bool detachWidget = true, bool destroyWidget = true, bool recursive = true) override;
 
