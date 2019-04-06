@@ -68,9 +68,8 @@ void WidgetHierarchyItem::refreshPathData(bool recursive)
     if (!_manipulator) return;
 
     setText(_manipulator->getWidgetName());
-/*
-            self.setData(self.manipulator.widget.getNamePath(), QtCore.Qt.UserRole)
-*/
+    setData(_manipulator->getWidgetPath(), Qt::UserRole);
+
     if (recursive)
     {
         for (int i = 0; i < rowCount(); ++i)

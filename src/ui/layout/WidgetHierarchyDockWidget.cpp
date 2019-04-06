@@ -11,9 +11,6 @@ WidgetHierarchyDockWidget::WidgetHierarchyDockWidget(QWidget *parent) :
 
     auto model = new WidgetHierarchyTreeModel(this);
     ui->treeView->setModel(model);
-/*
-        self.visual = visual
-*/
 }
 
 WidgetHierarchyDockWidget::~WidgetHierarchyDockWidget()
@@ -41,9 +38,8 @@ void WidgetHierarchyDockWidget::keyReleaseEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_Delete)
     {
-        /*
-        if (visual.scene.deleteSelectedWidgets()) return true;
-        */
+        emit deleteRequested();
+        return;
     }
 
     return QDockWidget::keyReleaseEvent(event);

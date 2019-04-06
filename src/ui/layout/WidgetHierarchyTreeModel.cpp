@@ -1,5 +1,8 @@
 #include "src/ui/layout/WidgetHierarchyTreeModel.h"
 #include "src/ui/layout/WidgetHierarchyItem.h"
+#include "src/ui/layout/LayoutManipulator.h"
+#include "qmessagebox.h"
+#include "qmimedata.h"
 
 WidgetHierarchyTreeModel::WidgetHierarchyTreeModel(WidgetHierarchyDockWidget* dockWidget)
     : _dockWidget(dockWidget)
@@ -10,24 +13,27 @@ WidgetHierarchyTreeModel::WidgetHierarchyTreeModel(WidgetHierarchyDockWidget* do
 
 bool WidgetHierarchyTreeModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
-/*
-        if role == QtCore.Qt.EditRole:
-            item = self.itemFromIndex(index)
+    // Handle widget renaming
+    if (role == Qt::EditRole)
+    {
+        auto item = static_cast<WidgetHierarchyItem*>(itemFromIndex(index));
+        QString newName = value.toString();
 
-            # if the new name is the same, cancel
-            if value == item.manipulator.widget.getName():
-                return False
+        if (newName == item->getManipulator()->getWidgetName()) return false;
 
-            # validate the new name, cancel if invalid
-            value = widgethelpers.Manipulator.getValidWidgetName(value)
-            if not value:
-                msgBox = QtGui.QMessageBox()
-                msgBox.setText("The name was not changed because the new name is invalid.")
-                msgBox.setIcon(QtGui.QMessageBox.Warning)
-                msgBox.exec_()
-                return False
+        // Validate the new name, cancel if invalid
+        newName = LayoutManipulator::getValidWidgetName(newName);
+        if (newName.isEmpty())
+        {
+            QMessageBox msgBox;
+            msgBox.setText("The name was not changed because the new name is invalid.");
+            msgBox.setIcon(QMessageBox::Warning);
+            msgBox.exec();
+            return false;
+        }
 
-            # check if the new name is unique in the parent, cancel if not
+        // Check if the new name is unique in the parent, cancel if not
+        /*
             parentWidget = item.manipulator.widget.getParent()
             if parentWidget is not None and parentWidget.isChild(value):
                 msgBox = QtGui.QMessageBox()
@@ -36,67 +42,69 @@ bool WidgetHierarchyTreeModel::setData(const QModelIndex& index, const QVariant&
                 msgBox.exec_()
                 return False
 
-            # the name is good, apply it
+            // The name is good, apply it
             cmd = undo.RenameCommand(self.dockWidget.visual, item.manipulator.widget.getNamePath(), value)
             self.dockWidget.visual.tabbedEditor.undoStack.push(cmd)
+        */
 
-            # return false because the undo command has changed the text of the item already
-            return False
+        // Return false because the undo command has changed the text of the item already
+        return false;
+    }
 
-        return super(WidgetHierarchyTreeModel, self).setData(index, value, role)
-*/
+    QStandardItemModel::setData(index, value, role);
 }
 
-QMimeData*WidgetHierarchyTreeModel::mimeData(const QModelIndexList& indexes) const
+// If the selection contains children of something that is also selected, we don't include that
+// (it doesn't make sense to move it anyways, it will be moved with its parent)
+// DFS, Qt doesn't have helper methods for this it seems to me :-/
+static bool isChild(QStandardItem* parent, QStandardItem* potentialChild)
 {
-/*
-        # if the selection contains children of something that is also selected, we don't include that
-        # (it doesn't make sense to move it anyways, it will be moved with its parent)
+    int i = 0;
+    while (i < parent->rowCount())
+    {
+        auto child = parent->child(i);
+        if (child == potentialChild || isChild(child, potentialChild)) return true;
+        ++i;
+    }
 
-        def isChild(parent, potentialChild):
-            i = 0
-            # DFS, Qt doesn't have helper methods for this it seems to me :-/
-            while i < parent.rowCount():
-                child = parent.child(i)
+    return false;
+}
 
-                if child is potentialChild:
-                    return True
+QMimeData* WidgetHierarchyTreeModel::mimeData(const QModelIndexList& indexes) const
+{
+    std::vector<QStandardItem*> topItems;
+    for (const auto& index : indexes)
+    {
+        auto item = itemFromIndex(index);
 
-                if isChild(child, potentialChild):
-                    return True
+        bool hasParent = false;
+        for (const auto& parentIndex : indexes)
+        {
+            if (parentIndex == index) continue;
 
-                i += 1
+            auto potentialParent = itemFromIndex(parentIndex);
 
-            return False
+            //???potentialParent here, potentialChild in isChild? was in original CEED.
+            if (isChild(item, potentialParent))
+            {
+                hasParent = true;
+                break;
+            }
+        }
 
-        topItems = []
+        if (!hasParent) topItems.push_back(item);
+    }
 
-        for index in indexes:
-            item = self.itemFromIndex(index)
-            hasParent = False
+    QByteArray bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    for (auto item : topItems)
+    {
+        stream << item->data(Qt::UserRole).toString();
+    }
 
-            for parentIndex in indexes:
-                if parentIndex is index:
-                    continue
-
-                potentialParent = self.itemFromIndex(parentIndex)
-
-                if isChild(item, potentialParent):
-                    hasParent = True
-                    break
-
-            if not hasParent:
-                topItems.append(item)
-
-        data = []
-        for item in topItems:
-            data.append(item.data(QtCore.Qt.UserRole))
-
-        ret = QtCore.QMimeData()
-        ret.setData("application/x-ceed-widget-paths", cPickle.dumps(data))
-
-        return ret
-*/
+    QMimeData* ret = new QMimeData();
+    ret->setData("application/x-ceed-widget-paths", bytes);
+    return ret;
 }
 
 QStringList WidgetHierarchyTreeModel::mimeTypes() const
@@ -210,13 +218,11 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
 
 void WidgetHierarchyTreeModel::setRootManipulator(LayoutManipulator* rootManipulator)
 {
-/*
-        if not self.synchroniseSubtree(self.getRootHierarchyItem(), rootManipulator):
-            self.clear()
-
-            if rootManipulator is not None:
-                self.appendRow(self.constructSubtree(rootManipulator))
-*/
+    if (!synchroniseSubtree(getRootHierarchyItem(), rootManipulator))
+    {
+        clear();
+        if (rootManipulator) appendRow(constructSubtree(rootManipulator));
+    }
 }
 
 WidgetHierarchyItem* WidgetHierarchyTreeModel::getRootHierarchyItem() const
@@ -229,64 +235,59 @@ WidgetHierarchyItem* WidgetHierarchyTreeModel::getRootHierarchyItem() const
 //             items with child manipulators (this is generally what you want to do).
 bool WidgetHierarchyTreeModel::synchroniseSubtree(WidgetHierarchyItem* item, LayoutManipulator* manipulator, bool recursive)
 {
-/*
-        if hierarchyItem is None or manipulator is None:
-            # no manipulator = no hierarchy item, we definitely can't synchronise
-            return False
+    if (!item || !manipulator || item->getManipulator() != manipulator) return false;
 
-        if hierarchyItem.manipulator is not manipulator:
-            # this widget hierarchy item itself will need to be recreated
-            return False
+    item->refreshPathData(false);
 
-        hierarchyItem.refreshPathData(False)
+    if (recursive)
+    {
+        std::vector<LayoutManipulator*> manipulatorsToRecreate;
+        manipulator->getChildLayoutManipulators(manipulatorsToRecreate, false);
 
-        if recursive:
-            manipulatorsToRecreate = manipulator.getChildManipulators()
+        // We do NOT use range here because the rowCount might change while we are processing
+        int i = 0;
+        while (i < item->rowCount())
+        {
+            auto child = static_cast<WidgetHierarchyItem*>(item->child(i));
 
-            i = 0
-            # we knowingly do NOT use range in here, the rowCount might change
-            # while we are processing!
-            while i < hierarchyItem.rowCount():
-                childHierarchyItem = hierarchyItem.child(i)
+            auto it = std::find(manipulatorsToRecreate.begin(), manipulatorsToRecreate.end(), child->getManipulator());
+            if (it != manipulatorsToRecreate.end() && synchroniseSubtree(child, child->getManipulator(), true))
+            {
+                manipulatorsToRecreate.erase(it);
+                ++i;
+            }
+            else
+            {
+                item->removeRow(i);
+            }
+        }
 
-                if childHierarchyItem.manipulator in manipulatorsToRecreate and \
-                   self.synchroniseSubtree(childHierarchyItem, childHierarchyItem.manipulator, True):
-                    manipulatorsToRecreate.remove(childHierarchyItem.manipulator)
-                    i += 1
+        for (LayoutManipulator* childManipulator : manipulatorsToRecreate)
+        {
+            if (!childManipulator->shouldBeSkipped())
+                item->appendRow(constructSubtree(childManipulator));
+        }
+    }
 
-                else:
-                    hierarchyItem.removeRow(i)
+    item->refreshOrderingData(true, true);
 
-            for childManipulator in manipulatorsToRecreate:
-                if self.shouldManipulatorBeSkipped(childManipulator):
-                    # skip this branch as per settings
-                    continue
-
-                hierarchyItem.appendRow(self.constructSubtree(childManipulator))
-
-        hierarchyItem.refreshOrderingData(True, True)
-*/
     return true;
 }
 
-/*
+WidgetHierarchyItem*WidgetHierarchyTreeModel::constructSubtree(LayoutManipulator* manipulator)
+{
+    auto ret = new WidgetHierarchyItem(manipulator);
 
-    def constructSubtree(self, manipulator):
-        ret = WidgetHierarchyItem(manipulator)
+    for (QGraphicsItem* item : manipulator->childItems())
+    {
+        LayoutManipulator* childManipulator = dynamic_cast<LayoutManipulator*>(item);
+        if (childManipulator && !childManipulator->shouldBeSkipped())
+        {
+            auto childSubtree = constructSubtree(childManipulator);
+            ret->appendRow(childSubtree);
+        }
+    }
 
-        manipulatorChildren = []
+    return ret;
+}
 
-        for item in manipulator.childItems():
-            if isinstance(item, widgethelpers.Manipulator):
-                manipulatorChildren.append(item)
-
-        for item in manipulatorChildren:
-            if self.shouldManipulatorBeSkipped(item):
-                # skip this branch as per settings
-                continue
-
-            childSubtree = self.constructSubtree(item)
-            ret.appendRow(childSubtree)
-
-        return ret
-*/

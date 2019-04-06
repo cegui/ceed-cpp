@@ -14,14 +14,13 @@ QString LayoutManipulator::getValidWidgetName(const QString& name)
     return trimmed.replace("/", "_");
 }
 
-LayoutManipulator::LayoutManipulator(QGraphicsItem* parent)
-    : CEGUIManipulator(parent)
+LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, bool recursive, bool skipAutoWidgets)
+    : CEGUIManipulator(parent, recursive, skipAutoWidgets)
+    , _visualMode(visualMode)
 {
     setAcceptDrops(true);
 /*
     def __init__(self, visual, parent, widget, recursive = True, skipAutoWidgets = False):
-        self.visual = visual
-
         super(Manipulator, self).__init__(parent, widget, recursive, skipAutoWidgets)
 
         self.snapGridAction = action.getAction("layout/snap_grid")
@@ -35,6 +34,19 @@ LayoutManipulator::LayoutManipulator(QGraphicsItem* parent)
 
 LayoutManipulator::~LayoutManipulator()
 {
+}
+
+void LayoutManipulator::getChildLayoutManipulators(std::vector<LayoutManipulator*>& outList, bool recursive)
+{
+    for (QGraphicsItem* item : childItems())
+    {
+        LayoutManipulator* manipulator = dynamic_cast<LayoutManipulator*>(item);
+        if (manipulator)
+        {
+            outList.push_back(manipulator);
+            if (recursive) manipulator->getChildLayoutManipulators(outList, true);
+        }
+    }
 }
 
 QPointF LayoutManipulator::constrainMovePoint(QPointF value)
@@ -97,9 +109,7 @@ void LayoutManipulator::notifyResizeStarted(ResizingHandle* handle)
 void LayoutManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
 {
     CEGUIManipulator::notifyResizeProgress(newPos, newRect);
-/*
-        self.triggerPropertyManagerCallback({"Size", "Position", "Area"})
-*/
+    triggerPropertyManagerCallback({"Size", "Position", "Area"});
 }
 
 void LayoutManipulator::notifyResizeFinished(QPointF newPos, QRectF newRect)
@@ -121,9 +131,7 @@ void LayoutManipulator::notifyMoveStarted()
 void LayoutManipulator::notifyMoveProgress(QPointF newPos)
 {
     CEGUIManipulator::notifyMoveProgress(newPos);
-/*
-        self.triggerPropertyManagerCallback({"Position", "Area"})
-*/
+    triggerPropertyManagerCallback({"Position", "Area"});
 }
 
 void LayoutManipulator::notifyMoveFinished(QPointF newPos)
@@ -269,7 +277,6 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
     {
         QString widgetType = data.data();
         /*
-            from ceed.editors.layout import undo
             cmd = undo.CreateCommand(self.visual, self.widget.getNamePath(), widgetType, self.getUniqueChildWidgetName(widgetType.rsplit("/", 1)[-1]))
             self.visual.tabbedEditor.undoStack.push(cmd)
         */

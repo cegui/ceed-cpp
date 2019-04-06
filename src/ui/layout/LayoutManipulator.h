@@ -6,6 +6,7 @@
 // Layout editing specific widget manipulator
 
 class WidgetHierarchyItem;
+class LayoutVisualMode;
 
 class LayoutManipulator : public CEGUIManipulator
 {
@@ -13,8 +14,10 @@ public:
 
     static QString getValidWidgetName(const QString& name);
 
-    LayoutManipulator(QGraphicsItem* parent);
+    LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, bool recursive = true, bool skipAutoWidgets = false);
     virtual ~LayoutManipulator() override;
+
+    void getChildLayoutManipulators(std::vector<LayoutManipulator*>& outList, bool recursive);
 
     virtual QPointF constrainMovePoint(QPointF value) override;
     virtual QRectF constrainResizeRect(QRectF rect, QRectF oldRect) override;
@@ -56,6 +59,7 @@ protected:
     qreal snapXCoordToGrid(qreal x);
     qreal snapYCoordToGrid(qreal y);
 
+    LayoutVisualMode& _visualMode;
     WidgetHierarchyItem* _treeItem = nullptr;
     bool _showOutline = true;
     bool _drawSnapGrid = false;

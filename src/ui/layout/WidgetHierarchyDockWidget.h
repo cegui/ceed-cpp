@@ -25,6 +25,10 @@ public:
 
     bool isIgnoringSelectionChanges() const { return _ignoreSelectionChanges; }
 
+signals:
+
+    void deleteRequested();
+
 private:
 
     virtual void keyReleaseEvent(QKeyEvent* event) override;

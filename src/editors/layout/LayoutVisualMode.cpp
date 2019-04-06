@@ -14,9 +14,14 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     : IEditMode(editor)
 {
     hierarchyDockWidget = new WidgetHierarchyDockWidget(this);
-    createWidgetDockWidget = new CreateWidgetDockWidget(this);
-    propertiesDockWidget = new QDockWidget(this);
+    connect(hierarchyDockWidget, &WidgetHierarchyDockWidget::deleteRequested, [this]()
+    {
+        if (scene) scene->deleteSelectedWidgets();
+    });
 
+    createWidgetDockWidget = new CreateWidgetDockWidget(this);
+
+    propertiesDockWidget = new QDockWidget(this);
     propertiesDockWidget->setObjectName("PropertiesDockWidget");
     propertiesDockWidget->setWindowTitle("Selection Properties");
     // Make the dock take as much space as it can vertically

@@ -24,6 +24,7 @@ public:
 protected:
 
     bool synchroniseSubtree(WidgetHierarchyItem* item, LayoutManipulator* manipulator, bool recursive = true);
+    WidgetHierarchyItem* constructSubtree(LayoutManipulator* manipulator);
 
     WidgetHierarchyDockWidget* _dockWidget = nullptr;
 };

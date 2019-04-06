@@ -337,7 +337,7 @@ bool ImagesetVisualMode::copy()
 
     if (!bytes.size()) return false;
 
-    QMimeData* mimeData = new QMimeData;
+    QMimeData* mimeData = new QMimeData();
     mimeData->setData("application/x-ceed-imageset-image-list", bytes);
     QApplication::clipboard()->setMimeData(mimeData);
     return true;

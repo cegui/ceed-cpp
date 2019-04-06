@@ -18,6 +18,7 @@ public:
     void refreshPathData(bool recursive = true);
     void refreshOrderingData(bool resort = true, bool recursive = true);
     void setLocked(bool locked, bool recursive = false);
+    LayoutManipulator* getManipulator() const { return _manipulator; }
 
 protected:
 
