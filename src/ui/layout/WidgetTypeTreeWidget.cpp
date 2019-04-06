@@ -53,7 +53,7 @@ bool WidgetTypeTreeWidget::viewportEvent(QEvent* event)
 
             const bool hasSkin = (skin != "__no_skin__");
 
-            QString fullWidgetType = hasSkin ? (hasSkin + "/" + widgetType) : widgetType;
+            QString fullWidgetType = hasSkin ? (skin + "/" + widgetType) : widgetType;
 
             QString tooltipText;
             if (!hasSkin)

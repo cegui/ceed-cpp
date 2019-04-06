@@ -11,6 +11,9 @@ class CEGUIManipulator : public ResizableRectItem
 public:
 
     CEGUIManipulator(QGraphicsItem* parent = nullptr);
+
+    virtual void updateFromWidget(bool callUpdate = false, bool updateAncestorLCs = false);
+    virtual void detach(bool detachWidget = true, bool destroyWidget = true, bool recursive = true);
 };
 
 #endif // CEGUIMANIPULATOR_H

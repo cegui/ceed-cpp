@@ -1,4 +1,5 @@
 #include "src/cegui/CEGUIManipulator.h"
+#include "qgraphicsscene.h"
 
 // widget - CEGUI::Widget to wrap
 // recursive - if true, even children of given widget are wrapped
@@ -23,6 +24,99 @@ CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent)
         self.preMovePos = None
         self.lastMoveNewPos = None
 */
+}
+
+// Updates this manipulator with associated widget properties. Mainly position and size.
+// callUpdate - if True we also call update on the widget itself before
+//              querying its properties
+// updateParentLCs - if True we update ancestor layout containers
+void CEGUIManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs)
+{
+/*
+        assert(self.widget is not None)
+
+        if callUpdate:
+            self.widget.update(0.0)
+
+        if updateAncestorLCs:
+            # We are trying to find a topmost LC (in case of nested LCs) and
+            # recursively update it
+
+            item = self.parentItem()
+            topmostLC = None
+            while (item is not None and isinstance(item.widget, PyCEGUI.LayoutContainer)):
+                topmostLC = item
+                item = item.parentItem()
+
+            if topmostLC is not None:
+                topmostLC.updateFromWidget(True, False)
+
+                # No need to continue, this method will get called again with
+                # updateAncestorLCs = False
+                return
+
+        unclippedOuterRect = self.widget.getUnclippedOuterRect().getFresh(True)
+        pos = unclippedOuterRect.getPosition()
+        size = unclippedOuterRect.getSize()
+
+        parentWidget = self.widget.getParent()
+        if parentWidget:
+            parentUnclippedOuterRect = parentWidget.getUnclippedOuterRect().get()
+            pos -= parentUnclippedOuterRect.getPosition()
+
+        self.ignoreGeometryChanges = True
+        self.setPos(QtCore.QPointF(pos.d_x, pos.d_y))
+        self.setRect(QtCore.QRectF(0, 0, size.d_width, size.d_height))
+        self.ignoreGeometryChanges = False
+
+        for item in self.childItems():
+            if not isinstance(item, Manipulator):
+                continue
+
+            # if we are updating top to bottom we don't need to update ancestor
+            # layout containers, they will already be updated
+            item.updateFromWidget(callUpdate, False)
+*/
+}
+
+// Detaches itself from the GUI hierarchy and the manipulator hierarchy.
+// detachWidget - should we detach the CEGUI widget as well?
+// destroyWidget - should we destroy the CEGUI widget after it's detached?
+// recursive - recurse into children?
+// This method doesn't destroy this instance immediately but it will be destroyed automatically
+// when nothing is referencing it.
+void CEGUIManipulator::detach(bool detachWidget, bool destroyWidget, bool recursive)
+{
+    // Descend if recursive
+    if (recursive)
+    {
+        for (QGraphicsItem* childItem : childItems())
+        {
+            CEGUIManipulator* child = dynamic_cast<CEGUIManipulator*>(childItem);
+            if (child) child->detach(detachWidget, destroyWidget, true);
+        }
+    }
+
+    if (detachWidget)
+    {
+        // Detach from the GUI hierarchy
+/*
+        parentWidget = self.widget.getParent()
+        if parentWidget is not None:
+            parentWidget.removeChild(self.widget)
+*/
+    }
+
+    // Detach from the parent manipulator
+    scene()->removeItem(this);
+
+    if (detachWidget && destroyWidget)
+    {
+/*
+        PyCEGUI.WindowManager.getSingleton().destroyWindow(self.widget)
+        self.widget = None
+*/
+    }
 }
 
 /*
@@ -108,45 +202,6 @@ CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent)
                     if recursive:
                         childManipulator.createMissingChildManipulators(True, skipAutoWidgets)
 
-    def detach(self, detachWidget = True, destroyWidget = True, recursive = True):
-        """Detaches itself from the GUI hierarchy and the manipulator hierarchy.
-
-        detachWidget - should we detach the CEGUI widget as well?
-        destroyWidget - should we destroy the CEGUI widget after it's detached?
-        recursive - recurse into children?
-
-        This method doesn't destroy this instance immediately but it will be destroyed automatically
-        when nothing is referencing it.
-        """
-
-        # descend if recursive
-        if recursive:
-            self.detachChildManipulators(detachWidget, destroyWidget, True)
-
-        # detach from the GUI hierarchy
-        if detachWidget:
-            parentWidget = self.widget.getParent()
-            if parentWidget is not None:
-                parentWidget.removeChild(self.widget)
-
-        # detach from the parent manipulator
-        self.scene().removeItem(self)
-
-        if detachWidget and destroyWidget:
-            PyCEGUI.WindowManager.getSingleton().destroyWindow(self.widget)
-            self.widget = None
-
-    def detachChildManipulators(self, detachWidget = True, destroyWidget = True, recursive = True):
-        """Detaches all child manipulators
-
-        detachWidget - should we detach the CEGUI widget as well?
-        destroyWidget - should we destroy the CEGUI widget after it's detached?
-        recursive - recurse into children?
-        """
-
-        for child in self.childItems():
-            if isinstance(child, Manipulator):
-                child.detach(detachWidget, destroyWidget, recursive)
 
     def getManipulatorByPath(self, widgetPath):
         """Retrieves a manipulator relative to this manipulator by given widget path
@@ -217,59 +272,6 @@ CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent)
                 ret.extend(child.getAllDescendantManipulators())
 
         return ret
-
-    def updateFromWidget(self, callUpdate = False, updateAncestorLCs = False):
-        """Updates this manipulator with associated widget properties. Mainly
-        position and size.
-
-        callUpdate - if True we also call update on the widget itself before
-                     querying its properties
-        updateParentLCs - if True we update ancestor layout containers
-        """
-
-        assert(self.widget is not None)
-
-        if callUpdate:
-            self.widget.update(0.0)
-
-        if updateAncestorLCs:
-            # We are trying to find a topmost LC (in case of nested LCs) and
-            # recursively update it
-
-            item = self.parentItem()
-            topmostLC = None
-            while (item is not None and isinstance(item.widget, PyCEGUI.LayoutContainer)):
-                topmostLC = item
-                item = item.parentItem()
-
-            if topmostLC is not None:
-                topmostLC.updateFromWidget(True, False)
-
-                # No need to continue, this method will get called again with
-                # updateAncestorLCs = False
-                return
-
-        unclippedOuterRect = self.widget.getUnclippedOuterRect().getFresh(True)
-        pos = unclippedOuterRect.getPosition()
-        size = unclippedOuterRect.getSize()
-
-        parentWidget = self.widget.getParent()
-        if parentWidget:
-            parentUnclippedOuterRect = parentWidget.getUnclippedOuterRect().get()
-            pos -= parentUnclippedOuterRect.getPosition()
-
-        self.ignoreGeometryChanges = True
-        self.setPos(QtCore.QPointF(pos.d_x, pos.d_y))
-        self.setRect(QtCore.QRectF(0, 0, size.d_width, size.d_height))
-        self.ignoreGeometryChanges = False
-
-        for item in self.childItems():
-            if not isinstance(item, Manipulator):
-                continue
-
-            # if we are updating top to bottom we don't need to update ancestor
-            # layout containers, they will already be updated
-            item.updateFromWidget(callUpdate, False)
 
     def moveToFront(self):
         self.widget.moveToFront()
