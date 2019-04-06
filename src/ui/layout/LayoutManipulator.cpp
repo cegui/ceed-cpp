@@ -14,7 +14,8 @@ QString LayoutManipulator::getValidWidgetName(const QString& name)
     return trimmed.replace("/", "_");
 }
 
-LayoutManipulator::LayoutManipulator()
+LayoutManipulator::LayoutManipulator(QGraphicsItem* parent)
+    : CEGUIManipulator(parent)
 {
     setAcceptDrops(true);
 /*
@@ -34,10 +35,6 @@ LayoutManipulator::LayoutManipulator()
 
 LayoutManipulator::~LayoutManipulator()
 {
-/*
-    def __del__(self):
-        self.absoluteModeAction.toggled.disconnect(self.slot_absoluteModeToggled)
-*/
 }
 
 QPointF LayoutManipulator::constrainMovePoint(QPointF value)

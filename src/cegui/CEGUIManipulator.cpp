@@ -26,6 +26,203 @@ CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent)
 */
 }
 
+QSizeF CEGUIManipulator::getMinSize() const
+{
+/*
+    if self.widget:
+        minPixelSize = PyCEGUI.CoordConverter.asAbsolute(self.widget.getMinSize(),
+                                                         PyCEGUI.System.getSingleton().getRenderer().getDisplaySize())
+
+        return QtCore.QSizeF(minPixelSize.d_width, minPixelSize.d_height)
+*/
+}
+
+QSizeF CEGUIManipulator::getMaxSize() const
+{
+/*
+    if self.widget:
+        maxPixelSize = PyCEGUI.CoordConverter.asAbsolute(self.widget.getMaxSize(),
+                                                         PyCEGUI.System.getSingleton().getRenderer().getDisplaySize())
+
+        return QtCore.QSizeF(maxPixelSize.d_width, maxPixelSize.d_height)
+*/
+}
+
+void CEGUIManipulator::notifyHandleSelected(ResizingHandle* handle)
+{
+    ResizableRectItem::notifyHandleSelected(handle);
+    moveToFront();
+}
+
+void CEGUIManipulator::notifyResizeStarted(ResizingHandle* handle)
+{
+    ResizableRectItem::notifyResizeStarted(handle);
+/*
+    self.preResizePos = self.widget.getPosition()
+    self.preResizeSize = self.widget.getSize()
+*/
+
+    for (QGraphicsItem* childItem : childItems())
+    {
+        CEGUIManipulator* child = dynamic_cast<CEGUIManipulator*>(childItem);
+        if (child) child->setVisible(false);
+    }
+/*
+    parent = self.widget.getParent()
+    if parent and isinstance(parent, PyCEGUI.LayoutContainer):
+        # hide siblings in the same layout container
+        for item in self.parentItem().childItems():
+            if item is not self and isinstance(item, Manipulator):
+                item.setVisible(False)
+*/
+}
+
+void CEGUIManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
+{
+    ResizableRectItem::notifyResizeProgress(newPos, newRect);
+/*
+        # absolute pixel deltas
+        pixelDeltaPos = newPos - self.resizeOldPos
+        pixelDeltaSize = newRect.size() - self.resizeOldRect.size()
+
+        deltaPos = None
+        deltaSize = None
+
+        if self.useAbsoluteCoordsForResize():
+            if self.useIntegersForAbsoluteResize():
+                deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(0, math.floor(pixelDeltaPos.x())), PyCEGUI.UDim(0, math.floor(pixelDeltaPos.y())))
+                deltaSize = PyCEGUI.USize(PyCEGUI.UDim(0, math.floor(pixelDeltaSize.width())), PyCEGUI.UDim(0, math.floor(pixelDeltaSize.height())))
+            else:
+                deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(0, pixelDeltaPos.x()), PyCEGUI.UDim(0, pixelDeltaPos.y()))
+                deltaSize = PyCEGUI.USize(PyCEGUI.UDim(0, pixelDeltaSize.width()), PyCEGUI.UDim(0, pixelDeltaSize.height()))
+
+        else:
+            baseSize = self.getBaseSize()
+
+            deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(pixelDeltaPos.x() / baseSize.d_width, 0), PyCEGUI.UDim(pixelDeltaPos.y() / baseSize.d_height, 0))
+            deltaSize = PyCEGUI.USize(PyCEGUI.UDim(pixelDeltaSize.width() / baseSize.d_width, 0), PyCEGUI.UDim(pixelDeltaSize.height() / baseSize.d_height, 0))
+
+        # because the Qt manipulator is always top left aligned in the CEGUI sense,
+        # we have to process the size to factor in alignments if they differ
+        processedDeltaPos = PyCEGUI.UVector2()
+
+        hAlignment = self.widget.getHorizontalAlignment()
+        if hAlignment == PyCEGUI.HorizontalAlignment.HA_LEFT:
+            processedDeltaPos.d_x = deltaPos.d_x
+        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_CENTRE:
+            processedDeltaPos.d_x = deltaPos.d_x + PyCEGUI.UDim(0.5, 0.5) * deltaSize.d_width
+        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_RIGHT:
+            processedDeltaPos.d_x = deltaPos.d_x + deltaSize.d_width
+        else:
+            assert(False)
+
+        vAlignment = self.widget.getVerticalAlignment()
+        if vAlignment == PyCEGUI.VerticalAlignment.VA_TOP:
+            processedDeltaPos.d_y = deltaPos.d_y
+        elif vAlignment == PyCEGUI.VerticalAlignment.VA_CENTRE:
+            processedDeltaPos.d_y = deltaPos.d_y + PyCEGUI.UDim(0.5, 0.5) * deltaSize.d_height
+        elif vAlignment == PyCEGUI.VerticalAlignment.VA_BOTTOM:
+            processedDeltaPos.d_y = deltaPos.d_y + deltaSize.d_height
+        else:
+            assert(False)
+
+        self.widget.setPosition(self.preResizePos + processedDeltaPos)
+        self.widget.setSize(self.preResizeSize + deltaSize)
+
+        self.lastResizeNewPos = newPos
+        self.lastResizeNewRect = newRect
+*/
+}
+
+void CEGUIManipulator::notifyResizeFinished(QPointF newPos, QRectF newRect)
+{
+    ResizableRectItem::notifyResizeFinished(newPos, newRect);
+
+    updateFromWidget();
+
+    for (QGraphicsItem* childItem : childItems())
+    {
+        CEGUIManipulator* child = dynamic_cast<CEGUIManipulator*>(childItem);
+        if (child)
+        {
+            child->updateFromWidget();
+            child->setVisible(true);
+        }
+    }
+/*
+        parent = self.widget.getParent()
+        if parent and isinstance(parent, PyCEGUI.LayoutContainer):
+            # show siblings in the same layout container
+            for item in self.parentItem().childItems():
+                if item is not self and isinstance(item, Manipulator):
+                    item.setVisible(True)
+
+            self.parentItem().updateFromWidget(True)
+
+        self.lastResizeNewPos = None
+        self.lastResizeNewRect = None
+*/
+}
+
+void CEGUIManipulator::notifyMoveStarted()
+{
+    ResizableRectItem::notifyMoveStarted();
+/*
+        self.preMovePos = self.widget.getPosition()
+*/
+
+    for (QGraphicsItem* childItem : childItems())
+    {
+        CEGUIManipulator* child = dynamic_cast<CEGUIManipulator*>(childItem);
+        if (child) child->setVisible(false);
+    }
+}
+
+void CEGUIManipulator::notifyMoveProgress(QPointF newPos)
+{
+    ResizableRectItem::notifyMoveProgress(newPos);
+/*
+        # absolute pixel deltas
+        pixelDeltaPos = newPos - self.moveOldPos
+
+        deltaPos = None
+        if self.useAbsoluteCoordsForMove():
+            if self.useIntegersForAbsoluteMove():
+                deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(0, math.floor(pixelDeltaPos.x())), PyCEGUI.UDim(0, math.floor(pixelDeltaPos.y())))
+            else:
+                deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(0, pixelDeltaPos.x()), PyCEGUI.UDim(0, pixelDeltaPos.y()))
+
+        else:
+            baseSize = self.getBaseSize()
+
+            deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(pixelDeltaPos.x() / baseSize.d_width, 0), PyCEGUI.UDim(pixelDeltaPos.y() / baseSize.d_height, 0))
+
+        self.widget.setPosition(self.preMovePos + deltaPos)
+
+        self.lastMoveNewPos = newPos
+*/
+}
+
+void CEGUIManipulator::notifyMoveFinished(QPointF newPos)
+{
+    ResizableRectItem::notifyMoveFinished(newPos);
+
+    updateFromWidget();
+
+    for (QGraphicsItem* childItem : childItems())
+    {
+        CEGUIManipulator* child = dynamic_cast<CEGUIManipulator*>(childItem);
+        if (child)
+        {
+            child->updateFromWidget();
+            child->setVisible(true);
+        }
+    }
+/*
+        self.lastMoveNewPos = None
+*/
+}
+
 // Updates this manipulator with associated widget properties. Mainly position and size.
 // callUpdate - if True we also call update on the widget itself before
 //              querying its properties
@@ -117,6 +314,56 @@ void CEGUIManipulator::detach(bool detachWidget, bool destroyWidget, bool recurs
         self.widget = None
 */
     }
+}
+
+void CEGUIManipulator::moveToFront()
+{
+/*
+    self.widget.moveToFront()
+
+    parentItem = self.parentItem()
+    if parentItem:
+        for item in parentItem.childItems():
+            if item == self:
+                continue
+
+            # For some reason this is the opposite of what (IMO) it should be
+            # which is self.stackBefore(item)
+            #
+            # Is Qt documentation flawed or something?!
+            item.stackBefore(self)
+
+        parentItem.moveToFront()
+*/
+}
+
+// Notify the property manager that the values of the given properties have changed for this widget
+void CEGUIManipulator::triggerPropertyManagerCallback(QStringList propertyNames)
+{
+/*
+        widget = self.widget
+
+        # if the property manager has set callbacks on this widget
+        if hasattr(widget, "propertyManagerCallbacks"):
+            for propertyName in propertyNames:
+                # if there's a callback for this property
+                if propertyName in widget.propertyManagerCallbacks:
+                    # call it
+                    widget.propertyManagerCallbacks[propertyName]()
+*/
+}
+
+QVariant CEGUIManipulator::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value)
+{
+/*
+
+    def itemChange(self, change, value):
+        if change == QtGui.QGraphicsItem.ItemSelectedHasChanged:
+            if value:
+                self.moveToFront()
+
+        return super(Manipulator, self).itemChange(change, value)
+*/
 }
 
 /*
@@ -273,49 +520,6 @@ void CEGUIManipulator::detach(bool detachWidget, bool destroyWidget, bool recurs
 
         return ret
 
-    def moveToFront(self):
-        self.widget.moveToFront()
-
-        parentItem = self.parentItem()
-        if parentItem:
-            for item in parentItem.childItems():
-                if item == self:
-                    continue
-
-                # For some reason this is the opposite of what (IMO) it should be
-                # which is self.stackBefore(item)
-                #
-                # Is Qt documentation flawed or something?!
-                item.stackBefore(self)
-
-            parentItem.moveToFront()
-
-    def itemChange(self, change, value):
-        if change == QtGui.QGraphicsItem.ItemSelectedHasChanged:
-            if value:
-                self.moveToFront()
-
-        return super(Manipulator, self).itemChange(change, value)
-
-    def notifyHandleSelected(self, handle):
-        super(Manipulator, self).notifyHandleSelected(handle)
-
-        self.moveToFront()
-
-    def getMinSize(self):
-        if self.widget:
-            minPixelSize = PyCEGUI.CoordConverter.asAbsolute(self.widget.getMinSize(),
-                                                             PyCEGUI.System.getSingleton().getRenderer().getDisplaySize())
-
-            return QtCore.QSizeF(minPixelSize.d_width, minPixelSize.d_height)
-
-    def getMaxSize(self):
-        if self.widget:
-            maxPixelSize = PyCEGUI.CoordConverter.asAbsolute(self.widget.getMaxSize(),
-                                                             PyCEGUI.System.getSingleton().getRenderer().getDisplaySize())
-
-            return QtCore.QSizeF(maxPixelSize.d_width, maxPixelSize.d_height)
-
     def getBaseSize(self):
         if self.widget.getParent() is not None and not self.widget.isNonClient():
             return self.widget.getParent().getUnclippedInnerRect().get().getSize()
@@ -334,142 +538,6 @@ void CEGUIManipulator::detach(bool detachWidget, bool destroyWidget, bool recurs
 
     def useIntegersForAbsoluteResize(self):
         return False
-
-    def notifyResizeStarted(self):
-        super(Manipulator, self).notifyResizeStarted()
-
-        self.preResizePos = self.widget.getPosition()
-        self.preResizeSize = self.widget.getSize()
-
-        for item in self.childItems():
-            if isinstance(item, Manipulator):
-                item.setVisible(False)
-
-        parent = self.widget.getParent()
-        if parent and isinstance(parent, PyCEGUI.LayoutContainer):
-            # hide siblings in the same layout container
-            for item in self.parentItem().childItems():
-                if item is not self and isinstance(item, Manipulator):
-                    item.setVisible(False)
-
-    def notifyResizeProgress(self, newPos, newRect):
-        super(Manipulator, self).notifyResizeProgress(newPos, newRect)
-
-        # absolute pixel deltas
-        pixelDeltaPos = newPos - self.resizeOldPos
-        pixelDeltaSize = newRect.size() - self.resizeOldRect.size()
-
-        deltaPos = None
-        deltaSize = None
-
-        if self.useAbsoluteCoordsForResize():
-            if self.useIntegersForAbsoluteResize():
-                deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(0, math.floor(pixelDeltaPos.x())), PyCEGUI.UDim(0, math.floor(pixelDeltaPos.y())))
-                deltaSize = PyCEGUI.USize(PyCEGUI.UDim(0, math.floor(pixelDeltaSize.width())), PyCEGUI.UDim(0, math.floor(pixelDeltaSize.height())))
-            else:
-                deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(0, pixelDeltaPos.x()), PyCEGUI.UDim(0, pixelDeltaPos.y()))
-                deltaSize = PyCEGUI.USize(PyCEGUI.UDim(0, pixelDeltaSize.width()), PyCEGUI.UDim(0, pixelDeltaSize.height()))
-
-        else:
-            baseSize = self.getBaseSize()
-
-            deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(pixelDeltaPos.x() / baseSize.d_width, 0), PyCEGUI.UDim(pixelDeltaPos.y() / baseSize.d_height, 0))
-            deltaSize = PyCEGUI.USize(PyCEGUI.UDim(pixelDeltaSize.width() / baseSize.d_width, 0), PyCEGUI.UDim(pixelDeltaSize.height() / baseSize.d_height, 0))
-
-        # because the Qt manipulator is always top left aligned in the CEGUI sense,
-        # we have to process the size to factor in alignments if they differ
-        processedDeltaPos = PyCEGUI.UVector2()
-
-        hAlignment = self.widget.getHorizontalAlignment()
-        if hAlignment == PyCEGUI.HorizontalAlignment.HA_LEFT:
-            processedDeltaPos.d_x = deltaPos.d_x
-        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_CENTRE:
-            processedDeltaPos.d_x = deltaPos.d_x + PyCEGUI.UDim(0.5, 0.5) * deltaSize.d_width
-        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_RIGHT:
-            processedDeltaPos.d_x = deltaPos.d_x + deltaSize.d_width
-        else:
-            assert(False)
-
-        vAlignment = self.widget.getVerticalAlignment()
-        if vAlignment == PyCEGUI.VerticalAlignment.VA_TOP:
-            processedDeltaPos.d_y = deltaPos.d_y
-        elif vAlignment == PyCEGUI.VerticalAlignment.VA_CENTRE:
-            processedDeltaPos.d_y = deltaPos.d_y + PyCEGUI.UDim(0.5, 0.5) * deltaSize.d_height
-        elif vAlignment == PyCEGUI.VerticalAlignment.VA_BOTTOM:
-            processedDeltaPos.d_y = deltaPos.d_y + deltaSize.d_height
-        else:
-            assert(False)
-
-        self.widget.setPosition(self.preResizePos + processedDeltaPos)
-        self.widget.setSize(self.preResizeSize + deltaSize)
-
-        self.lastResizeNewPos = newPos
-        self.lastResizeNewRect = newRect
-
-    def notifyResizeFinished(self, newPos, newRect):
-        super(Manipulator, self).notifyResizeFinished(newPos, newRect)
-
-        self.updateFromWidget()
-
-        for item in self.childItems():
-            if isinstance(item, Manipulator):
-                item.updateFromWidget()
-                item.setVisible(True)
-
-        parent = self.widget.getParent()
-        if parent and isinstance(parent, PyCEGUI.LayoutContainer):
-            # show siblings in the same layout container
-            for item in self.parentItem().childItems():
-                if item is not self and isinstance(item, Manipulator):
-                    item.setVisible(True)
-
-            self.parentItem().updateFromWidget(True)
-
-        self.lastResizeNewPos = None
-        self.lastResizeNewRect = None
-
-    def notifyMoveStarted(self):
-        super(Manipulator, self).notifyMoveStarted()
-
-        self.preMovePos = self.widget.getPosition()
-
-        for item in self.childItems():
-            if isinstance(item, Manipulator):
-                item.setVisible(False)
-
-    def notifyMoveProgress(self, newPos):
-        super(Manipulator, self).notifyMoveProgress(newPos)
-
-        # absolute pixel deltas
-        pixelDeltaPos = newPos - self.moveOldPos
-
-        deltaPos = None
-        if self.useAbsoluteCoordsForMove():
-            if self.useIntegersForAbsoluteMove():
-                deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(0, math.floor(pixelDeltaPos.x())), PyCEGUI.UDim(0, math.floor(pixelDeltaPos.y())))
-            else:
-                deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(0, pixelDeltaPos.x()), PyCEGUI.UDim(0, pixelDeltaPos.y()))
-
-        else:
-            baseSize = self.getBaseSize()
-
-            deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(pixelDeltaPos.x() / baseSize.d_width, 0), PyCEGUI.UDim(pixelDeltaPos.y() / baseSize.d_height, 0))
-
-        self.widget.setPosition(self.preMovePos + deltaPos)
-
-        self.lastMoveNewPos = newPos
-
-    def notifyMoveFinished(self, newPos):
-        super(Manipulator, self).notifyMoveFinished(newPos)
-
-        self.updateFromWidget()
-
-        for item in self.childItems():
-            if isinstance(item, Manipulator):
-                item.updateFromWidget()
-                item.setVisible(True)
-
-        self.lastMoveNewPos = None
 
     def boundingClipPath(self):
         """Retrieves clip path containing the bounding rectangle"""
@@ -666,20 +734,6 @@ void CEGUIManipulator::detach(bool detachWidget, bool destroyWidget, bool recurs
             baseSize = self.getBaseSize()
             self.paintHorizontalGuides(baseSize, painter, option, widget)
             self.paintVerticalGuides(baseSize, painter, option, widget)
-
-    def triggerPropertyManagerCallback(self, propertyNames):
-        """Notify the property manager that the values of the given
-        properties have changed for this widget.
-        """
-        widget = self.widget
-
-        # if the property manager has set callbacks on this widget
-        if hasattr(widget, "propertyManagerCallbacks"):
-            for propertyName in propertyNames:
-                # if there's a callback for this property
-                if propertyName in widget.propertyManagerCallbacks:
-                    # call it
-                    widget.propertyManagerCallbacks[propertyName]()
 
     def hasNonAutoWidgetDescendants(self):
         """Checks whether there are non-auto widgets nested in this widget

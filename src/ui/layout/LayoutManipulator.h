@@ -13,7 +13,7 @@ public:
 
     static QString getValidWidgetName(const QString& name);
 
-    LayoutManipulator();
+    LayoutManipulator(QGraphicsItem* parent);
     virtual ~LayoutManipulator() override;
 
     virtual QPointF constrainMovePoint(QPointF value) override;
