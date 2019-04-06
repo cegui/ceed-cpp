@@ -13,7 +13,6 @@ public:
     CEGUIManipulator(QGraphicsItem* parent = nullptr, bool recursive = true, bool skipAutoWidgets = false);
 
     virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
-    virtual void impl_paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr);
 
     virtual QSizeF getMinSize() const override;
     virtual QSizeF getMaxSize() const override;
@@ -36,6 +35,14 @@ public:
     virtual bool useIntegersForAbsoluteMove() const { return false; }
     virtual bool useIntegersForAbsoluteResize() const { return false; }
 
+    QString getWidgetName() const;
+    QString getWidgetType() const;
+    QString getWidgetPath() const;
+    void getChildManipulators(std::vector<CEGUIManipulator*>& outList, bool recursive);
+    CEGUIManipulator* getManipulatorByPath(const QString& widgetPath) const;
+    CEGUIManipulator* getManipulatorFromChildContainerByPath(const QString& widgetPath) const;
+
+    void createMissingChildManipulators(bool recursive = true, bool skipAutoWidgets = false);
     void moveToFront();
     void triggerPropertyManagerCallback(QStringList propertyNames);
     bool shouldBeSkipped() const;
@@ -44,6 +51,8 @@ public:
 protected:
 
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
+
+    virtual void impl_paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr);
 };
 
 #endif // CEGUIMANIPULATOR_H

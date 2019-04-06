@@ -29,13 +29,15 @@ public:
     virtual void updateFromWidget(bool callUpdate = false, bool updateAncestorLCs = false) override;
     virtual void detach(bool detachWidget = true, bool destroyWidget = true, bool recursive = true) override;
 
+    virtual bool preventManipulatorOverlap() const override;
+    virtual bool useAbsoluteCoordsForMove() const override;
+    virtual bool useAbsoluteCoordsForResize() const override;
+    virtual bool useIntegersForAbsoluteMove() const override;
+    virtual bool useIntegersForAbsoluteResize() const override;
+
     void setLocked(bool locked);
     void setTreeItem(WidgetHierarchyItem* treeItem) { _treeItem = treeItem; }
     //void setDrawSnapGrid(bool draw) { _drawSnapGrid = draw; }
-
-    // NB: in python was getWidget() and all fields requested directly, I need the same!
-    QString getWidgetName() const;
-    QString getWidgetType() const;
 
 protected:
 
@@ -47,6 +49,8 @@ protected:
     virtual QPen getHoverPen() const override;
     virtual QPen getPenWhileResizing() const override;
     virtual QPen getPenWhileMoving() const override;
+
+    virtual void impl_paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
 
     QString getUniqueChildWidgetName(const QString& base = "Widget");
     qreal snapXCoordToGrid(qreal x);

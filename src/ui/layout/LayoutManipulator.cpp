@@ -193,6 +193,44 @@ void LayoutManipulator::detach(bool detachWidget, bool destroyWidget, bool recur
 */
 }
 
+bool LayoutManipulator::preventManipulatorOverlap() const
+{
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    return settings->getEntryValue("layout/visual/prevent_manipulator_overlap").toBool();
+}
+
+bool LayoutManipulator::useAbsoluteCoordsForMove() const
+{
+    /*
+        return self.absoluteModeAction.isChecked()
+    */
+    return false;
+}
+
+bool LayoutManipulator::useAbsoluteCoordsForResize() const
+{
+    /*
+        return self.absoluteModeAction.isChecked()
+    */
+    return false;
+}
+
+bool LayoutManipulator::useIntegersForAbsoluteMove() const
+{
+    /*
+        return self.absoluteIntegersOnlyModeAction.isChecked()
+    */
+    return false;
+}
+
+bool LayoutManipulator::useIntegersForAbsoluteResize() const
+{
+    /*
+        return self.absoluteIntegersOnlyModeAction.isChecked()
+    */
+    return false;
+}
+
 void LayoutManipulator::setLocked(bool locked)
 {
     setFlag(ItemIsMovable, !locked);
@@ -265,6 +303,22 @@ QPen LayoutManipulator::getPenWhileMoving() const
 {
     auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
     return settings->getEntryValue("layout/visual/moving_outline").value<QPen>();
+}
+
+void LayoutManipulator::impl_paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
+{
+    CEGUIManipulator::impl_paint(painter, option, widget);
+/*
+        if self.drawSnapGrid and self.snapGridAction.isChecked():
+            childRect = self.widget.getChildContentArea(self.snapGridNonClientArea).get()
+            qChildRect = QtCore.QRectF(childRect.d_min.d_x, childRect.d_min.d_y, childRect.getWidth(), childRect.getHeight())
+            qChildRect.translate(-self.scenePos())
+
+            painter.save()
+            painter.setBrushOrigin(qChildRect.topLeft())
+            painter.fillRect(qChildRect, Manipulator.getSnapGridBrush())
+            painter.restore()
+*/
 }
 
 // Finds a unique name for a child widget of the manipulated widget.
@@ -366,36 +420,4 @@ qreal LayoutManipulator::snapYCoordToGrid(qreal y)
         ret = Manipulator(self.visual, self, childWidget, recursive, skipAutoWidgets)
         ret.updateFromWidget()
         return ret
-
-    def useAbsoluteCoordsForMove(self):
-        return self.absoluteModeAction.isChecked()
-
-    def useAbsoluteCoordsForResize(self):
-        return self.absoluteModeAction.isChecked()
-
-    def useIntegersForAbsoluteMove(self):
-        return self.absoluteIntegersOnlyModeAction.isChecked()
-
-    def useIntegersForAbsoluteResize(self):
-        return self.absoluteIntegersOnlyModeAction.isChecked()
-
-    def getPreventManipulatorOverlap(self):
-        """Returns whether the painting code should strive to prevent manipulator overlap (crossing outlines and possibly other things)
-        Override to change the behavior
-        """
-
-        return settings.getEntry("layout/visual/prevent_manipulator_overlap").value
-
-    def impl_paint(self, painter, option, widget):
-        super(Manipulator, self).impl_paint(painter, option, widget)
-
-        if self.drawSnapGrid and self.snapGridAction.isChecked():
-            childRect = self.widget.getChildContentArea(self.snapGridNonClientArea).get()
-            qChildRect = QtCore.QRectF(childRect.d_min.d_x, childRect.d_min.d_y, childRect.getWidth(), childRect.getHeight())
-            qChildRect.translate(-self.scenePos())
-
-            painter.save()
-            painter.setBrushOrigin(qChildRect.topLeft())
-            painter.fillRect(qChildRect, Manipulator.getSnapGridBrush())
-            painter.restore()
 */

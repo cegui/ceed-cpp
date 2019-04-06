@@ -539,6 +539,124 @@ void CEGUIManipulator::detach(bool detachWidget, bool destroyWidget, bool recurs
     }
 }
 
+QString CEGUIManipulator::getWidgetName() const
+{
+/*
+        return self.widget.getName() if self.widget is not None else "<Unknown>"
+*/
+    return "<IMPLEMENT ME!!!>";
+}
+
+QString CEGUIManipulator::getWidgetType() const
+{
+/*
+        return self.widget.getType() if self.widget is not None else "<Unknown>"
+*/
+    return "<IMPLEMENT ME!!!>";
+}
+
+QString CEGUIManipulator::getWidgetPath() const
+{
+/*
+        return self.widget.getNamePath() if self.widget is not None else "<Unknown>"
+*/
+    return "<IMPLEMENT ME!!!>";
+}
+
+void CEGUIManipulator::getChildManipulators(std::vector<CEGUIManipulator*>& outList, bool recursive)
+{
+    for (QGraphicsItem* item : childItems())
+    {
+        CEGUIManipulator* manipulator = dynamic_cast<CEGUIManipulator*>(item);
+        if (manipulator)
+        {
+            outList.push_back(manipulator);
+            if (recursive) manipulator->getChildManipulators(outList, true);
+        }
+    }
+}
+
+// Retrieves a manipulator relative to this manipulator by given widget path
+CEGUIManipulator* CEGUIManipulator::getManipulatorByPath(const QString& widgetPath) const
+{
+/*
+        // Throws LookupError on failure.
+        if isinstance(self.widget, PyCEGUI.TabControl) or isinstance(self.widget, PyCEGUI.ScrollablePane):
+            manipulator = self.getManipulatorFromChildContainerByPath(widgetPath)
+            if manipulator is not None:
+                return manipulator
+
+                //QString::section
+        path = widgetPath.split("/", 1)
+        assert(len(path) >= 1)
+
+        baseName = path[0]
+        remainder = ""
+        if len(path) == 2:
+            remainder = path[1]
+
+        for item in self.childItems():
+            if isinstance(item, Manipulator):
+                if item.widget.getName() == baseName:
+                    if remainder == "":
+                        return item
+
+                    else:
+                        return item.getManipulatorByPath(remainder)
+
+        raise LookupError("Can't find widget manipulator of path '" + widgetPath + "'")
+*/
+    return nullptr;
+}
+
+// Retrieves a manipulator relative to this manipulator by given widget path for widgets that use
+// autoWindow containers, such as ScrollablePanes and TabControl. The children in these case should
+// be treated as if they were attached to the window directly, whereas in reality they use a container
+// widget, which forces us to handle these cases using this function.
+CEGUIManipulator* CEGUIManipulator::getManipulatorFromChildContainerByPath(const QString& widgetPath) const
+{
+    auto sepPos = widgetPath.indexOf('/');
+    QString directChildPath = (sepPos >= 0) ? widgetPath.mid(sepPos + 1) : "";
+    for (QGraphicsItem* item : childItems())
+    {
+        CEGUIManipulator* manipulator = dynamic_cast<CEGUIManipulator*>(item);
+        if (manipulator)
+        {
+            /*
+                if item.widget.getName() == directChildPath:
+                    return item
+            */
+        }
+    }
+
+    return nullptr;
+}
+
+// Goes through child widgets of the manipulated widget and creates manipulator for each missing one.
+// recursive - recurse into children?
+// skipAutoWidgets - if true, auto widgets will be skipped over
+void CEGUIManipulator::createMissingChildManipulators(bool recursive, bool skipAutoWidgets)
+{
+/*
+        countGetter, childGetter = self.getFunctionsChildCountAndChildGet()
+
+        for idx in range(0, countGetter()):
+            childWidget = childGetter(idx)
+
+            try:
+                # try to find a manipulator for currently examined child widget
+                self.getManipulatorByPath(childWidget.getName())
+
+            except LookupError:
+                if not skipAutoWidgets or not childWidget.isAutoWindow():
+                    # note: we don't have to assign or attach the child manipulator here
+                    #       just passing parent to the constructor is enough
+                    childManipulator = self.createChildManipulator(childWidget, recursive, skipAutoWidgets)
+                    if recursive:
+                        childManipulator.createMissingChildManipulators(True, skipAutoWidgets)
+*/
+}
+
 void CEGUIManipulator::moveToFront()
 {
 /*
@@ -615,13 +733,10 @@ QVariant CEGUIManipulator::itemChange(QGraphicsItem::GraphicsItemChange change, 
         if (value.toBool()) moveToFront();
     }
 
-    ResizableRectItem::itemChange(change, value);
+    return ResizableRectItem::itemChange(change, value);
 }
 
 /*
-
-    def getWidgetPath(self):
-        return self.widget.getNamePath() if self.widget is not None else "<Unknown>"
 
     def createChildManipulator(self, childWidget, recursive = True, skipAutoWidgets = False):
         """Creates a child manipulator suitable for a child widget of manipulated widget
@@ -656,102 +771,6 @@ QVariant CEGUIManipulator::itemChange(QGraphicsItem::GraphicsItemChange change, 
             childGetter = self.widget.getChildAtIdx
 
         return countGetter, childGetter
-
-    def createMissingChildManipulators(self, recursive = True, skipAutoWidgets = False):
-        """Goes through child widgets of the manipulated widget and creates manipulator
-        for each missing one.
-
-        recursive - recurse into children?
-        skipAutoWidgets - if true, auto widgets will be skipped over
-        """
-
-        countGetter, childGetter = self.getFunctionsChildCountAndChildGet()
-
-        for idx in range(0, countGetter()):
-            childWidget = childGetter(idx)
-
-            try:
-                # try to find a manipulator for currently examined child widget
-                self.getManipulatorByPath(childWidget.getName())
-
-            except LookupError:
-                if not skipAutoWidgets or not childWidget.isAutoWindow():
-                    # note: we don't have to assign or attach the child manipulator here
-                    #       just passing parent to the constructor is enough
-                    childManipulator = self.createChildManipulator(childWidget, recursive, skipAutoWidgets)
-                    if recursive:
-                        childManipulator.createMissingChildManipulators(True, skipAutoWidgets)
-
-
-    def getManipulatorByPath(self, widgetPath):
-        """Retrieves a manipulator relative to this manipulator by given widget path
-
-        Throws LookupError on failure.
-        """
-
-        if isinstance(self.widget, PyCEGUI.TabControl) or isinstance(self.widget, PyCEGUI.ScrollablePane):
-            manipulator = self.getManipulatorFromChildContainerByPath(widgetPath)
-            if manipulator is not None:
-                return manipulator
-
-        path = widgetPath.split("/", 1)
-        assert(len(path) >= 1)
-
-        baseName = path[0]
-        remainder = ""
-        if len(path) == 2:
-            remainder = path[1]
-
-        for item in self.childItems():
-            if isinstance(item, Manipulator):
-                if item.widget.getName() == baseName:
-                    if remainder == "":
-                        return item
-
-                    else:
-                        return item.getManipulatorByPath(remainder)
-
-        raise LookupError("Can't find widget manipulator of path '" + widgetPath + "'")
-
-    def getManipulatorFromChildContainerByPath(self, widgetPath):
-        """Retrieves a manipulator relative to this manipulator by given widget path
-        for widget's that use autoWindow containers, such as ScrollablePanes and TabControl.
-        The children in these case should be treated as if they were attached to the window
-        directly, whereas in reality they use a container widget, which forces us to handle
-        these cases using this function
-        """
-        contentPaneChildPath = widgetPath.split("/", 1)
-        assert(len(contentPaneChildPath) >= 1)
-        directChildPath = ""
-        if len(contentPaneChildPath) == 2:
-            directChildPath = contentPaneChildPath[1]
-
-        for item in self.childItems():
-            if isinstance(item, Manipulator):
-                if item.widget.getName() == directChildPath:
-                    return item
-
-        return None
-
-    def getChildManipulators(self):
-        ret = []
-
-        for child in self.childItems():
-            if isinstance(child, Manipulator):
-                ret.append(child)
-
-        return ret
-
-    def getAllDescendantManipulators(self):
-        ret = []
-
-        for child in self.childItems():
-            if isinstance(child, Manipulator):
-                ret.append(child)
-
-                ret.extend(child.getAllDescendantManipulators())
-
-        return ret
 
     def getBaseSize(self):
         if self.widget.getParent() is not None and not self.widget.isNonClient():
