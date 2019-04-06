@@ -10,13 +10,18 @@ LayoutScene::LayoutScene(LayoutVisualMode& visualMode)
     connect(this, &LayoutScene::selectionChanged, this, &LayoutScene::slot_selectionChanged);
 }
 
+void LayoutScene::updateFromWidgets()
+{
+    if (rootManipulator) rootManipulator->updateFromWidget();
+}
+
 // Overridden to keep the manipulators in sync
 void LayoutScene::setCEGUIDisplaySize(float width, float height, bool lazyUpdate)
 {
     CEGUIGraphicsScene::setCEGUIDisplaySize(width, height, lazyUpdate);
 
     // FIXME: this won't do much with lazyUpdate = False
-    if (rootManipulator) rootManipulator->updateFromWidget();
+    updateFromWidgets();
 }
 
 void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
@@ -48,7 +53,105 @@ LayoutManipulator* LayoutScene::getManipulatorByPath(const QString& widgetPath) 
         # path[1] is the remainder of the path
         return self.rootManipulator.getManipulatorByPath(path[1])
     */
-return nullptr;
+    return nullptr;
+}
+
+void LayoutScene::normalisePositionOfSelectedWidgets()
+{
+/*
+        widgetPaths = []
+        oldPositions = {}
+
+        # if there will be no non-zero offsets, we will normalise to absolute
+        undoCommand = undo.NormalisePositionToAbsoluteCommand
+
+        selection = self.selectedItems()
+        for item in selection:
+            if isinstance(item, widgethelpers.Manipulator):
+                widgetPath = item.widget.getNamePath()
+
+                widgetPaths.append(widgetPath)
+                oldPositions[widgetPath] = item.widget.getPosition()
+
+                # if we find any non-zero offset, normalise to relative
+                if (item.widget.getPosition().d_x.d_offset != 0) or (item.widget.getPosition().d_y.d_offset != 0):
+                    undoCommand = undo.NormalisePositionToRelativeCommand
+
+        if len(widgetPaths) > 0:
+            cmd = undoCommand(self.visual, widgetPaths, oldPositions)
+            self.visual.tabbedEditor.undoStack.push(cmd)
+*/
+}
+
+void LayoutScene::normaliseSizeOfSelectedWidgets()
+{
+/*
+        widgetPaths = []
+        oldPositions = {}
+        oldSizes = {}
+
+        # if there will be no non-zero offsets, we will normalise to absolute
+        undoCommand = undo.NormaliseSizeToAbsoluteCommand
+
+        selection = self.selectedItems()
+        for item in selection:
+            if isinstance(item, widgethelpers.Manipulator):
+                widgetPath = item.widget.getNamePath()
+
+                widgetPaths.append(widgetPath)
+                oldPositions[widgetPath] = item.widget.getPosition()
+                oldSizes[widgetPath] = item.widget.getSize()
+
+                # if we find any non-zero offset, normalise to relative
+                if (item.widget.getSize().d_width.d_offset != 0) or (item.widget.getSize().d_height.d_offset != 0):
+                    undoCommand = undo.NormaliseSizeToRelativeCommand
+
+        if len(widgetPaths) > 0:
+            cmd = undoCommand(self.visual, widgetPaths, oldPositions, oldSizes)
+            self.visual.tabbedEditor.undoStack.push(cmd)
+*/
+}
+
+void LayoutScene::roundPositionOfSelectedWidgets()
+{
+/*
+        widgetPaths = []
+        oldPositions = {}
+
+        selection = self.selectedItems()
+        for item in selection:
+            if isinstance(item, widgethelpers.Manipulator):
+                widgetPath = item.widget.getNamePath()
+
+                widgetPaths.append(widgetPath)
+                oldPositions[widgetPath] = item.widget.getPosition()
+
+        if len(widgetPaths) > 0:
+            cmd = undo.RoundPositionCommand(self.visual, widgetPaths, oldPositions)
+            self.visual.tabbedEditor.undoStack.push(cmd)
+*/
+}
+
+void LayoutScene::roundSizeOfSelectedWidgets()
+{
+/*
+        widgetPaths = []
+        oldPositions = {}
+        oldSizes = {}
+
+        selection = self.selectedItems()
+        for item in selection:
+            if isinstance(item, widgethelpers.Manipulator):
+                widgetPath = item.widget.getNamePath()
+
+                widgetPaths.append(widgetPath)
+                oldPositions[widgetPath] = item.widget.getPosition()
+                oldSizes[widgetPath] = item.widget.getSize()
+
+        if len(widgetPaths) > 0:
+            cmd = undo.RoundSizeCommand(self.visual, widgetPaths, oldPositions, oldSizes)
+            self.visual.tabbedEditor.undoStack.push(cmd)
+*/
 }
 
 bool LayoutScene::deleteSelectedWidgets()
@@ -118,17 +221,16 @@ void LayoutScene::slot_selectionChanged()
 
 void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
 {
-/*
-        # if the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
-        # the graphics items (manipulators in fact) have that implemented already
-        if self.rootManipulator is not None:
-            super(EditingScene, self).dragEnterEvent(event)
-
-        else:
-            # otherwise we should accept a new root widget to the empty layout if it's a new widget
-            if event.mimeData().hasFormat("application/x-ceed-widget-type"):
-                event.acceptProposedAction()
-*/
+    // If the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
+    // the graphics items (manipulators in fact) have that implemented already
+    if (rootManipulator)
+        CEGUIGraphicsScene::dragEnterEvent(event);
+    else
+    {
+        // Otherwise we should accept a new root widget to the empty layout if it's a new widget
+        if (event->mimeData()->hasFormat("application/x-ceed-widget-type"))
+            event->acceptProposedAction();
+    }
 }
 
 void LayoutScene::dragLeaveEvent(QGraphicsSceneDragDropEvent* event)
@@ -279,88 +381,6 @@ void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 
         if len(widgetPaths) > 0:
             cmd = undo.VerticalAlignCommand(self.visual, widgetPaths, oldAlignments, alignment)
-            self.visual.tabbedEditor.undoStack.push(cmd)
-
-    def normalisePositionOfSelectedWidgets(self):
-        widgetPaths = []
-        oldPositions = {}
-
-        # if there will be no non-zero offsets, we will normalise to absolute
-        undoCommand = undo.NormalisePositionToAbsoluteCommand
-
-        selection = self.selectedItems()
-        for item in selection:
-            if isinstance(item, widgethelpers.Manipulator):
-                widgetPath = item.widget.getNamePath()
-
-                widgetPaths.append(widgetPath)
-                oldPositions[widgetPath] = item.widget.getPosition()
-
-                # if we find any non-zero offset, normalise to relative
-                if (item.widget.getPosition().d_x.d_offset != 0) or (item.widget.getPosition().d_y.d_offset != 0):
-                    undoCommand = undo.NormalisePositionToRelativeCommand
-
-        if len(widgetPaths) > 0:
-            cmd = undoCommand(self.visual, widgetPaths, oldPositions)
-            self.visual.tabbedEditor.undoStack.push(cmd)
-
-    def normaliseSizeOfSelectedWidgets(self):
-        widgetPaths = []
-        oldPositions = {}
-        oldSizes = {}
-
-        # if there will be no non-zero offsets, we will normalise to absolute
-        undoCommand = undo.NormaliseSizeToAbsoluteCommand
-
-        selection = self.selectedItems()
-        for item in selection:
-            if isinstance(item, widgethelpers.Manipulator):
-                widgetPath = item.widget.getNamePath()
-
-                widgetPaths.append(widgetPath)
-                oldPositions[widgetPath] = item.widget.getPosition()
-                oldSizes[widgetPath] = item.widget.getSize()
-
-                # if we find any non-zero offset, normalise to relative
-                if (item.widget.getSize().d_width.d_offset != 0) or (item.widget.getSize().d_height.d_offset != 0):
-                    undoCommand = undo.NormaliseSizeToRelativeCommand
-
-        if len(widgetPaths) > 0:
-            cmd = undoCommand(self.visual, widgetPaths, oldPositions, oldSizes)
-            self.visual.tabbedEditor.undoStack.push(cmd)
-
-    def roundPositionOfSelectedWidgets(self):
-        widgetPaths = []
-        oldPositions = {}
-
-        selection = self.selectedItems()
-        for item in selection:
-            if isinstance(item, widgethelpers.Manipulator):
-                widgetPath = item.widget.getNamePath()
-
-                widgetPaths.append(widgetPath)
-                oldPositions[widgetPath] = item.widget.getPosition()
-
-        if len(widgetPaths) > 0:
-            cmd = undo.RoundPositionCommand(self.visual, widgetPaths, oldPositions)
-            self.visual.tabbedEditor.undoStack.push(cmd)
-
-    def roundSizeOfSelectedWidgets(self):
-        widgetPaths = []
-        oldPositions = {}
-        oldSizes = {}
-
-        selection = self.selectedItems()
-        for item in selection:
-            if isinstance(item, widgethelpers.Manipulator):
-                widgetPath = item.widget.getNamePath()
-
-                widgetPaths.append(widgetPath)
-                oldPositions[widgetPath] = item.widget.getPosition()
-                oldSizes[widgetPath] = item.widget.getSize()
-
-        if len(widgetPaths) > 0:
-            cmd = undo.RoundSizeCommand(self.visual, widgetPaths, oldPositions, oldSizes)
             self.visual.tabbedEditor.undoStack.push(cmd)
 
     def moveSelectedWidgetsInParentWidgetLists(self, delta):

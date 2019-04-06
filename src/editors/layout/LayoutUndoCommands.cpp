@@ -205,24 +205,20 @@ class DeleteCommand(commands.UndoCommand):
     def undo(self):
         super(DeleteCommand, self).undo()
 
-        manipulators = []
-
         # we have to undo in reverse to ensure widgets have their (potential) dependencies in place when they
         # are constructed
         for widgetPath in reversed(self.widgetPaths):
             data = self.widgetData[widgetPath]
             result = data.reconstruct(self.visual.scene.rootManipulator)
 
-            manipulators.append(result)
-
-        self.visual.notifyWidgetManipulatorsAdded(manipulators)
+        self.visual.hierarchyDockWidget.refresh()
 
     def redo(self):
         for widgetPath in self.widgetPaths:
             manipulator = self.visual.scene.getManipulatorByPath(widgetPath)
             manipulator.detach(destroyWidget = True)
 
-        self.visual.notifyWidgetManipulatorsRemoved(self.widgetPaths)
+        self.visual.hierarchyDockWidget.refresh()
 
         super(DeleteCommand, self).redo()
 
@@ -644,7 +640,7 @@ class PasteCommand(commands.UndoCommand):
                 # this was a root widget being deleted, handle this accordingly
                 self.visual.setRootWidgetManipulator(None)
 
-        self.visual.notifyWidgetManipulatorsRemoved(widgetPaths)
+        self.visual.hierarchyDockWidget.refresh()
 
     def redo(self):
         targetManipulator = self.visual.scene.getManipulatorByPath(self.targetWidgetPath)

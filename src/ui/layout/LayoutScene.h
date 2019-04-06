@@ -16,11 +16,17 @@ public:
 
     LayoutScene(LayoutVisualMode& visualMode);
 
+    void updateFromWidgets();
     virtual void setCEGUIDisplaySize(float width, float height, bool lazyUpdate = true) override;
 
     void setRootWidgetManipulator(LayoutManipulator* manipulator);
+    LayoutManipulator* getRootWidgetManipulator() const { return rootManipulator; }
     LayoutManipulator* getManipulatorByPath(const QString& widgetPath) const;
 
+    void normalisePositionOfSelectedWidgets();
+    void normaliseSizeOfSelectedWidgets();
+    void roundPositionOfSelectedWidgets();
+    void roundSizeOfSelectedWidgets();
     bool deleteSelectedWidgets();
 
 public slots:

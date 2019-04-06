@@ -1,10 +1,14 @@
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutEditor.h"
-#include "src/editors/layout/LayoutScene.h"
+#include "src/ui/layout/LayoutScene.h"
 #include "src/ui/layout/CreateWidgetDockWidget.h"
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
+#include "src/util/Settings.h"
+#include "src/Application.h"
 #include "qboxlayout.h"
 #include "qgraphicsview.h"
+#include "qtoolbar.h"
+#include "qmenu.h"
 
 LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     : IEditMode(editor)
@@ -76,6 +80,27 @@ void LayoutVisualMode::rebuildEditorMenu(QMenu* editorMenu)
         editorMenu.addSeparator() # ---------------------------
         editorMenu.addAction(self.focusPropertyInspectorFilterBoxAction)
 */
+    _editorMenu = editorMenu;
+}
+
+void LayoutVisualMode::setRootWidgetManipulator(LayoutManipulator* manipulator)
+{
+/*
+        oldRoot = self.getCurrentRootWidget()
+*/
+
+    scene->setRootWidgetManipulator(manipulator);
+    hierarchyDockWidget->setRootWidgetManipulator(manipulator);
+
+/*
+        PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(self.getCurrentRootWidget())
+
+        if oldRoot:
+            PyCEGUI.WindowManager.getSingleton().destroyWindow(oldRoot)
+
+        # cause full redraw of the default GUI context to ensure nothing gets stuck
+        PyCEGUI.System.getSingleton().getDefaultGUIContext().markAsDirty()
+*/
 }
 
 void LayoutVisualMode::setupActions()
@@ -118,11 +143,9 @@ void LayoutVisualMode::setupActions()
 
 void LayoutVisualMode::setupToolBar()
 {
+    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
+    toolBar = mainWindow->createToolbar("Layout");
 /*
-        self.toolBar = QtGui.QToolBar("Layout")
-        self.toolBar.setObjectName("LayoutToolbar")
-        self.toolBar.setIconSize(QtCore.QSize(32, 32))
-
         self.toolBar.addAction(self.alignHLeftAction)
         self.toolBar.addAction(self.alignHCentreAction)
         self.toolBar.addAction(self.alignHRightAction)
@@ -141,6 +164,24 @@ void LayoutVisualMode::setupToolBar()
         self.toolBar.addSeparator() # ---------------------------
         self.toolBar.addAction(action.getAction("layout/move_backward_in_parent_list"))
         self.toolBar.addAction(action.getAction("layout/move_forward_in_parent_list"))
+*/
+}
+
+//!!!???to PropertyInspectorWidget?
+void LayoutVisualMode::focusPropertyInspectorFilterBox()
+{
+/*
+        """Focuses into property set inspector filter
+
+        This potentially allows the user to just press a shortcut to find properties to edit,
+        instead of having to reach for a mouse.
+        """
+
+        filterBox = self.propertiesDockWidget.inspector.filterBox
+        # selects all contents of the filter so that user can replace that with their search phrase
+        filterBox.selectAll()
+        # sets focus so that typing puts text into the filter box without clicking
+        filterBox.setFocus()
 */
 }
 
@@ -192,10 +233,8 @@ bool LayoutVisualMode::copy()
         data = QtCore.QMimeData()
         data.setData("application/x-ceed-widget-hierarchy-list", QtCore.QByteArray(cPickle.dumps(topMostSerialisationData)))
         QtGui.QApplication.clipboard().setMimeData(data)
-
-        return True
 */
-    return false;
+    return true;
 }
 
 bool LayoutVisualMode::paste()
@@ -236,10 +275,8 @@ bool LayoutVisualMode::paste()
         for serialisationData in topMostSerialisationData:
             manipulator = targetManipulator.getManipulatorByPath(serialisationData.name)
             manipulator.setSelected(True)
-
-        return True
 */
-    return false;
+    return true;
 }
 
 bool LayoutVisualMode::deleteSelected()
@@ -277,20 +314,20 @@ void LayoutVisualMode::showEvent(QShowEvent* event)
                                                                             continuousRendering = settings.getEntry("layout/visual/continuous_rendering").value)
 
         PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(self.getCurrentRootWidget())
+*/
+    hierarchyDockWidget->setEnabled(true);
+    propertiesDockWidget->setEnabled(true);
+    createWidgetDockWidget->setEnabled(true);
+    toolBar->setEnabled(true);
 
-        self.hierarchyDockWidget.setEnabled(True)
-        self.propertiesDockWidget.setEnabled(True)
-        self.createWidgetDockWidget.setEnabled(True)
-        self.toolBar.setEnabled(True)
-        if self.tabbedEditor.editorMenu() is not None:
-            self.tabbedEditor.editorMenu().menuAction().setEnabled(True)
+    //???signal from editor to main window instead of storing ptr here?
+    if (_editorMenu) _editorMenu->menuAction()->setEnabled(true);
 
-        # make sure all the manipulators are in sync to matter what
-        # this is there mainly for the situation when you switch to live preview, then change resolution, then switch
-        # back to visual editing and all manipulators are of different size than they should be
-        if self.scene.rootManipulator is not None:
-            self.scene.rootManipulator.updateFromWidget()
-
+    // Make sure all the manipulators are in sync to matter what
+    // this is there mainly for the situation when you switch to live preview, then change resolution, then switch
+    // back to visual editing and all manipulators are of different size than they should be
+    scene->updateFromWidgets();
+/*
         # connect all our actions
         self.connectionGroup.connectAll()
 
@@ -309,14 +346,17 @@ void LayoutVisualMode::hideEvent(QHideEvent* event)
 
     # disconnected all our actions
     self.connectionGroup.disconnectAll()
+*/
 
-    self.hierarchyDockWidget.setEnabled(False)
-    self.propertiesDockWidget.setEnabled(False)
-    self.createWidgetDockWidget.setEnabled(False)
-    self.toolBar.setEnabled(False)
-    if self.tabbedEditor.editorMenu() is not None:
-        self.tabbedEditor.editorMenu().menuAction().setEnabled(False)
+    hierarchyDockWidget->setEnabled(false);
+    propertiesDockWidget->setEnabled(false);
+    createWidgetDockWidget->setEnabled(false);
+    toolBar->setEnabled(false);
 
+    //???signal from editor to main window instead of storing ptr here?
+    if (_editorMenu) _editorMenu->menuAction()->setEnabled(false);
+
+/*
     mainwindow.MainWindow.instance.ceguiContainerWidget.deactivate(self)
 */
     QWidget::hideEvent(event);
@@ -325,20 +365,6 @@ void LayoutVisualMode::hideEvent(QHideEvent* event)
 /*
     def getCurrentRootWidget(self):
         return self.scene.rootManipulator.widget if self.scene.rootManipulator is not None else None
-
-    def setRootWidgetManipulator(self, manipulator):
-        oldRoot = self.getCurrentRootWidget()
-
-        self.scene.setRootWidgetManipulator(manipulator)
-        self.hierarchyDockWidget.setRootWidgetManipulator(self.scene.rootManipulator)
-
-        PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(self.getCurrentRootWidget())
-
-        if oldRoot:
-            PyCEGUI.WindowManager.getSingleton().destroyWindow(oldRoot)
-
-        # cause full redraw of the default GUI context to ensure nothing gets stuck
-        PyCEGUI.System.getSingleton().getDefaultGUIContext().markAsDirty()
 
     def setRootWidget(self, widget):
         """Sets the root widget we want to edit
@@ -349,28 +375,6 @@ void LayoutVisualMode::hideEvent(QHideEvent* event)
 
         else:
             self.setRootWidgetManipulator(widgethelpers.Manipulator(self, None, widget))
-
-    def notifyWidgetManipulatorsAdded(self, manipulators):
-        self.hierarchyDockWidget.refresh()
-
-    def notifyWidgetManipulatorsRemoved(self, widgetPaths):
-        """We are passing widget paths because manipulators might be destroyed at this point"""
-
-        self.hierarchyDockWidget.refresh()
-
-
-    def focusPropertyInspectorFilterBox(self):
-        """Focuses into property set inspector filter
-
-        This potentially allows the user to just press a shortcut to find properties to edit,
-        instead of having to reach for a mouse.
-        """
-
-        filterBox = self.propertiesDockWidget.inspector.filterBox
-        # selects all contents of the filter so that user can replace that with their search phrase
-        filterBox.selectAll()
-        # sets focus so that typing puts text into the filter box without clicking
-        filterBox.setFocus()
 */
 
 
