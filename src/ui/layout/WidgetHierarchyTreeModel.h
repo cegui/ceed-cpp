@@ -3,15 +3,15 @@
 
 #include "qstandarditemmodel.h"
 
-class WidgetHierarchyDockWidget;
 class WidgetHierarchyItem;
 class LayoutManipulator;
+class LayoutVisualMode;
 
 class WidgetHierarchyTreeModel : public QStandardItemModel
 {
 public:
 
-    WidgetHierarchyTreeModel(WidgetHierarchyDockWidget* dockWidget);
+    WidgetHierarchyTreeModel(LayoutVisualMode& visualMode);
 
     virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
     virtual QMimeData* mimeData(const QModelIndexList& indexes) const override;
@@ -26,7 +26,7 @@ protected:
     bool synchroniseSubtree(WidgetHierarchyItem* item, LayoutManipulator* manipulator, bool recursive = true);
     WidgetHierarchyItem* constructSubtree(LayoutManipulator* manipulator);
 
-    WidgetHierarchyDockWidget* _dockWidget = nullptr;
+    LayoutVisualMode& _visualMode;
 };
 
 #endif // WIDGETHIERARCHYTREEMODEL_H

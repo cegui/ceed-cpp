@@ -330,7 +330,7 @@ void LayoutManipulator::impl_paint(QPainter* painter, const QStyleOptionGraphics
 
 // Finds a unique name for a child widget of the manipulated widget.
 // The resulting name's format is the base with a number appended.
-QString LayoutManipulator::getUniqueChildWidgetName(const QString& base)
+QString LayoutManipulator::getUniqueChildWidgetName(const QString& base) const
 {
     QString candidate = base;
 /*

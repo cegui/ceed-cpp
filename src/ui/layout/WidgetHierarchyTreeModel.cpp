@@ -1,11 +1,15 @@
 #include "src/ui/layout/WidgetHierarchyTreeModel.h"
 #include "src/ui/layout/WidgetHierarchyItem.h"
 #include "src/ui/layout/LayoutManipulator.h"
+#include "src/ui/layout/LayoutScene.h"
+#include "src/editors/layout/LayoutVisualMode.h"
 #include "qmessagebox.h"
 #include "qmimedata.h"
+#include "qinputdialog.h"
+#include <unordered_set>
 
-WidgetHierarchyTreeModel::WidgetHierarchyTreeModel(WidgetHierarchyDockWidget* dockWidget)
-    : _dockWidget(dockWidget)
+WidgetHierarchyTreeModel::WidgetHierarchyTreeModel(LayoutVisualMode& visualMode)
+    : _visualMode(visualMode)
 {
     setSortRole(Qt::UserRole + 1);
     setItemPrototype(new WidgetHierarchyItem(nullptr));
@@ -114,105 +118,138 @@ QStringList WidgetHierarchyTreeModel::mimeTypes() const
 
 bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent)
 {
-/*
+    if (data->hasFormat("application/x-ceed-widget-paths"))
+    {
+        QStringList widgetPaths;
+        QByteArray bytes = data->data("application/x-ceed-widget-paths");
+        QDataStream stream(&bytes, QIODevice::ReadOnly);
+        while (!stream.atEnd())
+        {
+            QString name;
+            stream >> name;
+            widgetPaths.append(name);
+        }
 
-    def dropMimeData(self, data, action, row, column, parent):
-        if data.hasFormat("application/x-ceed-widget-paths"):
-            # data.data(..).data() looks weird but is the correct thing!
-            widgetPaths = cPickle.loads(data.data("application/x-ceed-widget-paths").data())
-            targetWidgetPaths = []
+        auto newParent = itemFromIndex(parent);
+        if (!newParent) return false;
 
-            newParent = self.itemFromIndex(parent)
-            if newParent is None:
-                return False
+        QStringList targetWidgetPaths;
+        std::unordered_set<QString> usedNames;
 
-            newParentManipulator = self.dockWidget.visual.scene.getManipulatorByPath(newParent.data(QtCore.Qt.UserRole))
+        const QString newParentPath = newParent->data(Qt::UserRole).toString();
+        auto newParentManipulator = _visualMode.getScene()->getManipulatorByPath(newParentPath);
+        for (const QString& widgetPath : widgetPaths)
+        {
+            const QString oldWidgetName = widgetPath.mid(widgetPath.lastIndexOf('/') + 1);
 
-            usedNames = set()
-            for widgetPath in widgetPaths:
-                oldWidgetName = widgetPath[widgetPath.rfind("/") + 1:]
-                # Prevent name clashes at the new parent
-                # When a name clash occurs, we suggest a new name to the user and
-                # ask them to confirm it/enter their own.
-                # The tricky part is that we have to consider the other widget renames
-                # too (in case we're reparenting and renaming more than one widget)
-                # and we must prevent invalid names (i.e. containing "/")
-                suggestedName = oldWidgetName
-                while True:
-                    # get a name that's not used in the new parent, trying to keep
-                    # the suggested name (which is the same as the old widget name at
-                    # the beginning)
-                    tempName = newParentManipulator.getUniqueChildWidgetName(suggestedName)
-                    # if the name we got is the same as the one we wanted...
-                    if tempName == suggestedName:
-                        # ...we need to check our own usedNames list too, in case
-                        # another widget we're reparenting has got this name.
-                        counter = 2
-                        while suggestedName in usedNames:
-                            # When this happens, we simply add a numeric suffix to
-                            # the suggested name. The result could theoretically
-                            # collide in the new parent but it's OK because this
-                            # is just a suggestion and will be checked again when
-                            # the 'while' loops.
-                            suggestedName = tempName + str(counter)
-                            counter += 1
-                            error = "Widget name is in use by another widget being " + ("copied" if action == QtCore.Qt.CopyAction else "moved")
+            // Prevent name clashes at the new parent
+            // When a name clash occurs, we suggest a new name to the user and
+            // ask them to confirm it/enter their own.
+            // The tricky part is that we have to consider the other widget renames
+            // too (in case we're reparenting and renaming more than one widget)
+            // and we must prevent invalid names (i.e. containing "/")
+            QString suggestedName = oldWidgetName;
+            QString error;
+            while (true)
+            {
+                // Get a name that's not used in the new parent, trying to keep
+                // the suggested name (which is the same as the old widget name at
+                // the beginning)
+                QString tempName = newParentManipulator->getUniqueChildWidgetName(suggestedName);
 
-                        # if we had no collision, we can keep this name!
-                        if counter == 2:
-                            break
-                    else:
-                        # The new parent had a child with that name already and so
-                        # it gave us a new suggested name.
-                        suggestedName = tempName
-                        error = "Widget name already exists in the new parent"
+                // If the name we got is the same as the one we wanted...
+                if (tempName == suggestedName)
+                {
+                    // ...we need to check our own usedNames list too, in case
+                    // another widget we're reparenting has got this name.
+                    int counter = 2;
+                    while (usedNames.find(suggestedName) != usedNames.end())
+                    {
+                        // When this happens, we simply add a numeric suffix to
+                        // the suggested name. The result could theoretically
+                        // collide in the new parent but it's OK because this
+                        // is just a suggestion and will be checked again when
+                        // the 'while' loops.
+                        suggestedName = tempName + QString::number(counter);
+                        ++counter;
+                        error = QString("Widget name is in use by another widget being ") + ((action == Qt::CopyAction) ? "copied" : "moved");
+                    }
 
-                    # Ask the user to confirm our suggested name or enter a new one
-                    # We do this in a loop because we validate the user input
-                    while True:
-                        suggestedName, ok = QtGui.QInputDialog.getText(
-                                            self.dockWidget,
-                                            error,
-                                            "New name for '" + oldWidgetName + "':",
-                                            QtGui.QLineEdit.Normal,
-                                            suggestedName)
-                        # Abort everything if the user cancels the dialog
-                        if not ok:
-                            return False
-                        # Validate the entered name
-                        suggestedName = widgethelpers.Manipulator.getValidWidgetName(suggestedName)
-                        if suggestedName:
-                            break
-                        error = "Invalid name, please try again"
+                    // If we had no collision, we can keep this name!
+                    if (counter == 2) break;
+                 }
+                 else
+                 {
+                     // The new parent had a child with that name already and so
+                     // it gave us a new suggested name.
+                     suggestedName = tempName;
+                     error = "Widget name already exists in the new parent";
+                 }
 
-                usedNames.add(suggestedName)
-                targetWidgetPaths.append(newParent.data(QtCore.Qt.UserRole) + "/" + suggestedName)
+                 // Ask the user to confirm our suggested name or enter a new one.
+                 // We do this in a loop because we validate the user input.
+                 while (true)
+                 {
+                     bool ok = false;
+                     suggestedName = QInputDialog::getText(
+                                         &_visualMode,
+                                         error,
+                                         "New name for '" + oldWidgetName + "':",
+                                         QLineEdit::Normal,
+                                         suggestedName,
+                                         &ok);
 
-            if action == QtCore.Qt.MoveAction:
+                     // Abort everything if the user cancels the dialog
+                     if (!ok) return false;
+
+                     // Validate the entered name
+                     suggestedName = LayoutManipulator::getValidWidgetName(suggestedName);
+                     if (!suggestedName.isEmpty()) break;
+                     error = "Invalid name, please try again";
+                 }
+             }
+
+            usedNames.insert(suggestedName);
+            targetWidgetPaths.append(newParentPath + "/" + suggestedName);
+        }
+
+        if (action == Qt::MoveAction)
+        {
+            /*
                 cmd = undo.ReparentCommand(self.dockWidget.visual, widgetPaths, targetWidgetPaths)
-                # FIXME: unreadable
                 self.dockWidget.visual.tabbedEditor.undoStack.push(cmd)
+            */
+            return true;
+        }
+        else if (action == Qt::CopyAction)
+        {
+            // FIXME: TODO
+            assert(false && "NOT IMPLEMENTED!!!");
+            return false;
+        }
+    }
+    else if (data->hasFormat("application/x-ceed-widget-type"))
+    {
+        QString widgetType = data->data("application/x-ceed-widget-type").data();
 
-                return True
+        auto parentItem = itemFromIndex(parent);
 
-            elif action == QtCore.Qt.CopyAction:
-                # FIXME: TODO
-                return False
+        // If the drop was at empty space (parentItem is None) the parentItemPath
+        // should be "" if no root item exists, otherwise the name of the root item
+        auto rootManip = _visualMode.getScene()->getRootWidgetManipulator();
+        const QString parentItemPath = parentItem ? parentItem->data(Qt::UserRole).toString() : (rootManip ? rootManip->getWidgetName() : "");
+        LayoutManipulator* parentManipulator = parentItemPath.isEmpty() ? nullptr : _visualMode.getScene()->getManipulatorByPath(parentItemPath);
 
-        elif data.hasFormat("application/x-ceed-widget-type"):
-            widgetType = data.data("application/x-ceed-widget-type").data()
-            parentItem = self.itemFromIndex(parent)
-            # if the drop was at empty space (parentItem is None) the parentItemPath
-            # should be "" if no root item exists, otherwise the name of the root item
-            parentItemPath = parentItem.data(QtCore.Qt.UserRole) if parentItem is not None else self.dockWidget.visual.scene.rootManipulator.widget.getName() if self.dockWidget.visual.scene.rootManipulator is not None else ""
-            parentManipulator = self.dockWidget.visual.scene.getManipulatorByPath(parentItemPath) if parentItemPath else None
-            uniqueName = parentManipulator.getUniqueChildWidgetName(widgetType.rsplit("/", 1)[-1]) if parentManipulator is not None else widgetType.rsplit("/", 1)[-1]
-
+        QString uniqueName = widgetType.mid(widgetType.lastIndexOf('/') + 1);
+        if (parentManipulator) uniqueName = parentManipulator->getUniqueChildWidgetName(uniqueName);
+        /*
             cmd = undo.CreateCommand(self.dockWidget.visual, parentItemPath, widgetType, uniqueName)
             self.dockWidget.visual.tabbedEditor.undoStack.push(cmd)
+        */
 
-            return True
-*/
+        return true;
+    }
+
     return false;
 }
 

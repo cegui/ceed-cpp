@@ -18,6 +18,7 @@ public:
     virtual ~LayoutManipulator() override;
 
     void getChildLayoutManipulators(std::vector<LayoutManipulator*>& outList, bool recursive);
+    QString getUniqueChildWidgetName(const QString& base = "Widget") const;
 
     virtual QPointF constrainMovePoint(QPointF value) override;
     virtual QRectF constrainResizeRect(QRectF rect, QRectF oldRect) override;
@@ -55,7 +56,6 @@ protected:
 
     virtual void impl_paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
 
-    QString getUniqueChildWidgetName(const QString& base = "Widget");
     qreal snapXCoordToGrid(qreal x);
     qreal snapYCoordToGrid(qreal y);
 

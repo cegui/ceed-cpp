@@ -33,7 +33,7 @@ public:
     void zoomOut();
     void zoomReset();
 
-    //LayoutScene* getScene() const { return scene; }
+    LayoutScene* getScene() const { return scene; }
     CreateWidgetDockWidget* getCreateWidgetDockWidget() const { return createWidgetDockWidget; }
     WidgetHierarchyDockWidget* getHierarchyDockWidget() const { return hierarchyDockWidget; }
     QDockWidget* getPropertiesDockWidget() const { return propertiesDockWidget; }
