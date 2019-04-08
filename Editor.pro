@@ -196,3 +196,28 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     data/Resources.qrc
+
+DISTFILES += \
+    data/icons/layout_editing/abs_integers_mode.png \
+    data/icons/layout_editing/absolute_mode.png \
+    data/icons/layout_editing/align_hcentre.png \
+    data/icons/layout_editing/align_hleft.png \
+    data/icons/layout_editing/align_hright.png \
+    data/icons/layout_editing/align_vbottom.png \
+    data/icons/layout_editing/align_vcentre.png \
+    data/icons/layout_editing/align_vtop.png \
+    data/icons/layout_editing/focus_property_inspector_filter_box.png \
+    data/icons/layout_editing/lock_widget.png \
+    data/icons/layout_editing/lock_widget_recursively.png \
+    data/icons/layout_editing/manipulator_locked.png \
+    data/icons/layout_editing/manipulator_unlocked.png \
+    data/icons/layout_editing/move_backward_in_parent_list.png \
+    data/icons/layout_editing/move_forward_in_parent_list.png \
+    data/icons/layout_editing/normalise_position.png \
+    data/icons/layout_editing/normalise_size.png \
+    data/icons/layout_editing/rename.png \
+    data/icons/layout_editing/round_position.png \
+    data/icons/layout_editing/round_size.png \
+    data/icons/layout_editing/snap_grid.png \
+    data/icons/layout_editing/unlock_widget.png \
+    data/icons/layout_editing/unlock_widget_recursively.png

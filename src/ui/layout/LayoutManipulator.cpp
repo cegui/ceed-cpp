@@ -1,9 +1,11 @@
 #include "src/ui/layout/LayoutManipulator.h"
+#include "src/editors/layout/LayoutVisualMode.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
 #include "qpen.h"
 #include "qgraphicssceneevent.h"
 #include "qmimedata.h"
+#include "qaction.h"
 
 // Returns a valid CEGUI widget name out of the supplied name, if possible. Returns empty string if
 // the supplied name is invalid and can't be converted to a valid name (an empty string for example).
@@ -14,22 +16,13 @@ QString LayoutManipulator::getValidWidgetName(const QString& name)
     return trimmed.replace("/", "_");
 }
 
+//!!!arg: widget!
 LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, bool recursive, bool skipAutoWidgets)
-    : CEGUIManipulator(parent, recursive, skipAutoWidgets)
+    : CEGUIManipulator(parent, recursive, skipAutoWidgets)//!!!arg: widget!
     , _visualMode(visualMode)
 {
     setAcceptDrops(true);
-/*
-    def __init__(self, visual, parent, widget, recursive = True, skipAutoWidgets = False):
-        super(Manipulator, self).__init__(parent, widget, recursive, skipAutoWidgets)
-
-        self.snapGridAction = action.getAction("layout/snap_grid")
-
-        self.absoluteModeAction = action.getAction("layout/absolute_mode")
-        self.absoluteModeAction.toggled.connect(self.slot_absoluteModeToggled)
-
-        self.absoluteIntegersOnlyModeAction = action.getAction("layout/abs_integers_mode")
-*/
+    QObject::connect(_visualMode.getAbsoluteModeAction(), &QAction::toggled, this, &LayoutManipulator::slot_absoluteModeToggled);
 }
 
 LayoutManipulator::~LayoutManipulator()
@@ -209,18 +202,12 @@ bool LayoutManipulator::preventManipulatorOverlap() const
 
 bool LayoutManipulator::useAbsoluteCoordsForMove() const
 {
-    /*
-        return self.absoluteModeAction.isChecked()
-    */
-    return false;
+    return _visualMode.isAbsoluteMode();
 }
 
 bool LayoutManipulator::useAbsoluteCoordsForResize() const
 {
-    /*
-        return self.absoluteModeAction.isChecked()
-    */
-    return false;
+    return _visualMode.isAbsoluteMode();
 }
 
 bool LayoutManipulator::useIntegersForAbsoluteMove() const
@@ -374,6 +361,21 @@ qreal LayoutManipulator::snapYCoordToGrid(qreal y)
     return y;
 }
 
+void LayoutManipulator::slot_absoluteModeToggled(bool /*checked*/)
+{
+    // Immediately update if possible
+    if (_resizeInProgress)
+    {
+        notifyResizeProgress(_lastResizeNewPos, _lastResizeNewRect);
+        update();
+    }
+    if (_moveInProgress)
+    {
+        notifyMoveProgress(_lastMoveNewPos);
+        update();
+    }
+}
+
 /*
     snapGridBrush = None
 
@@ -411,17 +413,6 @@ qreal LayoutManipulator::snapYCoordToGrid(qreal y)
             cls.snapGridBrush.setTexture(texture)
 
         return cls.snapGridBrush
-
-
-    def slot_absoluteModeToggled(self, checked):
-        # immediately update if possible
-        if self.resizeInProgress:
-            self.notifyResizeProgress(self.lastResizeNewPos, self.lastResizeNewRect)
-            self.update()
-
-        if self.moveInProgress:
-            self.notifyMoveProgress(self.lastMoveNewPos)
-            self.update()
 
     def createChildManipulator(self, childWidget, recursive = True, skipAutoWidgets = False):
         ret = Manipulator(self.visual, self, childWidget, recursive, skipAutoWidgets)

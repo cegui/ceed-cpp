@@ -68,5 +68,28 @@
         <file>icons/imageset_editing/edit_offsets.png</file>
         <file>icons/imageset_editing/filter_reset.png</file>
         <file>icons/imageset_editing/focus_image_list_filter_box.png</file>
+        <file>icons/layout_editing/abs_integers_mode.png</file>
+        <file>icons/layout_editing/absolute_mode.png</file>
+        <file>icons/layout_editing/align_hcentre.png</file>
+        <file>icons/layout_editing/align_hleft.png</file>
+        <file>icons/layout_editing/align_hright.png</file>
+        <file>icons/layout_editing/align_vbottom.png</file>
+        <file>icons/layout_editing/align_vcentre.png</file>
+        <file>icons/layout_editing/align_vtop.png</file>
+        <file>icons/layout_editing/focus_property_inspector_filter_box.png</file>
+        <file>icons/layout_editing/lock_widget.png</file>
+        <file>icons/layout_editing/lock_widget_recursively.png</file>
+        <file>icons/layout_editing/manipulator_locked.png</file>
+        <file>icons/layout_editing/manipulator_unlocked.png</file>
+        <file>icons/layout_editing/move_backward_in_parent_list.png</file>
+        <file>icons/layout_editing/move_forward_in_parent_list.png</file>
+        <file>icons/layout_editing/normalise_position.png</file>
+        <file>icons/layout_editing/normalise_size.png</file>
+        <file>icons/layout_editing/rename.png</file>
+        <file>icons/layout_editing/round_position.png</file>
+        <file>icons/layout_editing/round_size.png</file>
+        <file>icons/layout_editing/snap_grid.png</file>
+        <file>icons/layout_editing/unlock_widget.png</file>
+        <file>icons/layout_editing/unlock_widget_recursively.png</file>
     </qresource>
 </RCC>

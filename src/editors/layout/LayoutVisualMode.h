@@ -14,6 +14,7 @@ class WidgetHierarchyDockWidget;
 class QDockWidget;
 class QMenu;
 class QToolBar;
+class QAction;
 
 class LayoutVisualMode : public QWidget, public IEditMode
 {
@@ -38,6 +39,9 @@ public:
     WidgetHierarchyDockWidget* getHierarchyDockWidget() const { return hierarchyDockWidget; }
     QDockWidget* getPropertiesDockWidget() const { return propertiesDockWidget; }
     QToolBar* getToolBar() const { return toolBar; }
+    QAction* getAbsoluteModeAction() const { return absoluteModeAction; }
+
+    bool isAbsoluteMode() const;
 
 protected:
 
@@ -55,6 +59,7 @@ protected:
     QDockWidget* propertiesDockWidget = nullptr;
     QToolBar* toolBar = nullptr;
     QMenu* _editorMenu = nullptr; // Not owned, just stored when we have control over its content
+    QAction* absoluteModeAction = nullptr;
 };
 
 #endif // LAYOUTVISUALMODE_H

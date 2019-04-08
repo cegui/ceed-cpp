@@ -14,7 +14,6 @@ class LayoutEditor : public MultiModeEditor
 {
 public:
 
-    static void createActions(ActionManager& mgr);
     static void createSettings(Settings& mgr);
 
     LayoutEditor(const QString& filePath);

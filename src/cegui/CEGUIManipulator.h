@@ -53,6 +53,10 @@ protected:
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
 
     virtual void impl_paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr);
+
+    QPointF _lastResizeNewPos;
+    QRectF _lastResizeNewRect;
+    QPointF _lastMoveNewPos;
 };
 
 #endif // CEGUIMANIPULATOR_H
