@@ -176,14 +176,14 @@ void LayoutEditor::createSettings(Settings& mgr)
                                   "pen", false, 4));
     secVisual->addEntry(std::move(entry));
 
-    entry.reset(new SettingsEntry(*secVisual, "snap_grid_x", 5.f, "Snap grid cell width (X)",
+    entry.reset(new SettingsEntry(*secVisual, "snap_grid_x", 5, "Snap grid cell width (X)",
                                   "Snap grid X metric.",
-                                  "float", false, 5));
+                                  "int", false, 5));
     secVisual->addEntry(std::move(entry));
 
-    entry.reset(new SettingsEntry(*secVisual, "snap_grid_y", 5.f, "Snap grid cell width (Y)",
+    entry.reset(new SettingsEntry(*secVisual, "snap_grid_y", 5, "Snap grid cell width (Y)",
                                   "Snap grid Y metric.",
-                                  "float", false, 6));
+                                  "int", false, 6));
     secVisual->addEntry(std::move(entry));
 
     entry.reset(new SettingsEntry(*secVisual, "snap_grid_point_colour", QColor(255, 255, 255, 192), "Snap grid point colour",

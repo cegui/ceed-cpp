@@ -5,6 +5,7 @@
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
 #include "src/util/Settings.h"
 #include "src/util/SettingsCategory.h"
+#include "src/util/SettingsEntry.h"
 #include "src/util/ConfigurableAction.h"
 #include "src/Application.h"
 #include "qboxlayout.h"
@@ -48,6 +49,13 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
 
         self.oldViewState = None
 */
+
+    auto onSnapGridSettingsChanged = [this]() { snapGridBrushValid = false; };
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    connect(settings->getEntry("layout/visual/snap_grid_x"), &SettingsEntry::valueChanged, onSnapGridSettingsChanged);
+    connect(settings->getEntry("layout/visual/snap_grid_y"), &SettingsEntry::valueChanged, onSnapGridSettingsChanged);
+    connect(settings->getEntry("layout/visual/snap_grid_point_colour"), &SettingsEntry::valueChanged, onSnapGridSettingsChanged);
+    connect(settings->getEntry("layout/visual/snap_grid_point_shadow_colour"), &SettingsEntry::valueChanged, onSnapGridSettingsChanged);
 }
 
 // arg rootWidget
@@ -110,6 +118,14 @@ void LayoutVisualMode::setRootWidgetManipulator(LayoutManipulator* manipulator)
 */
 }
 
+void LayoutVisualMode::setActionsEnabled(bool enabled)
+{
+    // Weren't in a connection group:
+    //actionAbsoluteMode->setEnabled(enabled);
+    //actionAbsoluteIntegerMode->setEnabled(enabled);
+    //actionSnapGrid->setEnabled(enabled);
+}
+
 void LayoutVisualMode::setupActions()
 {
     Application* app = qobject_cast<Application*>(qApp);
@@ -121,12 +137,28 @@ void LayoutVisualMode::setupActions()
 
     auto mainWindow = app->getMainWindow();
 
-    absoluteModeAction = new ConfigurableAction(mainWindow,
+    actionAbsoluteMode = new ConfigurableAction(mainWindow,
                                                *section, "absolute_mode", "&Absolute Resizing && Moving Deltas",
                                                "When resizing and moving widgets, if checked this makes the delta absolute, it is relative if unchecked.",
                                                QIcon(":/icons/layout_editing/absolute_mode.png"), QKeySequence(Qt::Key_A));
-    absoluteModeAction->setCheckable(true);
-    absoluteModeAction->setChecked(true);
+    actionAbsoluteMode->setCheckable(true);
+    actionAbsoluteMode->setChecked(true);
+
+    actionAbsoluteIntegerMode = new ConfigurableAction(mainWindow,
+                                               *section, "abs_integers_mode", "Only Increase/Decrease by Integers When Moving or Resizing",
+                                               "If checked, while resizing or moving widgets in the editor only integer values (e.g. no"
+                                               "0.25 or 0.5 etc.) will be added to the current absolute values. This is only relevant if editing"
+                                               "in zoomed-in view while 'Absolute Resizing and Moving' is activated.",
+                                               QIcon(":/icons/layout_editing/abs_integers_mode.png"), QKeySequence(Qt::Key_Q));
+    actionAbsoluteIntegerMode->setCheckable(true);
+    actionAbsoluteIntegerMode->setChecked(true);
+
+    actionSnapGrid = new ConfigurableAction(mainWindow,
+                                            *section, "snap_grid", "Snap to &Grid",
+                                            "When resizing and moving widgets, if checked this makes sure they snap to a snap grid (see "
+                                            "settings for snap grid related entries), also shows the snap grid if checked.",
+                                            QIcon(":/icons/layout_editing/snap_grid.png"), QKeySequence(Qt::Key_Space));
+    actionSnapGrid->setCheckable(true);
 
     /*
 
@@ -149,21 +181,6 @@ void LayoutVisualMode::setupActions()
         cat.createAction(name = "align_vbottom", label = "Align &Bottom (vertically)",
                          help_ = "Sets vertical alignment of all selected widgets to bottom.",
                          icon = QtGui.QIcon("icons/layout_editing/align_vbottom.png"))
-
-        cat.createAction(name = "snap_grid", label = "Snap to &Grid",
-                         help_ = "When resizing and moving widgets, if checked this makes sure they snap to a snap grid (see settings for snap grid related entries), also shows the snap grid if checked.",
-                         icon = QtGui.QIcon("icons/layout_editing/snap_grid.png"),
-                         defaultShortcut = QtGui.QKeySequence(QtCore.Qt.Key_Space)).setCheckable(True)
-
-        abs_integers_mode = cat.createAction(
-                         name = "abs_integers_mode", label = "Only Increase/Decrease by Integers When Moving or Resizing",
-                         help_ = "If checked, while resizing or moving widgets in the editor only integer values (e.g. no"
-                                 "0.25 or 0.5 etc.) will be added to the current absolute values. This is only relevant if editing"
-                                 "in zoomed-in view while 'Absolute Resizing and Moving' is activated.",
-                         icon = QtGui.QIcon("icons/layout_editing/abs_integers_mode.png"),
-                         defaultShortcut = QtGui.QKeySequence(QtCore.Qt.Key_Q))
-        abs_integers_mode.setCheckable(True)
-        abs_integers_mode.setChecked(True)
 
         cat.createAction(name = "normalise_position", label = "Normalise &Position (cycle)",
                          help_ = "If the position is mixed (absolute and relative) it becomes relative only, if it's relative it becomes absolute, if it's absolute it becomes relative.",
@@ -222,8 +239,6 @@ void LayoutVisualMode::setupActions()
 
 */
 /*
-        self.connectionGroup = action.ConnectionGroup(action.ActionManager.instance)
-
         # horizontal alignment actions
         self.alignHLeftAction = action.getAction("layout/align_hleft")
         self.connectionGroup.add(self.alignHLeftAction, receiver = lambda: self.scene.alignSelectionHorizontally(PyCEGUI.HA_LEFT))
@@ -421,9 +436,52 @@ void LayoutVisualMode::zoomReset()
     */
 }
 
+// Retrieves a (cached) snap grid brush
+const QBrush& LayoutVisualMode::getSnapGridBrush() const
+{
+    if (snapGridBrushValid) return snapGridBrush;
+
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+
+    auto snapGridX = settings->getEntryValue("layout/visual/snap_grid_x").toInt();
+    auto snapGridY = settings->getEntryValue("layout/visual/snap_grid_y").toInt();
+    QColor snapGridPointColour = settings->getEntryValue("layout/visual/snap_grid_point_colour").value<QColor>();
+    QColor snapGridPointShadowColour = settings->getEntryValue("layout/visual/snap_grid_point_shadow_colour").value<QColor>();
+
+    // If snap grid wasn't created yet or if it's parameters changed, create it anew!
+
+    QPixmap texture(snapGridX, snapGridY);
+    texture.fill(QColor(Qt::transparent));
+
+    QPainter painter(&texture);
+    painter.setPen(QPen(snapGridPointColour));
+    painter.drawPoint(0, 0);
+    painter.setPen(QPen(snapGridPointShadowColour));
+    painter.drawPoint(1, 0);
+    painter.drawPoint(1, 1);
+    painter.drawPoint(0, 1);
+    painter.end();
+
+    snapGridBrush.setTexture(texture);
+
+    snapGridBrushValid = true;
+
+    return snapGridBrush;
+}
+
 bool LayoutVisualMode::isAbsoluteMode() const
 {
-    return absoluteModeAction ? absoluteModeAction->isChecked() : true;
+    return actionAbsoluteMode ? actionAbsoluteMode->isChecked() : true;
+}
+
+bool LayoutVisualMode::isAbsoluteIntegerMode() const
+{
+    return actionAbsoluteIntegerMode ? actionAbsoluteIntegerMode->isChecked() : true;
+}
+
+bool LayoutVisualMode::isSnapGridEnabled() const
+{
+    return actionSnapGrid ? actionSnapGrid->isChecked() : false;
 }
 
 void LayoutVisualMode::showEvent(QShowEvent* event)
@@ -448,10 +506,9 @@ void LayoutVisualMode::showEvent(QShowEvent* event)
     // this is there mainly for the situation when you switch to live preview, then change resolution, then switch
     // back to visual editing and all manipulators are of different size than they should be
     scene->updateFromWidgets();
-/*
-        # connect all our actions
-        self.connectionGroup.connectAll()
 
+    setActionsEnabled(true);
+/*
         if self.oldViewState is not None:
             mainwindow.MainWindow.instance.ceguiContainerWidget.setViewState(self.oldViewState)
     */
@@ -464,10 +521,9 @@ void LayoutVisualMode::hideEvent(QHideEvent* event)
     // Remember our view transform
 /*
     self.oldViewState = mainwindow.MainWindow.instance.ceguiContainerWidget.getViewState()
-
-    # disconnected all our actions
-    self.connectionGroup.disconnectAll()
 */
+
+    setActionsEnabled(false);
 
     hierarchyDockWidget->setEnabled(false);
     propertiesDockWidget->setEnabled(false);

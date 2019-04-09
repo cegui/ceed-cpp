@@ -44,50 +44,47 @@ void LayoutManipulator::getChildLayoutManipulators(std::vector<LayoutManipulator
 
 QPointF LayoutManipulator::constrainMovePoint(QPointF value)
 {
-/*
-    if not self.ignoreSnapGrid and hasattr(self, "snapGridAction") and self.snapGridAction.isChecked()
+    if (!_ignoreSnapGrid && _visualMode.isSnapGridEnabled())
     {
-        parent = self.parentItem()
-        if parent is None:
-            # ad hoc snapping for root widget, it snaps to itself
-            parent = self
+        auto parent = parentItem();
+        if (!parent) parent = this; // Ad hoc snapping for root widget, it snaps to itself
 
-        if isinstance(parent, Manipulator):
-            point = QtCore.QPointF(parent.snapXCoordToGrid(point.x()), parent.snapYCoordToGrid(point.y()))
+        auto parentManip = dynamic_cast<LayoutManipulator*>(parent);
+        if (parentManip)
+            value = QPointF(parentManip->snapXCoordToGrid(value.x()), parentManip->snapYCoordToGrid(value.y()));
     }
-*/
+
     return CEGUIManipulator::constrainMovePoint(value);
 }
 
+static inline bool compareReal(qreal a, qreal b) { return std::abs(a - b) < 0.0001f; }
+
 QRectF LayoutManipulator::constrainResizeRect(QRectF rect, QRectF oldRect)
 {
-/*
     // We constrain all 4 "corners" to the snap grid if needed
-    if not self.ignoreSnapGrid and hasattr(self, "snapGridAction") and self.snapGridAction.isChecked()
+    if (!_ignoreSnapGrid && _visualMode.isSnapGridEnabled())
     {
-        parent = self.parentItem()
-        if parent is None:
-            # ad hoc snapping for root widget, it snaps to itself
-            parent = self
+        auto parent = parentItem();
+        if (!parent) parent = this; // Ad hoc snapping for root widget, it snaps to itself
 
-        if isinstance(parent, Manipulator):
-            # we only snap the coordinates that have changed
-            # because for example when you drag the left edge you don't want the right edge to snap!
-
-            # we have to add the position coordinate as well to ensure the snap is precisely at the guide point
-            # it is subtracted later on because the rect is relative to the item position
-
-            if rect.left() != oldRect.left():
-                rect.setLeft(parent.snapXCoordToGrid(self.pos().x() + rect.left()) - self.pos().x())
-            if rect.top() != oldRect.top():
-                rect.setTop(parent.snapYCoordToGrid(self.pos().y() + rect.top()) - self.pos().y())
-
-            if rect.right() != oldRect.right():
-                rect.setRight(parent.snapXCoordToGrid(self.pos().x() + rect.right()) - self.pos().x())
-            if rect.bottom() != oldRect.bottom():
-                rect.setBottom(parent.snapYCoordToGrid(self.pos().y() + rect.bottom()) - self.pos().y())
+        auto parentManip = dynamic_cast<LayoutManipulator*>(parent);
+        if (parentManip)
+        {
+            // We only snap the coordinates that have changed
+            // because for example when you drag the left edge you don't want the right edge to snap!
+            // We have to add the position coordinate as well to ensure the snap is precisely at the guide point
+            // it is subtracted later on because the rect is relative to the item position
+            if (!compareReal(rect.left(), oldRect.left()))
+                rect.setLeft(parentManip->snapXCoordToGrid(pos().x() + rect.left()) - pos().x());
+            if (!compareReal(rect.top(), oldRect.top()))
+                rect.setTop(parentManip->snapYCoordToGrid(pos().y() + rect.top()) - pos().y());
+            if (!compareReal(rect.right(), oldRect.right()))
+                rect.setRight(parentManip->snapXCoordToGrid(pos().x() + rect.right()) - pos().x());
+            if (!compareReal(rect.bottom(), oldRect.bottom()))
+                rect.setBottom(parentManip->snapYCoordToGrid(pos().y() + rect.bottom()) - pos().y());
+        }
     }
-*/
+
     return CEGUIManipulator::constrainResizeRect(rect, oldRect);
 }
 
@@ -212,18 +209,12 @@ bool LayoutManipulator::useAbsoluteCoordsForResize() const
 
 bool LayoutManipulator::useIntegersForAbsoluteMove() const
 {
-    /*
-        return self.absoluteIntegersOnlyModeAction.isChecked()
-    */
-    return false;
+    return _visualMode.isAbsoluteIntegerMode();
 }
 
 bool LayoutManipulator::useIntegersForAbsoluteResize() const
 {
-    /*
-        return self.absoluteIntegersOnlyModeAction.isChecked()
-    */
-    return false;
+    return _visualMode.isAbsoluteIntegerMode();
 }
 
 void LayoutManipulator::setLocked(bool locked)
@@ -302,17 +293,20 @@ QPen LayoutManipulator::getPenWhileMoving() const
 void LayoutManipulator::impl_paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
     CEGUIManipulator::impl_paint(painter, option, widget);
-/*
-        if self.drawSnapGrid and self.snapGridAction.isChecked():
+
+    if (_drawSnapGrid && _visualMode.isSnapGridEnabled())
+    {
+        /*
             childRect = self.widget.getChildContentArea(self.snapGridNonClientArea).get()
             qChildRect = QtCore.QRectF(childRect.d_min.d_x, childRect.d_min.d_y, childRect.getWidth(), childRect.getHeight())
             qChildRect.translate(-self.scenePos())
 
             painter.save()
             painter.setBrushOrigin(qChildRect.topLeft())
-            painter.fillRect(qChildRect, Manipulator.getSnapGridBrush())
+            painter.fillRect(qChildRect, _visualMode.getSnapGridBrush())
             painter.restore()
-*/
+        */
+    }
 }
 
 // Finds a unique name for a child widget of the manipulated widget.
@@ -377,42 +371,6 @@ void LayoutManipulator::slot_absoluteModeToggled(bool /*checked*/)
 }
 
 /*
-    snapGridBrush = None
-
-    @classmethod
-    def getSnapGridBrush(cls):
-        """Retrieves a (cached) snap grid brush
-        """
-
-        snapGridX = settings.getEntry("layout/visual/snap_grid_x").value
-        snapGridY = settings.getEntry("layout/visual/snap_grid_y").value
-        snapGridPointColour = settings.getEntry("layout/visual/snap_grid_point_colour").value
-        snapGridPointShadowColour = settings.getEntry("layout/visual/snap_grid_point_shadow_colour").value
-
-        # if snap grid wasn't created yet or if it's parameters changed, create it anew!
-        if (cls.snapGridBrush is None) or (cls.snapGridX != snapGridX) or (cls.snapGridY != snapGridY) or (cls.snapGridPointColour != snapGridPointColour) or (cls.snapGridPointShadowColour != snapGridPointShadowColour):
-            cls.snapGridBrush = QtGui.QBrush()
-
-            cls.snapGridX = snapGridX
-            cls.snapGridY = snapGridY
-            cls.snapGridPointColour = snapGridPointColour
-            cls.snapGridPointShadowColour = snapGridPointShadowColour
-
-            texture = QtGui.QPixmap(snapGridX, snapGridY)
-            texture.fill(QtGui.QColor(QtCore.Qt.transparent))
-
-            painter = QtGui.QPainter(texture)
-            painter.setPen(QtGui.QPen(snapGridPointColour))
-            painter.drawPoint(0, 0)
-            painter.setPen(QtGui.QPen(snapGridPointShadowColour))
-            painter.drawPoint(1, 0)
-            painter.drawPoint(1, 1)
-            painter.drawPoint(0, 1)
-            painter.end()
-
-            cls.snapGridBrush.setTexture(texture)
-
-        return cls.snapGridBrush
 
     def createChildManipulator(self, childWidget, recursive = True, skipAutoWidgets = False):
         ret = Manipulator(self.visual, self, childWidget, recursive, skipAutoWidgets)
