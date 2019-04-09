@@ -1,6 +1,8 @@
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutEditor.h"
+#include "src/ui/CEGUIGraphicsView.h"
 #include "src/ui/layout/LayoutScene.h"
+#include "src/ui/layout/LayoutManipulator.h"
 #include "src/ui/layout/CreateWidgetDockWidget.h"
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
 #include "src/util/Settings.h"
@@ -12,6 +14,8 @@
 #include "qgraphicsview.h"
 #include "qtoolbar.h"
 #include "qmenu.h"
+#include "qmimedata.h"
+#include "qclipboard.h"
 
 LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     : IEditMode(editor)
@@ -101,20 +105,20 @@ void LayoutVisualMode::rebuildEditorMenu(QMenu* editorMenu)
 void LayoutVisualMode::setRootWidgetManipulator(LayoutManipulator* manipulator)
 {
 /*
-        oldRoot = self.getCurrentRootWidget()
+    oldRoot = self.getCurrentRootWidget()
 */
 
     scene->setRootWidgetManipulator(manipulator);
     hierarchyDockWidget->setRootWidgetManipulator(manipulator);
 
 /*
-        PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(self.getCurrentRootWidget())
+    PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(self.getCurrentRootWidget())
 
-        if oldRoot:
-            PyCEGUI.WindowManager.getSingleton().destroyWindow(oldRoot)
+    if oldRoot:
+        PyCEGUI.WindowManager.getSingleton().destroyWindow(oldRoot)
 
-        # cause full redraw of the default GUI context to ensure nothing gets stuck
-        PyCEGUI.System.getSingleton().getDefaultGUIContext().markAsDirty()
+    # cause full redraw of the default GUI context to ensure nothing gets stuck
+    PyCEGUI.System.getSingleton().getDefaultGUIContext().markAsDirty()
 */
 }
 
@@ -161,7 +165,6 @@ void LayoutVisualMode::setupActions()
     actionSnapGrid->setCheckable(true);
 
     /*
-
         cat.createAction(name = "align_hleft", label = "Align &Left (horizontally)",
                          help_ = "Sets horizontal alignment of all selected widgets to left.",
                          icon = QtGui.QIcon("icons/layout_editing/align_hleft.png"))
@@ -236,7 +239,6 @@ void LayoutVisualMode::setupActions()
         cat.createAction(name = "recursively_unlock_widget", label = "&Unlock Widget (recursively)",
                          help_ = "Unlocks the widget and all its child widgets for moving and resizing in the visual editing mode.",
                          icon = QtGui.QIcon("icons/layout_editing/unlock_widget_recursively.png"))
-
 */
 /*
         # horizontal alignment actions
@@ -284,10 +286,12 @@ void LayoutVisualMode::setupToolBar()
         self.toolBar.addAction(self.alignVTopAction)
         self.toolBar.addAction(self.alignVCentreAction)
         self.toolBar.addAction(self.alignVBottomAction)
-        self.toolBar.addSeparator() # ---------------------------
-        self.toolBar.addAction(action.getAction("layout/snap_grid"))
-        self.toolBar.addAction(action.getAction("layout/absolute_mode"))
-        self.toolBar.addAction(action.getAction("layout/abs_integers_mode"))
+*/
+    toolBar->addSeparator();
+    toolBar->addAction(actionSnapGrid);
+    toolBar->addAction(actionAbsoluteMode);
+    toolBar->addAction(actionAbsoluteIntegerMode);
+/*
         self.toolBar.addAction(action.getAction("layout/normalise_position"))
         self.toolBar.addAction(action.getAction("layout/normalise_size"))
         self.toolBar.addAction(action.getAction("layout/round_position"))
@@ -325,33 +329,32 @@ bool LayoutVisualMode::cut()
 
 bool LayoutVisualMode::copy()
 {
+    std::vector<LayoutManipulator*> topMostSelected;
+    for (QGraphicsItem* item : scene->selectedItems())
+    {
+        auto manip = dynamic_cast<LayoutManipulator*>(item);
+        if (!manip) continue;
+
+        bool hasAncestorSelected = false;
+        for (QGraphicsItem* item2 : scene->selectedItems())
+        {
+            auto manip2 = dynamic_cast<LayoutManipulator*>(item2);
+            if (!manip2 || manip == manip2) continue;
+
+            if (manip2->isAncestorOf(manip))
+            {
+                hasAncestorSelected = true;
+                break;
+            }
+        }
+
+        if (!hasAncestorSelected) topMostSelected.push_back(manip);
+    }
+
+    if (topMostSelected.empty()) return false;
+
+    // Now we serialize the topmost selected widgets (and thus their entire hierarchies)
 /*
-        topMostSelected = []
-
-        for item in self.scene.selectedItems():
-            if not isinstance(item, widgethelpers.Manipulator):
-                continue
-
-            hasAncestorSelected = False
-
-            for item2 in self.scene.selectedItems():
-                if not isinstance(item2, widgethelpers.Manipulator):
-                    continue
-
-                if item is item2:
-                    continue
-
-                if item2.isAncestorOf(item):
-                    hasAncestorSelected = True
-                    break
-
-            if not hasAncestorSelected:
-                topMostSelected.append(item)
-
-        if len(topMostSelected) == 0:
-            return False
-
-        # now we serialise the top most selected widgets (and thus their entire hierarchies)
         topMostSerialisationData = []
         for wdt in topMostSelected:
             serialisationData = widgethelpers.SerialisationData(self, wdt.widget)
@@ -360,22 +363,23 @@ bool LayoutVisualMode::copy()
             serialisationData.setVisual(None)
 
             topMostSerialisationData.append(serialisationData)
-
-        data = QtCore.QMimeData()
-        data.setData("application/x-ceed-widget-hierarchy-list", QtCore.QByteArray(cPickle.dumps(topMostSerialisationData)))
-        QtGui.QApplication.clipboard().setMimeData(data)
 */
+
+    QMimeData* mimeData = new QMimeData();
+    /*
+    mimeData->setData("application/x-ceed-widget-hierarchy-list", QtCore.QByteArray(cPickle.dumps(topMostSerialisationData)));
+    */
+    QApplication::clipboard()->setMimeData(mimeData);
+
     return true;
 }
 
 bool LayoutVisualMode::paste()
 {
+    const QMimeData* mimeData = QApplication::clipboard()->mimeData();
+    if (!mimeData->hasFormat("application/x-ceed-widget-hierarchy-list")) return false;
+
 /*
-        data = QtGui.QApplication.clipboard().mimeData()
-
-        if not data.hasFormat("application/x-ceed-widget-hierarchy-list"):
-            return False
-
         topMostSerialisationData = cPickle.loads(data.data("application/x-ceed-widget-hierarchy-list").data())
 
         if len(topMostSerialisationData) == 0:
@@ -417,23 +421,17 @@ bool LayoutVisualMode::deleteSelected()
 
 void LayoutVisualMode::zoomIn()
 {
-    /*
-        scene.views()[0].zoomIn()
-    */
+    static_cast<CEGUIGraphicsView*>(scene->views()[0])->zoomIn();
 }
 
 void LayoutVisualMode::zoomOut()
 {
-    /*
-        scene.views()[0].zoomOut()
-    */
+    static_cast<CEGUIGraphicsView*>(scene->views()[0])->zoomOut();
 }
 
 void LayoutVisualMode::zoomReset()
 {
-    /*
-        scene.views()[0].zoomOriginal()
-    */
+    static_cast<CEGUIGraphicsView*>(scene->views()[0])->zoomReset();
 }
 
 // Retrieves a (cached) snap grid brush
@@ -486,7 +484,7 @@ bool LayoutVisualMode::isSnapGridEnabled() const
 
 void LayoutVisualMode::showEvent(QShowEvent* event)
 {
-    /*
+/*
         mainwindow.MainWindow.instance.ceguiContainerWidget.activate(self, self.scene)
         mainwindow.MainWindow.instance.ceguiContainerWidget.setViewFeatures(wheelZoom = True,
                                                                             middleButtonScroll = True,
@@ -511,7 +509,7 @@ void LayoutVisualMode::showEvent(QShowEvent* event)
 /*
         if self.oldViewState is not None:
             mainwindow.MainWindow.instance.ceguiContainerWidget.setViewState(self.oldViewState)
-    */
+*/
 
     QWidget::showEvent(event);
 }
