@@ -1,15 +1,16 @@
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
 #include "ui_WidgetHierarchyDockWidget.h"
+#include "src/editors/layout/LayoutVisualMode.h"
 #include "src/ui/layout/WidgetHierarchyTreeModel.h"
 #include "qevent.h"
 
-WidgetHierarchyDockWidget::WidgetHierarchyDockWidget(QWidget *parent) :
-    QDockWidget(parent),
+WidgetHierarchyDockWidget::WidgetHierarchyDockWidget(LayoutVisualMode& visualMode) :
+    QDockWidget(&visualMode),
     ui(new Ui::WidgetHierarchyDockWidget)
 {
     ui->setupUi(this);
 
-    auto model = new WidgetHierarchyTreeModel(this);
+    auto model = new WidgetHierarchyTreeModel(visualMode);
     ui->treeView->setModel(model);
 }
 

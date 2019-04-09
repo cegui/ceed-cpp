@@ -20,7 +20,7 @@
 LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     : IEditMode(editor)
 {
-    hierarchyDockWidget = new WidgetHierarchyDockWidget(this);
+    hierarchyDockWidget = new WidgetHierarchyDockWidget(*this);
     connect(hierarchyDockWidget, &WidgetHierarchyDockWidget::deleteRequested, [this]()
     {
         if (scene) scene->deleteSelectedWidgets();

@@ -10,6 +10,7 @@
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
 #include "src/ui/layout/CreateWidgetDockWidget.h"
 #include "qmenu.h"
+#include "qtoolbar.h"
 
 LayoutEditor::LayoutEditor(const QString& filePath)
     : MultiModeEditor(/*layout_compatibility.manager, */ filePath)
@@ -56,10 +57,8 @@ void LayoutEditor::activate(MainWindow& mainWindow)
     visualMode->getCreateWidgetDockWidget()->setVisible(true);
     mainWindow.addDockWidget(Qt::RightDockWidgetArea, visualMode->getPropertiesDockWidget());
     visualMode->getPropertiesDockWidget()->setVisible(true);
-/*
-        self.mainWindow.addToolBar(QtCore.Qt.ToolBarArea.TopToolBarArea, self.visual.toolBar)
-        self.visual.toolBar.show()
-*/
+    mainWindow.addToolBar(Qt::ToolBarArea::TopToolBarArea, visualMode->getToolBar());
+    visualMode->getToolBar()->show();
 
     auto editorMenu = mainWindow.getEditorMenu();
     editorMenu->setTitle("&Layout");
@@ -73,9 +72,8 @@ void LayoutEditor::deactivate(MainWindow& mainWindow)
     mainWindow.removeDockWidget(visualMode->getHierarchyDockWidget());
     mainWindow.removeDockWidget(visualMode->getCreateWidgetDockWidget());
     mainWindow.removeDockWidget(visualMode->getPropertiesDockWidget());
-/*
-        self.mainWindow.removeToolBar(self.visual.toolBar)
-*/
+    mainWindow.removeToolBar(visualMode->getToolBar());
+
     MultiModeEditor::deactivate(mainWindow);
 }
 

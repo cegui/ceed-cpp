@@ -10,6 +10,7 @@ class WidgetHierarchyDockWidget;
 }
 
 class LayoutManipulator;
+class LayoutVisualMode;
 
 class WidgetHierarchyDockWidget : public QDockWidget
 {
@@ -17,7 +18,7 @@ class WidgetHierarchyDockWidget : public QDockWidget
 
 public:
 
-    explicit WidgetHierarchyDockWidget(QWidget *parent = nullptr);
+    explicit WidgetHierarchyDockWidget(LayoutVisualMode& visualMode);
     ~WidgetHierarchyDockWidget();
 
     void setRootWidgetManipulator(LayoutManipulator* root);

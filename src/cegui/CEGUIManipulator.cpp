@@ -303,10 +303,11 @@ void CEGUIManipulator::notifyResizeStarted(ResizingHandle* handle)
 void CEGUIManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
 {
     ResizableRectItem::notifyResizeProgress(newPos, newRect);
+
+    // Absolute pixel deltas
 /*
-        # absolute pixel deltas
-        pixelDeltaPos = newPos - self.resizeOldPos
-        pixelDeltaSize = newRect.size() - self.resizeOldRect.size()
+        auto pixelDeltaPos = newPos - _resizeOldPos;
+        auto pixelDeltaSize = newRect.size() - _resizeOldRect.size()
 
         deltaPos = None
         deltaSize = None
