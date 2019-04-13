@@ -1,8 +1,13 @@
 #include "src/ui/layout/LayoutScene.h"
 #include "src/ui/layout/LayoutManipulator.h"
+#include "src/ui/layout/WidgetHierarchyDockWidget.h"
+#include "src/ui/layout/WidgetHierarchyItem.h"
+#include "src/editors/layout/LayoutVisualMode.h"
 #include "qgraphicssceneevent.h"
 #include "qevent.h"
 #include "qmimedata.h"
+#include "qtreeview.h"
+#include "qstandarditemmodel.h"
 
 LayoutScene::LayoutScene(LayoutVisualMode& visualMode)
     : _visualMode(visualMode)
@@ -40,20 +45,16 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
 
 LayoutManipulator* LayoutScene::getManipulatorByPath(const QString& widgetPath) const
 {
-    /*
-    path = widgetPath.split("/", 1)
-    assert(len(path) >= 1)
-
-    if len(path) == 1:
-        assert(path[0] == self.rootManipulator.widget.getName())
-
-        return self.rootManipulator
-
-    else:
-        # path[1] is the remainder of the path
-        return self.rootManipulator.getManipulatorByPath(path[1])
-    */
-    return nullptr;
+    auto sepPos = widgetPath.indexOf('/');
+    if (sepPos < 0)
+    {
+        assert(widgetPath == rootManipulator->getWidgetName());
+        return rootManipulator;
+    }
+    else
+    {
+        return dynamic_cast<LayoutManipulator*>(rootManipulator->getManipulatorByPath(widgetPath.mid(sepPos + 1)));
+    }
 }
 
 void LayoutScene::normalisePositionOfSelectedWidgets()
@@ -156,27 +157,36 @@ void LayoutScene::roundSizeOfSelectedWidgets()
 
 bool LayoutScene::deleteSelectedWidgets()
 {
+    QStringList widgetPaths;
+    for (auto& item : selectedItems())
+    {
+        auto manip = dynamic_cast<LayoutManipulator*>(item);
+        if (manip) widgetPaths.push_back(manip->getWidgetPath());
+    }
+
+    if (!widgetPaths.isEmpty())
+    {
 /*
-        widgetPaths = []
-
-        selection = self.selectedItems()
-        for item in selection:
-            if isinstance(item, widgethelpers.Manipulator):
-                widgetPaths.append(item.widget.getNamePath())
-
-        if len(widgetPaths) > 0:
             cmd = undo.DeleteCommand(self.visual, widgetPaths)
             self.visual.tabbedEditor.undoStack.push(cmd)
 */
-    assert(false);
-    return false;
+    }
+
+    return true;
+}
+
+static void ensureParentIsExpanded(QTreeView* view, QStandardItem* treeItem)
+{
+    view->expand(treeItem->index());
+    if (treeItem->parent())
+        ensureParentIsExpanded(view, treeItem->parent());
 }
 
 void LayoutScene::slot_selectionChanged()
 {
-/*
-        selection = self.selectedItems()
+    auto selection = selectedItems();
 
+/*
         sets = []
         for item in selection:
             wdt = None
@@ -192,31 +202,33 @@ void LayoutScene::slot_selectionChanged()
                 sets.append(wdt)
 
         self.visual.propertiesDockWidget.inspector.setSource(sets)
-
-        def ensureParentIsExpanded(view, treeItem):
-            view.expand(treeItem.index())
-
-            if treeItem.parent():
-                ensureParentIsExpanded(view, treeItem.parent())
-
-        # we always sync the properties dock widget, we only ignore the hierarchy synchro if told so
-        if not self.ignoreSelectionChanges:
-            self.visual.hierarchyDockWidget.ignoreSelectionChanges = True
-
-            self.visual.hierarchyDockWidget.treeView.clearSelection()
-            lastTreeItem = None
-            for item in selection:
-                if isinstance(item, widgethelpers.Manipulator):
-                    if hasattr(item, "treeItem") and item.treeItem is not None:
-                        self.visual.hierarchyDockWidget.treeView.selectionModel().select(item.treeItem.index(), QtGui.QItemSelectionModel.Select)
-                        ensureParentIsExpanded(self.visual.hierarchyDockWidget.treeView, item.treeItem)
-                        lastTreeItem = item.treeItem
-
-            if lastTreeItem is not None:
-                self.visual.hierarchyDockWidget.treeView.scrollTo(lastTreeItem.index())
-
-            self.visual.hierarchyDockWidget.ignoreSelectionChanges = False
 */
+
+    // We always sync the properties dock widget, we only ignore the hierarchy synchro if told so
+    if (!_ignoreSelectionChanges)
+    {
+        _visualMode.getHierarchyDockWidget()->ignoreSelectionChanges(true);
+
+        _visualMode.getHierarchyDockWidget()->getTreeView()->clearSelection();
+
+        auto treeView = _visualMode.getHierarchyDockWidget()->getTreeView();
+
+        QStandardItem* lastTreeItem = nullptr;
+        for (auto& item : selection)
+        {
+            auto manip = dynamic_cast<LayoutManipulator*>(item);
+            if (manip && manip->getTreeItem())
+            {
+                treeView->selectionModel()->select(manip->getTreeItem()->index(), QItemSelectionModel::Select);
+                ensureParentIsExpanded(treeView, manip->getTreeItem());
+                lastTreeItem = manip->getTreeItem();
+            }
+        }
+
+        if (lastTreeItem) treeView->scrollTo(lastTreeItem->index());
+
+        _visualMode.getHierarchyDockWidget()->ignoreSelectionChanges(false);
+    }
 }
 
 void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
@@ -309,8 +321,8 @@ void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
         resizedNewPositions = {}
         resizedNewSizes = {}
 
-        # we have to "expand" the items, adding parents of resizing handles
-        # instead of the handles themselves
+        // We have to "expand" the items, adding parents of resizing handles
+        // instead of the handles themselves
         expandedSelectedItems = []
         for selectedItem in self.selectedItems():
             if isinstance(selectedItem, widgethelpers.Manipulator):

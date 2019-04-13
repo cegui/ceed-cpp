@@ -16,11 +16,18 @@ public:
     ~CEGUIGraphicsView();
 
     void injectInput(bool inject);
+    void setContinuousRendering(bool on) { continuousRendering = on; }
     void updateSelfAndScene();
 
     virtual void drawBackground(QPainter* painter, const QRectF& rect) override;
 
 private:
+
+    virtual void mouseMoveEvent(QMouseEvent* event) override;
+    virtual void mousePressEvent(QMouseEvent* event) override;
+    virtual void mouseReleaseEvent(QMouseEvent* event) override;
+    virtual void keyPressEvent(QKeyEvent* event) override;
+    virtual void keyReleaseEvent(QKeyEvent* event) override;
 
     bool _injectInput = false;
 

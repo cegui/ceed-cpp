@@ -11,6 +11,7 @@ class WidgetHierarchyDockWidget;
 
 class LayoutManipulator;
 class LayoutVisualMode;
+class QTreeView;
 
 class WidgetHierarchyDockWidget : public QDockWidget
 {
@@ -21,10 +22,15 @@ public:
     explicit WidgetHierarchyDockWidget(LayoutVisualMode& visualMode);
     ~WidgetHierarchyDockWidget();
 
+    LayoutVisualMode* getVisualMode() const;
     void setRootWidgetManipulator(LayoutManipulator* root);
     void refresh();
 
     bool isIgnoringSelectionChanges() const { return _ignoreSelectionChanges; }
+    void ignoreSelectionChanges(bool ignore) { _ignoreSelectionChanges = ignore; }
+    void ignoreSelectionChangesInScene(bool ignore);
+
+    QTreeView* getTreeView() const;
 
 signals:
 

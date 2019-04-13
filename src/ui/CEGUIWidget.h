@@ -11,17 +11,34 @@ namespace Ui {
 class CEGUIWidget;
 }
 
+class CEGUIGraphicsScene;
+
 class CEGUIWidget : public QWidget
 {
     Q_OBJECT
 
 public:
 
+    // TODO: use multiple CEGUIWidget instances instead?
+    struct ViewState
+    {
+        QTransform transform;
+        int horizontalScroll;
+        int verticalScroll;
+    };
+
     explicit CEGUIWidget(QWidget* parent = nullptr);
     ~CEGUIWidget();
 
+    void activate(QWidget* newParent, CEGUIGraphicsScene* scene = nullptr);
+    void deactivate(QWidget* oldParent);
+
     void makeOpenGLContextCurrent();
+    void setViewFeatures(bool wheelZoom = false, bool middleButtonScroll = false, bool continuousRendering = true);
     void setInputEnabled(bool enable);
+
+    ViewState getViewState() const;
+    void setViewState(const ViewState& state);
 
 private slots:
 

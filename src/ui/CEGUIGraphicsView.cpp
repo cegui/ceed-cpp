@@ -2,9 +2,9 @@
 #include "src/ui/CEGUIGraphicsScene.h"
 #include "qopenglwidget.h"
 #include "qtimer.h"
+#include "qevent.h"
 
-//!!!subclass of resizable.GraphicsView, cegui.GLContextProvider!
-// TODO: look at resizable.GraphicsView for scrolling & scaling
+//!!!subclass of cegui.GLContextProvider!
 CEGUIGraphicsView::CEGUIGraphicsView(QWidget *parent) :
     ResizableGraphicsView(parent)
 {
@@ -76,19 +76,95 @@ void CEGUIGraphicsView::drawBackground(QPainter *painter, const QRectF &rect)
     }
 }
 
+void CEGUIGraphicsView::mouseMoveEvent(QMouseEvent* event)
+{
+    bool handled = false;
+
+    if (_injectInput)
+    {
+        QPointF point = mapToScene(event->pos());
+/*
+            handled = PyCEGUI.System.getSingleton().getDefaultGUIContext().injectMousePosition(point.x(), point.y())
+*/
+    }
+
+    if (!handled) ResizableGraphicsView::mouseMoveEvent(event);
+}
+
+// FIXME: Somehow, if you drag on the Live preview in layout editing on Linux, it drag moves the whole window
+void CEGUIGraphicsView::mousePressEvent(QMouseEvent* event)
+{
+    bool handled = false;
+
+    if (_injectInput)
+    {
+/*
+            button = self.translateQtMouseButton(event.button())
+            if button is not None:
+                handled = PyCEGUI.System.getSingleton().getDefaultGUIContext().injectMouseButtonDown(button)
+*/
+    }
+
+    if (!handled) ResizableGraphicsView::mousePressEvent(event);
+}
+
+void CEGUIGraphicsView::mouseReleaseEvent(QMouseEvent* event)
+{
+    bool handled = false;
+
+    if (_injectInput)
+    {
+/*
+            button = self.translateQtMouseButton(event.button())
+            if button is not None:
+                handled = PyCEGUI.System.getSingleton().getDefaultGUIContext().injectMouseButtonUp(button)
+*/
+    }
+
+    if (!handled) ResizableGraphicsView::mouseReleaseEvent(event);
+}
+
+void CEGUIGraphicsView::keyPressEvent(QKeyEvent* event)
+{
+    bool handled = false;
+
+    if (_injectInput)
+    {
+/*
+            button = self.translateQtKeyboardButton(event.key())
+
+            if button is not None:
+                handled = PyCEGUI.System.getSingleton().getDefaultGUIContext().injectKeyDown(button)
+
+            char = event.text()
+            if len(char) > 0:
+                handled = handled or PyCEGUI.System.getSingleton().getDefaultGUIContext().injectChar(ord(char[0]))
+*/
+    }
+
+    if (!handled) ResizableGraphicsView::keyPressEvent(event);
+}
+
+void CEGUIGraphicsView::keyReleaseEvent(QKeyEvent* event)
+{
+    bool handled = false;
+
+    if (_injectInput)
+    {
+/*
+            button = self.translateQtKeyboardButton(event.key())
+
+            if button is not None:
+                handled = PyCEGUI.System.getSingleton().getDefaultGUIContext().injectKeyUp(button)
+*/
+    }
+
+    if (!handled) ResizableGraphicsView::keyReleaseEvent(event);
+}
+
 /*
     def makeGLContextCurrent(self):
         self.viewport().makeCurrent()
-
-    def mouseMoveEvent(self, event):
-        handled = False
-
-        if self.injectInput:
-            point = self.mapToScene(QtCore.QPoint(event.x(), event.y()))
-            handled = PyCEGUI.System.getSingleton().getDefaultGUIContext().injectMousePosition(point.x(), point.y())
-
-        if not handled:
-            super(GraphicsView, self).mouseMoveEvent(event)
 
     def translateQtMouseButton(self, button):
         ret = None
@@ -100,35 +176,8 @@ void CEGUIGraphicsView::drawBackground(QPainter *painter, const QRectF &rect)
 
         return ret
 
-    def mousePressEvent(self, event):
-        # FIXME: Somehow, if you drag on the Live preview in layout editing on Linux,
-        #        it drag moves the whole window
-
-        handled = False
-
-        if self.injectInput:
-            button = self.translateQtMouseButton(event.button())
-
-            if button is not None:
-                handled = PyCEGUI.System.getSingleton().getDefaultGUIContext().injectMouseButtonDown(button)
-
-        if not handled:
-            super(GraphicsView, self).mousePressEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        handled = False
-
-        if self.injectInput:
-            button = self.translateQtMouseButton(event.button())
-
-            if button is not None:
-                handled = PyCEGUI.System.getSingleton().getDefaultGUIContext().injectMouseButtonUp(button)
-
-        if not handled:
-            super(GraphicsView, self).mouseReleaseEvent(event)
-
     def translateQtKeyboardButton(self, button):
-        # Shame this isn't standardised :-/ Was a pain to write down
+        // Shame this isn't standardised :-/ Was a pain to write down
 
         if button == QtCore.Qt.Key_Escape:
             return PyCEGUI.Key.Escape
@@ -321,33 +370,5 @@ void CEGUIGraphicsView::drawBackground(QPainter *painter, const QRectF &rect)
         elif button == QtCore.Qt.Key_Z:
             return PyCEGUI.Key.Z
 
-        # The rest are weird keys I refuse to type here
-
-    def keyPressEvent(self, event):
-        handled = False
-
-        if self.injectInput:
-            button = self.translateQtKeyboardButton(event.key())
-
-            if button is not None:
-                handled = PyCEGUI.System.getSingleton().getDefaultGUIContext().injectKeyDown(button)
-
-            char = event.text()
-            if len(char) > 0:
-                handled = handled or PyCEGUI.System.getSingleton().getDefaultGUIContext().injectChar(ord(char[0]))
-
-        if not handled:
-            super(GraphicsView, self).keyPressEvent(event)
-
-    def keyReleaseEvent(self, event):
-        handled = False
-
-        if self.injectInput:
-            button = self.translateQtKeyboardButton(event.key())
-
-            if button is not None:
-                handled = PyCEGUI.System.getSingleton().getDefaultGUIContext().injectKeyUp(button)
-
-        if not handled:
-            super(GraphicsView, self).keyPressEvent(event)
+        // The rest are weird keys I refuse to type here
 */

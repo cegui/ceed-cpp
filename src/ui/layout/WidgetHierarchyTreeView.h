@@ -13,10 +13,14 @@ public:
 
     WidgetHierarchyTreeView(QWidget* parent = nullptr);
 
+    void setupContextMenu();
+
 protected:
 
     virtual void selectionChanged(const QItemSelection& selected, const QItemSelection& deselected) override;
+    virtual void contextMenuEvent(QContextMenuEvent* event) override;
 
+    QMenu* contextMenu = nullptr;
 };
 
 #endif // WIDGETHIERARCHYTREEVIEW_H

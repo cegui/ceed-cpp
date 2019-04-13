@@ -29,6 +29,8 @@ public:
     void roundSizeOfSelectedWidgets();
     bool deleteSelectedWidgets();
 
+    void ignoreSelectionChanges(bool ignore) { _ignoreSelectionChanges = ignore; }
+
 public slots:
 
     void slot_selectionChanged();
@@ -45,7 +47,7 @@ protected:
     LayoutVisualMode& _visualMode;
     LayoutManipulator* rootManipulator = nullptr;
 
-    bool ignoreSelectionChanges = false;
+    bool _ignoreSelectionChanges = false;
 };
 
 #endif // LAYOUTSCENE_H

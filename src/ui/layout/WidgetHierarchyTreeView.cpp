@@ -1,58 +1,24 @@
 #include "src/ui/layout/WidgetHierarchyTreeView.h"
+#include "src/ui/layout/WidgetHierarchyItem.h"
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
+#include "src/ui/layout/LayoutScene.h"
+#include "src/ui/layout/LayoutManipulator.h"
+#include "src/editors/layout/LayoutVisualMode.h"
+#include "qmenu.h"
+#include "qevent.h"
+#include "qstandarditemmodel.h"
 
 WidgetHierarchyTreeView::WidgetHierarchyTreeView(QWidget* parent)
     : QTreeView(parent)
 {
 }
 
-// Synchronizes tree selection with scene selection
-void WidgetHierarchyTreeView::selectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
+void WidgetHierarchyTreeView::setupContextMenu()
 {
-    QTreeView::selectionChanged(selected, deselected);
+    setContextMenuPolicy(Qt::DefaultContextMenu);
 
-    // We are running synchronization the other way, this prevents infinite loops and recursion
-    WidgetHierarchyDockWidget* widget = dynamic_cast<WidgetHierarchyDockWidget*>(parentWidget());
-    if (widget->isIgnoringSelectionChanges()) return;
-
-
+    contextMenu = new QMenu(this);
 /*
-        self.parentWidget.visual.scene.ignoreSelectionChanges = True
-
-        for index in selected.indexes():
-            item = self.model().itemFromIndex(index)
-
-            if isinstance(item, WidgetHierarchyItem):
-                manipulatorPath = item.data(QtCore.Qt.UserRole)
-                manipulator = None
-                if manipulatorPath is not None:
-                    manipulator = self.parentWidget.visual.scene.getManipulatorByPath(manipulatorPath)
-
-                if manipulator is not None:
-                    manipulator.setSelected(True)
-
-        for index in deselected.indexes():
-            item = self.model().itemFromIndex(index)
-
-            if isinstance(item, WidgetHierarchyItem):
-                manipulatorPath = item.data(QtCore.Qt.UserRole)
-                manipulator = None
-                if manipulatorPath is not None:
-                    manipulator = self.parentWidget.visual.scene.getManipulatorByPath(manipulatorPath)
-
-                if manipulator is not None:
-                    manipulator.setSelected(False)
-
-        self.parentWidget.visual.scene.ignoreSelectionChanges = False
-*/
-}
-
-/*
-
-    def setupContextMenu(self):
-        self.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
-
-        self.contextMenu = QtGui.QMenu(self)
 
         self.renameAction = action.getAction("layout/rename")
         self.contextMenu.addAction(self.renameAction)
@@ -83,18 +49,66 @@ void WidgetHierarchyTreeView::selectionChanged(const QItemSelection& selected, c
 
         self.copyNamePathAction = action.getAction("layout/copy_widget_path")
         self.contextMenu.addAction(self.copyNamePathAction)
+*/
+}
 
-    def contextMenuEvent(self, event):
-        selectedIndices = self.selectedIndexes()
+// Synchronizes tree selection with scene selection
+void WidgetHierarchyTreeView::selectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
+{
+    QTreeView::selectionChanged(selected, deselected);
 
-        # TODO: since these actions enabled state depends on the selection,
-        # move the enabling/disabling to a central "selection changed" handler.
-        # The handler should be called on tab activations too because
-        # activating a tab changes the selection, effectively.
-        # We don't touch the cut/copy/paste actions because they're shared
-        # among all editors and disabling them here would disable them
-        # for the other editors too.
-        haveSel = len(selectedIndices) > 0
+    // We are running synchronization the other way, this prevents infinite loops and recursion
+    WidgetHierarchyDockWidget* widget = dynamic_cast<WidgetHierarchyDockWidget*>(parentWidget());
+    if (widget->isIgnoringSelectionChanges()) return;
+
+    widget->ignoreSelectionChangesInScene(true);
+
+    for (auto& index : selected.indexes())
+    {
+        auto item = static_cast<QStandardItemModel*>(model())->itemFromIndex(index);
+
+        auto widgetItem = dynamic_cast<WidgetHierarchyItem*>(item);
+        if (!widgetItem) continue;
+
+        QString manipulatorPath = widgetItem->data(Qt::UserRole).toString();
+        LayoutManipulator* manipulator = nullptr;
+        if (!manipulatorPath.isEmpty())
+            manipulator = widget->getVisualMode()->getScene()->getManipulatorByPath(manipulatorPath);
+
+        if (manipulator) manipulator->setSelected(true);
+    }
+
+    for (auto& index : deselected.indexes())
+    {
+        auto item = static_cast<QStandardItemModel*>(model())->itemFromIndex(index);
+
+        auto widgetItem = dynamic_cast<WidgetHierarchyItem*>(item);
+        if (!widgetItem) continue;
+
+        QString manipulatorPath = widgetItem->data(Qt::UserRole).toString();
+        LayoutManipulator* manipulator = nullptr;
+        if (!manipulatorPath.isEmpty())
+            manipulator = widget->getVisualMode()->getScene()->getManipulatorByPath(manipulatorPath);
+
+        if (manipulator) manipulator->setSelected(false);
+    }
+
+    widget->ignoreSelectionChangesInScene(false);
+}
+
+void WidgetHierarchyTreeView::contextMenuEvent(QContextMenuEvent* event)
+{
+    auto selectedIndices = selectedIndexes();
+
+    // TODO: since these actions enabled state depends on the selection,
+    // move the enabling/disabling to a central "selection changed" handler.
+    // The handler should be called on tab activations too because
+    // activating a tab changes the selection, effectively.
+    // We don't touch the cut/copy/paste actions because they're shared
+    // among all editors and disabling them here would disable them
+    // for the other editors too.
+    const bool hasSelection = !selectedIndices.empty();
+/*
         self.copyNamePathAction.setEnabled(haveSel)
         self.renameAction.setEnabled(haveSel)
 
@@ -104,8 +118,11 @@ void WidgetHierarchyTreeView::selectionChanged(const QItemSelection& selected, c
         self.recursivelyUnlockAction.setEnabled(haveSel)
 
         self.deleteAction.setEnabled(haveSel)
+*/
+    contextMenu->exec(event->globalPos());
+}
 
-        self.contextMenu.exec_(event.globalPos())
+/* Not used even in the original CEED:
 
     def editSelectedWidgetName(self):
         selectedIndices = self.selectedIndexes()
