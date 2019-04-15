@@ -22,7 +22,20 @@ LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem
     , _visualMode(visualMode)
 {
     setAcceptDrops(true);
-    QObject::connect(_visualMode.getAbsoluteModeAction(), &QAction::toggled, this, &LayoutManipulator::slot_absoluteModeToggled);
+    QObject::connect(_visualMode.getAbsoluteModeAction(), &QAction::toggled, [this]
+    {
+        // Immediately update if possible
+        if (_resizeInProgress)
+        {
+            notifyResizeProgress(_lastResizeNewPos, _lastResizeNewRect);
+            update();
+        }
+        if (_moveInProgress)
+        {
+            notifyMoveProgress(_lastMoveNewPos);
+            update();
+        }
+    });
 }
 
 LayoutManipulator::~LayoutManipulator()
@@ -353,21 +366,6 @@ qreal LayoutManipulator::snapYCoordToGrid(qreal y)
         return yOffset + round((y - yOffset) / snapGridY) * snapGridY
 */
     return y;
-}
-
-void LayoutManipulator::slot_absoluteModeToggled(bool /*checked*/)
-{
-    // Immediately update if possible
-    if (_resizeInProgress)
-    {
-        notifyResizeProgress(_lastResizeNewPos, _lastResizeNewRect);
-        update();
-    }
-    if (_moveInProgress)
-    {
-        notifyMoveProgress(_lastMoveNewPos);
-        update();
-    }
 }
 
 /*

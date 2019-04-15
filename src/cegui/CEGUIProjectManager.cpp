@@ -19,6 +19,10 @@ CEGUIProjectManager::CEGUIProjectManager()
     ceguiContainerWidget = new CEGUIWidget(qobject_cast<Application*>(qApp)->getMainWindow());
 }
 
+CEGUIProjectManager::~CEGUIProjectManager()
+{
+}
+
 CEGUIProject* CEGUIProjectManager::createProject(const QString& filePath, bool createResourceDirs)
 {
     //???force unload prev project?

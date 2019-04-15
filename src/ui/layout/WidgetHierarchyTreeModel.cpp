@@ -8,6 +8,17 @@
 #include "qinputdialog.h"
 #include <unordered_set>
 
+namespace std
+{
+template<> struct hash<QString>
+{
+    std::size_t operator()(const QString& s) const
+    {
+        return qHash(s);
+    }
+};
+}
+
 WidgetHierarchyTreeModel::WidgetHierarchyTreeModel(LayoutVisualMode& visualMode)
     : _visualMode(visualMode)
 {

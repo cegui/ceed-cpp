@@ -19,6 +19,7 @@ public:
 
     CEGUIProjectManager();
     CEGUIProjectManager(const CEGUIProjectManager&) = delete;
+    ~CEGUIProjectManager();
 
     CEGUIProjectManager& operator =(const CEGUIProjectManager&) = delete;
 

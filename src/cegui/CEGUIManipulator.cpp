@@ -258,6 +258,7 @@ QSizeF CEGUIManipulator::getMinSize() const
 
         return QtCore.QSizeF(minPixelSize.d_width, minPixelSize.d_height)
 */
+    return QSizeF();
 }
 
 QSizeF CEGUIManipulator::getMaxSize() const
@@ -269,6 +270,7 @@ QSizeF CEGUIManipulator::getMaxSize() const
 
         return QtCore.QSizeF(maxPixelSize.d_width, maxPixelSize.d_height)
 */
+    return QSizeF();
 }
 
 void CEGUIManipulator::notifyHandleSelected(ResizingHandle* handle)

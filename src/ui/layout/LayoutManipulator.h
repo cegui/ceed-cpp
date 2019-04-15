@@ -60,8 +60,6 @@ protected:
     qreal snapXCoordToGrid(qreal x);
     qreal snapYCoordToGrid(qreal y);
 
-    void slot_absoluteModeToggled(bool checked);
-
     LayoutVisualMode& _visualMode;
     WidgetHierarchyItem* _treeItem = nullptr;
     bool _showOutline = true;
