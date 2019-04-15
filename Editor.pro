@@ -97,7 +97,9 @@ SOURCES += \
     src/ui/XMLSyntaxHighlighter.cpp \
     src/ui/layout/WidgetTypeTreeWidget.cpp \
     src/ui/layout/CreateWidgetDockWidget.cpp \
-    src/ui/layout/WidgetHierarchyItem.cpp
+    src/ui/layout/WidgetHierarchyItem.cpp \
+    src/cegui/CEGUIPropertyManager.cpp \
+    src/ui/PropertyInspectorWidget.cpp
 
 HEADERS += \
     src/ui/ProjectManager.h \
@@ -169,7 +171,9 @@ HEADERS += \
     src/ui/XMLSyntaxHighlighter.h \
     src/ui/layout/WidgetTypeTreeWidget.h \
     src/ui/layout/CreateWidgetDockWidget.h \
-    src/ui/layout/WidgetHierarchyItem.h
+    src/ui/layout/WidgetHierarchyItem.h \
+    src/cegui/CEGUIPropertyManager.h \
+    src/ui/PropertyInspectorWidget.h
 
 FORMS += \
     ui/MainWindow.ui \

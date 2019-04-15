@@ -1,184 +1,11 @@
-##############################################################################
-#   CEED - Unified CEGUI asset editor
-#
-#   Copyright (C) 2011-2012   Martin Preisler <martin@preisler.me>
-#                             and contributing authors (see AUTHORS file)
-#
-#   This program is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation, either version 3 of the License, or
-#   (at your option) any later version.
-#
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-##############################################################################
+#include "src/cegui/CEGUIPropertyManager.h"
 
-from PySide import QtCore
-from PySide import QtGui
-from .qtwidgets import LineEditWithClearButton
+CEGUIPropertyManager::CEGUIPropertyManager()
+{
 
-from .propertytree import properties
-from .propertytree import ui as ptUi
-from .propertytree import utility as ptUtility
+}
 
-from ceed.cegui import ceguitypes as ct
-
-from collections import OrderedDict
-
-import PyCEGUI
-
-
-class PropertyInspectorWidget(QtGui.QWidget):
-    """Full blown inspector widget for CEGUI PropertySet(s).
-
-    Requires a call to 'setPropertyManager()' before
-    it can show properties via 'setPropertySets'.
-    """
-
-    def __init__(self, parent=None):
-        super(PropertyInspectorWidget, self).__init__(parent)
-
-        layout = QtGui.QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
-
-        # if the filter starts with this, we only show modified properties
-        self.modifiedFilterPrefix = "*"
-        self.filterBox = LineEditWithClearButton()
-        self.filterBox.setPlaceholderText("Filter (prefix with '{}' to show modified)".format(self.modifiedFilterPrefix))
-        self.filterBox.textChanged.connect(self.filterChanged)
-
-        self.selectionLabel = QtGui.QLabel();
-        self.selectionLabel.setAlignment(QtCore.Qt.AlignCenter)
-        self.selectionLabel.setFrameStyle(QtGui.QFrame.StyledPanel)
-        self.selectionLabel.setFrameShadow(QtGui.QFrame.Sunken)
-
-        self.selectionObjectPath = ""
-        self.selectionObjectDescription = "Nothing is selected."
-        self.selectionLabelTooltip = ""
-
-        self.ptree = ptUi.PropertyTreeWidget()
-        """ :type : PropertyTreeWidget"""
-
-        layout.addWidget(self.selectionLabel)
-        layout.addWidget(self.filterBox)
-        layout.addWidget(self.ptree)
-
-        # set the minimum size to a reasonable value for this widget
-        self.setMinimumSize(200, 200)
-
-        self.propertyManager = None
-
-        self.currentSource = []
-
-    def sizeHint(self):
-        # we'd rather have this size
-        return QtCore.QSize(400, 600)
-
-    def filterChanged(self, filterText):
-        if filterText and filterText.startswith(self.modifiedFilterPrefix):
-            self.ptree.setFilter(filterText[len(self.modifiedFilterPrefix):], True)
-        else:
-            self.ptree.setFilter(filterText)
-
-    def setPropertyManager(self, propertyManager):
-        self.propertyManager = propertyManager
-
-    def resizeEvent(self, QResizeEvent):
-        self.updateSelectionLabelElidedText()
-
-        super(PropertyInspectorWidget, self).resizeEvent(QResizeEvent)
-
-    @staticmethod
-    def generateLabelForSet(ceguiPropertySet):
-        # We do not know what the property set is but we can take a few informed
-        # guesses. Most likely it will be a CEGUI::Window.
-
-        if isinstance(ceguiPropertySet, PyCEGUI.Window):
-            return ceguiPropertySet.getNamePath(), ceguiPropertySet.getType()
-        else:
-            return "", "Unknown PropertySet"
-
-    def setSource(self, source):
-
-        #We check what kind of source we are dealing with
-        if type(source) is list:
-            if len(source) == 0:
-                self.selectionObjectPath = ""
-                self.selectionObjectDescription = "Nothing is selected."
-                self.selectionLabelTooltip = ""
-
-            elif len(source) == 1:
-                self.selectionObjectPath, self.selectionObjectDescription = PropertyInspectorWidget.generateLabelForSet(source[0])
-
-                selectionInfoTuple = (self.selectionObjectPath, self.selectionObjectDescription)
-                self.selectionLabelTooltip = " : ".join(selectionInfoTuple)
-
-            else:
-                tooltip = ""
-                for ceguiPropertySet in source:
-                    path, typeName = PropertyInspectorWidget.generateLabelForSet(ceguiPropertySet)
-                
-                    selectionInfoTuple = (path, typeName)
-                    joinedPathAndName = " : ".join(selectionInfoTuple)
-                    tooltip += joinedPathAndName + "\n"
-
-                self.selectionObjectPath = ""
-                self.selectionObjectDescription = "Multiple selections..."
-                self.selectionLabelTooltip = tooltip.rstrip('\n')
-
-        else:
-            #Otherwise it must be a FalagardElement
-            from ceed.editors.looknfeel.hierarchy_tree_item import LookNFeelHierarchyItem
-            falagardEleName, falagardEleTooltip = LookNFeelHierarchyItem.getNameAndToolTip(source, "")
-            self.selectionObjectPath = ""
-            self.selectionObjectDescription = falagardEleName
-            self.selectionLabelTooltip = falagardEleTooltip
-
-        self.updateSelectionLabelElidedText()
-
-        categories = self.propertyManager.buildCategories(source)
-
-        # load them into the tree
-        self.ptree.load(categories)
-
-        self.currentSource = source
-
-    def getSources(self):
-        return self.currentSource
-
-
-    def updateSelectionLabelElidedText(self):
-        """
-        Shortens the window/widget path so that the whole text will fit into the label. The beginning of the, if necessary, cut-off path text will be "...".
-        """
-
-        adjustedSelectionObjectPath = ""
-        if self.selectionObjectPath:
-            adjustedSelectionObjectPath = self.selectionObjectPath + " : "
-
-        fontMetrics = self.selectionLabel.fontMetrics()
-        labelWidth = self.selectionLabel.size().width()
-        objectDescriptionWidth = fontMetrics.width(self.selectionObjectDescription)
-        objectPathWidth = fontMetrics.width(adjustedSelectionObjectPath)
-        margin = 6
-        minWidthTakenByPath = 20
-
-        if labelWidth > objectDescriptionWidth + objectPathWidth:
-            finalText = adjustedSelectionObjectPath + self.selectionObjectDescription
-        elif labelWidth < minWidthTakenByPath + objectDescriptionWidth:
-            finalText = fontMetrics.elidedText(self.selectionObjectDescription, QtCore.Qt.ElideRight, labelWidth - margin)
-        else:
-            alteredPathText = fontMetrics.elidedText(adjustedSelectionObjectPath, QtCore.Qt.ElideLeft, labelWidth - margin - objectDescriptionWidth)
-            finalText = alteredPathText + self.selectionObjectDescription
-
-        self.selectionLabel.setText(finalText)
-        self.selectionLabel.setToolTip(self.selectionLabelTooltip)
+/*
 
 class CEGUIPropertyManager(object):
     """Builds propertytree properties from CEGUI properties and PropertySets,
@@ -193,23 +20,23 @@ class CEGUIPropertyManager(object):
         "float": float,
         "bool": bool,
         "String": unicode,
-        "USize": ct.USize,
-        "UVector2": ct.UVector2,
-        "URect": ct.URect,
-        "AspectMode": ct.AspectMode,
-        "HorizontalAlignment": ct.HorizontalAlignment,
-        "VerticalAlignment": ct.VerticalAlignment,
-        "WindowUpdateMode": ct.WindowUpdateMode,
-        "Quaternion": ct.Quaternion,
-        "HorizontalFormatting": ct.HorizontalFormatting,
-        "VerticalFormatting": ct.VerticalFormatting,
-        "HorizontalTextFormatting": ct.HorizontalTextFormatting,
-        "VerticalTextFormatting": ct.VerticalTextFormatting,
-        "SortMode": ct.SortMode,
-        "Colour": ct.Colour,
-        "ColourRect": ct.ColourRect,
-        "Font": ct.FontRef,
-        "Image": ct.ImageRef
+        "USize": ceguitypes.USize,
+        "UVector2": ceguitypes.UVector2,
+        "URect": ceguitypes.URect,
+        "AspectMode": ceguitypes.AspectMode,
+        "HorizontalAlignment": ceguitypes.HorizontalAlignment,
+        "VerticalAlignment": ceguitypes.VerticalAlignment,
+        "WindowUpdateMode": ceguitypes.WindowUpdateMode,
+        "Quaternion": ceguitypes.Quaternion,
+        "HorizontalFormatting": ceguitypes.HorizontalFormatting,
+        "VerticalFormatting": ceguitypes.VerticalFormatting,
+        "HorizontalTextFormatting": ceguitypes.HorizontalTextFormatting,
+        "VerticalTextFormatting": ceguitypes.VerticalTextFormatting,
+        "SortMode": ceguitypes.SortMode,
+        "Colour": ceguitypes.Colour,
+        "ColourRect": ceguitypes.ColourRect,
+        "Font": ceguitypes.FontRef,
+        "Image": ceguitypes.ImageRef
     }
     # TODO: Font*, Image*, UBox?
 
@@ -240,7 +67,7 @@ class CEGUIPropertyManager(object):
         Return the categories, ready to be loaded into an Inspector Widget.
         """
         propertyList = self.buildProperties(ceguiPropertySets)
-        categories = properties.PropertyCategory.categorisePropertyList(propertyList)
+        categories = .propertytree.PropertyCategory.categorisePropertyList(propertyList)
 
         # sort properties in categories
         for cat in categories.values():
@@ -313,7 +140,7 @@ class CEGUIPropertyManager(object):
         return ptProps
 
     @staticmethod
-    def createProperty(ceguiProperty, ceguiSets, propertyMap, multiWrapperType=properties.MultiPropertyWrapper):
+    def createProperty(ceguiProperty, ceguiSets, propertyMap, multiWrapperType=.propertytree.MultiPropertyWrapper):
         """Create one MultiPropertyWrapper based property for the CEGUI Property
         for all of the PropertySets specified.
         """
@@ -336,7 +163,7 @@ class CEGUIPropertyManager(object):
         # and the Property type to use.
         valueCreator = None
 
-        if issubclass(pythonDataType, ct.Base):
+        if issubclass(pythonDataType, ceguitypes.Base):
             # if it is a subclass of our ceguitypes, do some special handling
             valueCreator = pythonDataType.fromString
             propertyType = pythonDataType.getPropertyType()
@@ -344,10 +171,10 @@ class CEGUIPropertyManager(object):
             if pythonDataType is bool:
                 # The built-in bool parses "false" as True
                 # so we replace the default value creator.
-                valueCreator = ptUtility.boolFromString
+                valueCreator = .propertytree.utility.boolFromString
             else:
                 valueCreator = pythonDataType
-            propertyType = properties.Property
+            propertyType = .propertytree.Property
 
         value = None
         defaultValue = None
@@ -413,4 +240,4 @@ class CEGUIPropertyManager(object):
                 continue
 
             for _, callback in ceguiPropertySet.propertyManagerCallbacks.iteritems():
-                callback()
+                callback()*/
