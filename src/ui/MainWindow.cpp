@@ -33,6 +33,11 @@
 #include "src/ui/FileSystemBrowser.h"
 #include "src/ui/UndoViewer.h"
 
+//!!!DBG TMP!
+#include "QtnProperty/PropertyWidget.h"
+#include "QtnProperty/Core/PropertyDouble.h"
+#include "QtnProperty/GUI/PropertyQColor.h"
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -105,6 +110,34 @@ MainWindow::MainWindow(QWidget *parent) :
     undoViewer = new UndoViewer(this);
     undoViewer->setVisible(false);
     addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, undoViewer);
+
+    //!!!DBG TMP!
+    auto propertyDockWidget = new QDockWidget(this);
+    propertyDockWidget->setObjectName("Property dock widget");
+    propertyDockWidget->setWindowTitle("Properties");
+    auto propertyWidget = new QtnPropertyWidget();
+    auto contentsWidget = new QWidget();
+    auto contentsLayout = new QVBoxLayout(contentsWidget);
+    auto margins = contentsLayout->contentsMargins();
+    margins.setTop(0);
+    contentsLayout->setContentsMargins(margins);
+    contentsLayout->addWidget(propertyWidget);
+    propertyDockWidget->setWidget(contentsWidget);
+    addDockWidget(Qt::DockWidgetArea::RightDockWidgetArea, propertyDockWidget);
+    auto propertySet = new QtnPropertySet(this);
+    auto floatValue = new QtnPropertyDouble(propertySet);
+    floatValue->setName(tr("Value"));
+    floatValue->setDescription(tr("Float value"));
+    floatValue->setMaxValue(1.0);
+    floatValue->setMinValue(0.0);
+    floatValue->setStepValue(0.1);
+    floatValue->setValue(0.3);
+    auto textColor = new QtnPropertyQColor(propertySet);
+    textColor->setName(tr("TextColor"));
+    textColor->setDescription(tr("Foreground text color"));
+    textColor->setValue(QColor(0, 0, 0));
+    propertyWidget->setPropertySet(propertySet);
+    //!!!END DBG TMP!
 
     ui->actionStatusbar->setChecked(statusBar()->isVisible());
 

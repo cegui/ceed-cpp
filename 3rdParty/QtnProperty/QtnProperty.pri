@@ -1,3 +1,5 @@
+BIN_DIR = $$PWD/build/Debug/bin # Modification for CEED-CPP (until I manage to set it up correctly)
+
 QTNPROPERTY_PATH = $$PWD
 
 isEmpty(QTNPROPERTY_LIB) {
