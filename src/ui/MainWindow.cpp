@@ -116,6 +116,7 @@ MainWindow::MainWindow(QWidget *parent) :
     propertyDockWidget->setObjectName("Property dock widget");
     propertyDockWidget->setWindowTitle("Properties");
     auto propertyWidget = new QtnPropertyWidget();
+    propertyWidget->setParts(QtnPropertyWidgetPartsDescriptionPanel);
     auto contentsWidget = new QWidget();
     auto contentsLayout = new QVBoxLayout(contentsWidget);
     auto margins = contentsLayout->contentsMargins();
