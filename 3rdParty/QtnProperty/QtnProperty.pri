@@ -18,11 +18,14 @@ SOURCES_CORE += PropertyBase.cpp \
     Core/PropertyFloat.cpp \
     Core/PropertyDouble.cpp \
     Core/PropertyQString.cpp \
-    Core/PropertyQRect.cpp \
     Core/PropertyEnum.cpp \
     Core/PropertyEnumFlags.cpp \
     Core/PropertyQSize.cpp \
     Core/PropertyQPoint.cpp \
+    Core/PropertyQRect.cpp \
+    Core/PropertyQSizeF.cpp \
+    Core/PropertyQPointF.cpp \
+    Core/PropertyQRectF.cpp \
     GUI/PropertyQColor.cpp \
     GUI/PropertyButton.cpp \
     GUI/PropertyQPen.cpp \
@@ -40,17 +43,22 @@ SOURCES_WIDGET += PropertyWidget.cpp \
     Delegates/Core/PropertyDelegateFloat.cpp \
     Delegates/Core/PropertyDelegateDouble.cpp \
     Delegates/Core/PropertyDelegateEnum.cpp \
-    Delegates/Core/PropertyDelegateQRect.cpp \
-    Delegates/Utils/PropertyEditorHandler.cpp \
     Delegates/Core/PropertyDelegateEnumFlags.cpp \
     Delegates/PropertyDelegate.cpp \
     Delegates/PropertyDelegateAux.cpp \
+    Delegates/Utils/PropertyEditorHandler.cpp \
     Delegates/Utils/PropertyDelegatePropertySet.cpp \
     Delegates/Utils/PropertyDelegateSliderBox.cpp \
     Delegates/Utils/PropertyDelegateMisc.cpp \
     Delegates/Utils/PropertyEditorAux.cpp \
+    Delegates/Utils/PropertyDelegateGeoCoord.cpp \
+    Delegates/Utils/PropertyDelegateGeoPoint.cpp \
     Delegates/Core/PropertyDelegateQSize.cpp \
     Delegates/Core/PropertyDelegateQPoint.cpp \
+    Delegates/Core/PropertyDelegateQRect.cpp \
+    Delegates/Core/PropertyDelegateQSizeF.cpp \
+    Delegates/Core/PropertyDelegateQPointF.cpp \
+    Delegates/Core/PropertyDelegateQRectF.cpp \
     Delegates/GUI/PropertyDelegateQFont.cpp \
     Delegates/GUI/PropertyDelegateQColor.cpp \
     Delegates/GUI/PropertyDelegateButton.cpp \
@@ -79,11 +87,14 @@ HEADERS += CoreAPI.h\
     Core/PropertyFloat.h \
     Core/PropertyDouble.h \
     Core/PropertyQString.h \
-    Core/PropertyQRect.h \
     Core/PropertyEnum.h \
     Core/PropertyEnumFlags.h \
     Core/PropertyQSize.h \
     Core/PropertyQPoint.h \
+    Core/PropertyQRect.h \
+    Core/PropertyQSizeF.h \
+    Core/PropertyQPointF.h \
+    Core/PropertyQRectF.h \
     GUI/PropertyQColor.h \
     GUI/PropertyButton.h \
     GUI/PropertyQPen.h \
@@ -98,6 +109,10 @@ HEADERS += PropertyWidgetAPI.h \
     Delegates/Utils/PropertyDelegatePropertySet.h \
     Delegates/Utils/PropertyDelegateSliderBox.h \
     Delegates/Utils/PropertyDelegateMisc.h \
+    Delegates/Utils/PropertyEditorHandler.h \
+    Delegates/Utils/PropertyEditorAux.h \
+    Delegates/Utils/PropertyDelegateGeoCoord.h \
+    Delegates/Utils/PropertyDelegateGeoPoint.h \
     Delegates/PropertyDelegateAux.h \
     Delegates/PropertyDelegateFactory.h \
     Delegates/Core/PropertyDelegateBool.h \
@@ -107,12 +122,13 @@ HEADERS += PropertyWidgetAPI.h \
     Delegates/Core/PropertyDelegateFloat.h \
     Delegates/Core/PropertyDelegateDouble.h \
     Delegates/Core/PropertyDelegateEnum.h \
-    Delegates/Core/PropertyDelegateQRect.h \
-    Delegates/Utils/PropertyEditorHandler.h \
     Delegates/Core/PropertyDelegateEnumFlags.h \
-    Delegates/Utils/PropertyEditorAux.h \
     Delegates/Core/PropertyDelegateQSize.h \
     Delegates/Core/PropertyDelegateQPoint.h \
+    Delegates/Core/PropertyDelegateQRect.h \
+    Delegates/Core/PropertyDelegateQSizeF.h \
+    Delegates/Core/PropertyDelegateQPointF.h \
+    Delegates/Core/PropertyDelegateQRectF.h \
     Delegates/GUI/PropertyDelegateQFont.h \
     Delegates/GUI/PropertyDelegateQColor.h \
     Delegates/GUI/PropertyDelegateButton.h \
