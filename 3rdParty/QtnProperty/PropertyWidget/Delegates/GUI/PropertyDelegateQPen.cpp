@@ -25,6 +25,7 @@
 #include <QPaintEvent>
 
 #include <Core/PropertyInt.h>
+#include <Core/PropertyEnum.h>
 
 #include <GUI/PropertyQColor.h>
 
