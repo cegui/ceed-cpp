@@ -1,35 +1,15 @@
-#CONFIG += qtn_unity_build
-QT += script widgets
+include(../Config.pri)
 
-QTNPROPVERSION = 1.0.0
+TARGET = QtnPropertyWidget
+TEMPLATE = lib
+VERSION = 1.1.0
 
-INCLUDEPATH += $$PWD $$PWD/Core $$PWD/PropertyWidget
+QT += core gui widgets script
+CONFIG += staticlib
+CONFIG += qtn_unity_build
 
-VPATH += $$PWD/Core $$PWD/PropertyWidget
-
-SOURCES_CORE += PropertyBase.cpp \
-    Property.cpp \
-    PropertySet.cpp \
-    Enum.cpp \
-    QObjectPropertySet.cpp \
-    Core/PropertyBool.cpp \
-    Core/PropertyInt.cpp \
-    Core/PropertyUInt.cpp \
-    Core/PropertyFloat.cpp \
-    Core/PropertyDouble.cpp \
-    Core/PropertyQString.cpp \
-    Core/PropertyQRect.cpp \
-    Core/PropertyEnum.cpp \
-    Core/PropertyEnumFlags.cpp \
-    Core/PropertyQSize.cpp \
-    Core/PropertyQPoint.cpp \
-    GUI/PropertyQColor.cpp \
-    GUI/PropertyButton.cpp \
-    GUI/PropertyQPen.cpp \
-    GUI/PropertyQBrush.cpp \
-    GUI/PropertyQFont.cpp
-
-SOURCES_WIDGET += PropertyWidget.cpp \
+qtn_unity_build: SOURCES += QtnPropertyWidgetUnity.cpp
+else: SOURCES += PropertyWidget.cpp \
     PropertyView.cpp \
     Utils/InplaceEditing.cpp \
     Delegates/PropertyDelegateFactory.cpp \
@@ -41,6 +21,7 @@ SOURCES_WIDGET += PropertyWidget.cpp \
     Delegates/Core/PropertyDelegateDouble.cpp \
     Delegates/Core/PropertyDelegateEnum.cpp \
     Delegates/Core/PropertyDelegateQRect.cpp \
+    Delegates/Core/PropertyDelegateQRectF.cpp \
     Delegates/Utils/PropertyEditorHandler.cpp \
     Delegates/Core/PropertyDelegateEnumFlags.cpp \
     Delegates/PropertyDelegate.cpp \
@@ -50,45 +31,17 @@ SOURCES_WIDGET += PropertyWidget.cpp \
     Delegates/Utils/PropertyDelegateMisc.cpp \
     Delegates/Utils/PropertyEditorAux.cpp \
     Delegates/Core/PropertyDelegateQSize.cpp \
+    Delegates/Core/PropertyDelegateQSizeF.cpp \
     Delegates/Core/PropertyDelegateQPoint.cpp \
+    Delegates/Core/PropertyDelegateQPointF.cpp \
     Delegates/GUI/PropertyDelegateQFont.cpp \
     Delegates/GUI/PropertyDelegateQColor.cpp \
-    Delegates/GUI/PropertyDelegateButton.cpp \
     Delegates/GUI/PropertyDelegateQPen.cpp \
     Delegates/GUI/PropertyDelegateQBrush.cpp \
-    Utils/AccessibilityProxy.cpp
-
-qtn_unity_build: SOURCES += $$PWD/QtnPropertyUnity.cpp
-else: SOURCES += $$SOURCES_CORE $$SOURCES_WIDGET
-
-HEADERS += CoreAPI.h\
-    PropertyBase.h \
-    Property.h\
-    PropertySet.h\
-    Enum.h\
-    QObjectPropertySet.h \
-    PropertyCore.h \
-    PropertyGUI.h \
-    Auxiliary/PropertyTemplates.h \
-    Auxiliary/PropertyMacro.h \
-    Auxiliary/PropertyAux.h \
-    Auxiliary/PropertyDelegateInfo.h \
-    Core/PropertyBool.h \
-    Core/PropertyInt.h \
-    Core/PropertyUInt.h \
-    Core/PropertyFloat.h \
-    Core/PropertyDouble.h \
-    Core/PropertyQString.h \
-    Core/PropertyQRect.h \
-    Core/PropertyEnum.h \
-    Core/PropertyEnumFlags.h \
-    Core/PropertyQSize.h \
-    Core/PropertyQPoint.h \
-    GUI/PropertyQColor.h \
-    GUI/PropertyButton.h \
-    GUI/PropertyQPen.h \
-    GUI/PropertyQBrush.h \
-    GUI/PropertyQFont.h
+    Delegates/GUI/PropertyDelegateButton.cpp \
+    Utils/AccessibilityProxy.cpp \
+    Delegates/Utils/PropertyDelegateGeoCoord.cpp \
+    Delegates/Utils/PropertyDelegateGeoPoint.cpp
 
 HEADERS += PropertyWidgetAPI.h \
     PropertyWidget.h \
@@ -108,14 +61,23 @@ HEADERS += PropertyWidgetAPI.h \
     Delegates/Core/PropertyDelegateDouble.h \
     Delegates/Core/PropertyDelegateEnum.h \
     Delegates/Core/PropertyDelegateQRect.h \
+    Delegates/Core/PropertyDelegateQRectF.h \
     Delegates/Utils/PropertyEditorHandler.h \
     Delegates/Core/PropertyDelegateEnumFlags.h \
     Delegates/Utils/PropertyEditorAux.h \
     Delegates/Core/PropertyDelegateQSize.h \
+    Delegates/Core/PropertyDelegateQSizeF.h \
     Delegates/Core/PropertyDelegateQPoint.h \
+    Delegates/Core/PropertyDelegateQPointF.h \
     Delegates/GUI/PropertyDelegateQFont.h \
-    Delegates/GUI/PropertyDelegateQColor.h \
-    Delegates/GUI/PropertyDelegateButton.h \
     Delegates/GUI/PropertyDelegateQPen.h \
     Delegates/GUI/PropertyDelegateQBrush.h \
-    Utils/AccessibilityProxy.h
+    Delegates/GUI/PropertyDelegateQColor.h \
+    Delegates/GUI/PropertyDelegateButton.h \
+    Utils/AccessibilityProxy.h \
+    Delegates/Utils/PropertyDelegateGeoCoord.h \
+    Delegates/Utils/PropertyDelegateGeoPoint.h
+
+LIBS += -L$$BIN_DIR -lQtnPropertyCore
+INCLUDEPATH += $$TOP_SRC_DIR/Core
+
