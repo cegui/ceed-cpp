@@ -46,21 +46,17 @@ PropertyInspectorWidget::PropertyInspectorWidget(QWidget *parent)
 void PropertyInspectorWidget::filterChanged(const QString& filterText)
 {
 /*
-        if filterText and filterText.startswith(self.modifiedFilterPrefix):
-            self.ptree.setFilter(filterText[len(self.modifiedFilterPrefix):], True)
-        else:
-            self.ptree.setFilter(filterText)
+    if (filterText.startsWith(modifiedFilterPrefix))
+        self.ptree.setFilter(filterText.midRef(modifiedFilterPrefix.length()), true);
+    else
+        self.ptree.setFilter(filterText);
 */
 }
 
 void PropertyInspectorWidget::resizeEvent(QResizeEvent* event)
 {
-/*
-    def resizeEvent(self, QResizeEvent):
-        self.updateSelectionLabelElidedText()
-
-        super(PropertyInspectorWidget, self).resizeEvent(QResizeEvent)
-*/
+    updateSelectionLabelElidedText();
+    QWidget::resizeEvent(event);
 }
 
 // Shortens the window/widget path so that the whole text will fit into the label.
