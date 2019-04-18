@@ -1,4 +1,4 @@
-#CONFIG += qtn_unity_build
+CONFIG += qtn_unity_build
 QT += script widgets
 
 QTNPROPVERSION = 1.0.0
