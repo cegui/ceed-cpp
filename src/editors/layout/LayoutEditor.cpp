@@ -55,8 +55,8 @@ void LayoutEditor::activate(MainWindow& mainWindow)
     visualMode->getHierarchyDockWidget()->setVisible(true);
     mainWindow.addDockWidget(Qt::LeftDockWidgetArea, visualMode->getCreateWidgetDockWidget());
     visualMode->getCreateWidgetDockWidget()->setVisible(true);
-    mainWindow.addDockWidget(Qt::RightDockWidgetArea, visualMode->getPropertiesDockWidget());
-    visualMode->getPropertiesDockWidget()->setVisible(true);
+    mainWindow.addDockWidget(Qt::RightDockWidgetArea, mainWindow.getPropertyDockWidget());
+    mainWindow.getPropertyDockWidget()->setVisible(true);
     mainWindow.addToolBar(Qt::ToolBarArea::TopToolBarArea, visualMode->getToolBar());
     visualMode->getToolBar()->show();
 
@@ -71,7 +71,7 @@ void LayoutEditor::deactivate(MainWindow& mainWindow)
 {
     mainWindow.removeDockWidget(visualMode->getHierarchyDockWidget());
     mainWindow.removeDockWidget(visualMode->getCreateWidgetDockWidget());
-    mainWindow.removeDockWidget(visualMode->getPropertiesDockWidget());
+    mainWindow.removeDockWidget(mainWindow.getPropertyDockWidget());
     mainWindow.removeToolBar(visualMode->getToolBar());
 
     MultiModeEditor::deactivate(mainWindow);

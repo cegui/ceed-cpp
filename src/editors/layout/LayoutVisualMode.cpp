@@ -28,18 +28,6 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
 
     createWidgetDockWidget = new CreateWidgetDockWidget(this);
 
-    propertiesDockWidget = new QDockWidget(this);
-    propertiesDockWidget->setObjectName("PropertiesDockWidget");
-    propertiesDockWidget->setWindowTitle("Selection Properties");
-    // Make the dock take as much space as it can vertically
-    propertiesDockWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
-
-/*
-    inspector = PropertyInspectorWidget()
-    inspector.ptree.setupRegistry(PropertyEditorRegistry(True))
-    propertiesDockWidget->setWidget(inspector)
-*/
-
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     setLayout(layout);
@@ -66,8 +54,9 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
 void LayoutVisualMode::initialize()
 {
 /*
+        auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
         pmap = mainwindow.MainWindow.instance.project.propertyMap
-        self.propertiesDockWidget.inspector.setPropertyManager(CEGUIWidgetPropertyManager(pmap, self))
+        mainWindow.propertiesDockWidget.inspector.setPropertyManager(CEGUIWidgetPropertyManager(pmap, self))
 
         self.setRootWidget(rootWidget)
 */
@@ -302,7 +291,7 @@ void LayoutVisualMode::setupToolBar()
 */
 }
 
-//!!!???to PropertyInspectorWidget?
+//!!!???to PropertyWidget / PropertyDockWidget?
 void LayoutVisualMode::focusPropertyInspectorFilterBox()
 {
 /*
@@ -312,7 +301,8 @@ void LayoutVisualMode::focusPropertyInspectorFilterBox()
         instead of having to reach for a mouse.
         """
 
-        filterBox = self.propertiesDockWidget.inspector.filterBox
+        auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
+        filterBox = mainWindow.propertiesDockWidget.inspector.filterBox
         # selects all contents of the filter so that user can replace that with their search phrase
         filterBox.selectAll()
         # sets focus so that typing puts text into the filter box without clicking
@@ -484,6 +474,8 @@ bool LayoutVisualMode::isSnapGridEnabled() const
 
 void LayoutVisualMode::showEvent(QShowEvent* event)
 {
+    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
+
 /*
         mainwindow.MainWindow.instance.ceguiContainerWidget.activate(self, self.scene)
         mainwindow.MainWindow.instance.ceguiContainerWidget.setViewFeatures(wheelZoom = True,
@@ -493,7 +485,7 @@ void LayoutVisualMode::showEvent(QShowEvent* event)
         PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(self.getCurrentRootWidget())
 */
     hierarchyDockWidget->setEnabled(true);
-    propertiesDockWidget->setEnabled(true);
+    mainWindow->getPropertyDockWidget()->setEnabled(true);
     createWidgetDockWidget->setEnabled(true);
     toolBar->setEnabled(true);
 
@@ -516,6 +508,8 @@ void LayoutVisualMode::showEvent(QShowEvent* event)
 
 void LayoutVisualMode::hideEvent(QHideEvent* event)
 {
+    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
+
     // Remember our view transform
 /*
     self.oldViewState = mainwindow.MainWindow.instance.ceguiContainerWidget.getViewState()
@@ -524,7 +518,7 @@ void LayoutVisualMode::hideEvent(QHideEvent* event)
     setActionsEnabled(false);
 
     hierarchyDockWidget->setEnabled(false);
-    propertiesDockWidget->setEnabled(false);
+    mainWindow->getPropertyDockWidget()->setEnabled(false);
     createWidgetDockWidget->setEnabled(false);
     toolBar->setEnabled(false);
 

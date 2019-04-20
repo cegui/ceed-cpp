@@ -201,7 +201,8 @@ void LayoutScene::slot_selectionChanged()
             if wdt is not None and wdt not in sets:
                 sets.append(wdt)
 
-        self.visual.propertiesDockWidget.inspector.setSource(sets)
+        auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
+        mainWindow.propertiesDockWidget.inspector.setSource(sets)
 */
 
     // We always sync the properties dock widget, we only ignore the hierarchy synchro if told so

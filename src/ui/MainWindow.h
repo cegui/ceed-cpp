@@ -25,8 +25,9 @@ class MainWindow : public QMainWindow
 public:
 
     explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    ~MainWindow() override;
 
+    QDockWidget* getPropertyDockWidget() const { return propertyDockWidget; }
     EditorBase* getCurrentEditor() const { return currentEditor; }
     QMenu* getEditorMenu() const;
     QToolBar* createToolbar(const QString& name);
@@ -117,6 +118,7 @@ private:
     ProjectManager* projectManager = nullptr;
     FileSystemBrowser* fsBrowser = nullptr;
     UndoViewer* undoViewer = nullptr;
+    QDockWidget* propertyDockWidget = nullptr;
     SettingsDialog* settingsDialog = nullptr;
     RecentlyUsedMenuEntry* recentlyUsedFiles = nullptr;
     RecentlyUsedMenuEntry* recentlyUsedProjects = nullptr;

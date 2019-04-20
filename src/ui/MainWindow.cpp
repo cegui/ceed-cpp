@@ -104,7 +104,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     auto propertyWidget = new QtnPropertyWidget();
     propertyWidget->setParts(QtnPropertyWidgetPartsDescriptionPanel);
-    auto propertyDockWidget = new QDockWidget("Properties", this);
+    propertyDockWidget = new QDockWidget("Properties", this);
     propertyDockWidget->setObjectName("Property dock widget");
     propertyDockWidget->setWidget(propertyWidget);
     propertyDockWidget->setVisible(false);
