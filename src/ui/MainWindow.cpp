@@ -106,6 +106,7 @@ MainWindow::MainWindow(QWidget *parent) :
     propertyWidget->setParts(QtnPropertyWidgetPartsDescriptionPanel);
     propertyDockWidget = new QDockWidget("Properties", this);
     propertyDockWidget->setObjectName("Property dock widget");
+    propertyDockWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum); // Make the dock take as much space as it can vertically
     propertyDockWidget->setWidget(propertyWidget);
     propertyDockWidget->setVisible(false);
     addDockWidget(Qt::DockWidgetArea::RightDockWidgetArea, propertyDockWidget);
