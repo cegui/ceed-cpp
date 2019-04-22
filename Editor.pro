@@ -205,4 +205,4 @@ RESOURCES += \
 
 # CEGUI integration
 INCLUDEPATH += 3rdParty/CEGUI/include 3rdParty/CEGUI/dependencies/include
-LIBS += -L"$${PWD}/3rdParty/CEGUI/lib" -lCEGUIBase-9999
+LIBS += -L"$${PWD}/3rdParty/CEGUI/lib" -lCEGUIBase-9999 -lCEGUIOpenGLRenderer-9999
