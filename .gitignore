@@ -1,2 +1,3 @@
 /build
 *.pro.user*
+/3rdParty/CEGUI

@@ -4,6 +4,8 @@
 #include "qmessagebox.h"
 #include "qprogressdialog.h"
 #include "qdiriterator.h"
+#include <CEGUI/CEGUI.h>
+#include <CEGUI/RendererModules/OpenGL/GLRenderer.h>
 
 // TODO: one CEGUI widget per editor instead of the global one?
 #include "src/ui/CEGUIWidget.h"
@@ -112,13 +114,13 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
     if (initialized) return;
 
     //???check FBO support here, when OpenGL is initialized? see MainWindow constructor
+    // FBOs are for sure supported at this point because CEED uses them internally
+
+    CEGUI::Exception::setStdErrEnabled(false);
+    CEGUI::OpenGLRenderer::bootstrapSystem(CEGUI::OpenGLRenderer::TextureTargetType::Fbo);
 
     // We don't want CEGUI Exceptions to output to stderr every time they are constructed
     /*
-        PyCEGUI.Exception.setStdErrEnabled(False)
-        # FBOs are for sure supported at this point because CEED uses them internally
-        PyCEGUIOpenGLRenderer.OpenGLRenderer.bootstrapSystem(PyCEGUIOpenGLRenderer.OpenGLRenderer.TTT_FBO)
-
         // Put the resource groups to a reasonable default value, './datafiles' followed by
         // the respective folder, same as CEGUI stock datafiles
         defaultBaseDirectory = os.path.join(os.path.curdir, "datafiles")

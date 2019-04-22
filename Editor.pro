@@ -202,3 +202,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     data/Resources.qrc
+
+# CEGUI integration
+INCLUDEPATH += 3rdParty/CEGUI/include 3rdParty/CEGUI/dependencies/include
+LIBS += -L"$${PWD}/3rdParty/CEGUI/lib" -lCEGUIBase-9999
