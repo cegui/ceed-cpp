@@ -200,9 +200,17 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
+DESTDIR = bin
+
+CONFIG(debug, debug|release) {
+    mac: TARGET = $$join(TARGET,,,_debug)
+    win32: TARGET = $$join(TARGET,,,_d)
+}
+
 RESOURCES += \
     data/Resources.qrc
 
 # CEGUI integration
-INCLUDEPATH += 3rdParty/CEGUI/include 3rdParty/CEGUI/dependencies/include
-LIBS += -L"$${PWD}/3rdParty/CEGUI/lib" -lCEGUIBase-9999 -lCEGUIOpenGLRenderer-9999
+INCLUDEPATH += $$PWD/3rdParty/CEGUI/include $$PWD/3rdParty/CEGUI/dependencies/include
+LIBS += -L"$$PWD/3rdParty/CEGUI/lib" -lCEGUIBase-9999 -lCEGUIOpenGLRenderer-9999
+LIBS += -L"$$PWD/3rdParty/CEGUI/bin" # For DLL search when debugging
