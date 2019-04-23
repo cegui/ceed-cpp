@@ -199,8 +199,8 @@ RESOURCES += \
 # CEGUI integration
 
 INCLUDEPATH += $$PWD/3rdParty/CEGUI/include $$PWD/3rdParty/CEGUI/dependencies/include
-LIBS += -L"$$PWD/3rdParty/CEGUI/lib" -lCEGUIBase-9999 -lCEGUIOpenGLRenderer-9999
 LIBS += -L"$$PWD/3rdParty/CEGUI/bin" # For DLL search when debugging
+LIBS += -L"$$PWD/3rdParty/CEGUI/lib" -lCEGUIBase-9999 -lCEGUIOpenGLRenderer-9999
 
 # Deployment
 
@@ -224,9 +224,19 @@ CONFIG(debug, debug|release) {
     win32: TARGET = $$join(TARGET,,,_d)
 }
 
-win32: DEPLOY_COMMAND = $$shell_quote($$shell_path($$[QT_INSTALL_BINS]/windeployqt)) --no-translations --no-system-d3d-compiler --no-compiler-runtime --no-angle --no-webkit2 --no-opengl-sw --no-svg
+# --no-plugins + static linking?
+# https://doc.qt.io/qt-5/deployment-plugins.html
+# https://doc.qt.io/qt-5/plugins-howto.html#static-plugins
+win32: DEPLOY_COMMAND = $$shell_quote($$shell_path($$[QT_INSTALL_BINS]/windeployqt)) --no-quick-import --no-translations --no-system-d3d-compiler --no-compiler-runtime --no-angle --no-webkit2 --no-opengl-sw --no-svg
 macx: DEPLOY_COMMAND = $$shell_quote($$shell_path($$[QT_INSTALL_BINS]/macdeployqt))
 
 DEPLOY_TARGET = $$shell_quote($$shell_path($$DESTDIR))
 
-!isEmpty(DEPLOY_COMMAND): QMAKE_POST_LINK = $$DEPLOY_COMMAND $$DEPLOY_TARGET
+!isEmpty(DEPLOY_COMMAND): QMAKE_POST_LINK += $$DEPLOY_COMMAND $$DEPLOY_TARGET$$escape_expand(\n\t)
+
+win32 {
+    cegui_dlls.path = $$DESTDIR
+    cegui_dlls.files = $$PWD/3rdParty/CEGUI/bin/*
+    INSTALLS += cegui_dlls
+    QMAKE_POST_LINK += $$quote(nmake install$$escape_expand(\n\t))
+}
