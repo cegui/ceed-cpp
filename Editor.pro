@@ -11,8 +11,6 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = Editor
 TEMPLATE = app
 
-RC_ICONS = data/icons/ceed.ico
-
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which has been marked as deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
@@ -195,22 +193,40 @@ FORMS += \
     ui/layout/WidgetHierarchyDockWidget.ui \
     ui/layout/CreateWidgetDockWidget.ui
 
-# Default rules for deployment.
+RESOURCES += \
+    data/Resources.qrc
+
+# CEGUI integration
+
+INCLUDEPATH += $$PWD/3rdParty/CEGUI/include $$PWD/3rdParty/CEGUI/dependencies/include
+LIBS += -L"$$PWD/3rdParty/CEGUI/lib" -lCEGUIBase-9999 -lCEGUIOpenGLRenderer-9999
+LIBS += -L"$$PWD/3rdParty/CEGUI/bin" # For DLL search when debugging
+
+# Deployment
+
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-DESTDIR = bin
+RC_ICONS = data/icons/ceed.ico
+#MacOS: ICON = myapp.icns
+
+QMAKE_TARGET_COMPANY = "CEGUI team, port by Vladimir 'Niello' Orlov"
+QMAKE_TARGET_COPYRIGHT = "2019 CEGUI team, port by Vladimir 'Niello' Orlov"
+QMAKE_TARGET_PRODUCT = "CEED"
+QMAKE_TARGET_DESCRIPTION = "CEGUI unified editor (CEED)"
+VERSION = 0.0.0
+
+DESTDIR = $$OUT_PWD/bin
 
 CONFIG(debug, debug|release) {
     mac: TARGET = $$join(TARGET,,,_debug)
     win32: TARGET = $$join(TARGET,,,_d)
 }
 
-RESOURCES += \
-    data/Resources.qrc
+win32: DEPLOY_COMMAND = $$shell_quote($$shell_path($$[QT_INSTALL_BINS]/windeployqt)) --no-translations --no-system-d3d-compiler --no-compiler-runtime --no-angle --no-webkit2 --no-opengl-sw --no-svg
+macx: DEPLOY_COMMAND = $$shell_quote($$shell_path($$[QT_INSTALL_BINS]/macdeployqt))
 
-# CEGUI integration
-INCLUDEPATH += $$PWD/3rdParty/CEGUI/include $$PWD/3rdParty/CEGUI/dependencies/include
-LIBS += -L"$$PWD/3rdParty/CEGUI/lib" -lCEGUIBase-9999 -lCEGUIOpenGLRenderer-9999
-LIBS += -L"$$PWD/3rdParty/CEGUI/bin" # For DLL search when debugging
+DEPLOY_TARGET = $$shell_quote($$shell_path($$DESTDIR))
+
+!isEmpty(DEPLOY_COMMAND): QMAKE_POST_LINK = $$DEPLOY_COMMAND $$DEPLOY_TARGET
