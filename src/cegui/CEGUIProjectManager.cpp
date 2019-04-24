@@ -116,34 +116,46 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
     //???check FBO support here, when OpenGL is initialized? see MainWindow constructor
     // FBOs are for sure supported at this point because CEED uses them internally
 
-    CEGUI::Exception::setStdErrEnabled(false);
-    CEGUI::OpenGLRenderer::bootstrapSystem(CEGUI::OpenGLRenderer::TextureTargetType::Fbo);
-
     // We don't want CEGUI Exceptions to output to stderr every time they are constructed
-    /*
-        // Put the resource groups to a reasonable default value, './datafiles' followed by
-        // the respective folder, same as CEGUI stock datafiles
-        defaultBaseDirectory = os.path.join(os.path.curdir, "datafiles")
+    CEGUI::Exception::setStdErrEnabled(false);
+    try
+    {
+        // FIXME: OpenGL context must be set here to initialize renderer
+        //???use OpenGL3Renderer? no FBO in bootstrap, need to look at implementation.
+        CEGUI::OpenGLRenderer::bootstrapSystem(CEGUI::OpenGLRenderer::TextureTargetType::Fbo);
+        //!!!destroySystem to destroy bootstrapped CEGUI!
+    }
+    catch (const std::exception& e)
+    {
+        QMessageBox::warning(nullptr, "Exception", e.what());
+        return;
+    }
 
-        rp = PyCEGUI.System.getSingleton().getResourceProvider()
-        rp.setResourceGroupDirectory("imagesets", os.path.join(defaultBaseDirectory, "imagesets"))
-        rp.setResourceGroupDirectory("fonts", os.path.join(defaultBaseDirectory, "fonts"))
-        rp.setResourceGroupDirectory("schemes", os.path.join(defaultBaseDirectory, "schemes"))
-        rp.setResourceGroupDirectory("looknfeels", os.path.join(defaultBaseDirectory, "looknfeel"))
-        rp.setResourceGroupDirectory("layouts", os.path.join(defaultBaseDirectory, "layouts"))
-        rp.setResourceGroupDirectory("xml_schemas", os.path.join(defaultBaseDirectory, "xml_schemas"))
+    // Put the resource groups to a reasonable default value, './datafiles' followed by
+    // the respective folder, same as CEGUI stock datafiles
+    auto defaultBaseDirectory = QDir(QDir::current().filePath("datafiles"));
 
-        // All this will never be set to anything else again
-        PyCEGUI.ImageManager.setImagesetDefaultResourceGroup("imagesets")
-        PyCEGUI.Font.setDefaultResourceGroup("fonts")
-        PyCEGUI.Scheme.setDefaultResourceGroup("schemes")
-        PyCEGUI.WidgetLookManager.setDefaultResourceGroup("looknfeels")
-        PyCEGUI.WindowManager.setDefaultResourceGroup("layouts")
+    auto resProvider = dynamic_cast<CEGUI::DefaultResourceProvider*>(CEGUI::System::getSingleton().getResourceProvider());
+    if (resProvider)
+    {
+        resProvider->setResourceGroupDirectory("imagesets", defaultBaseDirectory.filePath("imagesets").toLocal8Bit().data());
+        resProvider->setResourceGroupDirectory("fonts", defaultBaseDirectory.filePath("fonts").toLocal8Bit().data());
+        resProvider->setResourceGroupDirectory("schemes", defaultBaseDirectory.filePath("schemes").toLocal8Bit().data());
+        resProvider->setResourceGroupDirectory("looknfeels", defaultBaseDirectory.filePath("looknfeel").toLocal8Bit().data());
+        resProvider->setResourceGroupDirectory("layouts", defaultBaseDirectory.filePath("layouts").toLocal8Bit().data());
+        resProvider->setResourceGroupDirectory("xml_schemas", defaultBaseDirectory.filePath("xml_schemas").toLocal8Bit().data());
+    }
 
-        parser = PyCEGUI.System.getSingleton().getXMLParser()
-        if parser.isPropertyPresent("SchemaDefaultResourceGroup"):
-            parser.setProperty("SchemaDefaultResourceGroup", "xml_schemas")
-    */
+    // All this will never be set to anything else again
+    CEGUI::ImageManager::setImagesetDefaultResourceGroup("imagesets");
+    CEGUI::Font::setDefaultResourceGroup("fonts");
+    CEGUI::Scheme::setDefaultResourceGroup("schemes");
+    CEGUI::WidgetLookManager::setDefaultResourceGroup("looknfeels");
+    CEGUI::WindowManager::setDefaultResourceGroup("layouts");
+
+    auto parser = CEGUI::System::getSingleton().getXMLParser();
+    if (parser && parser->isPropertyPresent("SchemaDefaultResourceGroup"))
+        parser->setProperty("SchemaDefaultResourceGroup", "xml_schemas");
 
     initialized = true;
 }
@@ -212,24 +224,23 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
     progress.setValue(1);
     QApplication::instance()->processEvents();
 
-/*
-    rp = PyCEGUI.System.getSingleton().getResourceProvider()
-    rp.setResourceGroupDirectory("imagesets", project.getAbsolutePathOf(project.imagesetsPath))
-    rp.setResourceGroupDirectory("fonts", project.getAbsolutePathOf(project.fontsPath))
-    rp.setResourceGroupDirectory("schemes", project.getAbsolutePathOf(project.schemesPath))
-    rp.setResourceGroupDirectory("looknfeels", project.getAbsolutePathOf(project.looknfeelsPath))
-    rp.setResourceGroupDirectory("layouts", project.getAbsolutePathOf(project.layoutsPath))
-    rp.setResourceGroupDirectory("xml_schemas", project.getAbsolutePathOf(project.xmlSchemasPath))
-*/
+    auto resProvider = dynamic_cast<CEGUI::DefaultResourceProvider*>(CEGUI::System::getSingleton().getResourceProvider());
+    if (resProvider)
+    {
+        resProvider->setResourceGroupDirectory("imagesets", currentProject->getAbsolutePathOf(currentProject->imagesetsPath).toLocal8Bit().data());
+        resProvider->setResourceGroupDirectory("fonts", currentProject->getAbsolutePathOf(currentProject->fontsPath).toLocal8Bit().data());
+        resProvider->setResourceGroupDirectory("schemes", currentProject->getAbsolutePathOf(currentProject->schemesPath).toLocal8Bit().data());
+        resProvider->setResourceGroupDirectory("looknfeels", currentProject->getAbsolutePathOf(currentProject->looknfeelsPath).toLocal8Bit().data());
+        resProvider->setResourceGroupDirectory("layouts", currentProject->getAbsolutePathOf(currentProject->layoutsPath).toLocal8Bit().data());
+        resProvider->setResourceGroupDirectory("xml_schemas", currentProject->getAbsolutePathOf(currentProject->xmlSchemasPath).toLocal8Bit().data());
+    }
 
     progress.setLabelText("Recreating all schemes...");
     progress.setValue(2);
     QApplication::instance()->processEvents();
 
-/*
-    # we will load resources manually to be able to use the compatibility layer machinery
-    PyCEGUI.SchemeManager.getSingleton().setAutoLoadResources(False)
-*/
+    // We will load resources manually to be able to use the compatibility layer machinery
+    CEGUI::SchemeManager::getSingleton().setAutoLoadResources(false);
 
     bool result = true;
     try
@@ -245,9 +256,10 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
         {
             updateProgress(schemeFile, "Parsing the scheme file");
 
-            /*
-            auto schemeFilePath = currentProject->getResourceFilePath(schemeFile, PyCEGUI.Scheme.getDefaultResourceGroup());
+            auto schemeResourceGroup = CEGUI::String::convertUtf32ToUtf8(CEGUI::Scheme::getDefaultResourceGroup().c_str());
+            auto schemeFilePath = currentProject->getResourceFilePath(schemeFile, schemeResourceGroup.c_str());
 
+            /*
             rawData = open(schemeFilePath, "r").read()
             rawDataType = scheme_compatibility.manager.EditorNativeType
 
@@ -268,17 +280,21 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
                 rawDataType = suitableVersion
 
             nativeData = scheme_compatibility.manager.transform(rawDataType, scheme_compatibility.manager.EditorNativeType, rawData)
-            scheme = PyCEGUI.SchemeManager.getSingleton().createFromString(nativeData)
+            scheme = CEGUI::SchemeManager::getSingleton().createFromString(nativeData)
+            */
 
-            # NOTE: This is very CEGUI implementation specific unfortunately!
-            #
-            #       However I am not really sure how to do this any better.
+            CEGUI::Scheme& scheme = CEGUI::SchemeManager::getSingleton().createFromFile(schemeFilePath.toLocal8Bit().data());
 
-            updateProgress("Loading XML imagesets")
-            xmlImagesetIterator = scheme.getXMLImagesets()
-            while not xmlImagesetIterator.isAtEnd():
+            // NOTE: This is very CEGUI implementation specific unfortunately!
+            //       However I am not really sure how to do this any better.
+            updateProgress(schemeFilePath, "Loading XML imagesets");
+
+            auto xmlImagesetIterator = scheme.getXMLImagesets();
+            while (!xmlImagesetIterator.isAtEnd())
+            {
+                /*
                 loadableUIElement = xmlImagesetIterator.getCurrentValue()
-                imagesetFilePath = project.getResourceFilePath(loadableUIElement.filename, loadableUIElement.resourceGroup if loadableUIElement.resourceGroup != "" else PyCEGUI.ImageManager.getImagesetDefaultResourceGroup())
+                imagesetFilePath = project.getResourceFilePath(loadableUIElement.filename, loadableUIElement.resourceGroup if loadableUIElement.resourceGroup != "" else CEGUI::ImageManager.getImagesetDefaultResourceGroup())
                 imagesetRawData = open(imagesetFilePath, "r").read()
                 imagesetRawDataType = imageset_compatibility.manager.EditorNativeType
 
@@ -300,17 +316,24 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
 
                 imagesetNativeData = imageset_compatibility.manager.transform(imagesetRawDataType, imageset_compatibility.manager.EditorNativeType, imagesetRawData)
 
-                PyCEGUI.ImageManager.getSingleton().loadImagesetFromString(imagesetNativeData)
-                xmlImagesetIterator.next()
+                CEGUI::ImageManager::getSingleton().loadImagesetFromString(imagesetNativeData)
 
-            updateProgress("Loading image file imagesets")
-            scheme.loadImageFileImagesets()
+                */
+                ++xmlImagesetIterator;
+            }
 
-            updateProgress("Loading fonts")
-            fontIterator = scheme.getFonts()
-            while not fontIterator.isAtEnd():
+            updateProgress(schemeFilePath, "Loading image file imagesets");
+
+            scheme.loadImageFileImagesets();
+
+            updateProgress(schemeFilePath, "Loading fonts");
+
+            auto fontIterator = scheme.getFonts();
+            while (!fontIterator.isAtEnd())
+            {
+                /*
                 loadableUIElement = fontIterator.getCurrentValue()
-                fontFilePath = project.getResourceFilePath(loadableUIElement.filename, loadableUIElement.resourceGroup if loadableUIElement.resourceGroup != "" else PyCEGUI.Font.getDefaultResourceGroup())
+                fontFilePath = project.getResourceFilePath(loadableUIElement.filename, loadableUIElement.resourceGroup if loadableUIElement.resourceGroup != "" else CEGUI::Font.getDefaultResourceGroup())
                 fontRawData = open(fontFilePath, "r").read()
                 fontRawDataType = font_compatibility.manager.EditorNativeType
 
@@ -332,14 +355,20 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
 
                 fontNativeData = font_compatibility.manager.transform(fontRawDataType, font_compatibility.manager.EditorNativeType, fontRawData)
 
-                PyCEGUI.FontManager.getSingleton().createFromString(fontNativeData)
-                fontIterator.next()
+                CEGUI::FontManager::getSingleton().createFromString(fontNativeData)
 
-            updateProgress("Loading looknfeels")
-            looknfeelIterator = scheme.getLookNFeels()
-            while not looknfeelIterator.isAtEnd():
+                */
+                ++fontIterator;
+            }
+
+            updateProgress(schemeFilePath, "Loading looknfeels");
+
+            auto looknfeelIterator = scheme.getLookNFeels();
+            while (!looknfeelIterator.isAtEnd())
+            {
+                /*
                 loadableUIElement = looknfeelIterator.getCurrentValue()
-                looknfeelFilePath = project.getResourceFilePath(loadableUIElement.filename, loadableUIElement.resourceGroup if loadableUIElement.resourceGroup != "" else PyCEGUI.WidgetLookManager.getDefaultResourceGroup())
+                looknfeelFilePath = project.getResourceFilePath(loadableUIElement.filename, loadableUIElement.resourceGroup if loadableUIElement.resourceGroup != "" else CEGUI::WidgetLookManager.getDefaultResourceGroup())
                 looknfeelRawData = open(looknfeelFilePath, "r").read()
                 looknfeelRawDataType = looknfeel_compatibility.manager.EditorNativeType
                 try:
@@ -360,18 +389,20 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
 
                 looknfeelNativeData = looknfeel_compatibility.manager.transform(looknfeelRawDataType, looknfeel_compatibility.manager.EditorNativeType, looknfeelRawData)
 
-                PyCEGUI.WidgetLookManager.getSingleton().parseLookNFeelSpecificationFromString(looknfeelNativeData)
-                looknfeelIterator.next()
+                CEGUI::WidgetLookManager::getSingleton().parseLookNFeelSpecificationFromString(looknfeelNativeData)
 
-            updateProgress("Loading window renderer factory modules")
-            scheme.loadWindowRendererFactories()
-            updateProgress("Loading window factories")
-            scheme.loadWindowFactories()
-            updateProgress("Loading factory aliases")
-            scheme.loadFactoryAliases()
-            updateProgress("Loading falagard mappings")
-            scheme.loadFalagardMappings()
-            */
+                */
+                ++looknfeelIterator;
+            }
+
+            updateProgress(schemeFilePath, "Loading window renderer factory modules");
+            scheme.loadWindowRendererFactories();
+            updateProgress(schemeFilePath, "Loading window factories");
+            scheme.loadWindowFactories();
+            updateProgress(schemeFilePath, "Loading factory aliases");
+            scheme.loadFactoryAliases();
+            updateProgress(schemeFilePath, "Loading falagard mappings");
+            scheme.loadFalagardMappings();
         }
     }
     catch (...)
@@ -387,10 +418,8 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
         result = false;
     }
 
-/*
-    # put SchemeManager into the default state again
-    PyCEGUI.SchemeManager.getSingleton().setAutoLoadResources(True)
-*/
+    // Put SchemeManager into the default state again
+    CEGUI::SchemeManager::getSingleton().setAutoLoadResources(true);
 
     progress.reset();
     QApplication::instance()->processEvents();
@@ -402,24 +431,23 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
 void CEGUIProjectManager::cleanCEGUIResources()
 {
     if (!initialized) return;
-/*
-    PyCEGUI.WindowManager.getSingleton().destroyAllWindows()
-    # we need to ensure all windows are destroyed, dangling pointers would
-    # make us segfault later otherwise
-    PyCEGUI.WindowManager.getSingleton().cleanDeadPool()
-    PyCEGUI.FontManager.getSingleton().destroyAll()
-    PyCEGUI.ImageManager.getSingleton().destroyAll()
-    PyCEGUI.SchemeManager.getSingleton().destroyAll()
-    PyCEGUI.WidgetLookManager.getSingleton().eraseAllWidgetLooks()
-    PyCEGUI.AnimationManager.getSingleton().destroyAllAnimations()
-    PyCEGUI.WindowFactoryManager.getSingleton().removeAllFalagardWindowMappings()
-    PyCEGUI.WindowFactoryManager.getSingleton().removeAllWindowTypeAliases()
-    PyCEGUI.WindowFactoryManager.getSingleton().removeAllFactories()
-    # the previous call removes all Window factories, including the stock ones like DefaultWindow
-    # lets add them back
-    PyCEGUI.System.getSingleton().addStandardWindowFactories()
-    PyCEGUI.System.getSingleton().getRenderer().destroyAllTextures()
-*/
+
+    CEGUI::WindowManager::getSingleton().destroyAllWindows();
+
+    // We need to ensure all windows are destroyed, dangling pointers would make us segfault later otherwise
+    CEGUI::WindowManager::getSingleton().cleanDeadPool();
+    CEGUI::FontManager::getSingleton().destroyAll();
+    CEGUI::ImageManager::getSingleton().destroyAll();
+    CEGUI::SchemeManager::getSingleton().destroyAll();
+    CEGUI::WidgetLookManager::getSingleton().eraseAllWidgetLooks();
+    CEGUI::AnimationManager::getSingleton().destroyAllAnimations();
+    CEGUI::WindowFactoryManager::getSingleton().removeAllFalagardWindowMappings();
+    CEGUI::WindowFactoryManager::getSingleton().removeAllWindowTypeAliases();
+    CEGUI::WindowFactoryManager::getSingleton().removeAllFactories();
+
+    // The previous call removes all Window factories, including the stock ones like DefaultWindow lets add them back
+    CEGUI::System::getSingleton().addStandardWindowFactories();
+    CEGUI::System::getSingleton().getRenderer()->destroyAllTextures();
 }
 
 // Retrieves names of skins that are available from the set of schemes that were loaded.
@@ -428,9 +456,10 @@ QStringList CEGUIProjectManager::getAvailableSkins() const
 {
     QStringList skins;
 
-/*
-        it = PyCEGUI.WindowFactoryManager.getSingleton().getFalagardMappingIterator()
-        while not it.isAtEnd():
+    auto it = CEGUI::WindowFactoryManager::getSingleton().getFalagardMappingIterator();
+    while (!it.isAtEnd())
+    {
+        /*
             currentSkin = it.getCurrentValue().d_windowType.split('/')[0]
 
             from ceed.editors.looknfeel.tabbed_editor import LookNFeelTabbedEditor
@@ -441,9 +470,9 @@ QStringList CEGUIProjectManager::getAvailableSkins() const
 
             if currentSkin not in skins and not ceedInternalLNF:
                 skins.append(currentSkin)
-
-            it.next()
-*/
+        */
+        ++it;
+    }
 
     std::sort(skins.begin(), skins.end());
     return skins;
@@ -455,12 +484,12 @@ QStringList CEGUIProjectManager::getAvailableFonts() const
 {
     QStringList fonts;
 
-/*
-        it = PyCEGUI.FontManager.getSingleton().getIterator()
-        while not it.isAtEnd():
-            fonts.append(it.getCurrentKey())
-            it.next()
-*/
+    auto& fontRegistry = CEGUI::FontManager::getSingleton().getRegisteredFonts();
+    for (const auto& pair : fontRegistry)
+    {
+        auto id = CEGUI::String::convertUtf32ToUtf8(pair.first.c_str());
+        fonts.append(id.c_str());
+    }
 
     std::sort(fonts.begin(), fonts.end());
     return fonts;
@@ -472,12 +501,13 @@ QStringList CEGUIProjectManager::getAvailableImages() const
 {
     QStringList images;
 
-/*
-        it = PyCEGUI.ImageManager.getSingleton().getIterator()
-        while not it.isAtEnd():
-            images.append(it.getCurrentKey())
-            it.next()
-*/
+    auto it = CEGUI::ImageManager::getSingleton().getIterator();
+    while (!it.isAtEnd())
+    {
+        auto id = CEGUI::String::convertUtf32ToUtf8(it.getCurrentKey().c_str());
+        images.append(id.c_str());
+        ++it;
+    }
 
     std::sort(images.begin(), images.end());
     return images;
@@ -492,7 +522,7 @@ void CEGUIProjectManager::getAvailableWidgetsBySkin(std::map<QString, QStringLis
                 "VerticalLayoutContainer", "HorizontalLayoutContainer",
                 "GridLayoutContainer" });
 /*
-        it = PyCEGUI.WindowFactoryManager.getSingleton().getFalagardMappingIterator()
+        it = CEGUI::WindowFactoryManager::getSingleton().getFalagardMappingIterator()
         while not it.isAtEnd():
             #base = it.getCurrentValue().d_baseType
             mappedType = it.getCurrentValue().d_windowType.split('/', 1)
@@ -531,19 +561,17 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
     assert(false);
     //ceguiContainerWidget->makeOpenGLContextCurrent(); //???really need here?
 /*
-    system = PyCEGUI.System.getSingleton()
-
-    renderer = system.getRenderer()
+    renderer = CEGUI::System::getSingleton().getRenderer()
 
     renderTarget = PyCEGUIOpenGLRenderer.OpenGLViewportTarget(renderer)
-    renderTarget.setArea(PyCEGUI.Rectf(0, 0, previewWidth, previewHeight))
-    renderingSurface = PyCEGUI.RenderingSurface(renderTarget)
+    renderTarget.setArea(CEGUI::Rectf(0, 0, previewWidth, previewHeight))
+    renderingSurface = CEGUI::RenderingSurface(renderTarget)
 
-    widgetInstance = PyCEGUI.WindowManager.getSingleton().createWindow(widgetType, "preview")
+    widgetInstance = CEGUI::WindowManager::getSingleton().createWindow(widgetType, "preview")
     widgetInstance.setRenderingSurface(renderingSurface)
     # set it's size and position so that it shows up
-    widgetInstance.setPosition(PyCEGUI.UVector2(PyCEGUI.UDim(0, 0), PyCEGUI.UDim(0, 0)))
-    widgetInstance.setSize(PyCEGUI.USize(PyCEGUI.UDim(0, previewWidth), PyCEGUI.UDim(0, previewHeight)))
+    widgetInstance.setPosition(CEGUI::UVector2(CEGUI::UDim(0, 0), CEGUI::UDim(0, 0)))
+    widgetInstance.setSize(CEGUI::USize(CEGUI::UDim(0, previewWidth), CEGUI::UDim(0, previewHeight)))
     # fake update to ensure everything is set
     widgetInstance.update(1)
 
@@ -561,7 +589,7 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
         # no matter what happens we have to clean after ourselves!
         renderer.endRendering()
         temporaryFBO.release()
-        PyCEGUI.WindowManager.getSingleton().destroyWindow(widgetInstance)
+        CEGUI::WindowManager::getSingleton().destroyWindow(widgetInstance)
 
     return temporaryFBO.toImage()
 */
