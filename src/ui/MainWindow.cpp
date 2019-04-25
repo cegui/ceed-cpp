@@ -10,12 +10,10 @@
 #include "qsettings.h"
 #include "qevent.h"
 #include "qundostack.h"
-//#include "qopenglframebufferobject.h"
 #include "src/Application.h"
 #include "src/util/Settings.h"
 #include "src/util/SettingsEntry.h"
 #include "src/util/RecentlyUsed.h"
-#include "src/util/DismissableMessage.h"
 #include "src/cegui/CEGUIProjectManager.h"
 #include "src/cegui/CEGUIProject.h"
 #include "src/editors/NoEditor.h"
@@ -45,18 +43,6 @@ MainWindow::MainWindow(QWidget *parent) :
     */
 
     settingsDialog = new SettingsDialog(this);
-
-    // TODO: make the check work! Now crashes inside. Must setup OpenGL first?
-    //if (!QOpenGLFramebufferObject::hasOpenGLFramebufferObjects())
-    if (!ui) // to avoid 'code will never be executed' warning for now
-    {
-        DismissableMessage::warning(this, "No FBO support!",
-            "CEED uses OpenGL frame buffer objects for various tasks, "
-            "most notably to support panning and zooming in the layout editor.\n\n"
-            "FBO support was not detected on your system!\n\n"
-            "The editor will run but you may experience rendering artifacts.",
-            "no_fbo_support");
-    }
 
     // Register factories
 

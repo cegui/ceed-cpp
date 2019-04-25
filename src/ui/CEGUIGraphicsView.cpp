@@ -4,7 +4,6 @@
 #include "qtimer.h"
 #include "qevent.h"
 
-//!!!subclass of cegui.GLContextProvider! makeGLContextCurrent(self): self.viewport().makeCurrent()
 CEGUIGraphicsView::CEGUIGraphicsView(QWidget *parent) :
     ResizableGraphicsView(parent)
 {
@@ -13,6 +12,8 @@ CEGUIGraphicsView::CEGUIGraphicsView(QWidget *parent) :
     // Mainly to tone down potential antialiasing
     // TODO: look if glEnable(GL_MULTISAMPLE) call is required
     QSurfaceFormat format;
+    // TODO: use OpenGL3Renderer?
+    // format.setVersion(3, 2);
     format.setSamples(2);
     vp->setFormat(format);
 

@@ -199,8 +199,13 @@ RESOURCES += \
 # CEGUI integration
 
 INCLUDEPATH += $$PWD/3rdParty/CEGUI/include $$PWD/3rdParty/CEGUI/dependencies/include
-LIBS += -L"$$PWD/3rdParty/CEGUI/bin" # For DLL search when debugging
-LIBS += -L"$$PWD/3rdParty/CEGUI/lib" -lCEGUIBase-9999 -lCEGUIOpenGLRenderer-9999
+CONFIG(debug, debug|release) {
+    LIBS += -L"$$PWD/3rdParty/CEGUI/bin/debug" # For DLL search when debugging
+    LIBS += -L"$$PWD/3rdParty/CEGUI/lib/debug" -lCEGUIBase-9999_d -lCEGUIOpenGLRenderer-9999_d
+} else {
+    LIBS += -L"$$PWD/3rdParty/CEGUI/bin" # For DLL search when debugging
+    LIBS += -L"$$PWD/3rdParty/CEGUI/lib" -lCEGUIBase-9999 -lCEGUIOpenGLRenderer-9999
+}
 
 # Deployment
 
@@ -236,7 +241,15 @@ DEPLOY_TARGET = $$shell_quote($$shell_path($$DESTDIR))
 
 win32 {
     cegui_dlls.path = $$DESTDIR
-    cegui_dlls.files = $$PWD/3rdParty/CEGUI/bin/*
+    CONFIG(debug, debug|release) {
+        cegui_dlls.files = $$PWD/3rdParty/CEGUI/bin/debug/*.dll
+    } else {
+        cegui_dlls.files = $$PWD/3rdParty/CEGUI/bin/*.dll
+    }
     INSTALLS += cegui_dlls
-    QMAKE_POST_LINK += $$quote(nmake install$$escape_expand(\n\t))
+    win32-msvc* {
+        QMAKE_POST_LINK += $$quote(nmake install$$escape_expand(\n\t))
+    } else:win32-g++ {
+        QMAKE_POST_LINK += $$quote(mingw32-make install$$escape_expand(\n\t))
+    }
 }

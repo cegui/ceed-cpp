@@ -12,6 +12,8 @@
 
 class CEGUIProject;
 class CEGUIWidget; // TODO: one CEGUI widget per editor instead of the global one?
+class QOpenGLContext;
+class QOffscreenSurface;
 
 class CEGUIProjectManager
 {
@@ -49,7 +51,10 @@ protected:
 
     void cleanCEGUIResources();
 
-    CEGUIWidget* ceguiContainerWidget = nullptr;
+    QOpenGLContext* glContext = nullptr;
+    QOffscreenSurface* surface = nullptr;
+
+    CEGUIWidget* ceguiContainerWidget = nullptr; //???need?
     std::unique_ptr<CEGUIProject> currentProject;
     bool initialized = false;
 };

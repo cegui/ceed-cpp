@@ -4,6 +4,7 @@
 #include "src/cegui/CEGUIProjectManager.h"
 #include "src/cegui/CEGUIProject.h"
 #include "qscrollbar.h"
+#include "qopenglwidget.h"
 
 CEGUIWidget::CEGUIWidget(QWidget *parent) :
     QWidget(parent),
@@ -52,16 +53,14 @@ void CEGUIWidget::activate(QWidget* newParent, CEGUIGraphicsScene* scene)
 
 /*
         // Cause full redraw of the default context to ensure that nothing gets stuck
-        PyCEGUI.System.getSingleton().getDefaultGUIContext().markAsDirty()
+        CEGUI::System::getSingleton().getDefaultGUIContext().markAsDirty()
 */
 
     // And mark the view as dirty to force Qt to redraw it
     ui->view->update();
 
-/*
-        # finally, set the OpenGL context for CEGUI as current as other code may rely on it
-        makeOpenGLContextCurrent()
-*/
+    // Finally, set the OpenGL context for CEGUI as current as other code may rely on it
+    makeOpenGLContextCurrent();
 }
 
 // Deactivates the widget from use in given parentWidget (QWidget derived class), see activate
@@ -89,13 +88,8 @@ void CEGUIWidget::deactivate(QWidget* oldParent)
 
 void CEGUIWidget::makeOpenGLContextCurrent()
 {
-    // Do need in this form in Qt5?
-    assert(false);
-
-    //???accept context as arg?
-    // In Qt4 was:
-    //CEGUIGraphicsView* view = findChild<CEGUIGraphicsView*>("view");
-    //view->viewport()->makeCurrent();
+    auto* viewport = dynamic_cast<QOpenGLWidget*>(ui->view->viewport());
+    if (viewport) viewport->makeCurrent();
 }
 
 // The CEGUI view class has several enable/disable features that are very hard to achieve using
@@ -171,8 +165,6 @@ void CEGUIWidget::on_resolutionBox_editTextChanged(const QString& arg1)
     width = std::max(1, std::min(4096, width));
     height = std::max(1, std::min(4096, height));
 
-/*
-    makeOpenGLContextCurrent()
-*/
+    makeOpenGLContextCurrent();
     static_cast<CEGUIGraphicsScene*>(ui->view->scene())->setCEGUIDisplaySize(width, height, false);
 }

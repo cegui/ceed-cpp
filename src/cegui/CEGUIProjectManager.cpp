@@ -1,11 +1,14 @@
 #include "src/cegui/CEGUIProjectManager.h"
 #include "src/cegui/CEGUIProject.h"
+#include "src/util/DismissableMessage.h"
 #include "src/Application.h"
 #include "qmessagebox.h"
 #include "qprogressdialog.h"
 #include "qdiriterator.h"
 #include <CEGUI/CEGUI.h>
 #include <CEGUI/RendererModules/OpenGL/GLRenderer.h>
+#include "qopenglcontext.h"
+#include "qoffscreensurface.h"
 
 // TODO: one CEGUI widget per editor instead of the global one?
 #include "src/ui/CEGUIWidget.h"
@@ -113,15 +116,44 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
 {
     if (initialized) return;
 
-    //???check FBO support here, when OpenGL is initialized? see MainWindow constructor
-    // FBOs are for sure supported at this point because CEED uses them internally
+    QSurfaceFormat format;
+    format.setSamples(0);
+
+    glContext = new QOpenGLContext(); // TODO: destroy
+    glContext->setFormat(format);
+    if (Q_UNLIKELY(!glContext->create()))
+    {
+        assert(false);
+        return;
+    }
+
+    surface = new QOffscreenSurface(glContext->screen());
+    surface->setFormat(glContext->format());
+    surface->create();
+
+    if (Q_UNLIKELY(!glContext->makeCurrent(surface)))
+    {
+        //qWarning("QOpenGLWidget: Failed to make context current");
+        assert(false);
+        return;
+    }
+
+    if (!glContext->hasExtension("GL_EXT_framebuffer_object"))
+    {
+        DismissableMessage::warning(qobject_cast<Application*>(qApp)->getMainWindow(),
+                                    "No FBO support!",
+                                    "CEED uses OpenGL frame buffer objects for various tasks, "
+                                    "most notably to support panning and zooming in the layout editor.\n\n"
+                                    "FBO support was not detected on your system!\n\n"
+                                    "The editor will run but you may experience rendering artifacts.",
+                                    "no_fbo_support");
+    }
 
     // We don't want CEGUI Exceptions to output to stderr every time they are constructed
     CEGUI::Exception::setStdErrEnabled(false);
     try
     {
-        // FIXME: OpenGL context must be set here to initialize renderer
-        //???use OpenGL3Renderer? no FBO in bootstrap, need to look at implementation.
+        //??? glContext->format().version() >= 3.2 -> use OpenGL3Renderer? no FBO in bootstrap, need to look at implementation.
         CEGUI::OpenGLRenderer::bootstrapSystem(CEGUI::OpenGLRenderer::TextureTargetType::Fbo);
         //!!!destroySystem to destroy bootstrapped CEGUI!
     }
@@ -152,6 +184,8 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
     CEGUI::Scheme::setDefaultResourceGroup("schemes");
     CEGUI::WidgetLookManager::setDefaultResourceGroup("looknfeels");
     CEGUI::WindowManager::setDefaultResourceGroup("layouts");
+    //CEGUI::ScriptModule::setDefaultResourceGroup("lua_scripts");
+    //CEGUI::AnimationManager::setDefaultResourceGroup("animations");
 
     auto parser = CEGUI::System::getSingleton().getXMLParser();
     if (parser && parser->isPropertyPresent("SchemaDefaultResourceGroup"))
@@ -187,7 +221,6 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
     progress.show();
 
     ensureCEGUIInitialized();
-    //ceguiContainerWidget->makeOpenGLContextCurrent(); //???really need here?
 
     QStringList schemeFiles;
     auto absoluteSchemesPath = currentProject->getAbsolutePathOf(currentProject->schemesPath);
@@ -207,7 +240,7 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
         schemesIt.next();
         QFileInfo info = schemesIt.fileInfo();
         if (!info.isDir() && info.suffix() == "scheme")
-            schemeFiles.append(schemesIt.filePath());
+            schemeFiles.append(schemesIt.fileName());
     }
 
     progress.setMinimum(0);
@@ -239,6 +272,8 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
     progress.setValue(2);
     QApplication::instance()->processEvents();
 
+    glContext->makeCurrent(surface);
+
     // We will load resources manually to be able to use the compatibility layer machinery
     CEGUI::SchemeManager::getSingleton().setAutoLoadResources(false);
 
@@ -256,25 +291,22 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
         {
             updateProgress(schemeFile, "Parsing the scheme file");
 
-            auto schemeResourceGroup = CEGUI::String::convertUtf32ToUtf8(CEGUI::Scheme::getDefaultResourceGroup().c_str());
-            auto schemeFilePath = currentProject->getResourceFilePath(schemeFile, schemeResourceGroup.c_str());
-
             /*
-            rawData = open(schemeFilePath, "r").read()
+            rawData = open(schemeFile, "r").read()
             rawDataType = scheme_compatibility.manager.EditorNativeType
 
             try:
-                rawDataType = scheme_compatibility.manager.guessType(rawData, schemeFilePath)
+                rawDataType = scheme_compatibility.manager.guessType(rawData, schemeFile)
 
             except compatibility.NoPossibleTypesError:
-                QtGui.QMessageBox.warning(None, "Scheme doesn't match any known data type", "The scheme '%s' wasn't recognised by CEED as any scheme data type known to it. Please check that the data isn't corrupted. CEGUI instance synchronisation aborted!" % (schemeFilePath))
+                QtGui.QMessageBox.warning(None, "Scheme doesn't match any known data type", "The scheme '%s' wasn't recognised by CEED as any scheme data type known to it. Please check that the data isn't corrupted. CEGUI instance synchronisation aborted!" % (schemeFile))
                 return
 
             except compatibility.MultiplePossibleTypesError as e:
                 suitableVersion = scheme_compatibility.manager.getSuitableDataTypeForCEGUIVersion(project.CEGUIVersion)
 
                 if suitableVersion not in e.possibleTypes:
-                    QtGui.QMessageBox.warning(None, "Incorrect scheme data type", "The scheme '%s' checked out as some potential data types, however not any of these is suitable for your project's target CEGUI version '%s', please check your project settings! CEGUI instance synchronisation aborted!" % (schemeFilePath, suitableVersion))
+                    QtGui.QMessageBox.warning(None, "Incorrect scheme data type", "The scheme '%s' checked out as some potential data types, however not any of these is suitable for your project's target CEGUI version '%s', please check your project settings! CEGUI instance synchronisation aborted!" % (schemeFile, suitableVersion))
                     return
 
                 rawDataType = suitableVersion
@@ -283,11 +315,11 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
             scheme = CEGUI::SchemeManager::getSingleton().createFromString(nativeData)
             */
 
-            CEGUI::Scheme& scheme = CEGUI::SchemeManager::getSingleton().createFromFile(schemeFilePath.toLocal8Bit().data());
+            CEGUI::Scheme& scheme = CEGUI::SchemeManager::getSingleton().createFromFile(schemeFile.toLocal8Bit().data());
 
             // NOTE: This is very CEGUI implementation specific unfortunately!
             //       However I am not really sure how to do this any better.
-            updateProgress(schemeFilePath, "Loading XML imagesets");
+            updateProgress(schemeFile, "Loading XML imagesets");
 
             auto xmlImagesetIterator = scheme.getXMLImagesets();
             while (!xmlImagesetIterator.isAtEnd())
@@ -322,11 +354,11 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
                 ++xmlImagesetIterator;
             }
 
-            updateProgress(schemeFilePath, "Loading image file imagesets");
+            updateProgress(schemeFile, "Loading image file imagesets");
 
             scheme.loadImageFileImagesets();
 
-            updateProgress(schemeFilePath, "Loading fonts");
+            updateProgress(schemeFile, "Loading fonts");
 
             auto fontIterator = scheme.getFonts();
             while (!fontIterator.isAtEnd())
@@ -361,7 +393,7 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
                 ++fontIterator;
             }
 
-            updateProgress(schemeFilePath, "Loading looknfeels");
+            updateProgress(schemeFile, "Loading looknfeels");
 
             auto looknfeelIterator = scheme.getLookNFeels();
             while (!looknfeelIterator.isAtEnd())
@@ -395,31 +427,33 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
                 ++looknfeelIterator;
             }
 
-            updateProgress(schemeFilePath, "Loading window renderer factory modules");
+            updateProgress(schemeFile, "Loading window renderer factory modules");
             scheme.loadWindowRendererFactories();
-            updateProgress(schemeFilePath, "Loading window factories");
+            updateProgress(schemeFile, "Loading window factories");
             scheme.loadWindowFactories();
-            updateProgress(schemeFilePath, "Loading factory aliases");
+            updateProgress(schemeFile, "Loading factory aliases");
             scheme.loadFactoryAliases();
-            updateProgress(schemeFilePath, "Loading falagard mappings");
+            updateProgress(schemeFile, "Loading falagard mappings");
             scheme.loadFalagardMappings();
         }
     }
-    catch (...)
+    catch (const std::exception& e)
     {
         cleanCEGUIResources();
         QMessageBox::warning(mainWnd, "Failed to synchronise embedded CEGUI to your project",
-            "An attempt was made to load resources related to the project being opened, "
+            QString("An attempt was made to load resources related to the project being opened, "
             "for some reason the loading didn't succeed so all resources were destroyed! "
             "The most likely reason is that the resource directories are wrong, this can "
             "be very easily remedied in the project settings.\n\n"
             "This means that editing capabilities of CEED will be limited to editing of files "
-            "that don't require a project opened (for example: imagesets).");
+            "that don't require a project opened (for example: imagesets).\nException: %1").arg(e.what()));
         result = false;
     }
 
     // Put SchemeManager into the default state again
     CEGUI::SchemeManager::getSingleton().setAutoLoadResources(true);
+
+    glContext->doneCurrent();
 
     progress.reset();
     QApplication::instance()->processEvents();
@@ -431,6 +465,8 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
 void CEGUIProjectManager::cleanCEGUIResources()
 {
     if (!initialized) return;
+
+    glContext->makeCurrent(surface);
 
     CEGUI::WindowManager::getSingleton().destroyAllWindows();
 
@@ -445,9 +481,11 @@ void CEGUIProjectManager::cleanCEGUIResources()
     CEGUI::WindowFactoryManager::getSingleton().removeAllWindowTypeAliases();
     CEGUI::WindowFactoryManager::getSingleton().removeAllFactories();
 
-    // The previous call removes all Window factories, including the stock ones like DefaultWindow lets add them back
+    // The previous call removes all Window factories, including the stock ones like DefaultWindow. Lets add them back.
     CEGUI::System::getSingleton().addStandardWindowFactories();
     CEGUI::System::getSingleton().getRenderer()->destroyAllTextures();
+
+    glContext->doneCurrent();
 }
 
 // Retrieves names of skins that are available from the set of schemes that were loaded.
@@ -558,8 +596,9 @@ void CEGUIProjectManager::getAvailableWidgetsBySkin(std::map<QString, QStringLis
 QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int previewWidth, int previewHeight)
 {
     ensureCEGUIInitialized();
+    ceguiContainerWidget->makeOpenGLContextCurrent();
+
     assert(false);
-    //ceguiContainerWidget->makeOpenGLContextCurrent(); //???really need here?
 /*
     renderer = CEGUI::System::getSingleton().getRenderer()
 
