@@ -292,6 +292,9 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
             updateProgress(schemeFile, "Parsing the scheme file");
 
             /*
+            auto schemeResourceGroup = CEGUI::String::convertUtf32ToUtf8(CEGUI::Scheme::getDefaultResourceGroup().c_str());
+            auto schemeFilePath = currentProject->getResourceFilePath(schemeFile, schemeResourceGroup.c_str());
+
             rawData = open(schemeFile, "r").read()
             rawDataType = scheme_compatibility.manager.EditorNativeType
 
@@ -324,8 +327,9 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
             auto xmlImagesetIterator = scheme.getXMLImagesets();
             while (!xmlImagesetIterator.isAtEnd())
             {
+                auto loadableUIElement = xmlImagesetIterator.getCurrentValue();
+
                 /*
-                loadableUIElement = xmlImagesetIterator.getCurrentValue()
                 imagesetFilePath = project.getResourceFilePath(loadableUIElement.filename, loadableUIElement.resourceGroup if loadableUIElement.resourceGroup != "" else CEGUI::ImageManager.getImagesetDefaultResourceGroup())
                 imagesetRawData = open(imagesetFilePath, "r").read()
                 imagesetRawDataType = imageset_compatibility.manager.EditorNativeType
@@ -349,8 +353,10 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
                 imagesetNativeData = imageset_compatibility.manager.transform(imagesetRawDataType, imageset_compatibility.manager.EditorNativeType, imagesetRawData)
 
                 CEGUI::ImageManager::getSingleton().loadImagesetFromString(imagesetNativeData)
-
                 */
+
+                CEGUI::ImageManager::getSingleton().loadImageset(loadableUIElement.filename, loadableUIElement.resourceGroup);
+
                 ++xmlImagesetIterator;
             }
 
@@ -363,8 +369,9 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
             auto fontIterator = scheme.getFonts();
             while (!fontIterator.isAtEnd())
             {
+                auto loadableUIElement = fontIterator.getCurrentValue();
+
                 /*
-                loadableUIElement = fontIterator.getCurrentValue()
                 fontFilePath = project.getResourceFilePath(loadableUIElement.filename, loadableUIElement.resourceGroup if loadableUIElement.resourceGroup != "" else CEGUI::Font.getDefaultResourceGroup())
                 fontRawData = open(fontFilePath, "r").read()
                 fontRawDataType = font_compatibility.manager.EditorNativeType
@@ -388,8 +395,10 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
                 fontNativeData = font_compatibility.manager.transform(fontRawDataType, font_compatibility.manager.EditorNativeType, fontRawData)
 
                 CEGUI::FontManager::getSingleton().createFromString(fontNativeData)
-
                 */
+
+                CEGUI::FontManager::getSingleton().createFromFile(loadableUIElement.filename, loadableUIElement.resourceGroup);
+
                 ++fontIterator;
             }
 
@@ -398,8 +407,9 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
             auto looknfeelIterator = scheme.getLookNFeels();
             while (!looknfeelIterator.isAtEnd())
             {
+                auto loadableUIElement = looknfeelIterator.getCurrentValue();
+
                 /*
-                loadableUIElement = looknfeelIterator.getCurrentValue()
                 looknfeelFilePath = project.getResourceFilePath(loadableUIElement.filename, loadableUIElement.resourceGroup if loadableUIElement.resourceGroup != "" else CEGUI::WidgetLookManager.getDefaultResourceGroup())
                 looknfeelRawData = open(looknfeelFilePath, "r").read()
                 looknfeelRawDataType = looknfeel_compatibility.manager.EditorNativeType
@@ -422,8 +432,10 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
                 looknfeelNativeData = looknfeel_compatibility.manager.transform(looknfeelRawDataType, looknfeel_compatibility.manager.EditorNativeType, looknfeelRawData)
 
                 CEGUI::WidgetLookManager::getSingleton().parseLookNFeelSpecificationFromString(looknfeelNativeData)
-
                 */
+
+                CEGUI::WidgetLookManager::getSingleton().parseLookNFeelSpecificationFromFile(loadableUIElement.filename, loadableUIElement.resourceGroup);
+
                 ++looknfeelIterator;
             }
 
