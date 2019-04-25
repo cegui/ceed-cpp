@@ -7,8 +7,10 @@
 #include "qdiriterator.h"
 #include <CEGUI/CEGUI.h>
 #include <CEGUI/RendererModules/OpenGL/GLRenderer.h>
+#include <CEGUI/RendererModules/OpenGL/ViewportTarget.h>
 #include "qopenglcontext.h"
 #include "qoffscreensurface.h"
+#include "qopenglframebufferobject.h"
 
 // TODO: one CEGUI widget per editor instead of the global one?
 #include "src/ui/CEGUIWidget.h"
@@ -571,9 +573,11 @@ void CEGUIProjectManager::getAvailableWidgetsBySkin(std::map<QString, QStringLis
     list.append({ "DefaultWindow", "DragContainer",
                 "VerticalLayoutContainer", "HorizontalLayoutContainer",
                 "GridLayoutContainer" });
-/*
-        it = CEGUI::WindowFactoryManager::getSingleton().getFalagardMappingIterator()
-        while not it.isAtEnd():
+
+    auto it = CEGUI::WindowFactoryManager::getSingleton().getFalagardMappingIterator();
+    while (!it.isAtEnd())
+    {
+        /*
             #base = it.getCurrentValue().d_baseType
             mappedType = it.getCurrentValue().d_windowType.split('/', 1)
             assert(len(mappedType) == 2)
@@ -595,54 +599,68 @@ void CEGUIProjectManager::getAvailableWidgetsBySkin(std::map<QString, QStringLis
 
                 # append widget name to the list for its look
                 ret[look].append(widget)
+        */
 
-            it.next()
+        ++it;
+    }
 
-        # sort the lists
-        for look in ret:
-            ret[look].sort()
-*/
+    for (auto& pair : out)
+        pair.second.sort();
 }
 
 // Renders and retrieves a widget preview QImage. This is useful for various widget selection lists as a preview.
 QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int previewWidth, int previewHeight)
 {
     ensureCEGUIInitialized();
-    ceguiContainerWidget->makeOpenGLContextCurrent();
 
-    assert(false);
-/*
-    renderer = CEGUI::System::getSingleton().getRenderer()
+    glContext->makeCurrent(surface);
 
-    renderTarget = PyCEGUIOpenGLRenderer.OpenGLViewportTarget(renderer)
-    renderTarget.setArea(CEGUI::Rectf(0, 0, previewWidth, previewHeight))
-    renderingSurface = CEGUI::RenderingSurface(renderTarget)
+    const float previewWidthF = static_cast<float>(previewWidth);
+    const float previewHeightF = static_cast<float>(previewHeight);
 
-    widgetInstance = CEGUI::WindowManager::getSingleton().createWindow(widgetType, "preview")
-    widgetInstance.setRenderingSurface(renderingSurface)
-    # set it's size and position so that it shows up
-    widgetInstance.setPosition(CEGUI::UVector2(CEGUI::UDim(0, 0), CEGUI::UDim(0, 0)))
-    widgetInstance.setSize(CEGUI::USize(CEGUI::UDim(0, previewWidth), CEGUI::UDim(0, previewHeight)))
-    # fake update to ensure everything is set
-    widgetInstance.update(1)
+    //???allocate previews once?
+    // TODO: renderer->get/createViewportTarget!
+    auto renderer = static_cast<CEGUI::OpenGLRenderer*>(CEGUI::System::getSingleton().getRenderer());
+    auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer);
+    renderTarget->setArea(CEGUI::Rectf(0.f, 0.f, previewWidthF, previewHeightF));
+    auto renderingSurface = new CEGUI::RenderingSurface(*renderTarget);
 
-    temporaryFBO = QtOpenGL.QGLFramebufferObject(previewWidth, previewHeight, GL.GL_TEXTURE_2D)
-    temporaryFBO.bind()
+    auto widgetInstance = CEGUI::WindowManager::getSingleton().createWindow(widgetType.toLocal8Bit().data(), "preview");
+    widgetInstance->setRenderingSurface(renderingSurface);
 
-    renderingSurface.invalidate()
+    // Set it's size and position so that it shows up
+    widgetInstance->setPosition(CEGUI::UVector2(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)));
+    widgetInstance->setSize(CEGUI::USize(CEGUI::UDim(0.f, previewWidthF), CEGUI::UDim(0.f, previewHeightF)));
 
-    renderer.beginRendering()
+    // Fake update to ensure everything is set
+    widgetInstance->update(1.f);
 
-    try:
-        widgetInstance.render()
+    //???allocate once?
+    auto temporaryFBO = new QOpenGLFramebufferObject(previewWidth, previewHeight);
+    temporaryFBO->bind();
 
-    finally:
-        # no matter what happens we have to clean after ourselves!
-        renderer.endRendering()
-        temporaryFBO.release()
-        CEGUI::WindowManager::getSingleton().destroyWindow(widgetInstance)
+    renderingSurface->invalidate();
+    renderer->beginRendering();
 
-    return temporaryFBO.toImage()
-*/
-    return QImage(previewWidth, previewHeight, QImage::Format_ARGB32);
+    try
+    {
+        widgetInstance->draw();
+    }
+    catch (...)
+    {
+    }
+
+    renderer->endRendering();
+    temporaryFBO->release();
+
+    QImage result = temporaryFBO->toImage();
+
+    delete temporaryFBO;
+    CEGUI::WindowManager::getSingleton().destroyWindow(widgetInstance);
+    delete renderingSurface;
+    delete renderTarget;
+
+    glContext->doneCurrent(); //???need?
+
+    return result;
 }
