@@ -33,7 +33,6 @@ public:
     void activate(QWidget* newParent, CEGUIGraphicsScene* scene = nullptr);
     void deactivate(QWidget* oldParent);
 
-    void makeOpenGLContextCurrent();
     void setViewFeatures(bool wheelZoom = false, bool middleButtonScroll = false, bool continuousRendering = true);
     void setInputEnabled(bool enable);
 

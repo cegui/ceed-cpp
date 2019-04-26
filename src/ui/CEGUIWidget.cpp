@@ -60,7 +60,8 @@ void CEGUIWidget::activate(QWidget* newParent, CEGUIGraphicsScene* scene)
     ui->view->update();
 
     // Finally, set the OpenGL context for CEGUI as current as other code may rely on it
-    makeOpenGLContextCurrent();
+    //makeOpenGLContextCurrent();
+    assert(false);
 }
 
 // Deactivates the widget from use in given parentWidget (QWidget derived class), see activate
@@ -84,12 +85,6 @@ void CEGUIWidget::deactivate(QWidget* oldParent)
         setParent(nullptr);
 
     currentParentWidget->setUpdatesEnabled(true);
-}
-
-void CEGUIWidget::makeOpenGLContextCurrent()
-{
-    auto* viewport = dynamic_cast<QOpenGLWidget*>(ui->view->viewport());
-    if (viewport) viewport->makeCurrent();
 }
 
 // The CEGUI view class has several enable/disable features that are very hard to achieve using
@@ -165,6 +160,7 @@ void CEGUIWidget::on_resolutionBox_editTextChanged(const QString& arg1)
     width = std::max(1, std::min(4096, width));
     height = std::max(1, std::min(4096, height));
 
-    makeOpenGLContextCurrent();
+    //makeOpenGLContextCurrent();
+    assert(false);
     static_cast<CEGUIGraphicsScene*>(ui->view->scene())->setCEGUIDisplaySize(width, height, false);
 }

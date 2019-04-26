@@ -6,6 +6,9 @@
 #include "qpainter.h"
 #include "qpaintengine.h"
 #include "qopenglframebufferobject.h"
+#include "qopenglcontext.h"
+#include "qopenglfunctions.h"
+#include "qopenglfunctions_2_0.h"
 
 CEGUIGraphicsScene::CEGUIGraphicsScene()
     : timeOfLastRender(time(nullptr))
@@ -34,6 +37,7 @@ void CEGUIGraphicsScene::setCEGUIDisplaySize(float width, float height, bool laz
         ; /* PyCEGUI.System.getSingleton().notifyDisplaySizeChanged(self.ceguiDisplaySize);
           */
 
+    // FIXME: only if size changed!
     if (fbo)
     {
         delete fbo;
@@ -68,12 +72,15 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
     auto currTime = time(nullptr);
     lastDelta = currTime - timeOfLastRender;
     timeOfLastRender = currTime;
+
+    // Inject the time passed since the last render all at once
 /*
     system = PyCEGUI.System.getSingleton()
     self.ceguiInstance.lastRenderTimeDelta = self.lastDelta
     system.injectTimePulse(self.lastDelta)
     system.getDefaultGUIContext().injectTimePulse(self.lastDelta)
 */
+
     painter->setPen(Qt::transparent);
     painter->setBrush(checkerboardBrush);
     painter->drawRect(0, 0, static_cast<int>(contextWidth), static_cast<int>(contextHeight));
@@ -97,67 +104,78 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
     if (!fbo)
     {
         QSize desiredSize(static_cast<int>(std::ceil(contextWidth)), static_cast<int>(std::ceil(contextHeight)));
-        fbo = new QOpenGLFramebufferObject(desiredSize, GL_TEXTURE_2D);
+        fbo = new QOpenGLFramebufferObject(desiredSize);
     }
 
     fbo->bind();
-/*
-    GL.glClearColor(0, 0, 0, 0)
-    GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
+    auto glContext = QOpenGLContext::currentContext();
+
+    //???use default subset? need to use VBO, no fixed function glBegin / glEnd!
+    //auto gl = glContext->functions();
+    auto* gl = glContext->versionFunctions<QOpenGLFunctions_2_0>();
+    if (!gl)
+    {
+        qWarning("cegui.GraphicsScene: required OpenGL 2.0 not supported");
+        return;
+    }
+    gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+/*
     system.renderAllGUIContexts() //!!!render only the current context if possible (should be)!
 */
+
     fbo->release();
-/*
-    # the stretch and translation should be done automatically by QPainter at this point so just
-    # this code will do
-    if bool(GL.glActiveTexture):
-        GL.glActiveTexture(GL.GL_TEXTURE0)
 
-    GL.glEnable(GL.GL_TEXTURE_2D)
-    GL.glBindTexture(GL.GL_TEXTURE_2D, self.fbo.texture())
+    // The stretch and translation should be done automatically by QPainter at this point so just this code will do
+    gl->glActiveTexture(GL_TEXTURE0);
 
-    GL.glEnable(GL.GL_BLEND)
-    GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+    gl->glEnable(GL_TEXTURE_2D);
+    gl->glBindTexture(GL_TEXTURE_2D, fbo->texture());
 
-    # TODO: I was told that this is the slowest method to draw with OpenGL,
-    #       with which I certainly agree.
-    #
-    #       No profiling has been done at all and I don't suspect this to be
-    #       a painful performance problem.
-    #
-    #       Still, changing this to a less pathetic rendering method would be great.
+    gl->glEnable(GL_BLEND);
+    gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    GL.glBegin(GL.GL_TRIANGLES)
+    // TODO: I was told that this is the slowest method to draw with OpenGL,
+    //       with which I certainly agree.
+    //
+    //       No profiling has been done at all and I don't suspect this to be
+    //       a painful performance problem.
+    //
+    //       Still, changing this to a less pathetic rendering method would be great.
 
-    # top left
-    GL.glTexCoord2f(0, 1)
-    GL.glVertex3f(0, 0, 0)
+    gl->glBegin(GL_TRIANGLES);
 
-    # top right
-    GL.glTexCoord2f(1, 1)
-    GL.glVertex3f(self.fbo.size().width(), 0, 0)
+    // Top left
+    gl->glTexCoord2f(0.f, 1.f);
+    gl->glVertex3f(0.f, 0.f, 0.f);
 
-    # bottom right
-    GL.glTexCoord2f(1, 0)
-    GL.glVertex3f(self.fbo.size().width(), self.fbo.size().height(), 0)
+    // Top right
+    gl->glTexCoord2f(1.f, 1.f);
+    gl->glVertex3f(fbo->size().width(), 0.f, 0.f);
 
-    # bottom right
-    GL.glTexCoord2f(1, 0)
-    GL.glVertex3f(self.fbo.size().width(), self.fbo.size().height(), 0)
+    // Bottom right
+    gl->glTexCoord2f(1.f, 0.f);
+    gl->glVertex3f(fbo->size().width(), fbo->size().height(), 0.f);
 
-    # bottom left
-    GL.glTexCoord2f(0, 0)
-    GL.glVertex3f(0, self.fbo.size().height(), 0)
+    // Bottom right
+    gl->glTexCoord2f(1, 0.f);
+    gl->glVertex3f(fbo->size().width(), fbo->size().height(), 0.f);
 
-    # top left
-    GL.glTexCoord2f(0, 1)
-    GL.glVertex3f(0, 0, 0)
+    // Bottom left
+    gl->glTexCoord2f(0.f, 0.f);
+    gl->glVertex3f(0.f, fbo->size().height(), 0.f);
 
+    // Top left
+    gl->glTexCoord2f(0.f, 1);
+    gl->glVertex3f(0.f, 0.f, 0.f);
+
+    /*
     system.getDefaultGUIContext().markAsDirty()
+    */
 
-    GL.glEnd()
-*/
+    gl->glEnd();
 
     painter->endNativePainting();
 }
