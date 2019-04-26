@@ -19,6 +19,8 @@ class CEGUIProjectManager
 {
 public:
 
+    static QString getEditorIDStringPrefix() { return "ceed_internal-"; }
+
     CEGUIProjectManager();
     CEGUIProjectManager(const CEGUIProjectManager&) = delete;
     ~CEGUIProjectManager();

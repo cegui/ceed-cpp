@@ -577,29 +577,24 @@ void CEGUIProjectManager::getAvailableWidgetsBySkin(std::map<QString, QStringLis
     auto it = CEGUI::WindowFactoryManager::getSingleton().getFalagardMappingIterator();
     while (!it.isAtEnd())
     {
-        /*
-            #base = it.getCurrentValue().d_baseType
-            mappedType = it.getCurrentValue().d_windowType.split('/', 1)
-            assert(len(mappedType) == 2)
+        const QString windowType = CEGUI::String::convertUtf32ToUtf8(it.getCurrentValue().d_windowType.c_str()).c_str();
 
-            look = mappedType[0]
-            widget = mappedType[1]
-
-            //!!!make this method shared! store in CEGUIProjectManager.
-            from ceed.editors.looknfeel.tabbed_editor import LookNFeelTabbedEditor
-            ceedInternalEditingPrefix = LookNFeelTabbedEditor.getEditorIDStringPrefix()
-            ceedInternalLNF = False
-            if look.startswith(ceedInternalEditingPrefix):
-                ceedInternalLNF = True
-
-            if not ceedInternalLNF:
-                # insert empty list for the look if it's a new look
+        auto sepPos = windowType.indexOf('/');
+        assert(sepPos >= 0);
+        const QString look = windowType.left(sepPos);
+        const QString widget = windowType.mid(sepPos + 1);
+        const QString ceedInternalEditingPrefix = getEditorIDStringPrefix();
+        if (!look.startsWith(ceedInternalEditingPrefix))
+        {
+            // Insert empty list for the look if it's a new look
+            /*
                 if not look in ret:
                     ret[look] = []
 
                 # append widget name to the list for its look
                 ret[look].append(widget)
-        */
+            */
+        }
 
         ++it;
     }
