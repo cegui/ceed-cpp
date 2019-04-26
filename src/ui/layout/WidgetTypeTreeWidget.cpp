@@ -72,15 +72,13 @@ bool WidgetTypeTreeWidget::viewportEvent(QEvent* event)
 
                     tooltipText = QString("<img src=\"data:image/png;base64,%1\" />").arg(QString(bytes.toBase64()));
                 }
-                catch(...)
+                catch (const std::exception& e)
                 {
-                    // TODO: exception text
-                    assert(false);
-                    tooltipText = "Couldn't render a widgetType preview!";
+                    tooltipText = e.what();
                 }
             }
 
-            item->setToolTip(0, QString("<small>Drag to the layout to create!</small><br />%s").arg(tooltipText));
+            item->setToolTip(0, QString("<small>Drag to the layout to create!</small><br />%1").arg(tooltipText));
         }
     }
 

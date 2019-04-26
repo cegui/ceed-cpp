@@ -569,10 +569,16 @@ QStringList CEGUIProjectManager::getAvailableImages() const
 // see syncProjectToCEGUIInstance
 void CEGUIProjectManager::getAvailableWidgetsBySkin(std::map<QString, QStringList>& out) const
 {
-    QStringList& list = out["__no_skin__"];
-    list.append({ "DefaultWindow", "DragContainer",
-                "VerticalLayoutContainer", "HorizontalLayoutContainer",
-                "GridLayoutContainer" });
+    out["__no_skin__"].append(
+    {
+        "DefaultWindow",
+        "DragContainer",
+        "VerticalLayoutContainer",
+        "HorizontalLayoutContainer",
+        "GridLayoutContainer"
+    });
+
+    const QString ceedInternalEditingPrefix = getEditorIDStringPrefix();
 
     auto it = CEGUI::WindowFactoryManager::getSingleton().getFalagardMappingIterator();
     while (!it.isAtEnd())
@@ -583,18 +589,8 @@ void CEGUIProjectManager::getAvailableWidgetsBySkin(std::map<QString, QStringLis
         assert(sepPos >= 0);
         const QString look = windowType.left(sepPos);
         const QString widget = windowType.mid(sepPos + 1);
-        const QString ceedInternalEditingPrefix = getEditorIDStringPrefix();
         if (!look.startsWith(ceedInternalEditingPrefix))
-        {
-            // Insert empty list for the look if it's a new look
-            /*
-                if not look in ret:
-                    ret[look] = []
-
-                # append widget name to the list for its look
-                ret[look].append(widget)
-            */
-        }
+            out[look].append(widget);
 
         ++it;
     }
@@ -623,6 +619,13 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
     auto widgetInstance = CEGUI::WindowManager::getSingleton().createWindow(widgetType.toLocal8Bit().data(), "preview");
     widgetInstance->setRenderingSurface(renderingSurface);
 
+    // Window is not attached to a context so it has no default font. Set default.
+    // TODO: if project has no fonts, create CEED-internal default font.
+    //???set to context? mb create separate context for the preview?
+    const auto& fontRegistry = CEGUI::FontManager::getSingleton().getRegisteredFonts();
+    CEGUI::Font* defaultFont = fontRegistry.empty() ? nullptr : fontRegistry.begin()->second;
+    widgetInstance->setFont(defaultFont);
+
     // Set it's size and position so that it shows up
     widgetInstance->setPosition(CEGUI::UVector2(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)));
     widgetInstance->setSize(CEGUI::USize(CEGUI::UDim(0.f, previewWidthF), CEGUI::UDim(0.f, previewHeightF)));
@@ -637,12 +640,14 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
     renderingSurface->invalidate();
     renderer->beginRendering();
 
+    QString error;
     try
     {
         widgetInstance->draw();
     }
-    catch (...)
+    catch (const std::exception& e)
     {
+        error = e.what();
     }
 
     renderer->endRendering();
@@ -656,6 +661,9 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
     delete renderTarget;
 
     glContext->doneCurrent(); //???need?
+
+    if (!error.isEmpty())
+        throw error;
 
     return result;
 }

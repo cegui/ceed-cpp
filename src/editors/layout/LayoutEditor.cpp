@@ -45,6 +45,7 @@ void LayoutEditor::initialize()
 
         self.visual.initialise(root)
 */
+    visualMode->initialize(); //!!!need arg 'root'!
 }
 
 void LayoutEditor::activate(MainWindow& mainWindow)
