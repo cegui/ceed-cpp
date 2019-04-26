@@ -200,12 +200,13 @@ RESOURCES += \
 
 INCLUDEPATH += $$PWD/3rdParty/CEGUI/include $$PWD/3rdParty/CEGUI/dependencies/include
 CONFIG(debug, debug|release) {
-    LIBS += -L"$$PWD/3rdParty/CEGUI/bin/debug" # For DLL search when debugging
-    LIBS += -L"$$PWD/3rdParty/CEGUI/lib/debug" -lCEGUIBase-9999_d -lCEGUIOpenGLRenderer-9999_d
+    CEGUI_BIN_DIR = $$PWD/3rdParty/CEGUI/bin/debug
+    LIBS += -lCEGUIBase-9999_d -lCEGUIOpenGLRenderer-9999_d
 } else {
-    LIBS += -L"$$PWD/3rdParty/CEGUI/bin" # For DLL search when debugging
-    LIBS += -L"$$PWD/3rdParty/CEGUI/lib" -lCEGUIBase-9999 -lCEGUIOpenGLRenderer-9999
+    CEGUI_BIN_DIR = $$PWD/3rdParty/CEGUI/bin/release
+    LIBS += -lCEGUIBase-9999 -lCEGUIOpenGLRenderer-9999
 }
+LIBS += -L"$$PWD/3rdParty/CEGUI/lib" -L"$$CEGUI_BIN_DIR" # Bin is for DLL searching when debugging
 
 # Deployment
 
@@ -216,8 +217,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 RC_ICONS = data/icons/ceed.ico
 #MacOS: ICON = myapp.icns
 
-QMAKE_TARGET_COMPANY = "CEGUI team, port by Vladimir 'Niello' Orlov"
-QMAKE_TARGET_COPYRIGHT = "2019 CEGUI team, port by Vladimir 'Niello' Orlov"
+QMAKE_TARGET_COMPANY = "CEGUI team, Vladimir 'Niello' Orlov"
+QMAKE_TARGET_COPYRIGHT = "(c) 2019, CEGUI team, Vladimir 'Niello' Orlov"
 QMAKE_TARGET_PRODUCT = "CEED"
 QMAKE_TARGET_DESCRIPTION = "CEGUI unified editor (CEED)"
 VERSION = 0.0.0
@@ -241,11 +242,7 @@ DEPLOY_TARGET = $$shell_quote($$shell_path($$DESTDIR))
 
 win32 {
     cegui_dlls.path = $$DESTDIR
-    CONFIG(debug, debug|release) {
-        cegui_dlls.files = $$PWD/3rdParty/CEGUI/bin/debug/*.dll
-    } else {
-        cegui_dlls.files = $$PWD/3rdParty/CEGUI/bin/*.dll
-    }
+    cegui_dlls.files = $$CEGUI_BIN_DIR/*.dll
     INSTALLS += cegui_dlls
     win32-msvc* {
         QMAKE_POST_LINK += $$quote(nmake install$$escape_expand(\n\t))

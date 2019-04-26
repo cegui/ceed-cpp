@@ -66,7 +66,7 @@ bool WidgetHierarchyTreeModel::setData(const QModelIndex& index, const QVariant&
         return false;
     }
 
-    QStandardItemModel::setData(index, value, role);
+    return QStandardItemModel::setData(index, value, role);
 }
 
 // If the selection contains children of something that is also selected, we don't include that
@@ -127,7 +127,7 @@ QStringList WidgetHierarchyTreeModel::mimeTypes() const
     return { "application/x-ceed-widget-paths", "application/x-ceed-widget-type" };
 }
 
-bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent)
+bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int /*row*/, int /*column*/, const QModelIndex& parent)
 {
     if (data->hasFormat("application/x-ceed-widget-paths"))
     {
