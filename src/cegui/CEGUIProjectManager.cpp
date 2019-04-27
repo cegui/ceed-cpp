@@ -600,7 +600,6 @@ void CEGUIProjectManager::getAvailableWidgetsBySkin(std::map<QString, QStringLis
         pair.second.sort();
 }
 
-#if 0
 // Renders and retrieves a widget preview QImage. This is useful for various widget selection lists as a preview.
 QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int previewWidth, int previewHeight)
 {
@@ -647,6 +646,9 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
     auto temporaryFBO = new QOpenGLFramebufferObject(previewWidth, previewHeight);
     temporaryFBO->bind();
 
+    glContext->functions()->glClearColor(0.9f, 0.9f, 0.9f, 1.f);
+    glContext->functions()->glClear(GL_COLOR_BUFFER_BIT);
+
     renderer->beginRendering();
 
     QString error;
@@ -676,76 +678,3 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
 
     return result;
 }
-
-#else
-
-// Renders and retrieves a widget preview QImage. This is useful for various widget selection lists as a preview.
-QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int previewWidth, int previewHeight)
-{
-    ensureCEGUIInitialized();
-
-    const float previewWidthF = static_cast<float>(previewWidth);
-    const float previewHeightF = static_cast<float>(previewHeight);
-
-    //???allocate previews once?
-    // TODO: renderer->get/createViewportTarget!
-    auto renderer = static_cast<CEGUI::OpenGLRenderer*>(CEGUI::System::getSingleton().getRenderer());
-    auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer);
-    renderTarget->setArea(CEGUI::Rectf(0.f, 0.f, previewWidthF, previewHeightF));
-
-    CEGUI::GUIContext& ctx = CEGUI::System::getSingleton().createGUIContext(*renderTarget);
-
-    auto widgetInstance = CEGUI::WindowManager::getSingleton().createWindow(widgetType.toLocal8Bit().data(), "preview");
-
-    ctx.setRootWindow(widgetInstance);
-
-    // Set it's size and position so that it shows up
-    // TODO: per-widget-type size! See WidgetsSample!
-    widgetInstance->setPosition(CEGUI::UVector2(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)));
-    widgetInstance->setSize(CEGUI::USize(CEGUI::UDim(0.f, previewWidthF), CEGUI::UDim(0.f, previewHeightF)));
-
-    CEGUI::Spinner* spinner = dynamic_cast<CEGUI::Spinner*>(widgetInstance);
-    widgetInstance->setText(spinner ? "0" : widgetType.toLocal8Bit().data());
-
-    // Fake update to ensure everything is set
-    widgetInstance->update(1.f);
-
-    glContext->makeCurrent(surface);
-
-    //???allocate once?
-    auto temporaryFBO = new QOpenGLFramebufferObject(previewWidth, previewHeight);
-    temporaryFBO->bind();
-
-    glContext->functions()->glClearColor(0.9f, 0.9f, 0.9f, 1.f);
-    glContext->functions()->glClear(GL_COLOR_BUFFER_BIT);
-
-    renderer->beginRendering();
-
-    QString error;
-    try
-    {
-        ctx.draw();
-    }
-    catch (const std::exception& e)
-    {
-        error = e.what();
-    }
-
-    renderer->endRendering();
-    temporaryFBO->release();
-
-    QImage result = temporaryFBO->toImage();
-
-    delete temporaryFBO;
-    CEGUI::WindowManager::getSingleton().destroyWindow(widgetInstance);
-    CEGUI::System::getSingleton().destroyGUIContext(ctx);
-    delete renderTarget;
-
-    glContext->doneCurrent();
-
-    if (!error.isEmpty())
-        throw error;
-
-    return result;
-}
-#endif
