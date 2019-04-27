@@ -1,5 +1,6 @@
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutEditor.h"
+#include "src/cegui/CEGUIProjectManager.h"
 #include "src/ui/CEGUIGraphicsView.h"
 #include "src/ui/layout/LayoutScene.h"
 #include "src/ui/layout/LayoutManipulator.h"
@@ -16,6 +17,8 @@
 #include "qmenu.h"
 #include "qmimedata.h"
 #include "qclipboard.h"
+#include <CEGUI/GUIContext.h>
+#include <CEGUI/WindowManager.h>
 
 LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     : IEditMode(editor)
@@ -51,16 +54,38 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
 }
 
 // arg rootWidget
-void LayoutVisualMode::initialize()
+void LayoutVisualMode::initialize(CEGUI::Window* rootWidget)
 {
 /*
-        auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
-        pmap = mainwindow.MainWindow.instance.project.propertyMap
-        mainWindow.propertiesDockWidget.inspector.setPropertyManager(CEGUIWidgetPropertyManager(pmap, self))
-
-        self.setRootWidget(rootWidget)
+    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
+    mainWindow.propertiesDockWidget.inspector.setPropertyManager(CEGUIWidgetPropertyManager(project.propertyMap, self))
 */
+    setRootWidget(rootWidget);
+
     createWidgetDockWidget->populate();
+}
+
+void LayoutVisualMode::setRootWidget(CEGUI::Window* widget)
+{
+    setRootWidgetManipulator(widget ? new LayoutManipulator(*this, nullptr, widget) : nullptr);
+}
+
+void LayoutVisualMode::setRootWidgetManipulator(LayoutManipulator* manipulator)
+{
+    auto oldRoot = getRootWidget();
+
+    scene->setRootWidgetManipulator(manipulator);
+    hierarchyDockWidget->setRootWidgetManipulator(manipulator);
+
+    CEGUIProjectManager::Instance().getCEGUIContext()->setRootWindow(getRootWidget());
+
+    if (oldRoot) CEGUI::WindowManager::getSingleton().destroyWindow(oldRoot);
+}
+
+CEGUI::Window* LayoutVisualMode::getRootWidget() const
+{
+    auto manip = scene->getRootWidgetManipulator();
+    return manip ? manip->getWidget() : nullptr;
 }
 
 void LayoutVisualMode::rebuildEditorMenu(QMenu* editorMenu)
@@ -89,26 +114,6 @@ void LayoutVisualMode::rebuildEditorMenu(QMenu* editorMenu)
         editorMenu.addAction(self.focusPropertyInspectorFilterBoxAction)
 */
     _editorMenu = editorMenu;
-}
-
-void LayoutVisualMode::setRootWidgetManipulator(LayoutManipulator* manipulator)
-{
-/*
-    oldRoot = self.getCurrentRootWidget()
-*/
-
-    scene->setRootWidgetManipulator(manipulator);
-    hierarchyDockWidget->setRootWidgetManipulator(manipulator);
-
-/*
-    PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(self.getCurrentRootWidget())
-
-    if oldRoot:
-        PyCEGUI.WindowManager.getSingleton().destroyWindow(oldRoot)
-
-    # cause full redraw of the default GUI context to ensure nothing gets stuck
-    PyCEGUI.System.getSingleton().getDefaultGUIContext().markAsDirty()
-*/
 }
 
 void LayoutVisualMode::setActionsEnabled(bool enabled)
@@ -530,21 +535,6 @@ void LayoutVisualMode::hideEvent(QHideEvent* event)
 */
     QWidget::hideEvent(event);
 }
-
-/*
-    def getCurrentRootWidget(self):
-        return self.scene.rootManipulator.widget if self.scene.rootManipulator is not None else None
-
-    def setRootWidget(self, widget):
-        """Sets the root widget we want to edit
-        """
-
-        if widget is None:
-            self.setRootWidgetManipulator(None)
-
-        else:
-            self.setRootWidgetManipulator(widgethelpers.Manipulator(self, None, widget))
-*/
 
 
 /*

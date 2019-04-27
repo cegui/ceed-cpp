@@ -6,6 +6,7 @@
 #include "qgraphicssceneevent.h"
 #include "qmimedata.h"
 #include "qaction.h"
+#include <CEGUI/Window.h>
 
 // Returns a valid CEGUI widget name out of the supplied name, if possible. Returns empty string if
 // the supplied name is invalid and can't be converted to a valid name (an empty string for example).
@@ -16,9 +17,8 @@ QString LayoutManipulator::getValidWidgetName(const QString& name)
     return trimmed.replace("/", "_");
 }
 
-//!!!arg: widget!
-LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, bool recursive, bool skipAutoWidgets)
-    : CEGUIManipulator(parent, recursive, skipAutoWidgets)//!!!arg: widget!
+LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, CEGUI::Window* widget, bool recursive, bool skipAutoWidgets)
+    : CEGUIManipulator(parent, widget, recursive, skipAutoWidgets)
     , _visualMode(visualMode)
 {
     setAcceptDrops(true);
@@ -40,6 +40,13 @@ LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem
 
 LayoutManipulator::~LayoutManipulator()
 {
+}
+
+LayoutManipulator* LayoutManipulator::createChildManipulator(CEGUI::Window* childWidget, bool recursive, bool skipAutoWidgets)
+{
+    auto ret = new LayoutManipulator(_visualMode, this, childWidget, recursive, skipAutoWidgets);
+    ret->updateFromWidget();
+    return ret;
 }
 
 void LayoutManipulator::getChildLayoutManipulators(std::vector<LayoutManipulator*>& outList, bool recursive)
@@ -70,7 +77,7 @@ QPointF LayoutManipulator::constrainMovePoint(QPointF value)
     return CEGUIManipulator::constrainMovePoint(value);
 }
 
-static inline bool compareReal(qreal a, qreal b) { return std::abs(a - b) < 0.0001f; }
+static inline bool compareReal(qreal a, qreal b) { return std::abs(a - b) < static_cast<qreal>(0.0001); }
 
 QRectF LayoutManipulator::constrainResizeRect(QRectF rect, QRectF oldRect)
 {
@@ -193,15 +200,12 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
 
 void LayoutManipulator::detach(bool detachWidget, bool destroyWidget, bool recursive)
 {
-/*
-    parentWidgetWasNone = self.widget.getParent() is None
-*/
+    const bool parentWidgetWasNone = _widget->getParent();
+
     CEGUIManipulator::detach(detachWidget, destroyWidget, recursive);
-/*
-    if parentWidgetWasNone:
-        # if this was root we have to inform the scene accordingly!
-        self.visual.setRootWidgetManipulator(None)
-*/
+
+    // If this was root we have to inform the scene accordingly!
+    if (parentWidgetWasNone) _visualMode.setRootWidgetManipulator(nullptr);
 }
 
 bool LayoutManipulator::preventManipulatorOverlap() const
@@ -326,17 +330,17 @@ void LayoutManipulator::impl_paint(QPainter* painter, const QStyleOptionGraphics
 // The resulting name's format is the base with a number appended.
 QString LayoutManipulator::getUniqueChildWidgetName(const QString& base) const
 {
-    QString candidate = base;
-/*
-        if self.widget is None:
-            // We can't check for duplicates in this case
-            return candidate
+    // We can't check for duplicates in this case
+    if (!_widget) return base;
 
-        i = 2
-        while self.widget.isChild(candidate):
-            candidate = "%s%i" % (base, i)
-            i += 1
-*/
+    QString candidate = base;
+    int i = 2;
+    while (_widget->isChild(candidate.toLocal8Bit().data()))
+    {
+        candidate = base + QString::number(i);
+        ++i;
+    }
+
     return candidate;
 }
 
@@ -367,11 +371,3 @@ qreal LayoutManipulator::snapYCoordToGrid(qreal y)
 */
     return y;
 }
-
-/*
-
-    def createChildManipulator(self, childWidget, recursive = True, skipAutoWidgets = False):
-        ret = Manipulator(self.visual, self, childWidget, recursive, skipAutoWidgets)
-        ret.updateFromWidget()
-        return ret
-*/

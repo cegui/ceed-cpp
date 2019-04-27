@@ -14,9 +14,10 @@ public:
 
     static QString getValidWidgetName(const QString& name);
 
-    LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, bool recursive = true, bool skipAutoWidgets = false);
+    LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, CEGUI::Window* widget, bool recursive = true, bool skipAutoWidgets = false);
     virtual ~LayoutManipulator() override;
 
+    LayoutManipulator* createChildManipulator(CEGUI::Window* childWidget, bool recursive = true, bool skipAutoWidgets = false);
     void getChildLayoutManipulators(std::vector<LayoutManipulator*>& outList, bool recursive);
     QString getUniqueChildWidgetName(const QString& base = "Widget") const;
 

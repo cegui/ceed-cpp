@@ -6,11 +6,16 @@
 // This is a rectangle that is synchronised with given CEGUI widget,
 // it provides moving and resizing functionality
 
+namespace CEGUI
+{
+    class Window;
+}
+
 class CEGUIManipulator : public ResizableRectItem
 {
 public:
 
-    CEGUIManipulator(QGraphicsItem* parent = nullptr, bool recursive = true, bool skipAutoWidgets = false);
+    CEGUIManipulator(QGraphicsItem* parent = nullptr, CEGUI::Window* widget = nullptr, bool recursive = true, bool skipAutoWidgets = false);
 
     virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
 
@@ -35,6 +40,7 @@ public:
     virtual bool useIntegersForAbsoluteMove() const { return false; }
     virtual bool useIntegersForAbsoluteResize() const { return false; }
 
+    CEGUI::Window* getWidget() const { return _widget; }
     QString getWidgetName() const;
     QString getWidgetType() const;
     QString getWidgetPath() const;
@@ -54,6 +60,7 @@ protected:
 
     virtual void impl_paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr);
 
+    CEGUI::Window* _widget = nullptr;
     QPointF _lastResizeNewPos;
     QRectF _lastResizeNewRect;
     QPointF _lastMoveNewPos;

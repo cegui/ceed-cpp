@@ -38,14 +38,13 @@ void LayoutEditor::initialize()
 /*
         # we have to make the context the current context to ensure textures are fine
         self.mainWindow.ceguiContainerWidget.makeGLContextCurrent()
-
-        root = None
+*/
+    CEGUI::Window* root = nullptr;
+    /*
         if self.nativeData != "":
             root = PyCEGUI.WindowManager.getSingleton().loadLayoutFromString(self.nativeData)
-
-        self.visual.initialise(root)
-*/
-    visualMode->initialize(); //!!!need arg 'root'!
+    */
+    visualMode->initialize(root);
 }
 
 void LayoutEditor::activate(MainWindow& mainWindow)

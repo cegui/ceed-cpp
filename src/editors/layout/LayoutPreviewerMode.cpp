@@ -1,13 +1,15 @@
 #include "src/editors/layout/LayoutPreviewerMode.h"
+#include "src/editors/layout/LayoutVisualMode.h"
+#include "src/editors/layout/LayoutEditor.h"
+#include "src/cegui/CEGUIProjectManager.h"
 #include "qboxlayout.h"
+#include <CEGUI/Window.h>
+#include <CEGUI/WindowManager.h>
 
-LayoutPreviewerMode::LayoutPreviewerMode(MultiModeEditor& editor, QWidget* parent)
+LayoutPreviewerMode::LayoutPreviewerMode(LayoutEditor& editor, QWidget* parent)
     : QWidget(parent)
     , IEditMode(editor)
 {
-/*
-        self.rootWidget = None
-*/
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     setLayout(layout);
@@ -17,31 +19,28 @@ void LayoutPreviewerMode::activate()
 {
     IEditMode::activate();
 
-/*
-        assert(self.rootWidget is None)
+    assert(!rootWidget);
 
-        # we have to make the context the current context to ensure textures are fine
-        mainwindow.MainWindow.instance.ceguiContainerWidget.makeGLContextCurrent()
+    // We have to make the context the current context to ensure textures are fine
+    /*
+    CEGUIProjectManager::Instance().makeOpenGLContextCurrent();
+    */
 
-        currentRootWidget = self.tabbedEditor.visual.getCurrentRootWidget()
-        if currentRootWidget is None:
-            self.rootWidget = None
+    // Lets clone so we don't affect the layout at all
+    auto currentRootWidget = static_cast<LayoutEditor&>(_editor).getVisualMode()->getRootWidget();
+    rootWidget = currentRootWidget ? currentRootWidget->clone() : nullptr;
 
-        else:
-            # lets clone so we don't affect the layout at all
-            self.rootWidget = currentRootWidget.clone()
-
-        PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(self.rootWidget)
-*/
+    CEGUIProjectManager::Instance().getCEGUIContext()->setRootWindow(rootWidget);
 }
 
 bool LayoutPreviewerMode::deactivate()
 {
-/*
-        if self.rootWidget is not None:
-            PyCEGUI.WindowManager.getSingleton().destroyWindow(self.rootWidget)
-            self.rootWidget = None
-*/
+    if (rootWidget)
+    {
+        CEGUI::WindowManager::getSingleton().destroyWindow(rootWidget);
+        rootWidget = nullptr;
+    }
+
     return IEditMode::deactivate();
 }
 

@@ -36,6 +36,8 @@ public:
     //virtual bool hasChanges() const;
     virtual bool requiresProject() const override { return true; }
 
+    LayoutVisualMode* getVisualMode() const { return visualMode; }
+
 protected:
 
     virtual void getRawData(QByteArray& outRawData) override;

@@ -10,6 +10,11 @@
 
 //???rename to CEGUIManager?
 
+namespace CEGUI
+{
+    class GUIContext;
+}
+
 class CEGUIProject;
 class CEGUIWidget; // TODO: one CEGUI widget per editor instead of the global one?
 class QOpenGLContext;
@@ -45,6 +50,7 @@ public:
     void getAvailableWidgetsBySkin(std::map<QString, QStringList>& out) const;
     QImage getWidgetPreviewImage(const QString& widgetType, int previewWidth = 128, int previewHeight = 64);
     CEGUIWidget* getCEGUIWidget() const { return ceguiContainerWidget; }
+    CEGUI::GUIContext* getCEGUIContext() const { return guiContext; }
 
     bool syncProjectToCEGUIInstance();
     void ensureCEGUIInitialized();
@@ -55,6 +61,8 @@ protected:
 
     QOpenGLContext* glContext = nullptr;
     QOffscreenSurface* surface = nullptr;
+
+    CEGUI::GUIContext* guiContext = nullptr;
 
     CEGUIWidget* ceguiContainerWidget = nullptr; //???need?
     std::unique_ptr<CEGUIProject> currentProject;

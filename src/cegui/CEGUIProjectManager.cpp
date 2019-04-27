@@ -29,6 +29,9 @@ CEGUIProjectManager::CEGUIProjectManager()
 
 CEGUIProjectManager::~CEGUIProjectManager()
 {
+    if (guiContext) CEGUI::System::getSingleton().destroyGUIContext(*guiContext);
+    cleanCEGUIResources();
+    CEGUI::OpenGLRenderer::destroySystem();
 }
 
 CEGUIProject* CEGUIProjectManager::createProject(const QString& filePath, bool createResourceDirs)
@@ -154,11 +157,12 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
 
     // We don't want CEGUI Exceptions to output to stderr every time they are constructed
     CEGUI::Exception::setStdErrEnabled(false);
+
+    CEGUI::OpenGLRenderer* renderer = nullptr;
     try
     {
-        //??? glContext->format().version() >= 3.2 -> use OpenGL3Renderer? no FBO in bootstrap, need to look at implementation.
-        CEGUI::OpenGLRenderer::bootstrapSystem(CEGUI::OpenGLRenderer::TextureTargetType::Fbo);
-        //!!!destroySystem to destroy bootstrapped CEGUI!
+        //??? glContext->format().version() >= 3.2 -> use OpenGL3Renderer?
+        renderer = &CEGUI::OpenGLRenderer::bootstrapSystem(CEGUI::OpenGLRenderer::TextureTargetType::Fbo);
     }
     catch (const std::exception& e)
     {
@@ -193,6 +197,10 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
     auto parser = CEGUI::System::getSingleton().getXMLParser();
     if (parser && parser->isPropertyPresent("SchemaDefaultResourceGroup"))
         parser->setProperty("SchemaDefaultResourceGroup", "xml_schemas");
+
+    // TODO: renderer->get/createViewportTarget!
+    auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer); //CEGUI::Rectf(0.f, 0.f, widthF, heightF)
+    guiContext = &CEGUI::System::getSingleton().createGUIContext(*renderTarget);
 
     initialized = true;
 }
@@ -611,8 +619,7 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
     //???allocate previews once?
     // TODO: renderer->get/createViewportTarget!
     auto renderer = static_cast<CEGUI::OpenGLRenderer*>(CEGUI::System::getSingleton().getRenderer());
-    auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer);
-    renderTarget->setArea(CEGUI::Rectf(0.f, 0.f, previewWidthF, previewHeightF));
+    auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer, CEGUI::Rectf(0.f, 0.f, previewWidthF, previewHeightF));
 
     auto renderingSurface = new CEGUI::RenderingSurface(*renderTarget);
 

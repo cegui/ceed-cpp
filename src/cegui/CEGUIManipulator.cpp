@@ -4,18 +4,14 @@
 #include "qgraphicsscene.h"
 #include "qpainter.h"
 
-// widget - CEGUI::Widget to wrap
 // recursive - if true, even children of given widget are wrapped
 // skipAutoWidgets - if true, auto widgets are skipped (only applicable if recursive is True)
-CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent, bool recursive, bool skipAutoWidgets)
+CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent, CEGUI::Window* widget, bool recursive, bool skipAutoWidgets)
     : ResizableRectItem(parent)
+    , _widget(widget)
 {
     setFlags(ItemIsFocusable | ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
 
-/*
-        //!!!arg: widget!
-        self.widget = widget
-*/
     if (recursive)
     {
         // Creates manipulators for child widgets of widget manipulated by this manipulator

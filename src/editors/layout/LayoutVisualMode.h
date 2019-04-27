@@ -6,6 +6,11 @@
 
 // This is the layout visual editing mode
 
+namespace CEGUI
+{
+    class Window;
+}
+
 class LayoutEditor;
 class LayoutScene;
 class LayoutManipulator;
@@ -22,9 +27,11 @@ public:
 
     LayoutVisualMode(LayoutEditor& editor);
 
-    void initialize();
-    void rebuildEditorMenu(QMenu* editorMenu);
+    void initialize(CEGUI::Window* rootWidget);
+    void setRootWidget(CEGUI::Window* widget);
     void setRootWidgetManipulator(LayoutManipulator* manipulator);
+    CEGUI::Window* getRootWidget() const;
+    void rebuildEditorMenu(QMenu* editorMenu);
     void setActionsEnabled(bool enabled);
 
     bool cut();
