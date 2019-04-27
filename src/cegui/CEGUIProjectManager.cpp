@@ -11,6 +11,7 @@
 #include "qopenglcontext.h"
 #include "qoffscreensurface.h"
 #include "qopenglframebufferobject.h"
+#include "qopenglfunctions.h"
 
 // TODO: one CEGUI widget per editor instead of the global one?
 #include "src/ui/CEGUIWidget.h"
@@ -599,12 +600,11 @@ void CEGUIProjectManager::getAvailableWidgetsBySkin(std::map<QString, QStringLis
         pair.second.sort();
 }
 
+#if 0
 // Renders and retrieves a widget preview QImage. This is useful for various widget selection lists as a preview.
 QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int previewWidth, int previewHeight)
 {
     ensureCEGUIInitialized();
-
-    glContext->makeCurrent(surface);
 
     const float previewWidthF = static_cast<float>(previewWidth);
     const float previewHeightF = static_cast<float>(previewHeight);
@@ -614,30 +614,39 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
     auto renderer = static_cast<CEGUI::OpenGLRenderer*>(CEGUI::System::getSingleton().getRenderer());
     auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer);
     renderTarget->setArea(CEGUI::Rectf(0.f, 0.f, previewWidthF, previewHeightF));
+
     auto renderingSurface = new CEGUI::RenderingSurface(*renderTarget);
 
     auto widgetInstance = CEGUI::WindowManager::getSingleton().createWindow(widgetType.toLocal8Bit().data(), "preview");
+
     widgetInstance->setRenderingSurface(renderingSurface);
 
-    // Window is not attached to a context so it has no default font. Set default.
-    // TODO: if project has no fonts, create CEED-internal default font.
-    //???set to context? mb create separate context for the preview?
-    const auto& fontRegistry = CEGUI::FontManager::getSingleton().getRegisteredFonts();
-    CEGUI::Font* defaultFont = fontRegistry.empty() ? nullptr : fontRegistry.begin()->second;
-    widgetInstance->setFont(defaultFont);
-
     // Set it's size and position so that it shows up
+    // TODO: per-widget-type size! See WidgetsSample!
     widgetInstance->setPosition(CEGUI::UVector2(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)));
     widgetInstance->setSize(CEGUI::USize(CEGUI::UDim(0.f, previewWidthF), CEGUI::UDim(0.f, previewHeightF)));
 
+    // Window is not attached to a context so it has no default font. Set default.
+    // TODO: if project has no fonts, create CEED-internal default font.
+    if (!widgetInstance->getFont())
+    {
+        const auto& fontRegistry = CEGUI::FontManager::getSingleton().getRegisteredFonts();
+        CEGUI::Font* defaultFont = fontRegistry.empty() ? nullptr : fontRegistry.begin()->second;
+        widgetInstance->setFont(defaultFont);
+    }
+
+    CEGUI::Spinner* spinner = dynamic_cast<CEGUI::Spinner*>(widgetInstance);
+    widgetInstance->setText(spinner ? "0" : widgetType.toLocal8Bit().data());
+
     // Fake update to ensure everything is set
     widgetInstance->update(1.f);
+
+    glContext->makeCurrent(surface);
 
     //???allocate once?
     auto temporaryFBO = new QOpenGLFramebufferObject(previewWidth, previewHeight);
     temporaryFBO->bind();
 
-    renderingSurface->invalidate();
     renderer->beginRendering();
 
     QString error;
@@ -660,10 +669,83 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
     delete renderingSurface;
     delete renderTarget;
 
-    glContext->doneCurrent(); //???need?
+    glContext->doneCurrent();
 
     if (!error.isEmpty())
         throw error;
 
     return result;
 }
+
+#else
+
+// Renders and retrieves a widget preview QImage. This is useful for various widget selection lists as a preview.
+QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int previewWidth, int previewHeight)
+{
+    ensureCEGUIInitialized();
+
+    const float previewWidthF = static_cast<float>(previewWidth);
+    const float previewHeightF = static_cast<float>(previewHeight);
+
+    //???allocate previews once?
+    // TODO: renderer->get/createViewportTarget!
+    auto renderer = static_cast<CEGUI::OpenGLRenderer*>(CEGUI::System::getSingleton().getRenderer());
+    auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer);
+    renderTarget->setArea(CEGUI::Rectf(0.f, 0.f, previewWidthF, previewHeightF));
+
+    CEGUI::GUIContext& ctx = CEGUI::System::getSingleton().createGUIContext(*renderTarget);
+
+    auto widgetInstance = CEGUI::WindowManager::getSingleton().createWindow(widgetType.toLocal8Bit().data(), "preview");
+
+    ctx.setRootWindow(widgetInstance);
+
+    // Set it's size and position so that it shows up
+    // TODO: per-widget-type size! See WidgetsSample!
+    widgetInstance->setPosition(CEGUI::UVector2(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)));
+    widgetInstance->setSize(CEGUI::USize(CEGUI::UDim(0.f, previewWidthF), CEGUI::UDim(0.f, previewHeightF)));
+
+    CEGUI::Spinner* spinner = dynamic_cast<CEGUI::Spinner*>(widgetInstance);
+    widgetInstance->setText(spinner ? "0" : widgetType.toLocal8Bit().data());
+
+    // Fake update to ensure everything is set
+    widgetInstance->update(1.f);
+
+    glContext->makeCurrent(surface);
+
+    //???allocate once?
+    auto temporaryFBO = new QOpenGLFramebufferObject(previewWidth, previewHeight);
+    temporaryFBO->bind();
+
+    glContext->functions()->glClearColor(0.9f, 0.9f, 0.9f, 1.f);
+    glContext->functions()->glClear(GL_COLOR_BUFFER_BIT);
+
+    renderer->beginRendering();
+
+    QString error;
+    try
+    {
+        ctx.draw();
+    }
+    catch (const std::exception& e)
+    {
+        error = e.what();
+    }
+
+    renderer->endRendering();
+    temporaryFBO->release();
+
+    QImage result = temporaryFBO->toImage();
+
+    delete temporaryFBO;
+    CEGUI::WindowManager::getSingleton().destroyWindow(widgetInstance);
+    CEGUI::System::getSingleton().destroyGUIContext(ctx);
+    delete renderTarget;
+
+    glContext->doneCurrent();
+
+    if (!error.isEmpty())
+        throw error;
+
+    return result;
+}
+#endif

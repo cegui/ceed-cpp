@@ -67,7 +67,7 @@ bool WidgetTypeTreeWidget::viewportEvent(QEvent* event)
                     QByteArray bytes;
                     QBuffer buffer(&bytes);
                     buffer.open(QIODevice::WriteOnly);
-                    CEGUIProjectManager::Instance().getWidgetPreviewImage(fullWidgetType).save(&buffer, "PNG");
+                    CEGUIProjectManager::Instance().getWidgetPreviewImage(fullWidgetType, 256, 128).save(&buffer, "PNG");
                     buffer.close();
 
                     tooltipText = QString("<img src=\"data:image/png;base64,%1\" />").arg(QString(bytes.toBase64()));
