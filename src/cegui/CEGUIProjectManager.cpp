@@ -16,6 +16,16 @@
 // TODO: one CEGUI widget per editor instead of the global one?
 #include "src/ui/CEGUIWidget.h"
 
+QString CEGUIProjectManager::ceguiStringToQString(const CEGUI::String& str)
+{
+    return QString(CEGUI::String::convertUtf32ToUtf8(str.c_str()).c_str());
+}
+
+CEGUI::String CEGUIProjectManager::qStringToCeguiString(const QString& str)
+{
+    return CEGUI::String(str.toLocal8Bit().data());
+}
+
 CEGUIProjectManager::CEGUIProjectManager()
 {
 /*

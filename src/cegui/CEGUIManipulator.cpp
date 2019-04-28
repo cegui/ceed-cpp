@@ -1,8 +1,15 @@
 #include "src/cegui/CEGUIManipulator.h"
+#include "src/cegui/CEGUIProjectManager.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
 #include "qgraphicsscene.h"
 #include "qpainter.h"
+#include <CEGUI/widgets/TabControl.h>
+#include <CEGUI/widgets/ScrollablePane.h>
+#include <CEGUI/widgets/ScrolledContainer.h>
+#include <CEGUI/widgets/LayoutContainer.h>
+#include <CEGUI/WindowManager.h>
+#include <CEGUI/CoordConverter.h>
 
 // recursive - if true, even children of given widget are wrapped
 // skipAutoWidgets - if true, auto widgets are skipped (only applicable if recursive is True)
@@ -14,22 +21,13 @@ CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent, CEGUI::Window* widget,
 
     if (recursive)
     {
-        // Creates manipulators for child widgets of widget manipulated by this manipulator
-        // Special handling for widgets using children AutoWindows that act as  containers, such
-        // as TabControl and ScrollablePane is done.
-        // skipAutoWidgets - if true, auto widgets will be skipped over
-
-        /*
-            countGetter, childGetter = self.getFunctionsChildCountAndChildGet()
-
-            for idx in range(0, countGetter()):
-                childWidget = childGetter(idx)
-
-                if not skipAutoWidgets or not childWidget.isAutoWindow():
-                    # note: we don't have to assign or attach the child manipulator here
-                    #       just passing parent to the constructor is enough
-                    self.createChildManipulator(childWidget, true, skipAutoWidgets)
-        */
+        forEachChildWidget([this, skipAutoWidgets](CEGUI::Window* childWidget)
+        {
+            // NB: we don't have to assign or attach the child manipulator here
+            // just passing parent to the constructor is enough
+            if (!skipAutoWidgets || !childWidget->isAutoWindow())
+                createChildManipulator(childWidget, true, skipAutoWidgets);
+        });
     }
 /*
         self.preResizePos = None
@@ -247,25 +245,23 @@ void CEGUIManipulator::impl_paint(QPainter* painter, const QStyleOptionGraphicsI
 
 QSizeF CEGUIManipulator::getMinSize() const
 {
-/*
-    if self.widget:
-        minPixelSize = PyCEGUI.CoordConverter.asAbsolute(self.widget.getMinSize(),
-                                                         PyCEGUI.System.getSingleton().getRenderer().getDisplaySize())
+    if (_widget)
+    {
+        auto size = CEGUI::CoordConverter::asAbsolute(_widget->getMinSize(), CEGUI::System::getSingleton().getRenderer()->getDisplaySize());
+        return QSizeF(static_cast<qreal>(size.d_width), static_cast<qreal>(size.d_height));
+    }
 
-        return QtCore.QSizeF(minPixelSize.d_width, minPixelSize.d_height)
-*/
     return QSizeF();
 }
 
 QSizeF CEGUIManipulator::getMaxSize() const
 {
-/*
-    if self.widget:
-        maxPixelSize = PyCEGUI.CoordConverter.asAbsolute(self.widget.getMaxSize(),
-                                                         PyCEGUI.System.getSingleton().getRenderer().getDisplaySize())
+    if (_widget)
+    {
+        auto size = CEGUI::CoordConverter::asAbsolute(_widget->getMaxSize(), CEGUI::System::getSingleton().getRenderer()->getDisplaySize());
+        return QSizeF(static_cast<qreal>(size.d_width), static_cast<qreal>(size.d_height));
+    }
 
-        return QtCore.QSizeF(maxPixelSize.d_width, maxPixelSize.d_height)
-*/
     return QSizeF();
 }
 
@@ -285,17 +281,16 @@ void CEGUIManipulator::notifyResizeStarted(ResizingHandle* handle)
 
     for (QGraphicsItem* childItem : childItems())
     {
-        CEGUIManipulator* child = dynamic_cast<CEGUIManipulator*>(childItem);
-        if (child) child->setVisible(false);
+        if (dynamic_cast<CEGUIManipulator*>(childItem))
+            childItem->setVisible(false);
     }
-/*
-    parent = self.widget.getParent()
-    if parent and isinstance(parent, PyCEGUI.LayoutContainer):
-        # hide siblings in the same layout container
-        for item in self.parentItem().childItems():
-            if item is not self and isinstance(item, Manipulator):
-                item.setVisible(False)
-*/
+
+    // Hide siblings in the same layout container
+    auto parent = _widget->getParent();
+    if (parent && dynamic_cast<CEGUI::LayoutContainer*>(parent))
+        for (auto item : parentItem()->childItems())
+            if (item != this && dynamic_cast<CEGUIManipulator*>(item))
+                item->setVisible(false);
 }
 
 void CEGUIManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
@@ -451,51 +446,48 @@ void CEGUIManipulator::notifyMoveFinished(QPointF newPos)
 // updateParentLCs - if True we update ancestor layout containers
 void CEGUIManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs)
 {
-/*
-        assert(self.widget is not None)
+    assert(_widget);
+    if (!_widget) return;
 
-        if callUpdate:
-            self.widget.update(0.0)
+    if (callUpdate) _widget->update(0.f);
 
-        if updateAncestorLCs:
-            # We are trying to find a topmost LC (in case of nested LCs) and
-            # recursively update it
+    if (updateAncestorLCs)
+    {
+        // We are trying to find a topmost LC (in case of nested LCs) and recursively update it
+        QGraphicsItem* topmostLC = nullptr;
+        auto item = parentItem();
+        while (item && dynamic_cast<CEGUI::LayoutContainer*>(static_cast<CEGUIManipulator*>(item)->_widget))
+        {
+            topmostLC = item;
+            item = item->parentItem();
+        }
 
-            item = self.parentItem()
-            topmostLC = None
-            while (item is not None and isinstance(item.widget, PyCEGUI.LayoutContainer)):
-                topmostLC = item
-                item = item.parentItem()
+        if (topmostLC)
+        {
+            static_cast<CEGUIManipulator*>(topmostLC)->updateFromWidget(true, false);
 
-            if topmostLC is not None:
-                topmostLC.updateFromWidget(True, False)
+            // No need to continue, this method will get called again with updateAncestorLCs = False
+            return;
+        }
+    }
 
-                # No need to continue, this method will get called again with
-                # updateAncestorLCs = False
-                return
+    auto unclippedOuterRect = _widget->getUnclippedOuterRect().getFresh(true);
+    auto pos = unclippedOuterRect.getPosition();
+    auto size = unclippedOuterRect.getSize();
+    auto parentWidget = _widget->getParent();
+    if (parentWidget)
+        pos -= parentWidget->getUnclippedOuterRect().get().getPosition();
 
-        unclippedOuterRect = self.widget.getUnclippedOuterRect().getFresh(True)
-        pos = unclippedOuterRect.getPosition()
-        size = unclippedOuterRect.getSize()
+    _ignoreGeometryChanges = true;
+    setPos(QPointF(static_cast<qreal>(pos.x), static_cast<qreal>(pos.y)));
+    setRect(QRectF(0.0, 0.0, static_cast<qreal>(size.d_width), static_cast<qreal>(size.d_height)));
+    _ignoreGeometryChanges = false;
 
-        parentWidget = self.widget.getParent()
-        if parentWidget:
-            parentUnclippedOuterRect = parentWidget.getUnclippedOuterRect().get()
-            pos -= parentUnclippedOuterRect.getPosition()
-
-        self.ignoreGeometryChanges = True
-        self.setPos(QtCore.QPointF(pos.d_x, pos.d_y))
-        self.setRect(QtCore.QRectF(0, 0, size.d_width, size.d_height))
-        self.ignoreGeometryChanges = False
-
-        for item in self.childItems():
-            if not isinstance(item, Manipulator):
-                continue
-
-            # if we are updating top to bottom we don't need to update ancestor
-            # layout containers, they will already be updated
-            item.updateFromWidget(callUpdate, False)
-*/
+    // If we are updating top to bottom we don't need to update ancestor
+    // layout containers, they will already be updated
+    for (auto item : childItems())
+        if (auto manip = dynamic_cast<CEGUIManipulator*>(item))
+            manip->updateFromWidget(callUpdate, false);
 }
 
 // Detaches itself from the GUI hierarchy and the manipulator hierarchy.
@@ -519,11 +511,8 @@ void CEGUIManipulator::detach(bool detachWidget, bool destroyWidget, bool recurs
     if (detachWidget)
     {
         // Detach from the GUI hierarchy
-/*
-        parentWidget = self.widget.getParent()
-        if parentWidget is not None:
-            parentWidget.removeChild(self.widget)
-*/
+        auto parentWidget = _widget->getParent();
+        if (parentWidget) parentWidget->removeChild(_widget);
     }
 
     // Detach from the parent manipulator
@@ -531,35 +520,33 @@ void CEGUIManipulator::detach(bool detachWidget, bool destroyWidget, bool recurs
 
     if (detachWidget && destroyWidget)
     {
-/*
-        PyCEGUI.WindowManager.getSingleton().destroyWindow(self.widget)
-        self.widget = None
-*/
+        CEGUI::WindowManager::getSingleton().destroyWindow(_widget);
+        _widget = nullptr;
     }
 }
 
 QString CEGUIManipulator::getWidgetName() const
 {
-/*
-        return self.widget.getName() if self.widget is not None else "<Unknown>"
-*/
-    return "<IMPLEMENT ME!!!>";
+    return _widget ? CEGUIProjectManager::ceguiStringToQString(_widget->getName()) : "<Unknown>";
 }
 
 QString CEGUIManipulator::getWidgetType() const
 {
-/*
-        return self.widget.getType() if self.widget is not None else "<Unknown>"
-*/
-    return "<IMPLEMENT ME!!!>";
+    return _widget ? CEGUIProjectManager::ceguiStringToQString(_widget->getType()) : "<Unknown>";
 }
 
 QString CEGUIManipulator::getWidgetPath() const
 {
-/*
-        return self.widget.getNamePath() if self.widget is not None else "<Unknown>"
-*/
-    return "<IMPLEMENT ME!!!>";
+    return _widget ? CEGUIProjectManager::ceguiStringToQString(_widget->getNamePath()) : "<Unknown>";
+}
+
+// Creates a child manipulator suitable for a child widget of manipulated widget
+// This is there to allow overriding (if user subclasses the Manipulator, child manipulators are likely to be also subclassed)
+CEGUIManipulator* CEGUIManipulator::createChildManipulator(CEGUI::Window* childWidget, bool recursive, bool skipAutoWidgets)
+{
+    auto ret = new CEGUIManipulator(this, childWidget, recursive, skipAutoWidgets);
+    ret->updateFromWidget();
+    return ret;
 }
 
 void CEGUIManipulator::getChildManipulators(std::vector<CEGUIManipulator*>& outList, bool recursive)
@@ -619,16 +606,33 @@ CEGUIManipulator* CEGUIManipulator::getManipulatorFromChildContainerByPath(const
     for (QGraphicsItem* item : childItems())
     {
         CEGUIManipulator* manipulator = dynamic_cast<CEGUIManipulator*>(item);
-        if (manipulator)
-        {
-            /*
-                if item.widget.getName() == directChildPath:
-                    return item
-            */
-        }
+        if (manipulator && manipulator->getWidgetName() == directChildPath)
+            return manipulator;
     }
 
     return nullptr;
+}
+
+void CEGUIManipulator::forEachChildWidget(std::function<void (CEGUI::Window*)> callback) const
+{
+    if (auto tabControl = dynamic_cast<CEGUI::TabControl*>(_widget))
+    {
+        const size_t count = tabControl->getTabCount();
+        for (size_t i = 0; i < count; ++i)
+            callback(tabControl->getTabContentsAtIndex(i));
+    }
+    else if (auto scrollablePane = dynamic_cast<CEGUI::ScrollablePane*>(_widget))
+    {
+        const size_t count = scrollablePane->getContentPane()->getChildCount();
+        for (size_t i = 0; i < count; ++i)
+            callback(scrollablePane->getContentPane()->getChildAtIdx(i));
+    }
+    else
+    {
+        const size_t count = tabControl->getChildCount();
+        for (size_t i = 0; i < count; ++i)
+            callback(tabControl->getChildAtIdx(i));
+    }
 }
 
 // Goes through child widgets of the manipulated widget and creates manipulator for each missing one.
@@ -636,45 +640,38 @@ CEGUIManipulator* CEGUIManipulator::getManipulatorFromChildContainerByPath(const
 // skipAutoWidgets - if true, auto widgets will be skipped over
 void CEGUIManipulator::createMissingChildManipulators(bool recursive, bool skipAutoWidgets)
 {
-/*
-        countGetter, childGetter = self.getFunctionsChildCountAndChildGet()
+    forEachChildWidget([this, skipAutoWidgets, recursive](CEGUI::Window* childWidget)
+    {
+        if (getManipulatorByPath(CEGUIProjectManager::ceguiStringToQString(childWidget->getName())))
+            return;
 
-        for idx in range(0, countGetter()):
-            childWidget = childGetter(idx)
-
-            try:
-                # try to find a manipulator for currently examined child widget
-                self.getManipulatorByPath(childWidget.getName())
-
-            except LookupError:
-                if not skipAutoWidgets or not childWidget.isAutoWindow():
-                    # note: we don't have to assign or attach the child manipulator here
-                    #       just passing parent to the constructor is enough
-                    childManipulator = self.createChildManipulator(childWidget, recursive, skipAutoWidgets)
-                    if recursive:
-                        childManipulator.createMissingChildManipulators(True, skipAutoWidgets)
-*/
+        if (!skipAutoWidgets || !childWidget->isAutoWindow())
+        {
+            // NB: we don't have to assign or attach the child manipulator here
+            //     just passing parent to the constructor is enough
+            auto childManipulator = createChildManipulator(childWidget, recursive, skipAutoWidgets);
+            if (recursive)
+                childManipulator->createMissingChildManipulators(true, skipAutoWidgets);
+        }
+    });
 }
 
 void CEGUIManipulator::moveToFront()
 {
-/*
-    self.widget.moveToFront()
+    _widget->moveToFront();
 
-    parentItem = self.parentItem()
-    if parentItem:
-        for item in parentItem.childItems():
-            if item == self:
-                continue
+    if (!parentItem()) return;
 
-            # For some reason this is the opposite of what (IMO) it should be
-            # which is self.stackBefore(item)
-            #
-            # Is Qt documentation flawed or something?!
-            item.stackBefore(self)
+    for (auto&& item : parentItem()->childItems())
+    {
+        if (item == this) continue;
 
-        parentItem.moveToFront()
-*/
+        // For some reason this is the opposite of what (IMO) it should be
+        // which is self.stackBefore(item). Is Qt documentation flawed or something?!
+        item->stackBefore(this);
+    }
+
+    static_cast<CEGUIManipulator*>(parentItem())->moveToFront();
 }
 
 // Notify the property manager that the values of the given properties have changed for this widget
@@ -695,34 +692,30 @@ void CEGUIManipulator::triggerPropertyManagerCallback(QStringList propertyNames)
 
 bool CEGUIManipulator::shouldBeSkipped() const
 {
-    /*
-        if (!self.widget.isAutoWindow()) return false;
-    */
+    if (!_widget->isAutoWindow()) return false;
     auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
     const bool hideDeadEndAutoWidgets = settings->getEntryValue("layout/visual/hide_deadend_autowidgets").toBool();
     return hideDeadEndAutoWidgets && !hasNonAutoWidgetDescendants();
+}
+
+static bool impl_hasNonAutoWidgetDescendants(CEGUI::Window* widget)
+{
+    if (!widget->isAutoWindow()) return true;
+
+    const size_t count = widget->getChildCount();
+    for (size_t i = 0; i < count; ++i)
+    {
+        if (impl_hasNonAutoWidgetDescendants(widget->getChildAtIdx(i)))
+            return true;
+    }
+    return false;
 }
 
 // Checks whether there are non-auto widgets nested in this widget.
 // Self is a descendant of self in this context!
 bool CEGUIManipulator::hasNonAutoWidgetDescendants() const
 {
-/*
-        def impl_hasNonAutoWidgetDescendants(widget):
-            if not widget.isAutoWindow():
-                return True
-
-            for i in xrange(widget.getChildCount()):
-                child = widget.getChildAtIdx(i)
-
-                if impl_hasNonAutoWidgetDescendants(child):
-                    return True
-
-            return False
-
-        return impl_hasNonAutoWidgetDescendants(self.widget)
-*/
-return false;
+    return impl_hasNonAutoWidgetDescendants(_widget);
 }
 
 QVariant CEGUIManipulator::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value)
@@ -736,40 +729,6 @@ QVariant CEGUIManipulator::itemChange(QGraphicsItem::GraphicsItemChange change, 
 }
 
 /*
-
-    def createChildManipulator(self, childWidget, recursive = True, skipAutoWidgets = False):
-        """Creates a child manipulator suitable for a child widget of manipulated widget
-
-        recursive - recurse into children?
-        skipAutoWidgets - if true, auto widgets will be skipped over
-
-        This is there to allow overriding (if user subclasses the Manipulator, child manipulators are
-        likely to be also subclassed
-        """
-
-        ret = Manipulator(self, childWidget, recursive, skipAutoWidgets)
-        ret.updateFromWidget()
-        return ret
-
-    def getFunctionsChildCountAndChildGet(self):
-        """Returns function pointers for the child getter and the child count functions. This is
-        necessary since some windows, such as TabControl and ScrollablePane, use AutoWindows
-        as containers, but we want to attach the children directly to them and display them as such,
-        effectively hiding the auto windows.
-
-        Returns a tuple of a child-count getter and a children-by-index getter
-        """
-        if isinstance(self.widget, PyCEGUI.TabControl):
-            countGetter = self.widget.getTabCount
-            childGetter = self.widget.getTabContentsAtIndex
-        elif isinstance(self.widget, PyCEGUI.ScrollablePane):
-            countGetter = self.widget.getContentPane().getChildCount
-            childGetter = self.widget.getContentPane().getChildAtIdx
-        else:
-            countGetter = self.widget.getChildCount
-            childGetter = self.widget.getChildAtIdx
-
-        return countGetter, childGetter
 
     def getBaseSize(self):
         if self.widget.getParent() is not None and not self.widget.isNonClient():

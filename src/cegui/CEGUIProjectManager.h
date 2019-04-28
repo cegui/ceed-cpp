@@ -13,6 +13,7 @@
 namespace CEGUI
 {
     class GUIContext;
+    class String;
 }
 
 class CEGUIProject;
@@ -25,6 +26,8 @@ class CEGUIProjectManager
 public:
 
     static QString getEditorIDStringPrefix() { return "ceed_internal-"; }
+    static QString ceguiStringToQString(const CEGUI::String& str);
+    static CEGUI::String qStringToCeguiString(const QString& str);
 
     CEGUIProjectManager();
     CEGUIProjectManager(const CEGUIProjectManager&) = delete;

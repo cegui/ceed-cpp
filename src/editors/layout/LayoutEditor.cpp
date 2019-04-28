@@ -2,6 +2,8 @@
 #include "src/editors/layout/LayoutCodeMode.h"
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutPreviewerMode.h"
+#include "src/cegui/CEGUIProjectManager.h"
+#include "src/cegui/CEGUIProject.h"
 #include "src/util/Settings.h"
 #include "src/util/SettingsCategory.h"
 #include "src/util/SettingsSection.h"
@@ -11,6 +13,9 @@
 #include "src/ui/layout/CreateWidgetDockWidget.h"
 #include "qmenu.h"
 #include "qtoolbar.h"
+#include "qmessagebox.h"
+#include "qfileinfo.h"
+#include <CEGUI/WindowManager.h>
 
 LayoutEditor::LayoutEditor(const QString& filePath)
     : MultiModeEditor(/*layout_compatibility.manager, */ filePath)
@@ -35,16 +40,23 @@ LayoutEditor::LayoutEditor(const QString& filePath)
 void LayoutEditor::initialize()
 {
     MultiModeEditor::initialize();
+
 /*
         # we have to make the context the current context to ensure textures are fine
         self.mainWindow.ceguiContainerWidget.makeGLContextCurrent()
 */
-    CEGUI::Window* root = nullptr;
-    /*
-        if self.nativeData != "":
-            root = PyCEGUI.WindowManager.getSingleton().loadLayoutFromString(self.nativeData)
-    */
-    visualMode->initialize(root);
+
+    try
+    {
+        // FIXME: open manually and load from string?
+        auto layoutFileName = QFileInfo(_filePath).fileName();
+        CEGUI::Window* root = CEGUI::WindowManager::getSingleton().loadLayoutFromFile(layoutFileName.toLocal8Bit().data());
+        visualMode->initialize(root);
+    }
+    catch (const std::exception& e)
+    {
+        QMessageBox::warning(nullptr, "Exception", e.what());
+    }
 }
 
 void LayoutEditor::activate(MainWindow& mainWindow)
@@ -126,15 +138,18 @@ void LayoutEditor::getRawData(QByteArray& outRawData)
     if (tabs.currentWidget() == codeMode)
         codeMode->propagateToVisual();
 
-/*
-        currentRootWidget = self.visual.getCurrentRootWidget()
+    auto currentRootWidget = visualMode->getRootWidget();
+    if (!currentRootWidget)
+    {
+        QMessageBox::warning(nullptr, "No root widget in the layout!",
+                             "I am refusing to save your layout, CEGUI layouts are invalid unless they have a root widget!\n\n"
+                             "Please create a root widget before saving.");
+        return;
+    }
 
-        if currentRootWidget is None:
-            QtGui.QMessageBox.warning(self.mainWindow, "No root widget in the layout!", "I am refusing to save your layout, CEGUI layouts are invalid unless they have a root widget!\n\nPlease create a root widget before saving.")
-            return False
-
-        self.nativeData = PyCEGUI.WindowManager.getSingleton().getLayoutAsString(currentRootWidget)
-*/
+    CEGUI::String layoutString = CEGUI::WindowManager::getSingleton().getLayoutAsString(*currentRootWidget);
+    const std::string utf8 = CEGUI::String::convertUtf32ToUtf8(layoutString.c_str());
+    outRawData = utf8.c_str();
 }
 
 void LayoutEditor::createSettings(Settings& mgr)

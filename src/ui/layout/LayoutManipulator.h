@@ -17,7 +17,7 @@ public:
     LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, CEGUI::Window* widget, bool recursive = true, bool skipAutoWidgets = false);
     virtual ~LayoutManipulator() override;
 
-    LayoutManipulator* createChildManipulator(CEGUI::Window* childWidget, bool recursive = true, bool skipAutoWidgets = false);
+    virtual LayoutManipulator* createChildManipulator(CEGUI::Window* childWidget, bool recursive = true, bool skipAutoWidgets = false) override;
     void getChildLayoutManipulators(std::vector<LayoutManipulator*>& outList, bool recursive);
     QString getUniqueChildWidgetName(const QString& base = "Widget") const;
 
