@@ -629,9 +629,9 @@ void CEGUIManipulator::forEachChildWidget(std::function<void (CEGUI::Window*)> c
     }
     else
     {
-        const size_t count = tabControl->getChildCount();
+        const size_t count = _widget->getChildCount();
         for (size_t i = 0; i < count; ++i)
-            callback(tabControl->getChildAtIdx(i));
+            callback(_widget->getChildAtIdx(i));
     }
 }
 
