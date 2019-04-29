@@ -13,6 +13,7 @@ namespace CEGUI
 }
 
 class LayoutEditor;
+class CEGUIWidget;
 
 class LayoutPreviewerMode : public QWidget, public IEditMode
 {
@@ -30,6 +31,7 @@ protected:
     virtual void showEvent(QShowEvent* event) override;
     virtual void hideEvent(QHideEvent* event) override;
 
+    CEGUIWidget* ceguiWidget = nullptr;
     CEGUI::Window* rootWidget = nullptr;
 };
 

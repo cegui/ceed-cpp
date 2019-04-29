@@ -62,8 +62,7 @@ void CEGUIGraphicsView::drawBackground(QPainter *painter, const QRectF &rect)
             if (frameTime > lastDelta)
             {
                 // * 1000 because QTimer thinks in milliseconds
-                QTimer::singleShot(static_cast<int>(frameTime - lastDelta) * 1000,
-                                         this, SLOT(updateSelfAndScene));
+                QTimer::singleShot(static_cast<int>((frameTime - lastDelta) * 1000.f), this, SLOT(updateSelfAndScene()));
             }
             else
             {

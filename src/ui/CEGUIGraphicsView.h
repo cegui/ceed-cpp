@@ -17,9 +17,12 @@ public:
 
     void injectInput(bool inject);
     void setContinuousRendering(bool on) { continuousRendering = on; }
-    void updateSelfAndScene();
 
     virtual void drawBackground(QPainter* painter, const QRectF& rect) override;
+
+public slots:
+
+    void updateSelfAndScene();
 
 private:
 
