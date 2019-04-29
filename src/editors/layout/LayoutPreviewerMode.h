@@ -28,9 +28,6 @@ public:
 
 protected:
 
-    virtual void showEvent(QShowEvent* event) override;
-    virtual void hideEvent(QHideEvent* event) override;
-
     CEGUIWidget* ceguiWidget = nullptr;
     CEGUI::Window* rootWidget = nullptr;
 };

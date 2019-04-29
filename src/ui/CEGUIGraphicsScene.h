@@ -8,6 +8,11 @@
 // on top of the embedded CEGUI widget!
 // Interaction is also supported.
 
+namespace CEGUI
+{
+    class GUIContext;
+}
+
 class QOpenGLFramebufferObject;
 
 class CEGUIGraphicsScene : public QGraphicsScene
@@ -15,8 +20,10 @@ class CEGUIGraphicsScene : public QGraphicsScene
 public:
 
     CEGUIGraphicsScene();
+    virtual ~CEGUIGraphicsScene() override;
 
     time_t getLastDelta() const { return lastDelta; }
+    CEGUI::GUIContext* getCEGUIContext() const { return ceguiContext; }
     virtual void setCEGUIDisplaySize(float width, float height, bool lazyUpdate = true);
 
     virtual void drawBackground(QPainter* painter, const QRectF& rect) override;
@@ -24,6 +31,8 @@ public:
 protected:
 
     QOpenGLFramebufferObject* fbo = nullptr;
+
+    CEGUI::GUIContext* ceguiContext = nullptr;
 
     time_t lastDelta = 0;
     time_t timeOfLastRender;

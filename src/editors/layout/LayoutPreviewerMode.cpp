@@ -29,15 +29,10 @@ void LayoutPreviewerMode::activate()
 
     assert(!rootWidget);
 
-    // We have to make the context the current context to ensure textures are fine
-    /*
-    CEGUIProjectManager::Instance().makeOpenGLContextCurrent();
-    */
-
     // Lets clone so we don't affect the layout at all
     auto currentRootWidget = static_cast<LayoutEditor&>(_editor).getVisualMode()->getRootWidget();
     rootWidget = currentRootWidget ? currentRootWidget->clone() : nullptr;
-    ceguiWidget->getCEGUIContext()->setRootWindow(rootWidget);
+    ceguiWidget->getScene()->getCEGUIContext()->setRootWindow(rootWidget);
 }
 
 bool LayoutPreviewerMode::deactivate()
@@ -49,26 +44,4 @@ bool LayoutPreviewerMode::deactivate()
     }
 
     return IEditMode::deactivate();
-}
-
-void LayoutPreviewerMode::showEvent(QShowEvent* event)
-{
-    QWidget::showEvent(event);
-
-    /*
-            if self.rootWidget:
-                PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(self.rootWidget)
-    */
-}
-
-void LayoutPreviewerMode::hideEvent(QHideEvent* event)
-{
-/*
-        mainwindow.MainWindow.instance.ceguiContainerWidget.disableInput()
-        mainwindow.MainWindow.instance.ceguiContainerWidget.deactivate(self)
-
-        if self.rootWidget:
-            PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(None)
-*/
-    QWidget::hideEvent(event);
 }

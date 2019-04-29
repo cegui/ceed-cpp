@@ -11,11 +11,6 @@ namespace Ui {
 class CEGUIWidget;
 }
 
-namespace CEGUI
-{
-    class GUIContext;
-}
-
 class CEGUIGraphicsScene;
 
 class CEGUIWidget : public QWidget
@@ -36,7 +31,7 @@ public:
     ~CEGUIWidget();
 
     void setScene(CEGUIGraphicsScene* scene);
-    CEGUI::GUIContext* getCEGUIContext() const { return ceguiContext; }
+    CEGUIGraphicsScene* getScene() const;
 
     void activate(QWidget* newParent, CEGUIGraphicsScene* scene = nullptr);
     void deactivate(QWidget* oldParent);
@@ -56,8 +51,6 @@ private slots:
 private:
 
     Ui::CEGUIWidget *ui;
-
-    CEGUI::GUIContext* ceguiContext = nullptr;
 };
 
 #endif // CEGUIWIDGET_H

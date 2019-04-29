@@ -13,9 +13,6 @@
 #include "qopenglframebufferobject.h"
 #include "qopenglfunctions.h"
 
-// TODO: one CEGUI widget per editor instead of the global one?
-#include "src/ui/CEGUIWidget.h"
-
 QString CEGUIProjectManager::ceguiStringToQString(const CEGUI::String& str)
 {
     return QString(CEGUI::String::convertUtf32ToUtf8(str.c_str()).c_str());
@@ -32,16 +29,12 @@ CEGUIProjectManager::CEGUIProjectManager()
     self.logger = RedirectingCEGUILogger()
     self.lastRenderTimeDelta = 0
 */
-
-    // TODO: one CEGUI widget per editor instead of the global one?
-    ceguiContainerWidget = new CEGUIWidget(qobject_cast<Application*>(qApp)->getMainWindow());
 }
 
 CEGUIProjectManager::~CEGUIProjectManager()
 {
     if (initialized)
     {
-        if (guiContext) CEGUI::System::getSingleton().destroyGUIContext(*guiContext);
         cleanCEGUIResources();
         CEGUI::OpenGLRenderer::destroySystem();
     }
@@ -210,10 +203,6 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
     auto parser = CEGUI::System::getSingleton().getXMLParser();
     if (parser && parser->isPropertyPresent("SchemaDefaultResourceGroup"))
         parser->setProperty("SchemaDefaultResourceGroup", "xml_schemas");
-
-    // TODO: renderer->get/createViewportTarget!
-    auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer); //CEGUI::Rectf(0.f, 0.f, widthF, heightF)
-    guiContext = &CEGUI::System::getSingleton().createGUIContext(*renderTarget);
 
     initialized = true;
 }

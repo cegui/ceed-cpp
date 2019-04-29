@@ -4,10 +4,6 @@
 #include "src/cegui/CEGUIProjectManager.h"
 #include "src/cegui/CEGUIProject.h"
 #include "qscrollbar.h"
-#include <CEGUI/System.h>
-#include <CEGUI/RendererModules/OpenGL/GLRenderer.h>
-#include <CEGUI/RendererModules/OpenGL/ViewportTarget.h>
-//#include "qopenglwidget.h"
 
 CEGUIWidget::CEGUIWidget(QWidget *parent) :
     QWidget(parent),
@@ -18,36 +14,29 @@ CEGUIWidget::CEGUIWidget(QWidget *parent) :
     ui->view->setBackgroundRole(QPalette::Dark);
 
     /*
-        ui->view->containerWidget = this;
         self.debugInfo = DebugInfo(self)
     */
 }
 
 CEGUIWidget::~CEGUIWidget()
 {
-    if (ceguiContext) CEGUI::System::getSingleton().destroyGUIContext(*ceguiContext);
     delete ui;
 }
 
 void CEGUIWidget::setScene(CEGUIGraphicsScene* scene)
 {
-    //!!!FIXME: create RT of the correct size, don't resize postfactum!
-    if (!ceguiContext)
-    {
-        auto renderer = static_cast<CEGUI::OpenGLRenderer*>(CEGUI::System::getSingleton().getRenderer());
-        auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer, CEGUI::Rectf(0.f, 0.f, 800.f, 600.f));
-        ceguiContext = &CEGUI::System::getSingleton().createGUIContext(*renderTarget);
-    }
-
     ui->view->setScene(scene);
-
-    //???set root widget to the context if it is present in a scene?
 
     // Make sure the resolution is set right for the given scene
     on_resolutionBox_editTextChanged(ui->resolutionBox->currentText());
 
     // And mark the view as dirty to force Qt to redraw it
     ui->view->update();
+}
+
+CEGUIGraphicsScene* CEGUIWidget::getScene() const
+{
+    return static_cast<CEGUIGraphicsScene*>(ui->view->scene());
 }
 
 // Activates the CEGUI Widget for the given parentWidget (QWidget derived class)

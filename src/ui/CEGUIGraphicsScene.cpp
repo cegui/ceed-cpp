@@ -3,6 +3,11 @@
 #include "src/util/Utils.h"
 #include "src/cegui/CEGUIProjectManager.h"
 #include "src/Application.h"
+#include <CEGUI/System.h>
+#include <CEGUI/GUIContext.h>
+#include <CEGUI/WindowManager.h>
+#include <CEGUI/RendererModules/OpenGL/GLRenderer.h>
+#include <CEGUI/RendererModules/OpenGL/ViewportTarget.h>
 #include "qpainter.h"
 #include "qpaintengine.h"
 #include "qopenglframebufferobject.h"
@@ -13,6 +18,10 @@
 CEGUIGraphicsScene::CEGUIGraphicsScene()
     : timeOfLastRender(time(nullptr))
 {
+    //!!!FIXME: create RT of the correct size, don't resize by setCEGUIDisplaySize postfactum!
+    auto renderer = static_cast<CEGUI::OpenGLRenderer*>(CEGUI::System::getSingleton().getRenderer());
+    auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer, CEGUI::Rectf(0.f, 0.f, 800.f, 600.f));
+    ceguiContext = &CEGUI::System::getSingleton().createGUIContext(*renderTarget);
     setCEGUIDisplaySize(800, 600, true);
 
     auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
@@ -24,8 +33,17 @@ CEGUIGraphicsScene::CEGUIGraphicsScene()
     checkerboardBrush = Utils::getCheckerboardBrush(checkerWidth, checkerHeight, checkerFirstColour, checkerSecondColour);
 }
 
+CEGUIGraphicsScene::~CEGUIGraphicsScene()
+{
+    if (ceguiContext) CEGUI::System::getSingleton().destroyGUIContext(*ceguiContext);
+}
+
+static inline bool compareFloat(float a, float b) { return std::fabs(a - b) < 0.0001f; }
+
 void CEGUIGraphicsScene::setCEGUIDisplaySize(float width, float height, bool lazyUpdate)
 {
+    if (compareFloat(contextWidth, width) && compareFloat(contextHeight, height)) return;
+
     contextWidth = width;
     contextHeight = height;
 
@@ -34,10 +52,8 @@ void CEGUIGraphicsScene::setCEGUIDisplaySize(float width, float height, bool laz
     setSceneRect(QRectF(-padding, -padding, qWidth + 2.0 * padding, qHeight + 2.0 * padding));
 
     if (!lazyUpdate)
-        ; /* PyCEGUI.System.getSingleton().notifyDisplaySizeChanged(self.ceguiDisplaySize);
-          */
+        CEGUI::System::getSingleton().notifyDisplaySizeChanged(CEGUI::Sizef(contextWidth, contextHeight));
 
-    // FIXME: only if size changed!
     if (fbo)
     {
         delete fbo;
@@ -75,11 +91,10 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
 
     // Inject the time passed since the last render all at once
 /*
-    system = PyCEGUI.System.getSingleton()
     self.ceguiInstance.lastRenderTimeDelta = self.lastDelta
-    system.injectTimePulse(self.lastDelta)
-    system.getDefaultGUIContext().injectTimePulse(self.lastDelta)
 */
+    CEGUI::System::getSingleton().injectTimePulse(lastDelta);
+    ceguiContext->injectTimePulse(lastDelta);
 
     painter->setPen(Qt::transparent);
     painter->setBrush(checkerboardBrush);
@@ -87,16 +102,6 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
 
     painter->beginNativePainting();
 
-    CEGUIProjectManager::Instance().ensureCEGUIInitialized();
-/*
-    if self.ceguiDisplaySize != PyCEGUI.System.getSingleton().getRenderer().getDisplaySize():
-        # FIXME: Change when multi root is in CEGUI core
-        PyCEGUI.System.getSingleton().notifyDisplaySizeChanged(self.ceguiDisplaySize)
-
-    # markAsDirty is called on the default GUI context to work around potential issues with dangling
-    # references in the rendering code for some versions of CEGUI.
-    system.getDefaultGUIContext().markAsDirty()
-*/
     // We have to render to FBO and then scale/translate that since CEGUI doesn't allow
     // scaling the whole rendering root directly
 
@@ -122,11 +127,20 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
     gl->glClearColor(0.f, 0.f, 0.f, 0.f);
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-/*
-    system.renderAllGUIContexts() //!!!render only the current context if possible (should be)!
-*/
+    auto renderer = CEGUI::System::getSingleton().getRenderer();
+    renderer->beginRendering();
+    ceguiContext->draw();
+    renderer->endRendering();
+
+    CEGUI::WindowManager::getSingleton().cleanDeadPool();
 
     fbo->release();
+
+    //!!!DBG TMP!
+    QImage result = fbo->toImage();
+    painter->endNativePainting();
+    painter->drawImage(0, 0, result);
+    return;
 
     // The stretch and translation should be done automatically by QPainter at this point so just this code will do
     gl->glActiveTexture(GL_TEXTURE0);
@@ -170,10 +184,6 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
     // Top left
     gl->glTexCoord2f(0.f, 1);
     gl->glVertex3f(0.f, 0.f, 0.f);
-
-    /*
-    system.getDefaultGUIContext().markAsDirty()
-    */
 
     gl->glEnd();
 
