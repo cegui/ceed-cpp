@@ -3,6 +3,7 @@
 
 #include "qstring.h"
 #include "vector"
+#include <memory>
 
 // Groups sections, is usually represented by a tab in the interface
 

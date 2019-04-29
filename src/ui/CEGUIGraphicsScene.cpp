@@ -9,6 +9,7 @@
 #include "qopenglcontext.h"
 #include "qopenglfunctions.h"
 #include "qopenglfunctions_2_0.h"
+#include <ctime>
 
 CEGUIGraphicsScene::CEGUIGraphicsScene()
     : timeOfLastRender(time(nullptr))

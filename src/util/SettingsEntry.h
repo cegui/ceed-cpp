@@ -2,6 +2,7 @@
 #define SETTINGSENTRY_H
 
 #include "qvariant.h"
+#include <memory>
 
 // Is the value itself, inside a section. This is what's directly used when
 // accessing settings.

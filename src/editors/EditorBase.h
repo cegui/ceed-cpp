@@ -3,6 +3,7 @@
 
 #include "qstring.h"
 #include "qvariant.h"
+#include <memory>
 
 // This is the base class for a class that takes a file and allows manipulation with it
 

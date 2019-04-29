@@ -3,6 +3,7 @@
 
 #include "qstring.h"
 #include "vector"
+#include <memory>
 
 // Groups entries, is usually represented by a group box in the interface
 
