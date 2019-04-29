@@ -174,5 +174,5 @@ void CEGUIWidget::on_resolutionBox_editTextChanged(const QString& arg1)
     width = std::max(1, std::min(4096, width));
     height = std::max(1, std::min(4096, height));
 
-    static_cast<CEGUIGraphicsScene*>(ui->view->scene())->setCEGUIDisplaySize(width, height, false);
+    getScene()->setCEGUIDisplaySize(width, height);
 }

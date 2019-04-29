@@ -11,18 +11,21 @@
 #include "qpainter.h"
 #include "qpaintengine.h"
 #include "qopenglframebufferobject.h"
+#include "qopengltextureblitter.h"
 #include "qopenglcontext.h"
 #include "qopenglfunctions.h"
-#include "qopenglfunctions_2_0.h"
 
 CEGUIGraphicsScene::CEGUIGraphicsScene()
     : timeOfLastRender(time(nullptr))
+    , contextWidth(800.f)
+    , contextHeight(600.f)
 {
-    //!!!FIXME: create RT of the correct size, don't resize by setCEGUIDisplaySize postfactum!
     auto renderer = static_cast<CEGUI::OpenGLRenderer*>(CEGUI::System::getSingleton().getRenderer());
-    auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer, CEGUI::Rectf(0.f, 0.f, 800.f, 600.f));
+    auto viewportRect = CEGUI::Rectf(0.f, 0.f, contextWidth, contextHeight);
+    auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer, viewportRect);
     ceguiContext = &CEGUI::System::getSingleton().createGUIContext(*renderTarget);
-    setCEGUIDisplaySize(800, 600, true);
+
+    setSceneRect(QRectF(-padding, -padding, static_cast<qreal>(contextWidth) + 2.0 * padding, static_cast<qreal>(contextHeight) + 2.0 * padding));
 
     auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
     checkerWidth = settings->getEntryValue("cegui/background/checker_width").toInt();
@@ -31,16 +34,27 @@ CEGUIGraphicsScene::CEGUIGraphicsScene()
     checkerSecondColour = settings->getEntryValue("cegui/background/second_colour").value<QColor>();
 
     checkerboardBrush = Utils::getCheckerboardBrush(checkerWidth, checkerHeight, checkerFirstColour, checkerSecondColour);
+
+    blitter = new QOpenGLTextureBlitter();
 }
 
 CEGUIGraphicsScene::~CEGUIGraphicsScene()
 {
-    if (ceguiContext) CEGUI::System::getSingleton().destroyGUIContext(*ceguiContext);
+    //!!!FIXME: call destroy() manually when creation context is current!
+    //!!!must be in a view, as context belongs to view! many views require many blitters!
+    delete blitter;
+
+    if (ceguiContext)
+    {
+        auto renderTarget = &ceguiContext->getRenderTarget();
+        CEGUI::System::getSingleton().destroyGUIContext(*ceguiContext);
+        delete renderTarget;
+    }
 }
 
 static inline bool compareFloat(float a, float b) { return std::fabs(a - b) < 0.0001f; }
 
-void CEGUIGraphicsScene::setCEGUIDisplaySize(float width, float height, bool lazyUpdate)
+void CEGUIGraphicsScene::setCEGUIDisplaySize(float width, float height)
 {
     if (compareFloat(contextWidth, width) && compareFloat(contextHeight, height)) return;
 
@@ -51,9 +65,15 @@ void CEGUIGraphicsScene::setCEGUIDisplaySize(float width, float height, bool laz
     qreal qHeight = static_cast<qreal>(height);
     setSceneRect(QRectF(-padding, -padding, qWidth + 2.0 * padding, qHeight + 2.0 * padding));
 
-    if (!lazyUpdate)
-        CEGUI::System::getSingleton().notifyDisplaySizeChanged(CEGUI::Sizef(contextWidth, contextHeight));
+    CEGUI::Sizef newSize(contextWidth, contextHeight);
+    CEGUI::System::getSingleton().notifyDisplaySizeChanged(newSize);
 
+    auto& renderTarget = ceguiContext->getRenderTarget();
+    auto area = renderTarget.getArea();
+    area.setSize(newSize);
+    renderTarget.setArea(area);
+
+    // This makes sure the FBO is the correct size
     if (fbo)
     {
         delete fbo;
@@ -64,10 +84,8 @@ void CEGUIGraphicsScene::setCEGUIDisplaySize(float width, float height, bool laz
 // We override this and draw CEGUI instead of the whole background.
 // This method uses a FBO to implement zooming, scrolling around, etc...
 // FBOs are therefore required by CEED and it won't run without a GPU that supports them.
-void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
+void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF& rect)
 {
-    //???!!!use const QRectF& rect arg?!
-
     // Be robust, this is usually caused by recursive repainting
     if (!painter->paintEngine())
     {
@@ -80,8 +98,7 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
     auto painterType = painter->paintEngine()->type();
     if (painterType != QPaintEngine::OpenGL && painterType != QPaintEngine::OpenGL2)
     {
-        qWarning("cegui.GraphicsScene: drawBackground needs a "
-                 "QOpenGLWidget to be set as a viewport on the graphics view");
+        qWarning("CEGUIGraphicsScene::drawBackground() > needs a QOpenGLWidget viewport on the graphics view");
         return;
     }
 
@@ -90,101 +107,48 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
     timeOfLastRender = currTime;
 
     // Inject the time passed since the last render all at once
-/*
-    self.ceguiInstance.lastRenderTimeDelta = self.lastDelta
-*/
     CEGUI::System::getSingleton().injectTimePulse(lastDelta);
     ceguiContext->injectTimePulse(lastDelta);
 
+    QRect viewport(0, 0, static_cast<int>(contextWidth), static_cast<int>(contextHeight));
     painter->setPen(Qt::transparent);
     painter->setBrush(checkerboardBrush);
-    painter->drawRect(0, 0, static_cast<int>(contextWidth), static_cast<int>(contextHeight));
+    painter->drawRect(viewport);
 
     painter->beginNativePainting();
 
     // We have to render to FBO and then scale/translate that since CEGUI doesn't allow
     // scaling the whole rendering root directly
 
-    // This makes sure the FBO is the correct size
-    if (!fbo)
-    {
-        QSize desiredSize(static_cast<int>(std::ceil(contextWidth)), static_cast<int>(std::ceil(contextHeight)));
-        fbo = new QOpenGLFramebufferObject(desiredSize);
-    }
+    if (!fbo) fbo = new QOpenGLFramebufferObject(viewport.size());
 
-    //fbo->bind();
+    fbo->bind();
 
     auto glContext = QOpenGLContext::currentContext();
 
-    //???use default subset? need to use VBO, no fixed function glBegin / glEnd!
-    //auto gl = glContext->functions();
-    auto* gl = glContext->versionFunctions<QOpenGLFunctions_2_0>();
-    if (!gl)
-    {
-        qWarning("cegui.GraphicsScene: required OpenGL 2.0 not supported");
-        return;
-    }
-    //gl->glClearColor(0.f, 0.f, 0.f, 0.f);
-    //gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    auto gl = glContext->functions();
+    gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     auto renderer = CEGUI::System::getSingleton().getRenderer();
     renderer->beginRendering();
     ceguiContext->draw();
     renderer->endRendering();
 
-    CEGUI::WindowManager::getSingleton().cleanDeadPool();
-
-    //fbo->release();
-
-    //!!!DBG TMP!
-    painter->endNativePainting();
-    return;
-    //!!!END DBG TMP!
-
-    // The stretch and translation should be done automatically by QPainter at this point so just this code will do
-    gl->glActiveTexture(GL_TEXTURE0);
-
-    gl->glEnable(GL_TEXTURE_2D);
-    gl->glBindTexture(GL_TEXTURE_2D, fbo->texture());
+    fbo->release();
 
     gl->glEnable(GL_BLEND);
     gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    // TODO: I was told that this is the slowest method to draw with OpenGL,
-    //       with which I certainly agree.
-    //
-    //       No profiling has been done at all and I don't suspect this to be
-    //       a painful performance problem.
-    //
-    //       Still, changing this to a less pathetic rendering method would be great.
+    if (!blitter->isCreated()) blitter->create();
 
-    gl->glBegin(GL_TRIANGLES);
-
-    // Top left
-    gl->glTexCoord2f(0.f, 1.f);
-    gl->glVertex3f(0.f, 0.f, 0.f);
-
-    // Top right
-    gl->glTexCoord2f(1.f, 1.f);
-    gl->glVertex3f(fbo->size().width(), 0.f, 0.f);
-
-    // Bottom right
-    gl->glTexCoord2f(1.f, 0.f);
-    gl->glVertex3f(fbo->size().width(), fbo->size().height(), 0.f);
-
-    // Bottom right
-    gl->glTexCoord2f(1.f, 0.f);
-    gl->glVertex3f(fbo->size().width(), fbo->size().height(), 0.f);
-
-    // Bottom left
-    gl->glTexCoord2f(0.f, 0.f);
-    gl->glVertex3f(0.f, fbo->size().height(), 0.f);
-
-    // Top left
-    gl->glTexCoord2f(0.f, 1.f);
-    gl->glVertex3f(0.f, 0.f, 0.f);
-
-    gl->glEnd();
+    blitter->bind();
+    const QRect fboRect(QPoint(0.f, 0.f), fbo->size());
+    const QMatrix4x4 target = QOpenGLTextureBlitter::targetTransform(fboRect, rect.toRect());
+    blitter->blit(fbo->texture(), target, QOpenGLTextureBlitter::OriginBottomLeft);
+    blitter->release();
 
     painter->endNativePainting();
+
+    CEGUI::WindowManager::getSingleton().cleanDeadPool();
 }

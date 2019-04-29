@@ -27,7 +27,6 @@ CEGUIProjectManager::CEGUIProjectManager()
 {
 /*
     self.logger = RedirectingCEGUILogger()
-    self.lastRenderTimeDelta = 0
 */
 }
 

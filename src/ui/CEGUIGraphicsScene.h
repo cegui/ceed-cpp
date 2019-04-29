@@ -14,6 +14,7 @@ namespace CEGUI
 }
 
 class QOpenGLFramebufferObject;
+class QOpenGLTextureBlitter;
 
 class CEGUIGraphicsScene : public QGraphicsScene
 {
@@ -24,13 +25,14 @@ public:
 
     time_t getLastDelta() const { return lastDelta; }
     CEGUI::GUIContext* getCEGUIContext() const { return ceguiContext; }
-    virtual void setCEGUIDisplaySize(float width, float height, bool lazyUpdate = true);
+    virtual void setCEGUIDisplaySize(float width, float height);
 
     virtual void drawBackground(QPainter* painter, const QRectF& rect) override;
 
 protected:
 
     QOpenGLFramebufferObject* fbo = nullptr;
+    QOpenGLTextureBlitter* blitter = nullptr;
 
     CEGUI::GUIContext* ceguiContext = nullptr;
 
