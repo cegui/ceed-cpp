@@ -148,8 +148,7 @@ void LayoutEditor::getRawData(QByteArray& outRawData)
     }
 
     CEGUI::String layoutString = CEGUI::WindowManager::getSingleton().getLayoutAsString(*currentRootWidget);
-    const std::string utf8 = CEGUI::String::convertUtf32ToUtf8(layoutString.c_str());
-    outRawData = utf8.c_str();
+    outRawData = CEGUIProjectManager::ceguiStringToQString(layoutString).toUtf8();
 }
 
 void LayoutEditor::createSettings(Settings& mgr)
