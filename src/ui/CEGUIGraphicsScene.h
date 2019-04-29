@@ -15,7 +15,7 @@ class CEGUIGraphicsScene : public QGraphicsScene
 {
 public:
 
-    CEGUIGraphicsScene();
+    CEGUIGraphicsScene(float width = 0.f, float height = 0.f);
     virtual ~CEGUIGraphicsScene() override;
 
     virtual void setCEGUIDisplaySize(float width, float height);

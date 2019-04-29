@@ -1,8 +1,6 @@
 #include "src/ui/CEGUIWidget.h"
 #include "src/ui/CEGUIGraphicsScene.h"
 #include "ui_CEGUIWidget.h"
-#include "src/cegui/CEGUIProjectManager.h"
-#include "src/cegui/CEGUIProject.h"
 #include "qscrollbar.h"
 
 CEGUIWidget::CEGUIWidget(QWidget *parent) :
@@ -152,27 +150,22 @@ void CEGUIWidget::on_debugInfoButton_clicked()
 
 void CEGUIWidget::on_resolutionBox_editTextChanged(const QString& arg1)
 {
+    int width = 0;
+    int height = 0;
+
     auto text = ui->resolutionBox->currentText();
-    if (text == "Project default")
+    if (text != "Project default") // Special case, leave zeroes for default
     {
-        // Special case
-        auto project = CEGUIProjectManager::Instance().getCurrentProject();
-        if (!project) return;
-        text = project->defaultResolution;
+        auto sepPos = text.indexOf('x');
+        if (sepPos < 0) return;
+
+        // Clamp both to 1 - 4096, should suit 99% of all cases
+        bool ok = false;
+        width = std::max(1, std::min(4096, text.leftRef(sepPos).toInt(&ok)));
+        if (!ok) return;
+        height = std::max(1, std::min(4096, text.midRef(sepPos + 1).toInt(&ok)));
+        if (!ok) return;
     }
-
-    auto sepPos = text.indexOf('x');
-    if (sepPos < 0) return;
-
-    bool ok = false;
-    int width = text.leftRef(sepPos).toInt(&ok);
-    if (!ok) return;
-    int height = text.midRef(sepPos + 1).toInt(&ok);
-    if (!ok) return;
-
-    // Clamp both to 1 - 4096, should suit 99% of all cases
-    width = std::max(1, std::min(4096, width));
-    height = std::max(1, std::min(4096, height));
 
     getScene()->setCEGUIDisplaySize(width, height);
 }

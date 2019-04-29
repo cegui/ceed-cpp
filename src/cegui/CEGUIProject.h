@@ -33,10 +33,13 @@ public:
     QString getResourceFilePath(const QString& fileName, const QString& resourceGroup) const;
     bool referencesFilePath(const QString& filePath) const;
 
+    void setDefaultResolution(const QString& string);
+    const QSize& getDefaultResolution() const { return defaultResolution; }
+    QString getDefaultResolutionString() const;
+
 //private:
 public: // For now, to avoid lots of boilerplate setters & getters
 
-    QString defaultResolution;
     QString CEGUIVersion;
     QString filePath;
     QString baseDirectory;
@@ -48,6 +51,8 @@ public: // For now, to avoid lots of boilerplate setters & getters
     QString xmlSchemasPath;
 
 private:
+
+    QSize defaultResolution;
 
     bool changed = true; // A new project is not saved yet
 };

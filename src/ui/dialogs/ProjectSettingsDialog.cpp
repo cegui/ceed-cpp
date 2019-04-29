@@ -16,7 +16,7 @@ ProjectSettingsDialog::ProjectSettingsDialog(CEGUIProject& project, QWidget *par
     CEGUIVersion->setEditText(project.CEGUIVersion);
 
     CEGUIDefaultResolution = findChild<QComboBox*>("CEGUIDefaultResolution");
-    CEGUIDefaultResolution->setEditText(project.defaultResolution);
+    CEGUIDefaultResolution->setEditText(project.getDefaultResolutionString());
 
     baseDirectory = findChild<FileLineEdit*>("baseDirectory");
     baseDirectory->setMode(FileLineEdit::Mode::ExistingDirectory);
@@ -62,7 +62,7 @@ void ProjectSettingsDialog::apply(CEGUIProject& project) const
     project.baseDirectory = QFileInfo(project.filePath).dir().relativeFilePath(absBaseDir.path());
 
     project.CEGUIVersion = CEGUIVersion->currentText();
-    project.defaultResolution = CEGUIDefaultResolution->currentText();
+    project.setDefaultResolution(CEGUIDefaultResolution->currentText());
 
     project.imagesetsPath = absBaseDir.relativeFilePath(imagesetsPath->text());
     project.fontsPath = absBaseDir.relativeFilePath(fontsPath->text());
