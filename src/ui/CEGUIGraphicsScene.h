@@ -37,7 +37,7 @@ protected:
     time_t lastDelta = 0;
     time_t timeOfLastRender;
 
-    qreal padding = 100.0;
+    qreal padding = 30.0;
     float contextWidth = 0.f;
     float contextHeight = 0.f;
 

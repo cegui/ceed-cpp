@@ -143,7 +143,6 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
 
     //!!!DBG TMP!
     QImage result = fbo->toImage();
-    //painter->endNativePainting();
     CEGUIProjectManager::Instance().doneOpenGLContextCurrent();
     painter->drawImage(0, 0, result);
     return;
