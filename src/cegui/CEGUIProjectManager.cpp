@@ -6,7 +6,11 @@
 #include "qprogressdialog.h"
 #include "qdiriterator.h"
 #include <CEGUI/CEGUI.h>
+#ifdef CEED_OPENGL_LEGACY_RENDERER
 #include <CEGUI/RendererModules/OpenGL/GLRenderer.h>
+#else
+#include <CEGUI/RendererModules/OpenGL/GL3Renderer.h>
+#endif
 #include <CEGUI/RendererModules/OpenGL/ViewportTarget.h>
 #include "qopenglcontext.h"
 #include "qoffscreensurface.h"
@@ -45,7 +49,11 @@ CEGUIProjectManager::~CEGUIProjectManager()
 {
     if (guiContext) CEGUI::System::getSingleton().destroyGUIContext(*guiContext);
     cleanCEGUIResources();
+#ifdef CEED_OPENGL_LEGACY_RENDERER
     CEGUI::OpenGLRenderer::destroySystem();
+#else
+    CEGUI::OpenGL3Renderer::destroySystem();
+#endif
 }
 
 CEGUIProject* CEGUIProjectManager::createProject(const QString& filePath, bool createResourceDirs)
@@ -172,12 +180,20 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
     // We don't want CEGUI Exceptions to output to stderr every time they are constructed
     CEGUI::Exception::setStdErrEnabled(false);
 
+#ifdef CEED_OPENGL_LEGACY_RENDERER
     CEGUI::OpenGLRenderer* renderer = nullptr;
     try
     {
         //??? glContext->format().version() >= 3.2 -> use OpenGL3Renderer?
         renderer = &CEGUI::OpenGLRenderer::bootstrapSystem(CEGUI::OpenGLRenderer::TextureTargetType::Fbo);
     }
+#else
+    CEGUI::OpenGL3Renderer* renderer = nullptr;
+    try
+    {
+        renderer = &CEGUI::OpenGL3Renderer::bootstrapSystem();
+    }
+#endif
     catch (const std::exception& e)
     {
         QMessageBox::warning(nullptr, "Exception", e.what());
@@ -630,7 +646,11 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
 
     //???allocate previews once?
     // TODO: renderer->get/createViewportTarget!
+#ifdef CEED_OPENGL_LEGACY_RENDERER
     auto renderer = static_cast<CEGUI::OpenGLRenderer*>(CEGUI::System::getSingleton().getRenderer());
+#else
+    auto renderer = static_cast<CEGUI::OpenGL3Renderer*>(CEGUI::System::getSingleton().getRenderer());
+#endif
     auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer, CEGUI::Rectf(0.f, 0.f, previewWidthF, previewHeightF));
 
     auto renderingSurface = new CEGUI::RenderingSurface(*renderTarget);

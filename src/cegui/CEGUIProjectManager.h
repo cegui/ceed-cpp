@@ -4,6 +4,8 @@
 #include "qimage.h"
 #include <memory>
 
+#define CEED_OPENGL_LEGACY_RENDERER
+
 // A singleton CEGUI manager class controls the loaded project and encapsulates a running CEGUI instance.
 // Right now CEGUI can only be instantiated once because it's full of singletons. This might change in the
 // future though, then CEGUI instance may be allocated per project.
