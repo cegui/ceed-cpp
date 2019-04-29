@@ -1,22 +1,27 @@
 #include "src/ui/CEGUIGraphicsView.h"
 #include "src/ui/CEGUIGraphicsScene.h"
+#include "src/util/Settings.h"
+#include "src/util/Utils.h"
+#include "src/Application.h"
+#include <CEGUI/System.h>
+#include <CEGUI/WindowManager.h>
 #include "qopenglwidget.h"
+#include "qpaintengine.h"
+#include "qopenglframebufferobject.h"
+#include "qopengltextureblitter.h"
+#include "qopenglcontext.h"
+#include "qopenglfunctions.h"
 #include "qtimer.h"
 #include "qevent.h"
 
 CEGUIGraphicsView::CEGUIGraphicsView(QWidget *parent) :
     ResizableGraphicsView(parent)
 {
-    auto vp = new QOpenGLWidget();
-
-    // Mainly to tone down potential antialiasing
-    // TODO: look if glEnable(GL_MULTISAMPLE) call is required
     QSurfaceFormat format;
-    // TODO: use OpenGL3Renderer?
-    // format.setVersion(3, 2);
-    format.setSamples(2);
-    vp->setFormat(format);
+    format.setSamples(0);
 
+    auto vp = new QOpenGLWidget();
+    vp->setFormat(format);
     setViewport(vp);
     setViewportUpdateMode(FullViewportUpdate);
 
@@ -25,10 +30,24 @@ CEGUIGraphicsView::CEGUIGraphicsView(QWidget *parent) :
     // Prepare to receive input
     setMouseTracking(true);
     setFocusPolicy(Qt::ClickFocus);
+
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    const auto checkerWidth = settings->getEntryValue("cegui/background/checker_width").toInt();
+    const auto checkerHeight = settings->getEntryValue("cegui/background/checker_height").toInt();
+    const auto checkerFirstColour = settings->getEntryValue("cegui/background/first_colour").value<QColor>();
+    const auto checkerSecondColour = settings->getEntryValue("cegui/background/second_colour").value<QColor>();
+
+    checkerboardBrush = Utils::getCheckerboardBrush(checkerWidth, checkerHeight, checkerFirstColour, checkerSecondColour);
+
+    blitter = new QOpenGLTextureBlitter();
 }
 
 CEGUIGraphicsView::~CEGUIGraphicsView()
 {
+    auto vp = static_cast<QOpenGLWidget*>(viewport());
+    vp->makeCurrent();
+    delete blitter;
+    vp->doneCurrent();
 }
 
 void CEGUIGraphicsView::injectInput(bool inject)
@@ -43,9 +62,66 @@ void CEGUIGraphicsView::updateSelfAndScene()
         scene()->update();
 }
 
-void CEGUIGraphicsView::drawBackground(QPainter *painter, const QRectF &rect)
+// We override this and draw CEGUI instead of the whole background.
+// This method uses a FBO to implement zooming, scrolling around, etc...
+// FBOs are therefore required by CEED and it won't run without a GPU that supports them.
+void CEGUIGraphicsView::drawBackground(QPainter* painter, const QRectF& rect)
 {
-    ResizableGraphicsView::drawBackground(painter, rect);
+    auto painterType = painter->paintEngine()->type();
+    if (painterType != QPaintEngine::OpenGL && painterType != QPaintEngine::OpenGL2)
+    {
+        qWarning("CEGUIGraphicsView::drawBackground() > needs a QOpenGLWidget viewport on the graphics view");
+        return;
+    }
+
+    auto ceguiScene = static_cast<CEGUIGraphicsScene*>(scene());
+    if (!ceguiScene) return;
+
+    const int contextWidth = static_cast<int>(ceguiScene->getContextWidth());
+    const int contextHeight = static_cast<int>(ceguiScene->getContextHeight());
+    QRect viewportRect(0, 0, contextWidth, contextHeight);
+    painter->setPen(Qt::transparent);
+    painter->setBrush(checkerboardBrush);
+    painter->drawRect(viewportRect);
+
+    painter->beginNativePainting();
+
+    // We have to render to FBO and then scale/translate that since CEGUI doesn't allow
+    // scaling the whole rendering root directly
+
+    if (!fbo || fbo->size().width() != contextWidth || fbo->size().height() != contextHeight)
+    {
+        if (fbo) delete fbo;
+        fbo = new QOpenGLFramebufferObject(viewportRect.size());
+    }
+
+    fbo->bind();
+
+    auto gl = QOpenGLContext::currentContext()->functions();
+    gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    auto renderer = CEGUI::System::getSingleton().getRenderer();
+    renderer->beginRendering();
+    ceguiScene->drawCEGUIContext();
+    renderer->endRendering();
+
+    fbo->release();
+
+    gl->glEnable(GL_BLEND);
+    gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    if (!blitter->isCreated()) blitter->create();
+
+    blitter->bind();
+    const QRect fboRect(QPoint(0, 0), fbo->size());
+    const QMatrix4x4 target = QOpenGLTextureBlitter::targetTransform(fboRect, rect.toRect());
+    blitter->blit(fbo->texture(), target, QOpenGLTextureBlitter::OriginBottomLeft);
+    blitter->release();
+
+    painter->endNativePainting();
+
+    CEGUI::WindowManager::getSingleton().cleanDeadPool();
 
     if (continuousRendering)
     {
@@ -55,8 +131,7 @@ void CEGUIGraphicsView::drawBackground(QPainter *painter, const QRectF &rect)
         }
         else
         {
-            const CEGUIGraphicsScene* pScene = static_cast<const CEGUIGraphicsScene*>(scene());
-            const float lastDelta = pScene ? static_cast<float>(pScene->getLastDelta()) : 0.f;
+            const float lastDelta = static_cast<float>(ceguiScene->getLastDelta());
             const float frameTime = 1.0f / static_cast<float>(continuousRenderingTargetFPS);
 
             if (frameTime > lastDelta)
@@ -69,10 +144,6 @@ void CEGUIGraphicsView::drawBackground(QPainter *painter, const QRectF &rect)
                 updateSelfAndScene();
             }
         }
-    }
-    else
-    {
-        // We don't mark ourselves as dirty if user didn't request continuous rendering
     }
 }
 
