@@ -102,11 +102,6 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
 
     painter->beginNativePainting();
 
-    //!!!DBG TMP!
-    painter->endNativePainting();
-    CEGUIProjectManager::Instance().makeOpenGLContextCurrent();
-    //!!!END DBG TMP!
-
     // We have to render to FBO and then scale/translate that since CEGUI doesn't allow
     // scaling the whole rendering root directly
 
@@ -117,7 +112,7 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
         fbo = new QOpenGLFramebufferObject(desiredSize);
     }
 
-    fbo->bind();
+    //fbo->bind();
 
     auto glContext = QOpenGLContext::currentContext();
 
@@ -129,8 +124,8 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
         qWarning("cegui.GraphicsScene: required OpenGL 2.0 not supported");
         return;
     }
-    gl->glClearColor(0.f, 0.f, 0.f, 0.f);
-    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+    //gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     auto renderer = CEGUI::System::getSingleton().getRenderer();
     renderer->beginRendering();
@@ -139,12 +134,10 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
 
     CEGUI::WindowManager::getSingleton().cleanDeadPool();
 
-    fbo->release();
+    //fbo->release();
 
     //!!!DBG TMP!
-    QImage result = fbo->toImage();
-    CEGUIProjectManager::Instance().doneOpenGLContextCurrent();
-    painter->drawImage(0, 0, result);
+    painter->endNativePainting();
     return;
     //!!!END DBG TMP!
 
@@ -180,7 +173,7 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
     gl->glVertex3f(fbo->size().width(), fbo->size().height(), 0.f);
 
     // Bottom right
-    gl->glTexCoord2f(1, 0.f);
+    gl->glTexCoord2f(1.f, 0.f);
     gl->glVertex3f(fbo->size().width(), fbo->size().height(), 0.f);
 
     // Bottom left
@@ -188,7 +181,7 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
     gl->glVertex3f(0.f, fbo->size().height(), 0.f);
 
     // Top left
-    gl->glTexCoord2f(0.f, 1);
+    gl->glTexCoord2f(0.f, 1.f);
     gl->glVertex3f(0.f, 0.f, 0.f);
 
     gl->glEnd();

@@ -133,6 +133,7 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
 
     glContext = new QOpenGLContext(); // TODO: destroy
     glContext->setFormat(format);
+    glContext->setShareContext(QOpenGLContext::globalShareContext());
     if (Q_UNLIKELY(!glContext->create()))
     {
         assert(false);
