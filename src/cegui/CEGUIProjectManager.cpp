@@ -39,9 +39,12 @@ CEGUIProjectManager::CEGUIProjectManager()
 
 CEGUIProjectManager::~CEGUIProjectManager()
 {
-    if (guiContext) CEGUI::System::getSingleton().destroyGUIContext(*guiContext);
-    cleanCEGUIResources();
-    CEGUI::OpenGLRenderer::destroySystem();
+    if (initialized)
+    {
+        if (guiContext) CEGUI::System::getSingleton().destroyGUIContext(*guiContext);
+        cleanCEGUIResources();
+        CEGUI::OpenGLRenderer::destroySystem();
+    }
 }
 
 CEGUIProject* CEGUIProjectManager::createProject(const QString& filePath, bool createResourceDirs)

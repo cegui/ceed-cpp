@@ -53,6 +53,7 @@ LayoutManipulator* LayoutScene::getManipulatorByPath(const QString& widgetPath) 
     }
     else
     {
+        assert(widgetPath.leftRef(sepPos) == rootManipulator->getWidgetName());
         return dynamic_cast<LayoutManipulator*>(rootManipulator->getManipulatorByPath(widgetPath.mid(sepPos + 1)));
     }
 }
