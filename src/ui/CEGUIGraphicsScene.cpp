@@ -143,7 +143,7 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF& rect)
     if (!blitter->isCreated()) blitter->create();
 
     blitter->bind();
-    const QRect fboRect(QPoint(0.f, 0.f), fbo->size());
+    const QRect fboRect(QPoint(0, 0), fbo->size());
     const QMatrix4x4 target = QOpenGLTextureBlitter::targetTransform(fboRect, rect.toRect());
     blitter->blit(fbo->texture(), target, QOpenGLTextureBlitter::OriginBottomLeft);
     blitter->release();
