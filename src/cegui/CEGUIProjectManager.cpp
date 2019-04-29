@@ -19,9 +19,9 @@
 QString CEGUIProjectManager::ceguiStringToQString(const CEGUI::String& str)
 {
 #if (CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_8)
-	return QString(str.c_str());
+    return QString(str.c_str());
 #elif (CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_32)
-	return QString(CEGUI::String::convertUtf32ToUtf8(str.c_str()).c_str());
+    return QString(CEGUI::String::convertUtf32ToUtf8(str.c_str()).c_str());
 #endif
 }
 
