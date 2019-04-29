@@ -143,7 +143,7 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
     surface->setFormat(glContext->format());
     surface->create();
 
-    if (Q_UNLIKELY(!glContext->makeCurrent(surface)))
+    if (Q_UNLIKELY(!makeOpenGLContextCurrent()))
     {
         //qWarning("QOpenGLWidget: Failed to make context current");
         assert(false);
@@ -205,6 +205,16 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
         parser->setProperty("SchemaDefaultResourceGroup", "xml_schemas");
 
     initialized = true;
+}
+
+bool CEGUIProjectManager::makeOpenGLContextCurrent()
+{
+    return glContext ? glContext->makeCurrent(surface) : false;
+}
+
+void CEGUIProjectManager::doneOpenGLContextCurrent()
+{
+    if (glContext) glContext->doneCurrent();
 }
 
 // Synchronises the CEGUI instance with the current project, respecting it's paths and resources
@@ -285,7 +295,7 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
     progress.setValue(2);
     QApplication::instance()->processEvents();
 
-    glContext->makeCurrent(surface);
+    makeOpenGLContextCurrent();
 
     // We will load resources manually to be able to use the compatibility layer machinery
     CEGUI::SchemeManager::getSingleton().setAutoLoadResources(false);
@@ -478,7 +488,7 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
     // Put SchemeManager into the default state again
     CEGUI::SchemeManager::getSingleton().setAutoLoadResources(true);
 
-    glContext->doneCurrent();
+    doneOpenGLContextCurrent();
 
     progress.reset();
     QApplication::instance()->processEvents();
@@ -491,7 +501,7 @@ void CEGUIProjectManager::cleanCEGUIResources()
 {
     if (!initialized) return;
 
-    glContext->makeCurrent(surface);
+    makeOpenGLContextCurrent();
 
     CEGUI::WindowManager::getSingleton().destroyAllWindows();
 
@@ -510,7 +520,7 @@ void CEGUIProjectManager::cleanCEGUIResources()
     CEGUI::System::getSingleton().addStandardWindowFactories();
     CEGUI::System::getSingleton().getRenderer()->destroyAllTextures();
 
-    glContext->doneCurrent();
+    doneOpenGLContextCurrent();
 }
 
 // Retrieves names of skins that are available from the set of schemes that were loaded.
@@ -649,7 +659,7 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
     // Fake update to ensure everything is set
     widgetInstance->update(1.f);
 
-    glContext->makeCurrent(surface);
+    makeOpenGLContextCurrent();
 
     //???allocate once?
     auto temporaryFBO = new QOpenGLFramebufferObject(previewWidth, previewHeight);
@@ -680,7 +690,7 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
     delete renderingSurface;
     delete renderTarget;
 
-    glContext->doneCurrent();
+    doneOpenGLContextCurrent();
 
     if (!error.isEmpty())
         throw error;

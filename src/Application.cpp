@@ -18,9 +18,6 @@ Application::Application(int& argc, char** argv, bool debug)
     setApplicationName("CEED - CEGUI editor");
     setApplicationVersion("0.0.0-master");
 
-    // Allow rendering to QOpenGLWidget using our explicit context
-    //setAttribute(Qt::AA_ShareOpenGLContexts, true);
-
     // Create settings and load all values from the persistence store
     settings = new Settings(new QSettings("CEGUI", "CEED", this));
     createSettingsEntries();

@@ -102,6 +102,11 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
 
     painter->beginNativePainting();
 
+    //!!!DBG TMP!
+    painter->endNativePainting();
+    CEGUIProjectManager::Instance().makeOpenGLContextCurrent();
+    //!!!END DBG TMP!
+
     // We have to render to FBO and then scale/translate that since CEGUI doesn't allow
     // scaling the whole rendering root directly
 
@@ -138,9 +143,11 @@ void CEGUIGraphicsScene::drawBackground(QPainter* painter, const QRectF&)
 
     //!!!DBG TMP!
     QImage result = fbo->toImage();
-    painter->endNativePainting();
+    //painter->endNativePainting();
+    CEGUIProjectManager::Instance().doneOpenGLContextCurrent();
     painter->drawImage(0, 0, result);
     return;
+    //!!!END DBG TMP!
 
     // The stretch and translation should be done automatically by QPainter at this point so just this code will do
     gl->glActiveTexture(GL_TEXTURE0);

@@ -54,6 +54,8 @@ public:
 
     bool syncProjectToCEGUIInstance();
     void ensureCEGUIInitialized();
+    bool makeOpenGLContextCurrent();
+    void doneOpenGLContextCurrent();
 
 protected:
 
