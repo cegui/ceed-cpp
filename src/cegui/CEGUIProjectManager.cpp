@@ -15,7 +15,11 @@
 
 QString CEGUIProjectManager::ceguiStringToQString(const CEGUI::String& str)
 {
+#if (CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_8)
+    return QString(str.c_str());
+#elif (CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_32)
     return QString(CEGUI::String::convertUtf32ToUtf8(str.c_str()).c_str());
+#endif
 }
 
 CEGUI::String CEGUIProjectManager::qStringToCeguiString(const QString& str)
@@ -560,8 +564,7 @@ QStringList CEGUIProjectManager::getAvailableFonts() const
     auto& fontRegistry = CEGUI::FontManager::getSingleton().getRegisteredFonts();
     for (const auto& pair : fontRegistry)
     {
-        auto id = CEGUI::String::convertUtf32ToUtf8(pair.first.c_str());
-        fonts.append(id.c_str());
+        fonts.append(ceguiStringToQString(pair.first));
     }
 
     std::sort(fonts.begin(), fonts.end());
@@ -577,8 +580,7 @@ QStringList CEGUIProjectManager::getAvailableImages() const
     auto it = CEGUI::ImageManager::getSingleton().getIterator();
     while (!it.isAtEnd())
     {
-        auto id = CEGUI::String::convertUtf32ToUtf8(it.getCurrentKey().c_str());
-        images.append(id.c_str());
+        images.append(ceguiStringToQString(it.getCurrentKey()));
         ++it;
     }
 
@@ -604,7 +606,7 @@ void CEGUIProjectManager::getAvailableWidgetsBySkin(std::map<QString, QStringLis
     auto it = CEGUI::WindowFactoryManager::getSingleton().getFalagardMappingIterator();
     while (!it.isAtEnd())
     {
-        const QString windowType = CEGUI::String::convertUtf32ToUtf8(it.getCurrentValue().d_windowType.c_str()).c_str();
+        const QString windowType = ceguiStringToQString(it.getCurrentValue().d_windowType);
 
         auto sepPos = windowType.indexOf('/');
         assert(sepPos >= 0);
