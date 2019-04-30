@@ -20,7 +20,9 @@ class WidgetHierarchyDockWidget : public QDockWidget
 public:
 
     explicit WidgetHierarchyDockWidget(LayoutVisualMode& visualMode);
-    ~WidgetHierarchyDockWidget();
+    virtual ~WidgetHierarchyDockWidget() override;
+
+    void setupContextMenu();
 
     LayoutVisualMode* getVisualMode() const;
     void setRootWidgetManipulator(LayoutManipulator* root);

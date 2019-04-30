@@ -12,6 +12,7 @@ class CEGUIWidget;
 }
 
 class CEGUIGraphicsScene;
+class CEGUIGraphicsView;
 
 class CEGUIWidget : public QWidget
 {
@@ -19,28 +20,18 @@ class CEGUIWidget : public QWidget
 
 public:
 
-    // TODO: use multiple CEGUIWidget instances instead?
-    struct ViewState
-    {
-        QTransform transform;
-        int horizontalScroll;
-        int verticalScroll;
-    };
-
     explicit CEGUIWidget(QWidget* parent = nullptr);
     ~CEGUIWidget();
 
     void setScene(CEGUIGraphicsScene* scene);
     CEGUIGraphicsScene* getScene() const;
+    CEGUIGraphicsView* getView() const;
 
     void activate(QWidget* newParent, CEGUIGraphicsScene* scene = nullptr);
     void deactivate(QWidget* oldParent);
 
     void setViewFeatures(bool wheelZoom = false, bool middleButtonScroll = false, bool continuousRendering = true);
     void setInputEnabled(bool enable);
-
-    ViewState getViewState() const;
-    void setViewState(const ViewState& state);
 
 private slots:
 

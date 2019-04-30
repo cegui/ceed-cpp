@@ -20,6 +20,11 @@ WidgetHierarchyDockWidget::~WidgetHierarchyDockWidget()
     delete ui;
 }
 
+void WidgetHierarchyDockWidget::setupContextMenu()
+{
+    ui->treeView->setupContextMenu();
+}
+
 LayoutVisualMode* WidgetHierarchyDockWidget::getVisualMode() const
 {
     return static_cast<LayoutVisualMode*>(parentWidget());

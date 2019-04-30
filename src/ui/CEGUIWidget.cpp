@@ -37,6 +37,11 @@ CEGUIGraphicsScene* CEGUIWidget::getScene() const
     return static_cast<CEGUIGraphicsScene*>(ui->view->scene());
 }
 
+CEGUIGraphicsView* CEGUIWidget::getView() const
+{
+    return ui->view;
+}
+
 // Activates the CEGUI Widget for the given parentWidget (QWidget derived class)
 void CEGUIWidget::activate(QWidget* newParent, CEGUIGraphicsScene* scene)
 {
@@ -125,22 +130,6 @@ void CEGUIWidget::setInputEnabled(bool enable)
 {
     if (ui->view)
         ui->view->injectInput(enable);
-}
-
-CEGUIWidget::ViewState CEGUIWidget::getViewState() const
-{
-    CEGUIWidget::ViewState state;
-    state.transform = ui->view->transform();
-    state.horizontalScroll = ui->view->horizontalScrollBar()->value();
-    state.verticalScroll = ui->view->verticalScrollBar()->value();
-    return state;
-}
-
-void CEGUIWidget::setViewState(const CEGUIWidget::ViewState& state)
-{
-    ui->view->setTransform(state.transform);
-    ui->view->horizontalScrollBar()->setValue(state.horizontalScroll);
-    ui->view->verticalScrollBar()->setValue(state.verticalScroll);
 }
 
 void CEGUIWidget::on_debugInfoButton_clicked()
