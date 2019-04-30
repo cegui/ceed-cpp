@@ -10,8 +10,14 @@ Collaborators are highly welcome.
 
 Dependencies
 -------------
-2. CEGUI [(default branch)](https://bitbucket.org/cegui/cegui/src/default/) with the OpenGLRenderer
-3. Qt (Only tested with QT 5.12 yet, older versions should also work)
+1. [QtnProperty](https://github.com/lexxmark/QtnProperty) - a Qt property framework. Sources are included;
+2. CEGUI [(default branch)](https://bitbucket.org/cegui/cegui/src/default/) with the OpenGLRenderer or OpenGL3Renderer;
+3. Qt (Only tested with QT 5.12 yet, older versions should also work).
+
+Preparing CEGUI
+-------------
+Windows: build CEGUI and either place it into /3rdParty/CEGUI/\[bin, lib, include, dependencies\] or fix your local .pro file to point to the build. Prebuilt CEGUI to be included in the near future.
+
 
 Building with Qt Creator 4.x
 -------------
