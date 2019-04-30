@@ -12,7 +12,7 @@ Dependencies
 -------------
 1. [QtnProperty](https://github.com/lexxmark/QtnProperty) - a Qt property framework. Sources are included;
 2. CEGUI [(default branch)](https://bitbucket.org/cegui/cegui/src/default/) with the OpenGLRenderer or OpenGL3Renderer;
-3. Qt (Only tested with QT 5.12 yet, older versions should also work).
+3. Qt (Only tested with QT 5.12 yet, older versions down to 5.8 inclusive should also work).
 
 Preparing CEGUI
 -------------
