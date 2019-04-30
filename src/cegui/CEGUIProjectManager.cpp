@@ -48,7 +48,7 @@ CEGUIProjectManager::~CEGUIProjectManager()
 #ifdef CEED_OPENGL_LEGACY_RENDERER
         CEGUI::OpenGLRenderer::destroySystem();
 #else
-    CEGUI::OpenGL3Renderer::destroySystem();
+        CEGUI::OpenGL3Renderer::destroySystem();
 #endif
     }
 }
