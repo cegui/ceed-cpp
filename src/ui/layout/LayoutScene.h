@@ -17,7 +17,7 @@ public:
     LayoutScene(LayoutVisualMode& visualMode);
 
     void updateFromWidgets();
-    virtual void setCEGUIDisplaySize(float width, float height, bool lazyUpdate = true) override;
+    virtual void setCEGUIDisplaySize(float width, float height) override;
 
     void setRootWidgetManipulator(LayoutManipulator* manipulator);
     LayoutManipulator* getRootWidgetManipulator() const { return rootManipulator; }

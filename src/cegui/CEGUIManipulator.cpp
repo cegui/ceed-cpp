@@ -102,145 +102,109 @@ void CEGUIManipulator::impl_paint(QPainter* painter, const QStyleOptionGraphicsI
 {
     ResizableRectItem::paint(painter, option, widget);
 
+    if (!_widget) return;
+
     const bool drawGuides = (isSelected() || _resizeInProgress || isAnyHandleSelected());
     if (!drawGuides) return;
 
-/*
-        baseSize = self.getBaseSize()
-        self.paintHorizontalGuides(baseSize, painter, option, widget)
-        self.paintVerticalGuides(baseSize, painter, option, widget)
+    // Draw guides
 
+    const auto baseSize = getBaseSize();
+    const auto widgetPosition = _widget->getPosition();
+    const auto widgetSize = _widget->getSize();
 
-    def paintHorizontalGuides(self, baseSize, painter, option, widget):
-        """Paints horizontal dimension guides - position X and width guides"""
+    const auto scaleXInPixels = static_cast<qreal>(CEGUI::CoordConverter::asAbsolute(CEGUI::UDim(widgetPosition.d_x.d_scale, 0.f), baseSize.d_width));
+    const auto offsetXInPixels = static_cast<qreal>(widgetPosition.d_x.d_offset);
 
-        widgetPosition = self.widget.getPosition()
-        widgetSize = self.widget.getSize()
+    const auto scaleYInPixels = static_cast<qreal>(CEGUI::CoordConverter::asAbsolute(CEGUI::UDim(widgetPosition.d_y.d_scale, 0.f), baseSize.d_height));
+    const auto offsetYInPixels = static_cast<qreal>(widgetPosition.d_y.d_offset);
 
-        # x coordinate
-        scaleXInPixels = PyCEGUI.CoordConverter.asAbsolute(PyCEGUI.UDim(widgetPosition.d_x.d_scale, 0), baseSize.d_width)
-        offsetXInPixels = widgetPosition.d_x.d_offset
+    const auto scaleWidthInPixels = static_cast<qreal>(CEGUI::CoordConverter::asAbsolute(CEGUI::UDim(widgetSize.d_width.d_scale, 0.f), baseSize.d_width));
+    const auto offsetWidthInPixels = static_cast<qreal>(widgetSize.d_width.d_offset);
 
-        # width
-        scaleWidthInPixels = PyCEGUI.CoordConverter.asAbsolute(PyCEGUI.UDim(widgetSize.d_width.d_scale, 0), baseSize.d_width)
-        offsetWidthInPixels = widgetSize.d_width.d_offset
+    const auto scaleHeightInPixels = static_cast<qreal>(CEGUI::CoordConverter::asAbsolute(CEGUI::UDim(widgetSize.d_height.d_scale, 0.f), baseSize.d_height));
+    const auto offsetHeightInPixels = static_cast<qreal>(widgetSize.d_height.d_offset);
 
-        hAlignment = self.widget.getHorizontalAlignment()
-        startXPoint = 0
-        if hAlignment == PyCEGUI.HorizontalAlignment.HA_LEFT:
-            startXPoint = (self.rect().topLeft() + self.rect().bottomLeft()) / 2
-        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_CENTRE:
-            startXPoint = self.rect().center()
-        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_RIGHT:
-            startXPoint = (self.rect().topRight() + self.rect().bottomRight()) / 2
-        else:
-            assert(False)
+    QPointF startXPoint(0.0, 0.0);
+    QPointF startHPoint(0.0, 0.0);
+    qreal hOffsetX = 1.0;
+    switch (_widget->getHorizontalAlignment())
+    {
+        case CEGUI::HorizontalAlignment::Left:
+        {
+            startXPoint = (rect().topLeft() + rect().bottomLeft()) / 2.0;
+            startHPoint = rect().topRight();
+            break;
+        }
+        case CEGUI::HorizontalAlignment::Centre:
+        {
+            startXPoint = rect().center();
+            startHPoint = rect().topRight();
+            break;
+        }
+        case CEGUI::HorizontalAlignment::Right:
+        {
+            startXPoint = (rect().topRight() + rect().bottomRight()) / 2.0;
+            startHPoint = rect().topLeft();
+            hOffsetX = -1.0;
+            break;
+        }
+    }
 
-        midXPoint = startXPoint - QtCore.QPointF(offsetXInPixels, 0)
-        endXPoint = midXPoint - QtCore.QPointF(scaleXInPixels, 0)
-        xOffset = QtCore.QPointF(0, 1) if scaleXInPixels * offsetXInPixels < 0 else QtCore.QPointF(0, 0)
+    QPointF startYPoint(0.0, 0.0);
+    QPointF startWPoint(0.0, 0.0);
+    qreal wOffsetY = 1.0;
+    switch (_widget->getVerticalAlignment())
+    {
+        case CEGUI::VerticalAlignment::Top:
+        {
+            startYPoint = (rect().topLeft() + rect().topRight()) / 2.0;
+            startWPoint = rect().bottomLeft();
+            break;
+        }
+        case CEGUI::VerticalAlignment::Centre:
+        {
+            startYPoint = rect().center();
+            startWPoint = rect().bottomLeft();
+            break;
+        }
+        case CEGUI::VerticalAlignment::Bottom:
+        {
+            startYPoint = (rect().bottomLeft() + rect().bottomRight()) / 2.0;
+            startWPoint = rect().topLeft();
+            wOffsetY = -1.0;
+            break;
+        }
+    }
 
-        pen = QtGui.QPen()
-        # 0 means 1px size no matter the transformation
-        pen.setWidth(0)
-        pen.setColor(QtGui.QColor(0, 255, 0, 255))
-        painter.setPen(pen)
-        painter.drawLine(startXPoint, midXPoint)
-        pen.setColor(QtGui.QColor(255, 0, 0, 255))
-        painter.setPen(pen)
-        painter.drawLine(midXPoint + xOffset, endXPoint + xOffset)
+    const auto midXPoint = startXPoint - QPointF(offsetXInPixels, 0.0);
+    const auto endXPoint = midXPoint - QPointF(scaleXInPixels, 0.0);
+    const auto xOffset = QPointF(0.0, (scaleXInPixels * offsetXInPixels < 0.0) ? 1.0 : 0.0);
 
-        vAlignment = self.widget.getVerticalAlignment()
-        startWPoint = 0
-        if vAlignment == PyCEGUI.VerticalAlignment.VA_TOP:
-            startWPoint = self.rect().bottomLeft()
-        elif vAlignment == PyCEGUI.VerticalAlignment.VA_CENTRE:
-            startWPoint = self.rect().bottomLeft()
-        elif vAlignment == PyCEGUI.VerticalAlignment.VA_BOTTOM:
-            startWPoint = self.rect().topLeft()
-        else:
-            assert(False)
+    const auto midYPoint = startYPoint - QPointF(0.0, offsetYInPixels);
+    const auto endYPoint = midYPoint - QPointF(0.0, scaleYInPixels);
+    const auto yOffset = QPointF((scaleYInPixels * offsetYInPixels < 0) ? 1.0 : 0.0, 0.0);
 
-        midWPoint = startWPoint + QtCore.QPointF(scaleWidthInPixels, 0)
-        endWPoint = midWPoint + QtCore.QPointF(offsetWidthInPixels, 0)
-        # FIXME: epicly unreadable
-        wOffset = QtCore.QPointF(0, -1 if vAlignment == PyCEGUI.VerticalAlignment.VA_BOTTOM else 1) if scaleWidthInPixels * offsetWidthInPixels < 0 else QtCore.QPointF(0, 0)
+    const auto midWPoint = startWPoint + QPointF(scaleWidthInPixels, 0.0);
+    const auto endWPoint = midWPoint + QPointF(offsetWidthInPixels, 0.0);
+    const auto wOffset = QPointF(0.0, (scaleWidthInPixels * offsetWidthInPixels < 0.0) ? wOffsetY : 0.0);
 
-        pen = QtGui.QPen()
-        # 0 means 1px size no matter the transformation
-        pen.setWidth(0)
-        pen.setColor(QtGui.QColor(255, 0, 0, 255))
-        painter.setPen(pen)
-        painter.drawLine(startWPoint, midWPoint)
-        pen.setColor(QtGui.QColor(0, 255, 0, 255))
-        painter.setPen(pen)
-        painter.drawLine(midWPoint + wOffset, endWPoint + wOffset)
+    const auto midHPoint = startHPoint + QPointF(0.0, scaleHeightInPixels);
+    const auto endHPoint = midHPoint + QPointF(0.0, offsetHeightInPixels);
+    const auto hOffset = QPointF((scaleHeightInPixels * offsetHeightInPixels < 0.0) ? hOffsetX : 0.0, 0.0);
 
-    def paintVerticalGuides(self, baseSize, painter, option, widget):
-        """Paints vertical dimension guides - position Y and height guides"""
-
-        widgetPosition = self.widget.getPosition()
-        widgetSize = self.widget.getSize()
-
-        # y coordinate
-        scaleYInPixels = PyCEGUI.CoordConverter.asAbsolute(PyCEGUI.UDim(widgetPosition.d_y.d_scale, 0), baseSize.d_height)
-        offsetYInPixels = widgetPosition.d_y.d_offset
-
-        # height
-        scaleHeightInPixels = PyCEGUI.CoordConverter.asAbsolute(PyCEGUI.UDim(widgetSize.d_height.d_scale, 0), baseSize.d_height)
-        offsetHeightInPixels = widgetSize.d_height.d_offset
-
-        vAlignment = self.widget.getVerticalAlignment()
-        startYPoint = 0
-        if vAlignment == PyCEGUI.VerticalAlignment.VA_TOP:
-            startYPoint = (self.rect().topLeft() + self.rect().topRight()) / 2
-        elif vAlignment == PyCEGUI.VerticalAlignment.VA_CENTRE:
-            startYPoint = self.rect().center()
-        elif vAlignment == PyCEGUI.VerticalAlignment.VA_BOTTOM:
-            startYPoint = (self.rect().bottomLeft() + self.rect().bottomRight()) / 2
-        else:
-            assert(False)
-
-        midYPoint = startYPoint - QtCore.QPointF(0, offsetYInPixels)
-        endYPoint = midYPoint - QtCore.QPointF(0, scaleYInPixels)
-        yOffset = QtCore.QPointF(1, 0) if scaleYInPixels * offsetYInPixels < 0 else QtCore.QPointF(0, 0)
-
-        pen = QtGui.QPen()
-        # 0 means 1px size no matter the transformation
-        pen.setWidth(0)
-        pen.setColor(QtGui.QColor(0, 255, 0, 255))
-        painter.setPen(pen)
-        painter.drawLine(startYPoint, midYPoint)
-        pen.setColor(QtGui.QColor(255, 0, 0, 255))
-        painter.setPen(pen)
-        painter.drawLine(midYPoint + yOffset, endYPoint + yOffset)
-
-        hAlignment = self.widget.getHorizontalAlignment()
-        startHPoint = 0
-        if hAlignment == PyCEGUI.HorizontalAlignment.HA_LEFT:
-            startHPoint = self.rect().topRight()
-        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_CENTRE:
-            startHPoint = self.rect().topRight()
-        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_RIGHT:
-            startHPoint = self.rect().topLeft()
-        else:
-            assert(False)
-
-        midHPoint = startHPoint + QtCore.QPointF(0, scaleHeightInPixels)
-        endHPoint = midHPoint + QtCore.QPointF(0, offsetHeightInPixels)
-        # FIXME: epicly unreadable
-        hOffset = QtCore.QPointF(-1 if hAlignment == PyCEGUI.HorizontalAlignment.HA_RIGHT else 1, 0) if scaleHeightInPixels * offsetHeightInPixels < 0 else QtCore.QPointF(0, 0)
-
-        pen = QtGui.QPen()
-        # 0 means 1px size no matter the transformation
-        pen.setWidth(0)
-        pen.setColor(QtGui.QColor(255, 0, 0, 255))
-        painter.setPen(pen)
-        painter.drawLine(startHPoint, midHPoint)
-        pen.setColor(QtGui.QColor(0, 255, 0, 255))
-        painter.setPen(pen)
-        painter.drawLine(midHPoint + hOffset, endHPoint + hOffset)
-*/
+    QPen pen(QColor(0, 255, 0, 255), 0); // Width 0 means 1 px size no matter the transformation
+    painter->setPen(pen);
+    painter->drawLine(startXPoint, midXPoint);
+    painter->drawLine(startYPoint, midYPoint);
+    painter->drawLine(midWPoint + wOffset, endWPoint + wOffset);
+    painter->drawLine(midHPoint + hOffset, endHPoint + hOffset);
+    pen.setColor(QColor(255, 0, 0, 255));
+    painter->setPen(pen);
+    painter->drawLine(startWPoint, midWPoint);
+    painter->drawLine(startHPoint, midHPoint);
+    painter->drawLine(midXPoint + xOffset, endXPoint + xOffset);
+    painter->drawLine(midYPoint + yOffset, endYPoint + yOffset);
 }
 
 QSizeF CEGUIManipulator::getMinSize() const
@@ -265,6 +229,14 @@ QSizeF CEGUIManipulator::getMaxSize() const
     return QSizeF();
 }
 
+CEGUI::Sizef CEGUIManipulator::getBaseSize() const
+{
+    if (_widget && _widget->getParent() && !_widget->isNonClient())
+        return  _widget->getParent()->getUnclippedInnerRect().get().getSize();
+    else
+        return _widget->getParentPixelSize();
+}
+
 void CEGUIManipulator::notifyHandleSelected(ResizingHandle* handle)
 {
     ResizableRectItem::notifyHandleSelected(handle);
@@ -275,8 +247,8 @@ void CEGUIManipulator::notifyResizeStarted(ResizingHandle* handle)
 {
     ResizableRectItem::notifyResizeStarted(handle);
 /*
-    self.preResizePos = self.widget.getPosition()
-    self.preResizeSize = self.widget.getSize()
+    self.preResizePos = _widget->getPosition()
+    self.preResizeSize = _widget->getSize()
 */
 
     for (QGraphicsItem* childItem : childItems())
@@ -307,44 +279,44 @@ void CEGUIManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
 
         if self.useAbsoluteCoordsForResize():
             if self.useIntegersForAbsoluteResize():
-                deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(0, math.floor(pixelDeltaPos.x())), PyCEGUI.UDim(0, math.floor(pixelDeltaPos.y())))
-                deltaSize = PyCEGUI.USize(PyCEGUI.UDim(0, math.floor(pixelDeltaSize.width())), PyCEGUI.UDim(0, math.floor(pixelDeltaSize.height())))
+                deltaPos = CEGUI::UVector2(CEGUI::UDim(0, math.floor(pixelDeltaPos.x())), CEGUI::UDim(0, math.floor(pixelDeltaPos.y())))
+                deltaSize = CEGUI::USize(CEGUI::UDim(0, math.floor(pixelDeltaSize.width())), CEGUI::UDim(0, math.floor(pixelDeltaSize.height())))
             else:
-                deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(0, pixelDeltaPos.x()), PyCEGUI.UDim(0, pixelDeltaPos.y()))
-                deltaSize = PyCEGUI.USize(PyCEGUI.UDim(0, pixelDeltaSize.width()), PyCEGUI.UDim(0, pixelDeltaSize.height()))
+                deltaPos = CEGUI::UVector2(CEGUI::UDim(0, pixelDeltaPos.x()), CEGUI::UDim(0, pixelDeltaPos.y()))
+                deltaSize = CEGUI::USize(CEGUI::UDim(0, pixelDeltaSize.width()), CEGUI::UDim(0, pixelDeltaSize.height()))
 
         else:
             baseSize = self.getBaseSize()
 
-            deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(pixelDeltaPos.x() / baseSize.d_width, 0), PyCEGUI.UDim(pixelDeltaPos.y() / baseSize.d_height, 0))
-            deltaSize = PyCEGUI.USize(PyCEGUI.UDim(pixelDeltaSize.width() / baseSize.d_width, 0), PyCEGUI.UDim(pixelDeltaSize.height() / baseSize.d_height, 0))
+            deltaPos = CEGUI::UVector2(CEGUI::UDim(pixelDeltaPos.x() / baseSize.d_width, 0), CEGUI::UDim(pixelDeltaPos.y() / baseSize.d_height, 0))
+            deltaSize = CEGUI::USize(CEGUI::UDim(pixelDeltaSize.width() / baseSize.d_width, 0), CEGUI::UDim(pixelDeltaSize.height() / baseSize.d_height, 0))
 
         # because the Qt manipulator is always top left aligned in the CEGUI sense,
         # we have to process the size to factor in alignments if they differ
-        processedDeltaPos = PyCEGUI.UVector2()
+        processedDeltaPos = CEGUI::UVector2()
 
-        hAlignment = self.widget.getHorizontalAlignment()
-        if hAlignment == PyCEGUI.HorizontalAlignment.HA_LEFT:
+        hAlignment = _widget->getHorizontalAlignment()
+        if hAlignment == CEGUI::HorizontalAlignment.HA_LEFT:
             processedDeltaPos.d_x = deltaPos.d_x
-        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_CENTRE:
-            processedDeltaPos.d_x = deltaPos.d_x + PyCEGUI.UDim(0.5, 0.5) * deltaSize.d_width
-        elif hAlignment == PyCEGUI.HorizontalAlignment.HA_RIGHT:
+        elif hAlignment == CEGUI::HorizontalAlignment.HA_CENTRE:
+            processedDeltaPos.d_x = deltaPos.d_x + CEGUI::UDim(0.5, 0.5) * deltaSize.d_width
+        elif hAlignment == CEGUI::HorizontalAlignment.HA_RIGHT:
             processedDeltaPos.d_x = deltaPos.d_x + deltaSize.d_width
         else:
             assert(False)
 
-        vAlignment = self.widget.getVerticalAlignment()
-        if vAlignment == PyCEGUI.VerticalAlignment.VA_TOP:
+        vAlignment = _widget->getVerticalAlignment()
+        if vAlignment == CEGUI::VerticalAlignment.VA_TOP:
             processedDeltaPos.d_y = deltaPos.d_y
-        elif vAlignment == PyCEGUI.VerticalAlignment.VA_CENTRE:
-            processedDeltaPos.d_y = deltaPos.d_y + PyCEGUI.UDim(0.5, 0.5) * deltaSize.d_height
-        elif vAlignment == PyCEGUI.VerticalAlignment.VA_BOTTOM:
+        elif vAlignment == CEGUI::VerticalAlignment.VA_CENTRE:
+            processedDeltaPos.d_y = deltaPos.d_y + CEGUI::UDim(0.5, 0.5) * deltaSize.d_height
+        elif vAlignment == CEGUI::VerticalAlignment.VA_BOTTOM:
             processedDeltaPos.d_y = deltaPos.d_y + deltaSize.d_height
         else:
             assert(False)
 
-        self.widget.setPosition(self.preResizePos + processedDeltaPos)
-        self.widget.setSize(self.preResizeSize + deltaSize)
+        _widget->setPosition(self.preResizePos + processedDeltaPos)
+        _widget->setSize(self.preResizeSize + deltaSize)
 
         self.lastResizeNewPos = newPos
         self.lastResizeNewRect = newRect
@@ -366,16 +338,17 @@ void CEGUIManipulator::notifyResizeFinished(QPointF newPos, QRectF newRect)
             child->setVisible(true);
         }
     }
+
+    // Show siblings in the same layout container
+    auto parent = _widget->getParent();
+    if (parent && dynamic_cast<CEGUI::LayoutContainer*>(parent))
+        for (auto item : parentItem()->childItems())
+            if (item != this && dynamic_cast<CEGUIManipulator*>(item))
+                item->setVisible(true);
+
+    static_cast<CEGUIManipulator*>(parentItem())->updateFromWidget(true);
+
 /*
-        parent = self.widget.getParent()
-        if parent and isinstance(parent, PyCEGUI.LayoutContainer):
-            # show siblings in the same layout container
-            for item in self.parentItem().childItems():
-                if item is not self and isinstance(item, Manipulator):
-                    item.setVisible(True)
-
-            self.parentItem().updateFromWidget(True)
-
         self.lastResizeNewPos = None
         self.lastResizeNewRect = None
 */
@@ -385,7 +358,7 @@ void CEGUIManipulator::notifyMoveStarted()
 {
     ResizableRectItem::notifyMoveStarted();
 /*
-        self.preMovePos = self.widget.getPosition()
+        self.preMovePos = _widget->getPosition()
 */
 
     for (QGraphicsItem* childItem : childItems())
@@ -405,16 +378,16 @@ void CEGUIManipulator::notifyMoveProgress(QPointF newPos)
         deltaPos = None
         if self.useAbsoluteCoordsForMove():
             if self.useIntegersForAbsoluteMove():
-                deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(0, math.floor(pixelDeltaPos.x())), PyCEGUI.UDim(0, math.floor(pixelDeltaPos.y())))
+                deltaPos = CEGUI::UVector2(CEGUI::UDim(0, math.floor(pixelDeltaPos.x())), CEGUI::UDim(0, math.floor(pixelDeltaPos.y())))
             else:
-                deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(0, pixelDeltaPos.x()), PyCEGUI.UDim(0, pixelDeltaPos.y()))
+                deltaPos = CEGUI::UVector2(CEGUI::UDim(0, pixelDeltaPos.x()), CEGUI::UDim(0, pixelDeltaPos.y()))
 
         else:
             baseSize = self.getBaseSize()
 
-            deltaPos = PyCEGUI.UVector2(PyCEGUI.UDim(pixelDeltaPos.x() / baseSize.d_width, 0), PyCEGUI.UDim(pixelDeltaPos.y() / baseSize.d_height, 0))
+            deltaPos = CEGUI::UVector2(CEGUI::UDim(pixelDeltaPos.x() / baseSize.d_width, 0), CEGUI::UDim(pixelDeltaPos.y() / baseSize.d_height, 0))
 
-        self.widget.setPosition(self.preMovePos + deltaPos)
+        _widget->setPosition(self.preMovePos + deltaPos)
 
         self.lastMoveNewPos = newPos
 */
@@ -527,17 +500,17 @@ void CEGUIManipulator::detach(bool detachWidget, bool destroyWidget, bool recurs
 
 QString CEGUIManipulator::getWidgetName() const
 {
-    return _widget ? CEGUIProjectManager::ceguiStringToQString(_widget->getName()) : "<Unknown>";
+    return _widget ? ceguiStringToQString(_widget->getName()) : "<Unknown>";
 }
 
 QString CEGUIManipulator::getWidgetType() const
 {
-    return _widget ? CEGUIProjectManager::ceguiStringToQString(_widget->getType()) : "<Unknown>";
+    return _widget ? ceguiStringToQString(_widget->getType()) : "<Unknown>";
 }
 
 QString CEGUIManipulator::getWidgetPath() const
 {
-    return _widget ? CEGUIProjectManager::ceguiStringToQString(_widget->getNamePath()) : "<Unknown>";
+    return _widget ? ceguiStringToQString(_widget->getNamePath()) : "<Unknown>";
 }
 
 // Creates a child manipulator suitable for a child widget of manipulated widget
@@ -565,33 +538,22 @@ void CEGUIManipulator::getChildManipulators(std::vector<CEGUIManipulator*>& outL
 // Retrieves a manipulator relative to this manipulator by given widget path
 CEGUIManipulator* CEGUIManipulator::getManipulatorByPath(const QString& widgetPath) const
 {
-/*
-        // Throws LookupError on failure.
-        if isinstance(self.widget, PyCEGUI.TabControl) or isinstance(self.widget, PyCEGUI.ScrollablePane):
-            manipulator = self.getManipulatorFromChildContainerByPath(widgetPath)
-            if manipulator is not None:
-                return manipulator
+    if (dynamic_cast<CEGUI::TabControl*>(_widget) || dynamic_cast<CEGUI::ScrollablePane*>(_widget))
+    {
+        auto manipulator = getManipulatorFromChildContainerByPath(widgetPath);
+        if (manipulator) return manipulator;
+    }
 
-                //QString::section
-        path = widgetPath.split("/", 1)
-        assert(len(path) >= 1)
+    const auto sepPos = widgetPath.indexOf('/');
+    QString baseName = (sepPos >= 0) ? widgetPath.left(sepPos) : widgetPath;
+    QString remainder = (sepPos >= 0) ? widgetPath.mid(sepPos + 1) : "";
+    for (QGraphicsItem* item : childItems())
+    {
+        if (auto manipulator = dynamic_cast<CEGUIManipulator*>(item))
+            if (manipulator->getWidgetName() == baseName)
+                return (sepPos < 0) ? manipulator : manipulator->getManipulatorByPath(widgetPath.mid(sepPos + 1));
+    }
 
-        baseName = path[0]
-        remainder = ""
-        if len(path) == 2:
-            remainder = path[1]
-
-        for item in self.childItems():
-            if isinstance(item, Manipulator):
-                if item.widget.getName() == baseName:
-                    if remainder == "":
-                        return item
-
-                    else:
-                        return item.getManipulatorByPath(remainder)
-
-        raise LookupError("Can't find widget manipulator of path '" + widgetPath + "'")
-*/
     return nullptr;
 }
 
@@ -601,7 +563,7 @@ CEGUIManipulator* CEGUIManipulator::getManipulatorByPath(const QString& widgetPa
 // widget, which forces us to handle these cases using this function.
 CEGUIManipulator* CEGUIManipulator::getManipulatorFromChildContainerByPath(const QString& widgetPath) const
 {
-    auto sepPos = widgetPath.indexOf('/');
+    const auto sepPos = widgetPath.indexOf('/');
     QString directChildPath = (sepPos >= 0) ? widgetPath.mid(sepPos + 1) : "";
     for (QGraphicsItem* item : childItems())
     {
@@ -642,7 +604,7 @@ void CEGUIManipulator::createMissingChildManipulators(bool recursive, bool skipA
 {
     forEachChildWidget([this, skipAutoWidgets, recursive](CEGUI::Window* childWidget)
     {
-        if (getManipulatorByPath(CEGUIProjectManager::ceguiStringToQString(childWidget->getName())))
+        if (getManipulatorByPath(ceguiStringToQString(childWidget->getName())))
             return;
 
         if (!skipAutoWidgets || !childWidget->isAutoWindow())
@@ -727,14 +689,3 @@ QVariant CEGUIManipulator::itemChange(QGraphicsItem::GraphicsItemChange change, 
 
     return ResizableRectItem::itemChange(change, value);
 }
-
-/*
-
-    def getBaseSize(self):
-        if self.widget.getParent() is not None and not self.widget.isNonClient():
-            return self.widget.getParent().getUnclippedInnerRect().get().getSize()
-
-        else:
-            return self.widget.getParentPixelSize()
-
-*/

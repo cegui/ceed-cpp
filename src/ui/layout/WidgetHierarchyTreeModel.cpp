@@ -149,6 +149,12 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
 
         const QString newParentPath = newParent->data(Qt::UserRole).toString();
         auto newParentManipulator = _visualMode.getScene()->getManipulatorByPath(newParentPath);
+        if (!newParentManipulator)
+        {
+            assert(false);
+            return false;
+        }
+
         for (const QString& widgetPath : widgetPaths)
         {
             const QString oldWidgetName = widgetPath.mid(widgetPath.lastIndexOf('/') + 1);

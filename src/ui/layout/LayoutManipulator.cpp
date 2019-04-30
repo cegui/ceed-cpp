@@ -1,5 +1,6 @@
 #include "src/ui/layout/LayoutManipulator.h"
 #include "src/editors/layout/LayoutVisualMode.h"
+#include "src/cegui/CEGUIProjectManager.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
 #include "qpen.h"
@@ -335,7 +336,7 @@ QString LayoutManipulator::getUniqueChildWidgetName(const QString& base) const
 
     QString candidate = base;
     int i = 2;
-    while (_widget->isChild(candidate.toLocal8Bit().data()))
+    while (_widget->isChild(qStringToCeguiString(candidate)))
     {
         candidate = base + QString::number(i);
         ++i;

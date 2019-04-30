@@ -50,7 +50,7 @@ void LayoutEditor::initialize()
     {
         // FIXME: open manually and load from string?
         auto layoutFileName = QFileInfo(_filePath).fileName();
-        CEGUI::Window* root = CEGUI::WindowManager::getSingleton().loadLayoutFromFile(layoutFileName.toLocal8Bit().data());
+        CEGUI::Window* root = CEGUI::WindowManager::getSingleton().loadLayoutFromFile(qStringToCeguiString(layoutFileName));
         visualMode->initialize(root);
     }
     catch (const std::exception& e)
@@ -148,7 +148,7 @@ void LayoutEditor::getRawData(QByteArray& outRawData)
     }
 
     CEGUI::String layoutString = CEGUI::WindowManager::getSingleton().getLayoutAsString(*currentRootWidget);
-    outRawData = CEGUIProjectManager::ceguiStringToQString(layoutString).toUtf8();
+    outRawData = ceguiStringToQString(layoutString).toUtf8();
 }
 
 void LayoutEditor::createSettings(Settings& mgr)

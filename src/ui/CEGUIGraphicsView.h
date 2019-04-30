@@ -6,6 +6,9 @@
 // This is a final class, not suitable for subclassing. This views given scene using
 // QOpenGLWidget. It's designed to work with CEGUIGraphicsScene derived classes.
 
+class QOpenGLFramebufferObject;
+class QOpenGLTextureBlitter;
+
 class CEGUIGraphicsView final : public ResizableGraphicsView
 {
     Q_OBJECT
@@ -13,13 +16,16 @@ class CEGUIGraphicsView final : public ResizableGraphicsView
 public:
 
     explicit CEGUIGraphicsView(QWidget *parent = nullptr);
-    ~CEGUIGraphicsView();
+    virtual ~CEGUIGraphicsView() override;
 
     void injectInput(bool inject);
     void setContinuousRendering(bool on) { continuousRendering = on; }
-    void updateSelfAndScene();
 
     virtual void drawBackground(QPainter* painter, const QRectF& rect) override;
+
+public slots:
+
+    void updateSelfAndScene();
 
 private:
 
@@ -28,6 +34,10 @@ private:
     virtual void mouseReleaseEvent(QMouseEvent* event) override;
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void keyReleaseEvent(QKeyEvent* event) override;
+
+    QOpenGLFramebufferObject* fbo = nullptr;
+    QOpenGLTextureBlitter* blitter = nullptr;
+    QBrush checkerboardBrush;
 
     bool _injectInput = false;
 

@@ -9,8 +9,7 @@ const QString CEGUIProject::EditorEmbeddedCEGUIVersion("1.0");
 const QStringList CEGUIProject::CEGUIVersions = { "0.6", "0.7", "0.8", "1.0" };
 
 CEGUIProject::CEGUIProject()
-    : defaultResolution("1280x720") // 720p seems like a decent default nowadays, 16:9
-    , CEGUIVersion(EditorEmbeddedCEGUIVersion)
+    : CEGUIVersion(EditorEmbeddedCEGUIVersion)
     , baseDirectory("./")
     , imagesetsPath("./imagesets")
     , fontsPath("./fonts")
@@ -18,6 +17,7 @@ CEGUIProject::CEGUIProject()
     , schemesPath("./schemes")
     , layoutsPath("./layouts")
     , xmlSchemasPath("./xml_schemas")
+    , defaultResolution(1280, 720) // 720p seems like a decent default nowadays, 16:9
 {
     setHorizontalHeaderLabels({ "Name" });
 
@@ -55,7 +55,7 @@ bool CEGUIProject::loadFromFile(const QString& fileName)
     filePath = fileName;
 
     auto xmlRoot = doc.documentElement();
-    defaultResolution = xmlRoot.attribute("CEGUIDefaultResolution", "1280x720");
+    setDefaultResolution(xmlRoot.attribute("CEGUIDefaultResolution", "1280x720"));
     CEGUIVersion = xmlRoot.attribute("CEGUIVersion", EditorEmbeddedCEGUIVersion);
 
     baseDirectory = QDir::cleanPath(xmlRoot.attribute("baseDirectory", "./"));
@@ -106,7 +106,7 @@ bool CEGUIProject::save(const QString& newFilePath)
     auto xmlRoot = doc.createElement("Project");
     xmlRoot.setAttribute("version", "CEED Project 1");
     xmlRoot.setAttribute("CEGUIVersion", CEGUIVersion);
-    xmlRoot.setAttribute("CEGUIDefaultResolution", defaultResolution);
+    xmlRoot.setAttribute("CEGUIDefaultResolution", getDefaultResolutionString());
     xmlRoot.setAttribute("baseDirectory", QDir::cleanPath(baseDirectory));
     xmlRoot.setAttribute("imagesetsPath", QDir::cleanPath(imagesetsPath));
     xmlRoot.setAttribute("fontsPath", QDir::cleanPath(fontsPath));
@@ -223,4 +223,17 @@ bool CEGUIProject::referencesFilePath(const QString& filePath) const
     }
 
     return false;
+}
+
+void CEGUIProject::setDefaultResolution(const QString& string)
+{
+    auto sepPos = string.indexOf('x');
+    if (sepPos < 0) return;
+    defaultResolution.setWidth(string.leftRef(sepPos).toInt());
+    defaultResolution.setHeight(string.midRef(sepPos + 1).toInt());
+}
+
+QString CEGUIProject::getDefaultResolutionString() const
+{
+    return QString("%1x%2").arg(defaultResolution.width()).arg(defaultResolution.height());
 }
