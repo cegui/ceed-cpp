@@ -16,7 +16,7 @@ class CEGUIManipulator : public ResizableRectItem
 {
 public:
 
-    CEGUIManipulator(QGraphicsItem* parent = nullptr, CEGUI::Window* widget = nullptr, bool recursive = true, bool skipAutoWidgets = false);
+    CEGUIManipulator(QGraphicsItem* parent = nullptr, CEGUI::Window* widget = nullptr);
 
     virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
 
@@ -52,7 +52,7 @@ public:
     CEGUIManipulator* getManipulatorFromChildContainerByPath(const QString& widgetPath) const;
     void forEachChildWidget(std::function<void (CEGUI::Window*)> callback) const;
 
-    void createMissingChildManipulators(bool recursive = true, bool skipAutoWidgets = false);
+    void createChildManipulators(bool recursive, bool skipAutoWidgets, bool checkExisting = true);
     void moveToFront();
     void triggerPropertyManagerCallback(QStringList propertyNames);
     bool shouldBeSkipped() const;

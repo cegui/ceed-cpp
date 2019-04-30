@@ -3,11 +3,12 @@
 #include "src/cegui/CEGUIProjectManager.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
+#include <CEGUI/widgets/LayoutContainer.h>
 #include "qpen.h"
+#include "qpainter.h"
 #include "qgraphicssceneevent.h"
 #include "qmimedata.h"
 #include "qaction.h"
-#include <CEGUI/Window.h>
 
 // Returns a valid CEGUI widget name out of the supplied name, if possible. Returns empty string if
 // the supplied name is invalid and can't be converted to a valid name (an empty string for example).
@@ -18,8 +19,8 @@ QString LayoutManipulator::getValidWidgetName(const QString& name)
     return trimmed.replace("/", "_");
 }
 
-LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, CEGUI::Window* widget, bool recursive, bool skipAutoWidgets)
-    : CEGUIManipulator(parent, widget, recursive, skipAutoWidgets)
+LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, CEGUI::Window* widget)
+    : CEGUIManipulator(parent, widget)
     , _visualMode(visualMode)
 {
     setAcceptDrops(true);
@@ -45,7 +46,8 @@ LayoutManipulator::~LayoutManipulator()
 
 LayoutManipulator* LayoutManipulator::createChildManipulator(CEGUI::Window* childWidget, bool recursive, bool skipAutoWidgets)
 {
-    auto ret = new LayoutManipulator(_visualMode, this, childWidget, recursive, skipAutoWidgets);
+    auto ret = new LayoutManipulator(_visualMode, this, childWidget);
+    ret->createChildManipulators(recursive, skipAutoWidgets, false);
     ret->updateFromWidget();
     return ret;
 }
@@ -169,34 +171,38 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
 
     setResizingEnabled(true);
 
-/*
-        if self.widget.isAutoWindow():
-            if not settings.getEntry("layout/visual/auto_widgets_show_outline").value:
-                # don't show outlines unless instructed to do so
-                self.showOutline = False
+    if (_widget->isAutoWindow())
+    {
+        auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
 
-            if not settings.getEntry("layout/visual/auto_widgets_selectable").value:
-                # make this widget not focusable, selectable, movable and resizable
-                self.setFlags(self.flags() & ~QtGui.QGraphicsItem.ItemIsFocusable)
-                self.setFlags(self.flags() & ~QtGui.QGraphicsItem.ItemIsSelectable)
-                self.setFlags(self.flags() & ~QtGui.QGraphicsItem.ItemIsMovable)
-                self.setFlags(self.flags() |  QtGui.QGraphicsItem.ItemHasNoContents)
-                self.setResizingEnabled(False)
+        // Don't show outlines unless instructed to do so
+        if (!settings->getEntryValue("layout/visual/auto_widgets_show_outline").toBool())
+            _showOutline = false;
 
-        if isinstance(self.widget, PyCEGUI.LayoutContainer):
-            # LayoutContainers change their size to fit the widgets, it makes
-            # no sense to show this size
-            self.showOutline = False
-            # And it makes no sense to resize them, they will just snap back
-            # when they relayout
-            self.setResizingEnabled(False)
+        if (!settings->getEntryValue("layout/visual/auto_widgets_selectable").toBool())
+        {
+            // Make this widget not focusable, selectable, movable and resizable
+            auto newFlags = flags();
+            newFlags |= ItemHasNoContents;
+            newFlags &= ~(ItemIsFocusable | ItemIsSelectable | ItemIsMovable);
+            setFlags(newFlags);
+            setResizingEnabled(false);
+        }
+    }
 
-        parent = self.widget.getParent()
-        if parent and isinstance(parent, PyCEGUI.LayoutContainer):
-            # if the widget is now parented inside a layout container we don't want
-            # any drag moving to be possible
-            self.setFlags(self.flags() & ~QtGui.QGraphicsItem.ItemIsMovable)
-*/
+    if (dynamic_cast<CEGUI::LayoutContainer*>(_widget))
+    {
+        // LayoutContainers change their size to fit the widgets, it makes no sense to show this size
+        _showOutline = false;
+
+        // And it makes no sense to resize them, they will just snap back when they relayout
+        setResizingEnabled(false);
+    }
+
+    // If the widget is parented inside a layout container we don't want any drag moving to be possible
+    auto parent = _widget->getParent();
+    if (dynamic_cast<CEGUI::LayoutContainer*>(parent))
+        setFlags(flags() & ~ItemIsMovable);
 }
 
 void LayoutManipulator::detach(bool detachWidget, bool destroyWidget, bool recursive)
@@ -314,16 +320,14 @@ void LayoutManipulator::impl_paint(QPainter* painter, const QStyleOptionGraphics
 
     if (_drawSnapGrid && _visualMode.isSnapGridEnabled())
     {
-        /*
-            childRect = self.widget.getChildContentArea(self.snapGridNonClientArea).get()
-            qChildRect = QtCore.QRectF(childRect.d_min.d_x, childRect.d_min.d_y, childRect.getWidth(), childRect.getHeight())
-            qChildRect.translate(-self.scenePos())
+        const auto& childRect = _widget->getChildContentArea(_snapGridNonClientArea).get();
+        QRectF qChildRect(childRect.d_min.x, childRect.d_min.y, static_cast<qreal>(childRect.getWidth()), static_cast<qreal>(childRect.getHeight()));
+         qChildRect.translate(-scenePos());
 
-            painter.save()
-            painter.setBrushOrigin(qChildRect.topLeft())
-            painter.fillRect(qChildRect, _visualMode.getSnapGridBrush())
-            painter.restore()
-        */
+        painter->save();
+        painter->setBrushOrigin(qChildRect.topLeft());
+        painter->fillRect(qChildRect, _visualMode.getSnapGridBrush());
+        painter->restore();
     }
 }
 
@@ -348,27 +352,23 @@ QString LayoutManipulator::getUniqueChildWidgetName(const QString& base) const
 qreal LayoutManipulator::snapXCoordToGrid(qreal x)
 {
     // We have to take the child rect into account
-/*
-        childRect = self.widget.getChildContentArea(self.snapGridNonClientArea).get()
-        xOffset = childRect.d_min.d_x - self.scenePos().x()
+    const auto& childRect = _widget->getChildContentArea(_snapGridNonClientArea).get();
+    const qreal xOffset = static_cast<qreal>(childRect.d_min.x) - scenePos().x();
 
-        # point is in local space
-        snapGridX = settings.getEntry("layout/visual/snap_grid_x").value
-        return xOffset + round((x - xOffset) / snapGridX) * snapGridX
-*/
-    return x;
+    // Point is in local space
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    const int snapGridX = settings->getEntryValue("layout/visual/snap_grid_x").toInt();
+    return xOffset + round((x - xOffset) / snapGridX) * snapGridX;
 }
 
 qreal LayoutManipulator::snapYCoordToGrid(qreal y)
 {
     // We have to take the child rect into account
-/*
-        childRect = self.widget.getChildContentArea(self.snapGridNonClientArea).get()
-        yOffset = childRect.d_min.d_y - self.scenePos().y()
+    const auto& childRect = _widget->getChildContentArea(_snapGridNonClientArea).get();
+    const qreal yOffset = static_cast<qreal>(childRect.d_min.y) - scenePos().y();
 
-        # point is in local space
-        snapGridY = settings.getEntry("layout/visual/snap_grid_y").value
-        return yOffset + round((y - yOffset) / snapGridY) * snapGridY
-*/
-    return y;
+    // Point is in local space
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    const int snapGridY = settings->getEntryValue("layout/visual/snap_grid_y").toInt();
+    return yOffset + round((y - yOffset) / snapGridY) * snapGridY;
 }

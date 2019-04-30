@@ -67,7 +67,14 @@ void LayoutVisualMode::initialize(CEGUI::Window* rootWidget)
 
 void LayoutVisualMode::setRootWidget(CEGUI::Window* widget)
 {
-    setRootWidgetManipulator(widget ? new LayoutManipulator(*this, nullptr, widget) : nullptr);
+    if (widget)
+    {
+        auto manipulator = new LayoutManipulator(*this, nullptr, widget);
+        manipulator->createChildManipulators(true, false, false);
+        setRootWidgetManipulator(manipulator);
+    }
+    else
+        setRootWidgetManipulator(nullptr);
 }
 
 void LayoutVisualMode::setRootWidgetManipulator(LayoutManipulator* manipulator)

@@ -98,6 +98,8 @@ void WidgetHierarchyTreeView::selectionChanged(const QItemSelection& selected, c
 
 void WidgetHierarchyTreeView::contextMenuEvent(QContextMenuEvent* event)
 {
+    if (!contextMenu) return;
+
     auto selectedIndices = selectedIndexes();
 
     // TODO: since these actions enabled state depends on the selection,

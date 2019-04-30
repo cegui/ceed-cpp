@@ -1,5 +1,6 @@
 #include "src/ui/layout/WidgetHierarchyItem.h"
 #include "src/ui/layout/LayoutManipulator.h"
+#include <CEGUI/Window.h>
 
 WidgetHierarchyItem::WidgetHierarchyItem(LayoutManipulator* manipulator)
     : QStandardItem(manipulator ? manipulator->getWidgetName() : "<No widget>")
@@ -22,7 +23,7 @@ WidgetHierarchyItem::WidgetHierarchyItem(LayoutManipulator* manipulator)
     setData(Qt::Unchecked, Qt::CheckStateRole);
 }
 
-QStandardItem*WidgetHierarchyItem::clone() const
+QStandardItem* WidgetHierarchyItem::clone() const
 {
     auto ret = new WidgetHierarchyItem(_manipulator);
     ret->setData(data(Qt::CheckStateRole), Qt::CheckStateRole);
@@ -40,22 +41,19 @@ void WidgetHierarchyItem::setData(const QVariant& value, int role)
     return QStandardItem::setData(value, role);
 }
 
+//  TODO: Move this to CEGUI::Window
 int WidgetHierarchyItem::getWidgetIdxInParent() const
 {
-    //  TODO: Move this to CEGUI::Window
-/*
-        widget = self.manipulator.widget
-        if widget is None:
-            return -1
+    auto widget = _manipulator->getWidget();
+    if (!widget) return -1;
 
-        parent = widget.getParent()
-        if parent is None:
-            return 0
+    auto parent = widget->getParent();
+    if (!parent) return 0;
 
-        for i in range(parent.getChildCount()):
-            if parent.getChildAtIdx(i).getNamePath() == widget.getNamePath():
-                return i
-*/
+    for (size_t i = 0; i < parent->getChildCount(); ++i)
+        if (parent->getChildAtIdx(i) == widget)
+            return static_cast<int>(i);
+
     return -1;
 }
 
