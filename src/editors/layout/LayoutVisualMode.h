@@ -14,6 +14,7 @@ namespace CEGUI
 class LayoutEditor;
 class LayoutScene;
 class LayoutManipulator;
+class CEGUIWidget;
 class CreateWidgetDockWidget;
 class WidgetHierarchyDockWidget;
 class QDockWidget;
@@ -67,6 +68,7 @@ protected:
     mutable bool snapGridBrushValid = false;
 
     LayoutScene* scene = nullptr;
+    CEGUIWidget* ceguiWidget = nullptr;
     CreateWidgetDockWidget* createWidgetDockWidget = nullptr;
     WidgetHierarchyDockWidget* hierarchyDockWidget = nullptr;
     QToolBar* toolBar = nullptr;

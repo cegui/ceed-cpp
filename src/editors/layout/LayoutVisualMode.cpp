@@ -1,6 +1,7 @@
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutEditor.h"
 #include "src/cegui/CEGUIProjectManager.h"
+#include "src/ui/CEGUIWidget.h"
 #include "src/ui/CEGUIGraphicsView.h"
 #include "src/ui/layout/LayoutScene.h"
 #include "src/ui/layout/LayoutManipulator.h"
@@ -11,18 +12,20 @@
 #include "src/util/SettingsEntry.h"
 #include "src/util/ConfigurableAction.h"
 #include "src/Application.h"
+#include <CEGUI/GUIContext.h>
+#include <CEGUI/WindowManager.h>
 #include "qboxlayout.h"
 #include "qgraphicsview.h"
 #include "qtoolbar.h"
 #include "qmenu.h"
 #include "qmimedata.h"
 #include "qclipboard.h"
-#include <CEGUI/GUIContext.h>
-#include <CEGUI/WindowManager.h>
 
 LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     : IEditMode(editor)
 {
+    scene = new LayoutScene(*this);
+
     hierarchyDockWidget = new WidgetHierarchyDockWidget(*this);
     connect(hierarchyDockWidget, &WidgetHierarchyDockWidget::deleteRequested, [this]()
     {
@@ -35,25 +38,27 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     layout->setContentsMargins(0, 0, 0, 0);
     setLayout(layout);
 
-    scene = new LayoutScene(*this);
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    const bool continuousRendering = settings->getEntryValue("layout/visual/continuous_rendering").toBool();
+
+    ceguiWidget = new CEGUIWidget(this);
+    layout->addWidget(ceguiWidget);
+    ceguiWidget->setScene(scene);
+    ceguiWidget->setViewFeatures(true, true, continuousRendering);
+    ceguiWidget->setInputEnabled(true);
 
     setupActions();
     setupToolBar();
-/*
-        self.hierarchyDockWidget.treeView.setupContextMenu()
 
-        self.oldViewState = None
-*/
+    hierarchyDockWidget->setupContextMenu();
 
     auto onSnapGridSettingsChanged = [this]() { snapGridBrushValid = false; };
-    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
     connect(settings->getEntry("layout/visual/snap_grid_x"), &SettingsEntry::valueChanged, onSnapGridSettingsChanged);
     connect(settings->getEntry("layout/visual/snap_grid_y"), &SettingsEntry::valueChanged, onSnapGridSettingsChanged);
     connect(settings->getEntry("layout/visual/snap_grid_point_colour"), &SettingsEntry::valueChanged, onSnapGridSettingsChanged);
     connect(settings->getEntry("layout/visual/snap_grid_point_shadow_colour"), &SettingsEntry::valueChanged, onSnapGridSettingsChanged);
 }
 
-// arg rootWidget
 void LayoutVisualMode::initialize(CEGUI::Window* rootWidget)
 {
 /*
@@ -83,10 +88,6 @@ void LayoutVisualMode::setRootWidgetManipulator(LayoutManipulator* manipulator)
 
     scene->setRootWidgetManipulator(manipulator);
     hierarchyDockWidget->setRootWidgetManipulator(manipulator);
-
-    /*
-    CEGUIProjectManager::Instance().getCEGUIContext()->setRootWindow(getRootWidget());
-    */
 
     if (oldRoot) CEGUI::WindowManager::getSingleton().destroyWindow(oldRoot);
 }
@@ -425,17 +426,17 @@ bool LayoutVisualMode::deleteSelected()
 
 void LayoutVisualMode::zoomIn()
 {
-    static_cast<CEGUIGraphicsView*>(scene->views()[0])->zoomIn();
+    ceguiWidget->getView()->zoomIn();
 }
 
 void LayoutVisualMode::zoomOut()
 {
-    static_cast<CEGUIGraphicsView*>(scene->views()[0])->zoomOut();
+    ceguiWidget->getView()->zoomOut();
 }
 
 void LayoutVisualMode::zoomReset()
 {
-    static_cast<CEGUIGraphicsView*>(scene->views()[0])->zoomReset();
+    ceguiWidget->getView()->zoomReset();
 }
 
 // Retrieves a (cached) snap grid brush
@@ -490,14 +491,6 @@ void LayoutVisualMode::showEvent(QShowEvent* event)
 {
     auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
 
-/*
-        mainwindow.MainWindow.instance.ceguiContainerWidget.activate(self, self.scene)
-        mainwindow.MainWindow.instance.ceguiContainerWidget.setViewFeatures(wheelZoom = True,
-                                                                            middleButtonScroll = True,
-                                                                            continuousRendering = settings.getEntry("layout/visual/continuous_rendering").value)
-
-        PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(self.getCurrentRootWidget())
-*/
     hierarchyDockWidget->setEnabled(true);
     mainWindow->getPropertyDockWidget()->setEnabled(true);
     createWidgetDockWidget->setEnabled(true);
@@ -512,10 +505,6 @@ void LayoutVisualMode::showEvent(QShowEvent* event)
     scene->updateFromWidgets();
 
     setActionsEnabled(true);
-/*
-        if self.oldViewState is not None:
-            mainwindow.MainWindow.instance.ceguiContainerWidget.setViewState(self.oldViewState)
-*/
 
     QWidget::showEvent(event);
 }
@@ -523,11 +512,6 @@ void LayoutVisualMode::showEvent(QShowEvent* event)
 void LayoutVisualMode::hideEvent(QHideEvent* event)
 {
     auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
-
-    // Remember our view transform
-/*
-    self.oldViewState = mainwindow.MainWindow.instance.ceguiContainerWidget.getViewState()
-*/
 
     setActionsEnabled(false);
 
@@ -539,9 +523,6 @@ void LayoutVisualMode::hideEvent(QHideEvent* event)
     //???signal from editor to main window instead of storing ptr here?
     if (_editorMenu) _editorMenu->menuAction()->setEnabled(false);
 
-/*
-    mainwindow.MainWindow.instance.ceguiContainerWidget.deactivate(self)
-*/
     QWidget::hideEvent(event);
 }
 

@@ -335,7 +335,8 @@ void CEGUIManipulator::notifyResizeFinished(QPointF newPos, QRectF newRect)
             if (item != this && dynamic_cast<CEGUIManipulator*>(item))
                 item->setVisible(true);
 
-    static_cast<CEGUIManipulator*>(parentItem())->updateFromWidget(true);
+    if (parentItem())
+        static_cast<CEGUIManipulator*>(parentItem())->updateFromWidget(true);
 
 /*
         self.lastResizeNewPos = None

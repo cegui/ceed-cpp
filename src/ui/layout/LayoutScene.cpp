@@ -3,6 +3,7 @@
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
 #include "src/ui/layout/WidgetHierarchyItem.h"
 #include "src/editors/layout/LayoutVisualMode.h"
+#include <CEGUI/GUIContext.h>
 #include "qgraphicssceneevent.h"
 #include "qevent.h"
 #include "qmimedata.h"
@@ -41,7 +42,11 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
         // Root manipulator changed, perform a full update
         rootManipulator->updateFromWidget(true);
         addItem(rootManipulator);
+
+        ceguiContext->setRootWindow(rootManipulator->getWidget());
     }
+    else
+        ceguiContext->setRootWindow(nullptr);
 }
 
 LayoutManipulator* LayoutScene::getManipulatorByPath(const QString& widgetPath) const
