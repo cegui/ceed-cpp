@@ -77,7 +77,9 @@ void LayoutVisualMode::setRootWidgetManipulator(LayoutManipulator* manipulator)
     scene->setRootWidgetManipulator(manipulator);
     hierarchyDockWidget->setRootWidgetManipulator(manipulator);
 
+    /*
     CEGUIProjectManager::Instance().getCEGUIContext()->setRootWindow(getRootWidget());
+    */
 
     if (oldRoot) CEGUI::WindowManager::getSingleton().destroyWindow(oldRoot);
 }

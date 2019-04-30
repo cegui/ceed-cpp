@@ -21,11 +21,12 @@ void LayoutScene::updateFromWidgets()
 }
 
 // Overridden to keep the manipulators in sync
-void LayoutScene::setCEGUIDisplaySize(float width, float height, bool lazyUpdate)
+void LayoutScene::setCEGUIDisplaySize(float width, float height)
 {
-    CEGUIGraphicsScene::setCEGUIDisplaySize(width, height, lazyUpdate);
+    CEGUIGraphicsScene::setCEGUIDisplaySize(width, height);
 
     // FIXME: this won't do much with lazyUpdate = False
+    //!!!NOW lazyUpdate = False IS ALWAYS TRUE!
     updateFromWidgets();
 }
 
@@ -53,6 +54,7 @@ LayoutManipulator* LayoutScene::getManipulatorByPath(const QString& widgetPath) 
     }
     else
     {
+        assert(widgetPath.leftRef(sepPos) == rootManipulator->getWidgetName());
         return dynamic_cast<LayoutManipulator*>(rootManipulator->getManipulatorByPath(widgetPath.mid(sepPos + 1)));
     }
 }

@@ -3,40 +3,39 @@
 
 #include "qgraphicsscene.h"
 
-// A scene that draws CEGUI as it's background.
-// Subclass this to be able to show Qt graphics items and widgets
-// on top of the embedded CEGUI widget!
-// Interaction is also supported.
+// A scene that draws CEGUI as it's background. Subclass this to be able to show Qt graphic
+// items and widgets on top of the embedded CEGUI widget! Interaction is also supported.
 
-class QOpenGLFramebufferObject;
+namespace CEGUI
+{
+    class GUIContext;
+}
 
 class CEGUIGraphicsScene : public QGraphicsScene
 {
 public:
 
-    CEGUIGraphicsScene();
+    CEGUIGraphicsScene(float width = 0.f, float height = 0.f);
+    virtual ~CEGUIGraphicsScene() override;
+
+    virtual void setCEGUIDisplaySize(float width, float height);
+    void drawCEGUIContext();
 
     time_t getLastDelta() const { return lastDelta; }
-    virtual void setCEGUIDisplaySize(float width, float height, bool lazyUpdate = true);
-
-    virtual void drawBackground(QPainter* painter, const QRectF& rect) override;
+    CEGUI::GUIContext* getCEGUIContext() const { return ceguiContext; }
+    float getContextWidth() const { return contextWidth; }
+    float getContextHeight() const { return contextHeight; }
 
 protected:
 
-    QOpenGLFramebufferObject* fbo = nullptr;
+    CEGUI::GUIContext* ceguiContext = nullptr;
 
     time_t lastDelta = 0;
     time_t timeOfLastRender;
 
-    qreal padding = 100.0;
+    qreal padding = 30.0;
     float contextWidth = 0.f;
     float contextHeight = 0.f;
-
-    QBrush checkerboardBrush;
-    QColor checkerFirstColour = Qt::darkGray;
-    QColor checkerSecondColour = Qt::gray;
-    int checkerWidth = 5;
-    int checkerHeight = 5;
 };
 
 #endif // CEGUIGRAPHICSSCENE_H

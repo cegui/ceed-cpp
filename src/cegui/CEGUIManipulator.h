@@ -2,6 +2,7 @@
 #define CEGUIMANIPULATOR_H
 
 #include "src/ui/ResizableRectItem.h"
+#include <CEGUI/Sizef.h>
 
 // This is a rectangle that is synchronised with given CEGUI widget,
 // it provides moving and resizing functionality
@@ -21,6 +22,7 @@ public:
 
     virtual QSizeF getMinSize() const override;
     virtual QSizeF getMaxSize() const override;
+    CEGUI::Sizef getBaseSize() const;
 
     virtual void notifyHandleSelected(ResizingHandle* handle) override;
     virtual void notifyResizeStarted(ResizingHandle* handle) override;

@@ -30,6 +30,9 @@ public:
     explicit CEGUIWidget(QWidget* parent = nullptr);
     ~CEGUIWidget();
 
+    void setScene(CEGUIGraphicsScene* scene);
+    CEGUIGraphicsScene* getScene() const;
+
     void activate(QWidget* newParent, CEGUIGraphicsScene* scene = nullptr);
     void deactivate(QWidget* oldParent);
 

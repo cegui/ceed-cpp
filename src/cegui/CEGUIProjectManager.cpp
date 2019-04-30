@@ -13,19 +13,18 @@
 #include "qopenglframebufferobject.h"
 #include "qopenglfunctions.h"
 
-// TODO: one CEGUI widget per editor instead of the global one?
-#include "src/ui/CEGUIWidget.h"
-
-QString CEGUIProjectManager::ceguiStringToQString(const CEGUI::String& str)
+QString ceguiStringToQString(const CEGUI::String& str)
 {
-#if (CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_8)
-	return QString(str.c_str());
+#if (CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_8 || CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_ASCII)
+    return QString(str.c_str());
 #elif (CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_32)
-	return QString(CEGUI::String::convertUtf32ToUtf8(str.c_str()).c_str());
+    return QString(CEGUI::String::convertUtf32ToUtf8(str.c_str()).c_str());
+#else
+    #error "Unknown CEGUI::String implementation, consider adding support for it!"
 #endif
 }
 
-CEGUI::String CEGUIProjectManager::qStringToCeguiString(const QString& str)
+CEGUI::String qStringToCeguiString(const QString& str)
 {
     return CEGUI::String(str.toLocal8Bit().data());
 }
@@ -34,18 +33,16 @@ CEGUIProjectManager::CEGUIProjectManager()
 {
 /*
     self.logger = RedirectingCEGUILogger()
-    self.lastRenderTimeDelta = 0
 */
-
-    // TODO: one CEGUI widget per editor instead of the global one?
-    ceguiContainerWidget = new CEGUIWidget(qobject_cast<Application*>(qApp)->getMainWindow());
 }
 
 CEGUIProjectManager::~CEGUIProjectManager()
 {
-    if (guiContext) CEGUI::System::getSingleton().destroyGUIContext(*guiContext);
-    cleanCEGUIResources();
-    CEGUI::OpenGLRenderer::destroySystem();
+    if (initialized)
+    {
+        cleanCEGUIResources();
+        CEGUI::OpenGLRenderer::destroySystem();
+    }
 }
 
 CEGUIProject* CEGUIProjectManager::createProject(const QString& filePath, bool createResourceDirs)
@@ -141,6 +138,7 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
 
     glContext = new QOpenGLContext(); // TODO: destroy
     glContext->setFormat(format);
+    glContext->setShareContext(QOpenGLContext::globalShareContext());
     if (Q_UNLIKELY(!glContext->create()))
     {
         assert(false);
@@ -151,7 +149,7 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
     surface->setFormat(glContext->format());
     surface->create();
 
-    if (Q_UNLIKELY(!glContext->makeCurrent(surface)))
+    if (Q_UNLIKELY(!makeOpenGLContextCurrent()))
     {
         //qWarning("QOpenGLWidget: Failed to make context current");
         assert(false);
@@ -191,12 +189,12 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
     auto resProvider = dynamic_cast<CEGUI::DefaultResourceProvider*>(CEGUI::System::getSingleton().getResourceProvider());
     if (resProvider)
     {
-        resProvider->setResourceGroupDirectory("imagesets", defaultBaseDirectory.filePath("imagesets").toLocal8Bit().data());
-        resProvider->setResourceGroupDirectory("fonts", defaultBaseDirectory.filePath("fonts").toLocal8Bit().data());
-        resProvider->setResourceGroupDirectory("schemes", defaultBaseDirectory.filePath("schemes").toLocal8Bit().data());
-        resProvider->setResourceGroupDirectory("looknfeels", defaultBaseDirectory.filePath("looknfeel").toLocal8Bit().data());
-        resProvider->setResourceGroupDirectory("layouts", defaultBaseDirectory.filePath("layouts").toLocal8Bit().data());
-        resProvider->setResourceGroupDirectory("xml_schemas", defaultBaseDirectory.filePath("xml_schemas").toLocal8Bit().data());
+        resProvider->setResourceGroupDirectory("imagesets", qStringToCeguiString(defaultBaseDirectory.filePath("imagesets")));
+        resProvider->setResourceGroupDirectory("fonts", qStringToCeguiString(defaultBaseDirectory.filePath("fonts")));
+        resProvider->setResourceGroupDirectory("schemes", qStringToCeguiString(defaultBaseDirectory.filePath("schemes")));
+        resProvider->setResourceGroupDirectory("looknfeels", qStringToCeguiString(defaultBaseDirectory.filePath("looknfeel")));
+        resProvider->setResourceGroupDirectory("layouts", qStringToCeguiString(defaultBaseDirectory.filePath("layouts")));
+        resProvider->setResourceGroupDirectory("xml_schemas", qStringToCeguiString(defaultBaseDirectory.filePath("xml_schemas")));
     }
 
     // All this will never be set to anything else again
@@ -212,11 +210,17 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
     if (parser && parser->isPropertyPresent("SchemaDefaultResourceGroup"))
         parser->setProperty("SchemaDefaultResourceGroup", "xml_schemas");
 
-    // TODO: renderer->get/createViewportTarget!
-    auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer); //CEGUI::Rectf(0.f, 0.f, widthF, heightF)
-    guiContext = &CEGUI::System::getSingleton().createGUIContext(*renderTarget);
-
     initialized = true;
+}
+
+bool CEGUIProjectManager::makeOpenGLContextCurrent()
+{
+    return glContext ? glContext->makeCurrent(surface) : false;
+}
+
+void CEGUIProjectManager::doneOpenGLContextCurrent()
+{
+    if (glContext) glContext->doneCurrent();
 }
 
 // Synchronises the CEGUI instance with the current project, respecting it's paths and resources
@@ -285,19 +289,19 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
     auto resProvider = dynamic_cast<CEGUI::DefaultResourceProvider*>(CEGUI::System::getSingleton().getResourceProvider());
     if (resProvider)
     {
-        resProvider->setResourceGroupDirectory("imagesets", currentProject->getAbsolutePathOf(currentProject->imagesetsPath).toLocal8Bit().data());
-        resProvider->setResourceGroupDirectory("fonts", currentProject->getAbsolutePathOf(currentProject->fontsPath).toLocal8Bit().data());
-        resProvider->setResourceGroupDirectory("schemes", currentProject->getAbsolutePathOf(currentProject->schemesPath).toLocal8Bit().data());
-        resProvider->setResourceGroupDirectory("looknfeels", currentProject->getAbsolutePathOf(currentProject->looknfeelsPath).toLocal8Bit().data());
-        resProvider->setResourceGroupDirectory("layouts", currentProject->getAbsolutePathOf(currentProject->layoutsPath).toLocal8Bit().data());
-        resProvider->setResourceGroupDirectory("xml_schemas", currentProject->getAbsolutePathOf(currentProject->xmlSchemasPath).toLocal8Bit().data());
+        resProvider->setResourceGroupDirectory("imagesets", qStringToCeguiString(currentProject->getAbsolutePathOf(currentProject->imagesetsPath)));
+        resProvider->setResourceGroupDirectory("fonts", qStringToCeguiString(currentProject->getAbsolutePathOf(currentProject->fontsPath)));
+        resProvider->setResourceGroupDirectory("schemes", qStringToCeguiString(currentProject->getAbsolutePathOf(currentProject->schemesPath)));
+        resProvider->setResourceGroupDirectory("looknfeels", qStringToCeguiString(currentProject->getAbsolutePathOf(currentProject->looknfeelsPath)));
+        resProvider->setResourceGroupDirectory("layouts", qStringToCeguiString(currentProject->getAbsolutePathOf(currentProject->layoutsPath)));
+        resProvider->setResourceGroupDirectory("xml_schemas", qStringToCeguiString(currentProject->getAbsolutePathOf(currentProject->xmlSchemasPath)));
     }
 
     progress.setLabelText("Recreating all schemes...");
     progress.setValue(2);
     QApplication::instance()->processEvents();
 
-    glContext->makeCurrent(surface);
+    makeOpenGLContextCurrent();
 
     // We will load resources manually to be able to use the compatibility layer machinery
     CEGUI::SchemeManager::getSingleton().setAutoLoadResources(false);
@@ -317,7 +321,7 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
             updateProgress(schemeFile, "Parsing the scheme file");
 
             /*
-            auto schemeResourceGroup = CEGUI::String::convertUtf32ToUtf8(CEGUI::Scheme::getDefaultResourceGroup().c_str());
+            auto schemeResourceGroup = ceguiStringToQString(CEGUI::Scheme::getDefaultResourceGroup());
             auto schemeFilePath = currentProject->getResourceFilePath(schemeFile, schemeResourceGroup.c_str());
 
             rawData = open(schemeFile, "r").read()
@@ -343,7 +347,7 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
             scheme = CEGUI::SchemeManager::getSingleton().createFromString(nativeData)
             */
 
-            CEGUI::Scheme& scheme = CEGUI::SchemeManager::getSingleton().createFromFile(schemeFile.toLocal8Bit().data());
+            CEGUI::Scheme& scheme = CEGUI::SchemeManager::getSingleton().createFromFile(qStringToCeguiString(schemeFile));
 
             // NOTE: This is very CEGUI implementation specific unfortunately!
             //       However I am not really sure how to do this any better.
@@ -490,7 +494,7 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
     // Put SchemeManager into the default state again
     CEGUI::SchemeManager::getSingleton().setAutoLoadResources(true);
 
-    glContext->doneCurrent();
+    doneOpenGLContextCurrent();
 
     progress.reset();
     QApplication::instance()->processEvents();
@@ -503,7 +507,7 @@ void CEGUIProjectManager::cleanCEGUIResources()
 {
     if (!initialized) return;
 
-    glContext->makeCurrent(surface);
+    makeOpenGLContextCurrent();
 
     CEGUI::WindowManager::getSingleton().destroyAllWindows();
 
@@ -522,7 +526,7 @@ void CEGUIProjectManager::cleanCEGUIResources()
     CEGUI::System::getSingleton().addStandardWindowFactories();
     CEGUI::System::getSingleton().getRenderer()->destroyAllTextures();
 
-    glContext->doneCurrent();
+    doneOpenGLContextCurrent();
 }
 
 // Retrieves names of skins that are available from the set of schemes that were loaded.
@@ -635,7 +639,7 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
 
     auto renderingSurface = new CEGUI::RenderingSurface(*renderTarget);
 
-    auto widgetInstance = CEGUI::WindowManager::getSingleton().createWindow(widgetType.toLocal8Bit().data(), "preview");
+    auto widgetInstance = CEGUI::WindowManager::getSingleton().createWindow(qStringToCeguiString(widgetType), "preview");
 
     widgetInstance->setRenderingSurface(renderingSurface);
 
@@ -654,12 +658,12 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
     }
 
     CEGUI::Spinner* spinner = dynamic_cast<CEGUI::Spinner*>(widgetInstance);
-    widgetInstance->setText(spinner ? "0" : widgetType.toLocal8Bit().data());
+    widgetInstance->setText(spinner ? "0" : qStringToCeguiString(widgetType));
 
     // Fake update to ensure everything is set
     widgetInstance->update(1.f);
 
-    glContext->makeCurrent(surface);
+    makeOpenGLContextCurrent();
 
     //???allocate once?
     auto temporaryFBO = new QOpenGLFramebufferObject(previewWidth, previewHeight);
@@ -690,7 +694,7 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
     delete renderingSurface;
     delete renderTarget;
 
-    glContext->doneCurrent();
+    doneOpenGLContextCurrent();
 
     if (!error.isEmpty())
         throw error;
