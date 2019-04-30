@@ -301,7 +301,7 @@ SettingEntryEditorCombobox::SettingEntryEditorCombobox(SettingsEntry& entry)
 
     updateValueInUI();
 
-    connect(entryWidget, qOverload<int>(&QComboBox::currentIndexChanged), this, &SettingEntryEditorCombobox::onChange);
+    connect(entryWidget, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingEntryEditorCombobox::onChange);
 }
 
 void SettingEntryEditorCombobox::updateValueInUI()

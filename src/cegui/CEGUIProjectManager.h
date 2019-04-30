@@ -2,6 +2,7 @@
 #define CEGUIPROJECTMANAGER_H
 #include "qstring.h"
 #include "qimage.h"
+#include <memory>
 
 // A singleton CEGUI manager class controls the loaded project and encapsulates a running CEGUI instance.
 // Right now CEGUI can only be instantiated once because it's full of singletons. This might change in the

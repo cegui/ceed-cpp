@@ -5,6 +5,7 @@
 #include <CEGUI/RendererModules/OpenGL/ViewportTarget.h>
 #include <CEGUI/System.h>
 #include <CEGUI/GUIContext.h>
+#include <ctime>
 
 static inline bool compareFloat(float a, float b) { return std::fabs(a - b) < 0.0001f; }
 

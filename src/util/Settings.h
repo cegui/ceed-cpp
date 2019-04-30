@@ -3,6 +3,7 @@
 
 #include "qvariant.h"
 #include "vector"
+#include <memory>
 
 // Application global settings system
 

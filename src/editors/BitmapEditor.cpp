@@ -1,4 +1,5 @@
 #include "src/editors/BitmapEditor.h"
+#include <memory>
 
 BitmapEditor::BitmapEditor(const QString& filePath)
     : EditorBase(/*nullptr,*/ filePath)
