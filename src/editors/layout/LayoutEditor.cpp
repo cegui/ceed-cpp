@@ -15,6 +15,7 @@
 #include "qtoolbar.h"
 #include "qmessagebox.h"
 #include "qfileinfo.h"
+#include "QDir"
 #include <CEGUI/WindowManager.h>
 
 LayoutEditor::LayoutEditor(const QString& filePath)
@@ -49,7 +50,7 @@ void LayoutEditor::initialize()
     try
     {
         // FIXME: open manually and load from string?
-        auto layoutFileName = QFileInfo(_filePath).fileName();
+        auto layoutFileName = QDir(CEGUIProjectManager::Instance().getCurrentProject()->getResourceFilePath("", "layouts")).relativeFilePath(_filePath);
         CEGUI::Window* root = CEGUI::WindowManager::getSingleton().loadLayoutFromFile(qStringToCeguiString(layoutFileName));
         visualMode->initialize(root);
     }
