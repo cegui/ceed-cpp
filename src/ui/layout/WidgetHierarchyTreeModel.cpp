@@ -3,6 +3,8 @@
 #include "src/ui/layout/LayoutManipulator.h"
 #include "src/ui/layout/LayoutScene.h"
 #include "src/editors/layout/LayoutVisualMode.h"
+#include "src/cegui/CEGUIProjectManager.h"
+#include <CEGUI/Window.h>
 #include "qmessagebox.h"
 #include "qmimedata.h"
 #include "qinputdialog.h"
@@ -48,15 +50,17 @@ bool WidgetHierarchyTreeModel::setData(const QModelIndex& index, const QVariant&
         }
 
         // Check if the new name is unique in the parent, cancel if not
-        /*
-            parentWidget = item.manipulator.widget.getParent()
-            if parentWidget is not None and parentWidget.isChild(value):
-                msgBox = QtGui.QMessageBox()
-                msgBox.setText("The name was not changed because the new name is in use by a sibling widget.")
-                msgBox.setIcon(QtGui.QMessageBox.Warning)
-                msgBox.exec_()
-                return False
+        auto parentWidget = item->getManipulator()->getWidget()->getParent();
+        if (parentWidget && parentWidget->isChild(qStringToCeguiString(newName)))
+        {
+            QMessageBox msgBox;
+            msgBox.setText("The name was not changed because the new name is in use by a sibling widget.");
+            msgBox.setIcon(QMessageBox::Warning);
+            msgBox.exec();
+            return false;
+        }
 
+        /*
             // The name is good, apply it
             cmd = undo.RenameCommand(self.dockWidget.visual, item.manipulator.widget.getNamePath(), value)
             self.dockWidget.visual.tabbedEditor.undoStack.push(cmd)
@@ -328,7 +332,7 @@ bool WidgetHierarchyTreeModel::synchroniseSubtree(WidgetHierarchyItem* item, Lay
     return true;
 }
 
-WidgetHierarchyItem*WidgetHierarchyTreeModel::constructSubtree(LayoutManipulator* manipulator)
+WidgetHierarchyItem* WidgetHierarchyTreeModel::constructSubtree(LayoutManipulator* manipulator)
 {
     auto ret = new WidgetHierarchyItem(manipulator);
 

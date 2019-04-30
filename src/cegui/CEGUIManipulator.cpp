@@ -13,22 +13,11 @@
 
 // recursive - if true, even children of given widget are wrapped
 // skipAutoWidgets - if true, auto widgets are skipped (only applicable if recursive is True)
-CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent, CEGUI::Window* widget, bool recursive, bool skipAutoWidgets)
+CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent, CEGUI::Window* widget)
     : ResizableRectItem(parent)
     , _widget(widget)
 {
     setFlags(ItemIsFocusable | ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
-
-    if (recursive)
-    {
-        forEachChildWidget([this, skipAutoWidgets](CEGUI::Window* childWidget)
-        {
-            // NB: we don't have to assign or attach the child manipulator here
-            // just passing parent to the constructor is enough
-            if (!skipAutoWidgets || !childWidget->isAutoWindow())
-                createChildManipulator(childWidget, true, skipAutoWidgets);
-        });
-    }
 /*
         self.preResizePos = None
         self.preResizeSize = None
@@ -517,7 +506,8 @@ QString CEGUIManipulator::getWidgetPath() const
 // This is there to allow overriding (if user subclasses the Manipulator, child manipulators are likely to be also subclassed)
 CEGUIManipulator* CEGUIManipulator::createChildManipulator(CEGUI::Window* childWidget, bool recursive, bool skipAutoWidgets)
 {
-    auto ret = new CEGUIManipulator(this, childWidget, recursive, skipAutoWidgets);
+    auto ret = new CEGUIManipulator(this, childWidget);
+    ret->createChildManipulators(recursive, skipAutoWidgets, false);
     ret->updateFromWidget();
     return ret;
 }
@@ -597,14 +587,15 @@ void CEGUIManipulator::forEachChildWidget(std::function<void (CEGUI::Window*)> c
     }
 }
 
-// Goes through child widgets of the manipulated widget and creates manipulator for each missing one.
+// Goes through child widgets of the manipulated widget and creates manipulator for each one.
 // recursive - recurse into children?
 // skipAutoWidgets - if true, auto widgets will be skipped over
-void CEGUIManipulator::createMissingChildManipulators(bool recursive, bool skipAutoWidgets)
+// checkExisting - hint to skip search, useful for initial construction
+void CEGUIManipulator::createChildManipulators(bool recursive, bool skipAutoWidgets, bool checkExisting)
 {
-    forEachChildWidget([this, skipAutoWidgets, recursive](CEGUI::Window* childWidget)
+    forEachChildWidget([this, skipAutoWidgets, recursive, checkExisting](CEGUI::Window* childWidget)
     {
-        if (getManipulatorByPath(ceguiStringToQString(childWidget->getName())))
+        if (checkExisting && getManipulatorByPath(ceguiStringToQString(childWidget->getName())))
             return;
 
         if (!skipAutoWidgets || !childWidget->isAutoWindow())
@@ -613,7 +604,7 @@ void CEGUIManipulator::createMissingChildManipulators(bool recursive, bool skipA
             //     just passing parent to the constructor is enough
             auto childManipulator = createChildManipulator(childWidget, recursive, skipAutoWidgets);
             if (recursive)
-                childManipulator->createMissingChildManipulators(true, skipAutoWidgets);
+                childManipulator->createChildManipulators(true, skipAutoWidgets, checkExisting);
         }
     });
 }
