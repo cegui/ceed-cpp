@@ -500,17 +500,17 @@ void CEGUIManipulator::detach(bool detachWidget, bool destroyWidget, bool recurs
 
 QString CEGUIManipulator::getWidgetName() const
 {
-    return _widget ? CEGUIProjectManager::ceguiStringToQString(_widget->getName()) : "<Unknown>";
+    return _widget ? ceguiStringToQString(_widget->getName()) : "<Unknown>";
 }
 
 QString CEGUIManipulator::getWidgetType() const
 {
-    return _widget ? CEGUIProjectManager::ceguiStringToQString(_widget->getType()) : "<Unknown>";
+    return _widget ? ceguiStringToQString(_widget->getType()) : "<Unknown>";
 }
 
 QString CEGUIManipulator::getWidgetPath() const
 {
-    return _widget ? CEGUIProjectManager::ceguiStringToQString(_widget->getNamePath()) : "<Unknown>";
+    return _widget ? ceguiStringToQString(_widget->getNamePath()) : "<Unknown>";
 }
 
 // Creates a child manipulator suitable for a child widget of manipulated widget
@@ -604,7 +604,7 @@ void CEGUIManipulator::createMissingChildManipulators(bool recursive, bool skipA
 {
     forEachChildWidget([this, skipAutoWidgets, recursive](CEGUI::Window* childWidget)
     {
-        if (getManipulatorByPath(CEGUIProjectManager::ceguiStringToQString(childWidget->getName())))
+        if (getManipulatorByPath(ceguiStringToQString(childWidget->getName())))
             return;
 
         if (!skipAutoWidgets || !childWidget->isAutoWindow())
