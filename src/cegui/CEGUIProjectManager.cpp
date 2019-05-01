@@ -30,11 +30,6 @@ CEGUIProjectManager::~CEGUIProjectManager()
     if (initialized)
     {
         cleanCEGUIResources();
-#ifdef CEED_OPENGL_LEGACY_RENDERER
-        CEGUI::OpenGLRenderer::destroySystem();
-#else
-        CEGUI::OpenGL3Renderer::destroySystem();
-#endif
     }
 }
 
@@ -116,9 +111,21 @@ void CEGUIProjectManager::unloadProject()
 
     // Clean resources that were potentially used with this project
     cleanCEGUIResources();
+    if(Q_UNLIKELY(!CEGUIProjectManager::Instance().makeOpenGLContextCurrent()))
+    {
+        //qWarning("QOpenGLWidget: Failed to make context current");
+        assert(false);
+        return;
+    }
+#ifdef CEED_OPENGL_LEGACY_RENDERER
+    CEGUI::OpenGLRenderer::destroySystem();
+#else
+    CEGUI::OpenGL3Renderer::destroySystem();
+#endif
 
     currentProject->unload();
     currentProject.reset();
+    initialized = false;
 }
 
 // Ensures this CEGUI instance is properly initialised, if it's not it initialises it right away
