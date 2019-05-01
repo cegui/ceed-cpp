@@ -370,21 +370,29 @@ bool LayoutVisualMode::copy()
     if (topMostSelected.empty()) return false;
 
     // Now we serialize the topmost selected widgets (and thus their entire hierarchies)
-/*
-        topMostSerialisationData = []
-        for wdt in topMostSelected:
-            serialisationData = widgethelpers.SerialisationData(self, wdt.widget)
+    QByteArray bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    for (LayoutManipulator* manipulator : topMostSelected)
+    {
+        // manipulator->getWidget()
+
+        //stream << entry->name();
+        //stream << entry->pos();
+        //...
+
+        /*
             # we set the visual to None because we can't pickle QWidgets (also it would prevent copying across editors)
             # we will set it to the correct visual when we will be pasting it back
+            serialisationData = widgethelpers.SerialisationData(self, wdt.widget)
             serialisationData.setVisual(None)
-
             topMostSerialisationData.append(serialisationData)
-*/
+        */
+    }
+
+    if (!bytes.size()) return false;
 
     QMimeData* mimeData = new QMimeData();
-    /*
-    mimeData->setData("application/x-ceed-widget-hierarchy-list", QtCore.QByteArray(cPickle.dumps(topMostSerialisationData)));
-    */
+    mimeData->setData("application/x-ceed-widget-hierarchy-list", bytes);
     QApplication::clipboard()->setMimeData(mimeData);
 
     return true;
@@ -394,38 +402,40 @@ bool LayoutVisualMode::paste()
 {
     const QMimeData* mimeData = QApplication::clipboard()->mimeData();
     if (!mimeData->hasFormat("application/x-ceed-widget-hierarchy-list")) return false;
+    QByteArray bytes = mimeData->data("application/x-ceed-widget-hierarchy-list");
+    if (bytes.size() <= 0) return false;
+
+    LayoutManipulator* target = nullptr;
+    for (QGraphicsItem* item : scene->selectedItems())
+    {
+        auto manipulator = dynamic_cast<LayoutManipulator*>(item);
+        if (!manipulator) continue;
+
+        // Multiple targets, we can't decide!
+        if (target) return false;
+
+        target = manipulator;
+    }
+
+    if (!target) return false;
+
+    scene->clearSelection();
+
+    //???copy bytes to PasteCommand? how to handle what widgets are created by the command?
+    QDataStream stream(&bytes, QIODevice::ReadOnly);
+    while (!stream.atEnd())
+    {
+        // deserialize widget from stream
+        // create manipulators for this widget recursively with target as parent
+        // make topmost manipulators selected: manipulator.setSelected(True)
+    }
 
 /*
-        topMostSerialisationData = cPickle.loads(data.data("application/x-ceed-widget-hierarchy-list").data())
-
-        if len(topMostSerialisationData) == 0:
-            return False
-
-        targetManipulator = None
-        for item in self.scene.selectedItems():
-            if not isinstance(item, widgethelpers.Manipulator):
-                continue
-
-            # multiple targets, we can't decide!
-            if targetManipulator is not None:
-                return False
-
-            targetManipulator = item
-
-        if targetManipulator is None:
-            return False
-
         for serialisationData in topMostSerialisationData:
             serialisationData.setVisual(self)
 
-        cmd = undo.PasteCommand(self, topMostSerialisationData, targetManipulator.widget.getNamePath())
+        cmd = undo.PasteCommand(self, topMostSerialisationData, target.widget.getNamePath())
         self.tabbedEditor.undoStack.push(cmd)
-
-        # select the topmost pasted widgets for convenience
-        self.scene.clearSelection()
-        for serialisationData in topMostSerialisationData:
-            manipulator = targetManipulator.getManipulatorByPath(serialisationData.name)
-            manipulator.setSelected(True)
 */
     return true;
 }
