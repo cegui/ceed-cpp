@@ -120,6 +120,7 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
 
     QSurfaceFormat format;
     format.setSamples(0);
+    format.setProfile(QSurfaceFormat::CompatibilityProfile);
 
     glContext = new QOpenGLContext(); // TODO: destroy
     glContext->setFormat(format);
