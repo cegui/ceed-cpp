@@ -699,6 +699,13 @@ void MainWindow::openEditorTab(const QString& absolutePath)
 {
     if (activateEditorTabByFilePath(absolutePath)) return;
 
+    if(Q_UNLIKELY(!CEGUIProjectManager::Instance().makeOpenGLContextCurrent())) // needed if a Window has "AutoRenderingSurface" set, as that will call Window::allocateRenderingWindow()
+    {
+        //qWarning("QOpenGLWidget: Failed to make context current");
+        assert(false);
+        return;
+    }
+
     EditorBase* editor = createEditorForFile(absolutePath);
     if (!editor) return;
 
