@@ -3,7 +3,7 @@
 #include "src/ui/layout/LayoutManipulator.h"
 #include "src/ui/layout/LayoutScene.h"
 #include "src/editors/layout/LayoutVisualMode.h"
-#include "src/cegui/CEGUIProjectManager.h"
+#include "src/cegui/CEGUIUtils.h"
 #include <CEGUI/Window.h>
 #include "qmessagebox.h"
 #include "qmimedata.h"
@@ -51,7 +51,7 @@ bool WidgetHierarchyTreeModel::setData(const QModelIndex& index, const QVariant&
 
         // Check if the new name is unique in the parent, cancel if not
         auto parentWidget = item->getManipulator()->getWidget()->getParent();
-        if (parentWidget && parentWidget->isChild(qStringToCeguiString(newName)))
+        if (parentWidget && parentWidget->isChild(CEGUIUtils::qStringToString(newName)))
         {
             QMessageBox msgBox;
             msgBox.setText("The name was not changed because the new name is in use by a sibling widget.");

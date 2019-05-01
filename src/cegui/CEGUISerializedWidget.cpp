@@ -1,8 +1,49 @@
-#include "src/editors/layout/LayoutSerializationData.h"
+#include "src/cegui/CEGUISerializedWidget.h"
 
-LayoutSerializationData::LayoutSerializationData()
+CEGUISerializedWidgetPtr CEGUISerializedWidget::serialize(CEGUI::Window* widget, bool recursive)
 {
+    CEGUISerializedWidgetPtr data(new CEGUISerializedWidget);
+    if (!data->serializeImpl(widget, recursive)) data.reset();
+    return data;
+}
 
+CEGUI::Window* CEGUISerializedWidget::deserialize() const
+{
+    return nullptr;
+}
+
+CEGUISerializedWidget::CEGUISerializedWidget()
+{
+}
+
+bool CEGUISerializedWidget::serializeImpl(CEGUI::Window* widget, bool recursive)
+{
+    /*
+        self.name = ""
+        self.type = ""
+        # full parent path at the time of serialisation
+        self.parentPath = ""
+        # if True, the widget was an auto-widget, therefore it will not be
+        # created directly when reconstructing but instead just retrieved
+        self.autoWidget = False
+        self.properties = {}
+        self.children = []
+
+        if widget is not None:
+            self.name = widget.getName()
+            self.type = widget.getType()
+            self.autoWidget = widget.isAutoWindow()
+
+            parent = widget.getParent()
+            if parent is not None:
+                self.parentPath = parent.getNamePath()
+
+            self.serialiseProperties(widget)
+
+            if serialiseChildren:
+                self.serialiseChildren(widget)
+    */
+    return false;
 }
 
 /*
@@ -43,39 +84,6 @@ class SerialisationData(cegui_widgethelpers.SerialisationData):
 */
 
 /*
- *
- * // CEGUI (base) need 2 separate classes?
-
-class SerialisationData(object):
-    """Allows to "freeze" CEGUI widget to data that is easy to retain in python,
-    this is a helper class that can be used for copy/paste, undo commands, etc...
-    """
-
-    def __init__(self, widget = None, serialiseChildren = True):
-        self.name = ""
-        self.type = ""
-        # full parent path at the time of serialisation
-        self.parentPath = ""
-        # if True, the widget was an auto-widget, therefore it will not be
-        # created directly when reconstructing but instead just retrieved
-        self.autoWidget = False
-        self.properties = {}
-        self.children = []
-
-        if widget is not None:
-            self.name = widget.getName()
-            self.type = widget.getType()
-            self.autoWidget = widget.isAutoWindow()
-
-            parent = widget.getParent()
-            if parent is not None:
-                self.parentPath = parent.getNamePath()
-
-            self.serialiseProperties(widget)
-
-            if serialiseChildren:
-                self.serialiseChildren(widget)
-
     def setParentPath(self, parentPath):
         """Recursively changes the parent path
         """

@@ -11,14 +11,6 @@
 
 //???rename to CEGUIManager?
 
-namespace CEGUI
-{
-    class String;
-}
-
-QString ceguiStringToQString(const CEGUI::String& str);
-CEGUI::String qStringToCeguiString(const QString& str);
-
 class CEGUIProject;
 class CEGUIWidget; // TODO: one CEGUI widget per editor instead of the global one?
 class QOpenGLContext;
