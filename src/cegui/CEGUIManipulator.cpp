@@ -1,5 +1,5 @@
 #include "src/cegui/CEGUIManipulator.h"
-#include "src/cegui/CEGUIProjectManager.h"
+#include "src/cegui/CEGUIUtils.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
 #include "qgraphicsscene.h"
@@ -490,17 +490,17 @@ void CEGUIManipulator::detach(bool detachWidget, bool destroyWidget, bool recurs
 
 QString CEGUIManipulator::getWidgetName() const
 {
-    return _widget ? ceguiStringToQString(_widget->getName()) : "<Unknown>";
+    return _widget ? CEGUIUtils::stringToQString(_widget->getName()) : "<Unknown>";
 }
 
 QString CEGUIManipulator::getWidgetType() const
 {
-    return _widget ? ceguiStringToQString(_widget->getType()) : "<Unknown>";
+    return _widget ? CEGUIUtils::stringToQString(_widget->getType()) : "<Unknown>";
 }
 
 QString CEGUIManipulator::getWidgetPath() const
 {
-    return _widget ? ceguiStringToQString(_widget->getNamePath()) : "<Unknown>";
+    return _widget ? CEGUIUtils::stringToQString(_widget->getNamePath()) : "<Unknown>";
 }
 
 // Creates a child manipulator suitable for a child widget of manipulated widget
@@ -596,7 +596,7 @@ void CEGUIManipulator::createChildManipulators(bool recursive, bool skipAutoWidg
 {
     forEachChildWidget([this, skipAutoWidgets, recursive, checkExisting](CEGUI::Window* childWidget)
     {
-        if (checkExisting && getManipulatorByPath(ceguiStringToQString(childWidget->getName())))
+        if (checkExisting && getManipulatorByPath(CEGUIUtils::stringToQString(childWidget->getName())))
             return;
 
         if (!skipAutoWidgets || !childWidget->isAutoWindow())

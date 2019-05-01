@@ -2,6 +2,7 @@
 #include "src/ui/layout/LayoutManipulator.h"
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
 #include "src/ui/layout/WidgetHierarchyItem.h"
+#include "src/ui/ResizingHandle.h"
 #include "src/editors/layout/LayoutVisualMode.h"
 #include <CEGUI/GUIContext.h>
 #include "qgraphicssceneevent.h"
@@ -9,6 +10,7 @@
 #include "qmimedata.h"
 #include "qtreeview.h"
 #include "qstandarditemmodel.h"
+#include <set>
 
 LayoutScene::LayoutScene(LayoutVisualMode& visualMode)
     : _visualMode(visualMode)
@@ -25,9 +27,6 @@ void LayoutScene::updateFromWidgets()
 void LayoutScene::setCEGUIDisplaySize(float width, float height)
 {
     CEGUIGraphicsScene::setCEGUIDisplaySize(width, height);
-
-    // FIXME: this won't do much with lazyUpdate = False
-    //!!!NOW lazyUpdate = False IS ALWAYS TRUE!
     updateFromWidgets();
 }
 
@@ -64,7 +63,7 @@ LayoutManipulator* LayoutScene::getManipulatorByPath(const QString& widgetPath) 
     }
 }
 
-void LayoutScene::normalisePositionOfSelectedWidgets()
+void LayoutScene::normalizePositionOfSelectedWidgets()
 {
 /*
         widgetPaths = []
@@ -91,7 +90,7 @@ void LayoutScene::normalisePositionOfSelectedWidgets()
 */
 }
 
-void LayoutScene::normaliseSizeOfSelectedWidgets()
+void LayoutScene::normalizeSizeOfSelectedWidgets()
 {
 /*
         widgetPaths = []
@@ -162,6 +161,77 @@ void LayoutScene::roundSizeOfSelectedWidgets()
 */
 }
 
+void LayoutScene::alignSelectionHorizontally(CEGUI::HorizontalAlignment alignment)
+{
+/*
+        widgetPaths = []
+        oldAlignments = {}
+
+        selection = self.selectedItems()
+        for item in selection:
+            if isinstance(item, widgethelpers.Manipulator):
+                widgetPath = item.widget.getNamePath()
+                widgetPaths.append(widgetPath)
+                oldAlignments[widgetPath] = item.widget.getHorizontalAlignment()
+
+        if len(widgetPaths) > 0:
+            cmd = undo.HorizontalAlignCommand(self.visual, widgetPaths, oldAlignments, alignment)
+            self.visual.tabbedEditor.undoStack.push(cmd)
+*/
+}
+
+void LayoutScene::alignSelectionVertically(CEGUI::VerticalAlignment alignment)
+{
+/*
+        widgetPaths = []
+        oldAlignments = {}
+
+        selection = self.selectedItems()
+        for item in selection:
+            if isinstance(item, widgethelpers.Manipulator):
+                widgetPath = item.widget.getNamePath()
+                widgetPaths.append(widgetPath)
+                oldAlignments[widgetPath] = item.widget.getVerticalAlignment()
+
+        if len(widgetPaths) > 0:
+            cmd = undo.VerticalAlignCommand(self.visual, widgetPaths, oldAlignments, alignment)
+            self.visual.tabbedEditor.undoStack.push(cmd)
+*/
+}
+
+void LayoutScene::moveSelectedWidgetsInParentWidgetLists(int delta)
+{
+/*
+        widgetPaths = []
+
+        selection = self.selectedItems()
+        for item in selection:
+            if not isinstance(item, widgethelpers.Manipulator):
+                continue
+
+            if not isinstance(item.parentItem(), widgethelpers.Manipulator):
+                continue
+
+            if not isinstance(item.parentItem().widget, PyCEGUI.SequentialLayoutContainer):
+                continue
+
+            potentialPosition = item.parentItem().widget.getPositionOfChild(item.widget) + delta
+            if potentialPosition < 0 or potentialPosition > item.parentItem().widget.getChildCount() - 1:
+                continue
+
+            widgetPath = item.widget.getNamePath()
+            widgetPaths.append(widgetPath)
+
+        # TODO: We currently only support moving one widget at a time.
+        #       Fixing this involves sorting the widgets by their position in
+        #       the parent widget and then either working from the "right" side
+        #       if delta > 0 or from the left side if delta < 0.
+        if len(widgetPaths) == 1:
+            cmd = undo.MoveInParentWidgetListCommand(self.visual, widgetPaths, delta)
+            self.visual.tabbedEditor.undoStack.push(cmd)
+*/
+}
+
 bool LayoutScene::deleteSelectedWidgets()
 {
     QStringList widgetPaths;
@@ -191,23 +261,22 @@ static void ensureParentIsExpanded(QTreeView* view, QStandardItem* treeItem)
 
 void LayoutScene::slot_selectionChanged()
 {
+    std::set<CEGUI::Window*> selectedWidgets;
+
     auto selection = selectedItems();
-
+    for (QGraphicsItem* item : selection)
+    {
+        if (auto manipulator = dynamic_cast<LayoutManipulator*>(item))
+        {
+            selectedWidgets.insert(manipulator->getWidget());
+        }
+        else if (dynamic_cast<ResizingHandle*>(item))
+        {
+            if (auto manipulator = dynamic_cast<LayoutManipulator*>(item->parentItem()))
+                selectedWidgets.insert(manipulator->getWidget());
+        }
+    }
 /*
-        sets = []
-        for item in selection:
-            wdt = None
-
-            if isinstance(item, widgethelpers.Manipulator):
-                wdt = item.widget
-
-            elif isinstance(item, resizable.ResizingHandle):
-                if isinstance(item.parentResizable, widgethelpers.Manipulator):
-                    wdt = item.parentResizable.widget
-
-            if wdt is not None and wdt not in sets:
-                sets.append(wdt)
-
         auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
         mainWindow.propertiesDockWidget.inspector.setSource(sets)
 */
@@ -222,7 +291,7 @@ void LayoutScene::slot_selectionChanged()
         auto treeView = _visualMode.getHierarchyDockWidget()->getTreeView();
 
         QStandardItem* lastTreeItem = nullptr;
-        for (auto& item : selection)
+        for (QGraphicsItem* item : selection)
         {
             auto manip = dynamic_cast<LayoutManipulator*>(item);
             if (manip && manip->getTreeItem())
@@ -371,64 +440,3 @@ void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
             self.visual.tabbedEditor.undoStack.push(cmd)
 */
 }
-
-/*
-    def alignSelectionHorizontally(self, alignment):
-        widgetPaths = []
-        oldAlignments = {}
-
-        selection = self.selectedItems()
-        for item in selection:
-            if isinstance(item, widgethelpers.Manipulator):
-                widgetPath = item.widget.getNamePath()
-                widgetPaths.append(widgetPath)
-                oldAlignments[widgetPath] = item.widget.getHorizontalAlignment()
-
-        if len(widgetPaths) > 0:
-            cmd = undo.HorizontalAlignCommand(self.visual, widgetPaths, oldAlignments, alignment)
-            self.visual.tabbedEditor.undoStack.push(cmd)
-
-    def alignSelectionVertically(self, alignment):
-        widgetPaths = []
-        oldAlignments = {}
-
-        selection = self.selectedItems()
-        for item in selection:
-            if isinstance(item, widgethelpers.Manipulator):
-                widgetPath = item.widget.getNamePath()
-                widgetPaths.append(widgetPath)
-                oldAlignments[widgetPath] = item.widget.getVerticalAlignment()
-
-        if len(widgetPaths) > 0:
-            cmd = undo.VerticalAlignCommand(self.visual, widgetPaths, oldAlignments, alignment)
-            self.visual.tabbedEditor.undoStack.push(cmd)
-
-    def moveSelectedWidgetsInParentWidgetLists(self, delta):
-        widgetPaths = []
-
-        selection = self.selectedItems()
-        for item in selection:
-            if not isinstance(item, widgethelpers.Manipulator):
-                continue
-
-            if not isinstance(item.parentItem(), widgethelpers.Manipulator):
-                continue
-
-            if not isinstance(item.parentItem().widget, PyCEGUI.SequentialLayoutContainer):
-                continue
-
-            potentialPosition = item.parentItem().widget.getPositionOfChild(item.widget) + delta
-            if potentialPosition < 0 or potentialPosition > item.parentItem().widget.getChildCount() - 1:
-                continue
-
-            widgetPath = item.widget.getNamePath()
-            widgetPaths.append(widgetPath)
-
-        # TODO: We currently only support moving one widget at a time.
-        #       Fixing this involves sorting the widgets by their position in
-        #       the parent widget and then either working from the "right" side
-        #       if delta > 0 or from the left side if delta < 0.
-        if len(widgetPaths) == 1:
-            cmd = undo.MoveInParentWidgetListCommand(self.visual, widgetPaths, delta)
-            self.visual.tabbedEditor.undoStack.push(cmd)
-*/

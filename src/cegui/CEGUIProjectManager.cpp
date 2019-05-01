@@ -1,5 +1,6 @@
 #include "src/cegui/CEGUIProjectManager.h"
 #include "src/cegui/CEGUIProject.h"
+#include "src/cegui/CEGUIUtils.h"
 #include "src/util/DismissableMessage.h"
 #include "src/Application.h"
 #include "qmessagebox.h"
@@ -16,22 +17,6 @@
 #include "qoffscreensurface.h"
 #include "qopenglframebufferobject.h"
 #include "qopenglfunctions.h"
-
-QString ceguiStringToQString(const CEGUI::String& str)
-{
-#if (CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_8 || CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_ASCII)
-    return QString(str.c_str());
-#elif (CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_32)
-    return QString(CEGUI::String::convertUtf32ToUtf8(str.c_str()).c_str());
-#else
-    #error "Unknown CEGUI::String implementation, consider adding support for it!"
-#endif
-}
-
-CEGUI::String qStringToCeguiString(const QString& str)
-{
-    return CEGUI::String(str.toLocal8Bit().data());
-}
 
 CEGUIProjectManager::CEGUIProjectManager()
 {
@@ -205,12 +190,12 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
     auto resProvider = dynamic_cast<CEGUI::DefaultResourceProvider*>(CEGUI::System::getSingleton().getResourceProvider());
     if (resProvider)
     {
-        resProvider->setResourceGroupDirectory("imagesets", qStringToCeguiString(defaultBaseDirectory.filePath("imagesets")));
-        resProvider->setResourceGroupDirectory("fonts", qStringToCeguiString(defaultBaseDirectory.filePath("fonts")));
-        resProvider->setResourceGroupDirectory("schemes", qStringToCeguiString(defaultBaseDirectory.filePath("schemes")));
-        resProvider->setResourceGroupDirectory("looknfeels", qStringToCeguiString(defaultBaseDirectory.filePath("looknfeel")));
-        resProvider->setResourceGroupDirectory("layouts", qStringToCeguiString(defaultBaseDirectory.filePath("layouts")));
-        resProvider->setResourceGroupDirectory("xml_schemas", qStringToCeguiString(defaultBaseDirectory.filePath("xml_schemas")));
+        resProvider->setResourceGroupDirectory("imagesets", CEGUIUtils::qStringToString(defaultBaseDirectory.filePath("imagesets")));
+        resProvider->setResourceGroupDirectory("fonts", CEGUIUtils::qStringToString(defaultBaseDirectory.filePath("fonts")));
+        resProvider->setResourceGroupDirectory("schemes", CEGUIUtils::qStringToString(defaultBaseDirectory.filePath("schemes")));
+        resProvider->setResourceGroupDirectory("looknfeels", CEGUIUtils::qStringToString(defaultBaseDirectory.filePath("looknfeel")));
+        resProvider->setResourceGroupDirectory("layouts", CEGUIUtils::qStringToString(defaultBaseDirectory.filePath("layouts")));
+        resProvider->setResourceGroupDirectory("xml_schemas", CEGUIUtils::qStringToString(defaultBaseDirectory.filePath("xml_schemas")));
     }
 
     // All this will never be set to anything else again
@@ -305,12 +290,12 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
     auto resProvider = dynamic_cast<CEGUI::DefaultResourceProvider*>(CEGUI::System::getSingleton().getResourceProvider());
     if (resProvider)
     {
-        resProvider->setResourceGroupDirectory("imagesets", qStringToCeguiString(currentProject->getAbsolutePathOf(currentProject->imagesetsPath)));
-        resProvider->setResourceGroupDirectory("fonts", qStringToCeguiString(currentProject->getAbsolutePathOf(currentProject->fontsPath)));
-        resProvider->setResourceGroupDirectory("schemes", qStringToCeguiString(currentProject->getAbsolutePathOf(currentProject->schemesPath)));
-        resProvider->setResourceGroupDirectory("looknfeels", qStringToCeguiString(currentProject->getAbsolutePathOf(currentProject->looknfeelsPath)));
-        resProvider->setResourceGroupDirectory("layouts", qStringToCeguiString(currentProject->getAbsolutePathOf(currentProject->layoutsPath)));
-        resProvider->setResourceGroupDirectory("xml_schemas", qStringToCeguiString(currentProject->getAbsolutePathOf(currentProject->xmlSchemasPath)));
+        resProvider->setResourceGroupDirectory("imagesets", CEGUIUtils::qStringToString(currentProject->getAbsolutePathOf(currentProject->imagesetsPath)));
+        resProvider->setResourceGroupDirectory("fonts", CEGUIUtils::qStringToString(currentProject->getAbsolutePathOf(currentProject->fontsPath)));
+        resProvider->setResourceGroupDirectory("schemes", CEGUIUtils::qStringToString(currentProject->getAbsolutePathOf(currentProject->schemesPath)));
+        resProvider->setResourceGroupDirectory("looknfeels", CEGUIUtils::qStringToString(currentProject->getAbsolutePathOf(currentProject->looknfeelsPath)));
+        resProvider->setResourceGroupDirectory("layouts", CEGUIUtils::qStringToString(currentProject->getAbsolutePathOf(currentProject->layoutsPath)));
+        resProvider->setResourceGroupDirectory("xml_schemas", CEGUIUtils::qStringToString(currentProject->getAbsolutePathOf(currentProject->xmlSchemasPath)));
     }
 
     progress.setLabelText("Recreating all schemes...");
@@ -337,7 +322,7 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
             updateProgress(schemeFile, "Parsing the scheme file");
 
             /*
-            auto schemeResourceGroup = ceguiStringToQString(CEGUI::Scheme::getDefaultResourceGroup());
+            auto schemeResourceGroup = CEGUIUtils::stringToQString(CEGUI::Scheme::getDefaultResourceGroup());
             auto schemeFilePath = currentProject->getResourceFilePath(schemeFile, schemeResourceGroup.c_str());
 
             rawData = open(schemeFile, "r").read()
@@ -363,7 +348,7 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
             scheme = CEGUI::SchemeManager::getSingleton().createFromString(nativeData)
             */
 
-            CEGUI::Scheme& scheme = CEGUI::SchemeManager::getSingleton().createFromFile(qStringToCeguiString(schemeFile));
+            CEGUI::Scheme& scheme = CEGUI::SchemeManager::getSingleton().createFromFile(CEGUIUtils::qStringToString(schemeFile));
 
             // NOTE: This is very CEGUI implementation specific unfortunately!
             //       However I am not really sure how to do this any better.
@@ -582,7 +567,7 @@ QStringList CEGUIProjectManager::getAvailableFonts() const
     auto& fontRegistry = CEGUI::FontManager::getSingleton().getRegisteredFonts();
     for (const auto& pair : fontRegistry)
     {
-        fonts.append(ceguiStringToQString(pair.first));
+        fonts.append(CEGUIUtils::stringToQString(pair.first));
     }
 
     std::sort(fonts.begin(), fonts.end());
@@ -598,7 +583,7 @@ QStringList CEGUIProjectManager::getAvailableImages() const
     auto it = CEGUI::ImageManager::getSingleton().getIterator();
     while (!it.isAtEnd())
     {
-        images.append(ceguiStringToQString(it.getCurrentKey()));
+        images.append(CEGUIUtils::stringToQString(it.getCurrentKey()));
         ++it;
     }
 
@@ -624,7 +609,7 @@ void CEGUIProjectManager::getAvailableWidgetsBySkin(std::map<QString, QStringLis
     auto it = CEGUI::WindowFactoryManager::getSingleton().getFalagardMappingIterator();
     while (!it.isAtEnd())
     {
-        const QString windowType = ceguiStringToQString(it.getCurrentValue().d_windowType);
+        const QString windowType = CEGUIUtils::stringToQString(it.getCurrentValue().d_windowType);
 
         auto sepPos = windowType.indexOf('/');
         assert(sepPos >= 0);
@@ -659,7 +644,7 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
 
     auto renderingSurface = new CEGUI::RenderingSurface(*renderTarget);
 
-    auto widgetInstance = CEGUI::WindowManager::getSingleton().createWindow(qStringToCeguiString(widgetType), "preview");
+    auto widgetInstance = CEGUI::WindowManager::getSingleton().createWindow(CEGUIUtils::qStringToString(widgetType), "preview");
 
     widgetInstance->setRenderingSurface(renderingSurface);
 
@@ -678,7 +663,7 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
     }
 
     CEGUI::Spinner* spinner = dynamic_cast<CEGUI::Spinner*>(widgetInstance);
-    widgetInstance->setText(spinner ? "0" : qStringToCeguiString(widgetType));
+    widgetInstance->setText(spinner ? "0" : CEGUIUtils::qStringToString(widgetType));
 
     // Fake update to ensure everything is set
     widgetInstance->update(1.f);

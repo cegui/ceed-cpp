@@ -4,6 +4,7 @@
 #include "src/editors/layout/LayoutPreviewerMode.h"
 #include "src/cegui/CEGUIProjectManager.h"
 #include "src/cegui/CEGUIProject.h"
+#include "src/cegui/CEGUIUtils.h"
 #include "src/util/Settings.h"
 #include "src/util/SettingsCategory.h"
 #include "src/util/SettingsSection.h"
@@ -15,6 +16,7 @@
 #include "qtoolbar.h"
 #include "qmessagebox.h"
 #include "qfileinfo.h"
+#include "QDir"
 #include <CEGUI/WindowManager.h>
 
 LayoutEditor::LayoutEditor(const QString& filePath)
@@ -41,16 +43,11 @@ void LayoutEditor::initialize()
 {
     MultiModeEditor::initialize();
 
-/*
-        # we have to make the context the current context to ensure textures are fine
-        self.mainWindow.ceguiContainerWidget.makeGLContextCurrent()
-*/
-
     try
     {
         // FIXME: open manually and load from string?
-        auto layoutFileName = QFileInfo(_filePath).fileName();
-        CEGUI::Window* root = CEGUI::WindowManager::getSingleton().loadLayoutFromFile(qStringToCeguiString(layoutFileName));
+        auto layoutFileName = QDir(CEGUIProjectManager::Instance().getCurrentProject()->getResourceFilePath("", "layouts")).relativeFilePath(_filePath);
+        CEGUI::Window* root = CEGUI::WindowManager::getSingleton().loadLayoutFromFile(CEGUIUtils::qStringToString(layoutFileName));
         visualMode->initialize(root);
     }
     catch (const std::exception& e)
@@ -148,7 +145,7 @@ void LayoutEditor::getRawData(QByteArray& outRawData)
     }
 
     CEGUI::String layoutString = CEGUI::WindowManager::getSingleton().getLayoutAsString(*currentRootWidget);
-    outRawData = ceguiStringToQString(layoutString).toUtf8();
+    outRawData = CEGUIUtils::stringToQString(layoutString).toUtf8();
 }
 
 void LayoutEditor::createSettings(Settings& mgr)

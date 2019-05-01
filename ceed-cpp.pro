@@ -27,41 +27,45 @@ include(3rdParty\QtnProperty\QtnProperty.pri)
 CONFIG += c++11
 
 SOURCES += \
+    src/cegui/CEGUIUtils.cpp \
     src/main.cpp \
     src/ui/MainWindow.cpp \
     src/ui/ProjectManager.cpp \
-    src/cegui/CEGUIProjectManager.cpp \
     src/ui/CEGUIWidget.cpp \
     src/ui/CEGUIGraphicsView.cpp \
     src/ui/CEGUIGraphicsScene.cpp \
-    src/cegui/CEGUIProject.cpp \
-    src/cegui/CEGUIProjectItem.cpp \
     src/ui/dialogs/NewProjectDialog.cpp \
     src/ui/dialogs/ProjectSettingsDialog.cpp \
     src/ui/FileSystemBrowser.cpp \
     src/ui/widgets/FileLineEdit.cpp \
     src/ui/dialogs/LicenseDialog.cpp \
     src/ui/dialogs/AboutDialog.cpp \
-    src/editors/EditorBase.cpp \
-    src/editors/TextEditor.cpp \
-    src/editors/NoEditor.cpp \
-    src/ui/dialogs/MultiplePossibleFactoriesDialog.cpp \
-    src/Application.cpp \
-    src/util/RecentlyUsed.cpp \
-    src/ui/dialogs/SettingsDialog.cpp \
-    src/util/Settings.cpp \
-    src/util/SettingsCategory.cpp \
-    src/util/SettingsSection.cpp \
-    src/util/SettingsEntry.cpp \
     src/ui/SettingEntryEditors.cpp \
+    src/ui/dialogs/MultiplePossibleFactoriesDialog.cpp \
+    src/ui/dialogs/SettingsDialog.cpp \
     src/ui/widgets/ColourButton.cpp \
     src/ui/widgets/PenButton.cpp \
     src/ui/dialogs/PenDialog.cpp \
     src/ui/widgets/KeySequenceButton.cpp \
     src/ui/dialogs/KeySequenceDialog.cpp \
     src/ui/UndoViewer.cpp \
-    src/util/DismissableMessage.cpp \
     src/ui/widgets/BitmapEditorWidget.cpp \
+    src/cegui/CEGUIProjectManager.cpp \
+    src/cegui/CEGUIProject.cpp \
+    src/cegui/CEGUIProjectItem.cpp \
+    src/cegui/CEGUISerializedWidget.cpp \
+    src/cegui/CEGUIManipulator.cpp \
+    src/cegui/CEGUIPropertyManager.cpp \
+    src/editors/EditorBase.cpp \
+    src/editors/TextEditor.cpp \
+    src/editors/NoEditor.cpp \
+    src/Application.cpp \
+    src/util/RecentlyUsed.cpp \
+    src/util/Settings.cpp \
+    src/util/SettingsCategory.cpp \
+    src/util/SettingsSection.cpp \
+    src/util/SettingsEntry.cpp \
+    src/util/DismissableMessage.cpp \
     src/editors/BitmapEditor.cpp \
     src/editors/MultiModeEditor.cpp \
     src/editors/CodeEditMode.cpp \
@@ -87,8 +91,6 @@ SOURCES += \
     src/util/ConfigurableAction.cpp \
     src/editors/layout/LayoutUndoCommands.cpp \
     src/editors/layout/LayoutVisualMode.cpp \
-    src/editors/layout/LayoutSerializationData.cpp \
-    src/cegui/CEGUIManipulator.cpp \
     src/ui/layout/WidgetHierarchyTreeView.cpp \
     src/ui/layout/LayoutManipulator.cpp \
     src/ui/layout/LayoutScene.cpp \
@@ -98,18 +100,21 @@ SOURCES += \
     src/ui/layout/WidgetTypeTreeWidget.cpp \
     src/ui/layout/CreateWidgetDockWidget.cpp \
     src/ui/layout/WidgetHierarchyItem.cpp \
-    src/cegui/CEGUIPropertyManager.cpp \
     src/ui/PropertyInspectorWidget.cpp
 
 HEADERS += \
+    src/cegui/CEGUIUtils.h \
     src/ui/ProjectManager.h \
     src/ui/MainWindow.h \
-    src/cegui/CEGUIProjectManager.h \
     src/ui/CEGUIWidget.h \
     src/ui/CEGUIGraphicsView.h \
     src/ui/CEGUIGraphicsScene.h \
+    src/cegui/CEGUIProjectManager.h \
     src/cegui/CEGUIProject.h \
     src/cegui/CEGUIProjectItem.h \
+    src/cegui/CEGUIManipulator.h \
+    src/cegui/CEGUIPropertyManager.h \
+    src/cegui/CEGUISerializedWidget.h \
     src/ui/dialogs/NewProjectDialog.h \
     src/ui/dialogs/ProjectSettingsDialog.h \
     src/ui/FileSystemBrowser.h \
@@ -161,8 +166,6 @@ HEADERS += \
     src/util/ConfigurableAction.h \
     src/editors/layout/LayoutUndoCommands.h \
     src/editors/layout/LayoutVisualMode.h \
-    src/editors/layout/LayoutSerializationData.h \
-    src/cegui/CEGUIManipulator.h \
     src/ui/layout/WidgetHierarchyTreeView.h \
     src/ui/layout/LayoutManipulator.h \
     src/ui/layout/LayoutScene.h \
@@ -172,7 +175,6 @@ HEADERS += \
     src/ui/layout/WidgetTypeTreeWidget.h \
     src/ui/layout/CreateWidgetDockWidget.h \
     src/ui/layout/WidgetHierarchyItem.h \
-    src/cegui/CEGUIPropertyManager.h \
     src/ui/PropertyInspectorWidget.h
 
 FORMS += \

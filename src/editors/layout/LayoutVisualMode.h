@@ -74,6 +74,18 @@ protected:
     QToolBar* toolBar = nullptr;
     QMenu* _editorMenu = nullptr; // Not owned, just stored when we have control over its content
 
+    QAction* actionAlignHLeft = nullptr;
+    QAction* actionAlignHCenter = nullptr;
+    QAction* actionAlignHRight = nullptr;
+    QAction* actionAlignVTop = nullptr;
+    QAction* actionAlignVCenter = nullptr;
+    QAction* actionAlignVBottom = nullptr;
+    QAction* actionNormalizePosition = nullptr;
+    QAction* actionNormalizeSize = nullptr;
+    QAction* actionRoundPosition = nullptr;
+    QAction* actionRoundSize = nullptr;
+    QAction* actionMoveBackward = nullptr;
+    QAction* actionMoveForward = nullptr;
     QAction* actionAbsoluteMode = nullptr;
     QAction* actionAbsoluteIntegerMode = nullptr;
     QAction* actionSnapGrid = nullptr;

@@ -2,6 +2,8 @@
 #define LAYOUTSCENE_H
 
 #include "src/ui/CEGUIGraphicsScene.h"
+#include <CEGUI/HorizontalAlignment.h>
+#include <CEGUI/VerticalAlignment.h>
 
 // This scene contains all the manipulators users want to interact it. You can visualise it as the
 // visual editing centre screen where CEGUI is rendered.
@@ -23,10 +25,13 @@ public:
     LayoutManipulator* getRootWidgetManipulator() const { return rootManipulator; }
     LayoutManipulator* getManipulatorByPath(const QString& widgetPath) const;
 
-    void normalisePositionOfSelectedWidgets();
-    void normaliseSizeOfSelectedWidgets();
+    void normalizePositionOfSelectedWidgets();
+    void normalizeSizeOfSelectedWidgets();
     void roundPositionOfSelectedWidgets();
     void roundSizeOfSelectedWidgets();
+    void alignSelectionHorizontally(CEGUI::HorizontalAlignment alignment);
+    void alignSelectionVertically(CEGUI::VerticalAlignment alignment);
+    void moveSelectedWidgetsInParentWidgetLists(int delta);
     bool deleteSelectedWidgets();
 
     void ignoreSelectionChanges(bool ignore) { _ignoreSelectionChanges = ignore; }

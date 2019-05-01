@@ -1,43 +1,40 @@
 #include "src/editors/layout/LayoutCodeMode.h"
+#include "src/editors/layout/LayoutVisualMode.h"
+#include "src/editors/layout/LayoutEditor.h"
+#include "src/cegui/CEGUIUtils.h"
+#include <CEGUI/WindowManager.h>
 
-LayoutCodeMode::LayoutCodeMode(MultiModeEditor& editor)
+LayoutCodeMode::LayoutCodeMode(LayoutEditor& editor)
     : ViewRestoringCodeEditMode(editor)
 {
-
 }
 
 QString LayoutCodeMode::getNativeCode()
 {
-/*
-        currentRootWidget = self.tabbedEditor.visual.getCurrentRootWidget()
-
-        if currentRootWidget is None:
-            return ""
-
-        else:
-            return PyCEGUI.WindowManager.getSingleton().getLayoutAsString(currentRootWidget)
-*/
-    return "";
+    const CEGUI::Window* rootWidget = static_cast<LayoutEditor&>(_editor).getVisualMode()->getRootWidget();
+    if (!rootWidget) return "";
+    return CEGUIUtils::stringToQString(CEGUI::WindowManager::getSingleton().getLayoutAsString(*rootWidget));
 }
 
 bool LayoutCodeMode::propagateNativeCode(const QString& code)
 {
     // We have to make the context the current context to ensure textures are fine
-    /*
-        mainwindow.MainWindow.instance.ceguiContainerWidget.makeGLContextCurrent()
+    if (code.isEmpty())
+    {
+        static_cast<LayoutEditor&>(_editor).getVisualMode()->setRootWidget(nullptr);
+    }
+    else
+    {
+        try
+        {
+            CEGUI::Window* newRoot = CEGUI::WindowManager::getSingleton().loadLayoutFromString(CEGUIUtils::qStringToString(code));
+            static_cast<LayoutEditor&>(_editor).getVisualMode()->setRootWidget(newRoot);
+        }
+        catch (...)
+        {
+            return false;
+        }
+    }
 
-        if code == "":
-            self.tabbedEditor.visual.setRootWidget(None)
-
-        else:
-            try:
-                newRoot = PyCEGUI.WindowManager.getSingleton().loadLayoutFromString(code)
-                self.tabbedEditor.visual.setRootWidget(newRoot)
-
-                return True
-
-            except:
-                return False
-    */
     return true;
 }
