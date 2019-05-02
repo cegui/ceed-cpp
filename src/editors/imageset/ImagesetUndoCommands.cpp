@@ -642,5 +642,3 @@ void ImagesetPasteCommand::redo()
 
     QUndoCommand::redo();
 }
-
-//---------------------------------------------------------------------
