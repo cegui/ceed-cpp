@@ -107,4 +107,12 @@ class SerialisationData(cegui_widgethelpers.SerialisationData):
         ret.updateFromWidget()
         return ret
 
+        // From reconstruct:
+                # Extra code because of auto windows
+                # NOTE: We don't have to do rootManipulator.createChildManipulators
+                #       because auto windows never get created outside their parent
+                parentManipulator.createChildManipulators(True, False)
+
+                realPathSplit = widget.getNamePath().split("/", 1)
+                ret = parent.getChildByPath(realPathSplit[1])
 */

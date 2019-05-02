@@ -35,7 +35,7 @@ bool serializeWidget(const CEGUI::Window& widget, QDataStream& stream, bool recu
 
     const auto propertyCounterPosition = stream.device()->pos();
 
-    uint16_t propertyCount = 0;
+    qint16 propertyCount = 0;
     stream << propertyCount;
 
     auto it = widget.getPropertyIterator();
@@ -59,6 +59,8 @@ bool serializeWidget(const CEGUI::Window& widget, QDataStream& stream, bool recu
 
     if (recursive)
     {
+        assert(widget.getChildCount() < 65536);
+        stream << static_cast<qint16>(widget.getChildCount());
         for (size_t i = 0; i < widget.getChildCount(); ++i)
         {
             const CEGUI::Window* child = widget.getChildAtIdx(i);
@@ -66,20 +68,25 @@ bool serializeWidget(const CEGUI::Window& widget, QDataStream& stream, bool recu
                 serializeWidget(*child, stream, true);
         }
     }
+    else
+    {
+        stream << static_cast<qint16>(0);
+    }
 
     return true;
 }
 
-CEGUI::Window* deserializeWidget(const QByteArray& data, CEGUI::Window* parent)
+CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent)
 {
-    QDataStream stream(data);
-
     QString name, type;
     stream >> name;
     stream >> type;
 
     bool isAutoWidget = false;
     stream >> isAutoWidget;
+
+    QString parentPath;
+    stream >> parentPath;
 
     CEGUI::Window* widget = nullptr;
 
@@ -106,44 +113,28 @@ CEGUI::Window* deserializeWidget(const QByteArray& data, CEGUI::Window* parent)
 
         if (parent)
         {
-            CEGUI::Window* realParent = nullptr;
-            /*
-                parentPathSplit = self.parentPath.split("/", 1)
-                assert(len(parentPathSplit) >= 1)
-
-                if len(parentPathSplit) == 1:
-                    realParent = parent
-                else:
-                    realParent = parent.getChildByPath(parentPathSplit[1])
-            */
+            auto sepPos = parentPath.indexOf('/');
+            CEGUI::Window* realParent = (sepPos < 0) ? parent : parent->getChild(qStringToString(parentPath.mid(sepPos + 1)));
             if (realParent) realParent->addChild(widget);
-            /*
-                # Extra code because of auto windows
-                # NOTE: We don't have to do rootManipulator.createMissingChildManipulators
-                #       because auto windows never get created outside their parent
-                parentManipulator.createMissingChildManipulators(True, False)
-
-                realPathSplit = widget.getNamePath().split("/", 1)
-                ret = parent.getChildByPath(realPathSplit[1])
-            */
         }
     }
 
-    /*
-            for name, value in self.properties.iteritems():
-                widget.setProperty(name, value)
+    qint16 propertyCount = 0;
+    stream >> propertyCount;
+    for (qint16 i = 0; i < propertyCount; ++i)
+    {
+        QString propertyName, propertyValue;
+        stream >> propertyName;
+        stream >> propertyValue;
+        widget->setProperty(qStringToString(propertyName), qStringToString(propertyValue));
+    }
 
-            for child in self.children:
-                childWidget = child.reconstruct(rootManipulator).widget
-                if not child.autoWidget:
-                    widget.addChild(childWidget)
+    qint16 childCount = 0;
+    stream >> childCount;
+    for (qint16 i = 0; i < childCount; ++i)
+        deserializeWidget(stream, widget);
 
-            # refresh the manipulator using newly set properties
-            ret.updateFromWidget(False, True)
-            return ret
-    */
-
-    return nullptr;
+    return widget;
 }
 
 }
