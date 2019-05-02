@@ -39,7 +39,7 @@ bool WidgetHierarchyTreeModel::setData(const QModelIndex& index, const QVariant&
         if (newName == item->getManipulator()->getWidgetName()) return false;
 
         // Validate the new name, cancel if invalid
-        newName = LayoutManipulator::getValidWidgetName(newName);
+        newName = CEGUIUtils::getValidWidgetName(newName);
         if (newName.isEmpty())
         {
             QMessageBox msgBox;
@@ -176,7 +176,7 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
                 // Get a name that's not used in the new parent, trying to keep
                 // the suggested name (which is the same as the old widget name at
                 // the beginning)
-                QString tempName = newParentManipulator->getUniqueChildWidgetName(suggestedName);
+                QString tempName = CEGUIUtils::getUniqueChildWidgetName(*newParentManipulator->getWidget(), suggestedName);
 
                 // If the name we got is the same as the one we wanted...
                 if (tempName == suggestedName)
@@ -224,7 +224,7 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
                      if (!ok) return false;
 
                      // Validate the entered name
-                     suggestedName = LayoutManipulator::getValidWidgetName(suggestedName);
+                     suggestedName = CEGUIUtils::getValidWidgetName(suggestedName);
                      if (!suggestedName.isEmpty()) break;
                      error = "Invalid name, please try again";
                  }
@@ -262,7 +262,8 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
         LayoutManipulator* parentManipulator = parentItemPath.isEmpty() ? nullptr : _visualMode.getScene()->getManipulatorByPath(parentItemPath);
 
         QString uniqueName = widgetType.mid(widgetType.lastIndexOf('/') + 1);
-        if (parentManipulator) uniqueName = parentManipulator->getUniqueChildWidgetName(uniqueName);
+        if (parentManipulator)
+            uniqueName = CEGUIUtils::getUniqueChildWidgetName(*parentManipulator->getWidget(), uniqueName);
         /*
             cmd = undo.CreateCommand(self.dockWidget.visual, parentItemPath, widgetType, uniqueName)
             self.dockWidget.visual.tabbedEditor.undoStack.push(cmd)

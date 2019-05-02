@@ -10,15 +10,6 @@
 #include "qmimedata.h"
 #include "qaction.h"
 
-// Returns a valid CEGUI widget name out of the supplied name, if possible. Returns empty string if
-// the supplied name is invalid and can't be converted to a valid name (an empty string for example).
-QString LayoutManipulator::getValidWidgetName(const QString& name)
-{
-    QString trimmed = name.trimmed();
-    if (trimmed.isEmpty()) return "";
-    return trimmed.replace("/", "_");
-}
-
 LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, CEGUI::Window* widget)
     : CEGUIManipulator(parent, widget)
     , _visualMode(visualMode)
@@ -265,7 +256,7 @@ void LayoutManipulator::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
     }
 }
 
-void LayoutManipulator::dragLeaveEvent(QGraphicsSceneDragDropEvent* event)
+void LayoutManipulator::dragLeaveEvent(QGraphicsSceneDragDropEvent* /*event*/)
 {
     setPen(getNormalPen());
 }
@@ -321,7 +312,10 @@ void LayoutManipulator::impl_paint(QPainter* painter, const QStyleOptionGraphics
     if (_drawSnapGrid && _visualMode.isSnapGridEnabled())
     {
         const auto& childRect = _widget->getChildContentArea(_snapGridNonClientArea).get();
-        QRectF qChildRect(childRect.d_min.x, childRect.d_min.y, static_cast<qreal>(childRect.getWidth()), static_cast<qreal>(childRect.getHeight()));
+        QRectF qChildRect(static_cast<qreal>(childRect.d_min.x),
+                          static_cast<qreal>(childRect.d_min.y),
+                          static_cast<qreal>(childRect.getWidth()),
+                          static_cast<qreal>(childRect.getHeight()));
          qChildRect.translate(-scenePos());
 
         painter->save();
@@ -329,24 +323,6 @@ void LayoutManipulator::impl_paint(QPainter* painter, const QStyleOptionGraphics
         painter->fillRect(qChildRect, _visualMode.getSnapGridBrush());
         painter->restore();
     }
-}
-
-// Finds a unique name for a child widget of the manipulated widget.
-// The resulting name's format is the base with a number appended.
-QString LayoutManipulator::getUniqueChildWidgetName(const QString& base) const
-{
-    // We can't check for duplicates in this case
-    if (!_widget) return base;
-
-    QString candidate = base;
-    int i = 2;
-    while (_widget->isChild(CEGUIUtils::qStringToString(candidate)))
-    {
-        candidate = base + QString::number(i);
-        ++i;
-    }
-
-    return candidate;
 }
 
 qreal LayoutManipulator::snapXCoordToGrid(qreal x)

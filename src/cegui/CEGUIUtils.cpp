@@ -22,6 +22,33 @@ CEGUI::String qStringToString(const QString& str)
     return CEGUI::String(str.toLocal8Bit().data());
 }
 
+// Returns a valid CEGUI widget name out of the supplied name, if possible. Returns empty string if
+// the supplied name is invalid and can't be converted to a valid name (an empty string for example).
+QString getValidWidgetName(const QString& name)
+{
+    return name.trimmed().replace("/", "_");
+}
+
+QString getUniqueChildWidgetName(const CEGUI::Window& parent, const QString& baseName)
+{
+    return stringToQString(getUniqueChildWidgetName(parent, qStringToString(baseName)));
+}
+
+// Finds a unique name for a child widget of the manipulated widget.
+// The resulting name's format is the base with a number appended.
+CEGUI::String getUniqueChildWidgetName(const CEGUI::Window& parent, const CEGUI::String& baseName)
+{
+    CEGUI::String candidate = baseName;
+    int i = 2;
+    while (parent.isChild(candidate))
+    {
+        candidate = baseName + std::to_string(i);
+        ++i;
+    }
+
+    return candidate;
+}
+
 bool serializeWidget(const CEGUI::Window& widget, QDataStream& stream, bool recursive)
 {
     if (!stream.device()->isWritable()) return false;
@@ -29,9 +56,6 @@ bool serializeWidget(const CEGUI::Window& widget, QDataStream& stream, bool recu
     stream << stringToQString(widget.getName());
     stream << stringToQString(widget.getType());
     stream << widget.isAutoWindow();
-
-    //???need? lots of duplicated data for children
-    stream << (widget.getParent() ? stringToQString(widget.getParent()->getNamePath()) : "");
 
     const auto propertyCounterPosition = stream.device()->pos();
 
@@ -85,9 +109,6 @@ CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent)
     bool isAutoWidget = false;
     stream >> isAutoWidget;
 
-    QString parentPath;
-    stream >> parentPath;
-
     CEGUI::Window* widget = nullptr;
 
     if (isAutoWidget)
@@ -109,14 +130,10 @@ CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent)
     }
     else
     {
-        widget = CEGUI::WindowManager::getSingleton().createWindow(qStringToString(type), qStringToString(name));
-
-        if (parent)
-        {
-            auto sepPos = parentPath.indexOf('/');
-            CEGUI::Window* realParent = (sepPos < 0) ? parent : parent->getChild(qStringToString(parentPath.mid(sepPos + 1)));
-            if (realParent) realParent->addChild(widget);
-        }
+        CEGUI::String widgetName = qStringToString(name);
+        if (parent) widgetName = getUniqueChildWidgetName(*parent, widgetName);
+        widget = CEGUI::WindowManager::getSingleton().createWindow(qStringToString(type), widgetName);
+        if (parent) parent->addChild(widget);
     }
 
     qint16 propertyCount = 0;

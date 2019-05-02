@@ -419,11 +419,6 @@ bool LayoutVisualMode::paste()
     QDataStream stream(&bytes, QIODevice::ReadOnly);
     while (!stream.atEnd())
     {
-        /*
-        serialisationData.name = targetManipulator.getUniqueChildWidgetName(serialisationData.name)
-        serialisationData.setParentPath(self.targetWidgetPath)
-        serialisationData.reconstruct(self.visual.scene.rootManipulator)
-        */
         CEGUI::Window* widget = CEGUIUtils::deserializeWidget(stream, target->getWidget());
         LayoutManipulator* manipulator = target->createChildManipulator(widget);
         manipulator->setSelected(true);

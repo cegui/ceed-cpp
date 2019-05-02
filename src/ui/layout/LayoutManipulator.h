@@ -12,14 +12,11 @@ class LayoutManipulator : public CEGUIManipulator
 {
 public:
 
-    static QString getValidWidgetName(const QString& name);
-
     LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, CEGUI::Window* widget);
     virtual ~LayoutManipulator() override;
 
     virtual LayoutManipulator* createChildManipulator(CEGUI::Window* childWidget, bool recursive = true, bool skipAutoWidgets = false) override;
     void getChildLayoutManipulators(std::vector<LayoutManipulator*>& outList, bool recursive);
-    QString getUniqueChildWidgetName(const QString& base = "Widget") const;
 
     virtual QPointF constrainMovePoint(QPointF value) override;
     virtual QRectF constrainResizeRect(QRectF rect, QRectF oldRect) override;
