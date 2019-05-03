@@ -2,6 +2,7 @@
 #define CEGUIMANIPULATOR_H
 
 #include "src/ui/ResizableRectItem.h"
+#include <CEGUI/UVector.h>
 #include <CEGUI/Sizef.h>
 
 // This is a rectangle that is synchronised with given CEGUI widget,
@@ -65,8 +66,17 @@ protected:
     virtual void impl_paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr);
 
     CEGUI::Window* _widget = nullptr;
+
+    // All below must be null at start!
+
     QPointF _lastResizeNewPos;
     QRectF _lastResizeNewRect;
+
+    /*
+            self.preResizePos = None
+            self.preResizeSize = None
+    */
+    CEGUI::UVector2 _preMovePos;
     QPointF _lastMoveNewPos;
 };
 

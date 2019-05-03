@@ -6,6 +6,93 @@
 #include "src/cegui/CEGUIUtils.h"
 #include <CEGUI/Window.h>
 
+LayoutMoveCommand::LayoutMoveCommand(LayoutVisualMode& visualMode, std::vector<Record>&& imageRecords)
+    : _visualMode(visualMode)
+    , _records(std::move(imageRecords))
+{
+    if (_records.size() == 1)
+        setText(QString("Move '%1'").arg(_records[0].path));
+    else
+        setText(QString("Move %1 widgets'").arg(_records.size()));
+}
+
+void LayoutMoveCommand::undo()
+{
+    QUndoCommand::undo();
+
+    for (const auto& rec : _records)
+    {
+        auto manipulator = _visualMode.getScene()->getManipulatorByPath(rec.path);
+        assert(manipulator);
+        manipulator->getWidget()->setPosition(rec.oldPos);
+        manipulator->updateFromWidget(false, true);
+
+        // In case the pixel position didn't change but the absolute and negative components changed and canceled each other out
+        manipulator->update();
+
+        /*
+            widgetManipulator.triggerPropertyManagerCallback({"Position", "Area"})
+        */
+    }
+}
+
+void LayoutMoveCommand::redo()
+{
+    for (const auto& rec : _records)
+    {
+        auto manipulator = _visualMode.getScene()->getManipulatorByPath(rec.path);
+        assert(manipulator);
+        manipulator->getWidget()->setPosition(rec.newPos);
+        manipulator->updateFromWidget(false, true);
+
+        // In case the pixel position didn't change but the absolute and negative components changed and canceled each other out
+        manipulator->update();
+
+        /*
+            widgetManipulator.triggerPropertyManagerCallback({"Position", "Area"})
+        */
+    }
+
+    QUndoCommand::redo();
+}
+
+bool LayoutMoveCommand::mergeWith(const QUndoCommand* other)
+{
+    const LayoutMoveCommand* otherCmd = dynamic_cast<const LayoutMoveCommand*>(other);
+    if (!otherCmd) return false;
+
+    // It is nearly impossible to do the delta guesswork right, the parent might get resized etc,
+    // it might be possible in this exact scenario (no resizes) but in the generic one it's a pain
+    // and can't be done consistently, so I don't even try and just merge if the paths match
+
+    if (_records.size() != otherCmd->_records.size()) return false;
+
+    QStringList pathes;
+    for (const auto& rec : _records)
+        pathes.push_back(rec.path);
+
+    for (const auto& rec : otherCmd->_records)
+        if (!pathes.contains(rec.path)) return false;
+
+    // The same set of widgets, can merge
+
+    for (auto& rec : _records)
+    {
+        const QString& path = rec.path;
+        auto it = std::find_if(otherCmd->_records.begin(), otherCmd->_records.end(), [&path](const Record& otherRec)
+        {
+            return otherRec.path == path;
+        });
+        assert(it != otherCmd->_records.end());
+
+        rec.newPos = it->newPos;
+    }
+
+    return true;
+}
+
+//---------------------------------------------------------------------
+
 LayoutPasteCommand::LayoutPasteCommand(LayoutVisualMode& visualMode,
                                        const QString& targetPath,
                                        QByteArray&& data)
@@ -62,70 +149,6 @@ void LayoutPasteCommand::redo()
 //---------------------------------------------------------------------
 
 /*
-class MoveCommand(commands.UndoCommand):
-    """This command simply moves given widgets from old positions to new
-    """
-
-    def __init__(self, visual, widgetPaths, oldPositions, newPositions):
-        super(MoveCommand, self).__init__()
-
-        self.visual = visual
-
-        self.widgetPaths = widgetPaths
-        self.oldPositions = oldPositions
-        self.newPositions = newPositions
-
-        self.refreshText()
-
-    def refreshText(self):
-        if len(self.widgetPaths) == 1:
-            self.setText("Move '%s'" % (self.widgetPaths[0]))
-        else:
-            self.setText("Move %i widgets" % (len(self.widgetPaths)))
-
-    def id(self):
-        return idbase + 1
-
-    def mergeWith(self, cmd):
-        if self.widgetPaths == cmd.widgetPaths:
-            # it is nearly impossible to do the delta guesswork right, the parent might get resized
-            # etc, it might be possible in this exact scenario (no resizes) but in the generic
-            # one it's a pain and can't be done consistently, so I don't even try and just merge if
-            # the paths match
-            self.newPositions = cmd.newPositions
-
-            return True
-
-            #for widgetPath in self.widgetPaths:
-            #    delta = self.newPositions[widgetPath] - self.oldPositions[widgetPath]
-
-        return False
-
-    def undo(self):
-        super(MoveCommand, self).undo()
-
-        for widgetPath in self.widgetPaths:
-            widgetManipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-            widgetManipulator.widget.setPosition(self.oldPositions[widgetPath])
-            widgetManipulator.updateFromWidget(False, True)
-            # in case the pixel position didn't change but the absolute and negative components changed and canceled each other out
-            widgetManipulator.update()
-
-            widgetManipulator.triggerPropertyManagerCallback({"Position", "Area"})
-
-    def redo(self):
-        for widgetPath in self.widgetPaths:
-            widgetManipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-            widgetManipulator.widget.setPosition(self.newPositions[widgetPath])
-            widgetManipulator.updateFromWidget(False, True)
-            # in case the pixel position didn't change but the absolute and negative components changed and canceled each other out
-            widgetManipulator.update()
-
-            widgetManipulator.triggerPropertyManagerCallback({"Position", "Area"})
-
-        super(MoveCommand, self).redo()
-
-
 class ResizeCommand(commands.UndoCommand):
     """This command resizes given widgets from old positions and old sizes to new
     """

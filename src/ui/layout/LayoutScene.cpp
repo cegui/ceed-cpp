@@ -4,6 +4,7 @@
 #include "src/ui/layout/WidgetHierarchyItem.h"
 #include "src/ui/ResizingHandle.h"
 #include "src/editors/layout/LayoutVisualMode.h"
+#include "src/editors/layout/LayoutUndoCommands.h"
 #include <CEGUI/GUIContext.h>
 #include "qgraphicssceneevent.h"
 #include "qevent.h"
@@ -387,53 +388,59 @@ void LayoutScene::keyReleaseEvent(QKeyEvent* event)
 void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 {
     CEGUIGraphicsScene::mouseReleaseEvent(event);
+
+    // We have to "expand" the items, adding parents of resizing handles instead of the handles themselves
+    std::vector<LayoutManipulator*> selection;
+    for (QGraphicsItem* selectedItem : selectedItems())
+    {
+        if (auto manipulator = dynamic_cast<LayoutManipulator*>(selectedItem))
+        {
+            selection.push_back(manipulator);
+            continue;
+        }
+
+        if (auto handle = dynamic_cast<ResizingHandle*>(selectedItem))
+        {
+            if (auto manipulator = dynamic_cast<LayoutManipulator*>(handle->parentItem()))
+            {
+                selection.push_back(manipulator);
+                continue;
+            }
+        }
+    }
+
+    std::vector<LayoutMoveCommand::Record> move;
+    //std::vector<LayoutResizeCommand::Record> resize;
+
+    for (LayoutManipulator* manipulator : selection)
+    {
+    /*
+        if item.preMovePos is not None:
+            widgetPath = item.widget.getNamePath()
+            movedWidgetPaths.append(widgetPath)
+            movedOldPositions[widgetPath] = item.preMovePos
+            movedNewPositions[widgetPath] = item.widget.getPosition()
+
+            # it won't be needed anymore so we use this to mark we picked this item up
+            item.preMovePos = None
+
+        if item.preResizePos is not None and item.preResizeSize is not None:
+            widgetPath = item.widget.getNamePath()
+            resizedWidgetPaths.append(widgetPath)
+            resizedOldPositions[widgetPath] = item.preResizePos
+            resizedOldSizes[widgetPath] = item.preResizeSize
+            resizedNewPositions[widgetPath] = item.widget.getPosition()
+            resizedNewSizes[widgetPath] = item.widget.getSize()
+
+            # it won't be needed anymore so we use this to mark we picked this item up
+            item.preResizePos = None
+            item.preResizeSize = None
+    */
+    }
+
+    if (!move.empty())
+        _visualMode.getEditor().getUndoStack()->push(new LayoutMoveCommand(_visualMode, std::move(move)));
 /*
-        movedWidgetPaths = []
-        movedOldPositions = {}
-        movedNewPositions = {}
-
-        resizedWidgetPaths = []
-        resizedOldPositions = {}
-        resizedOldSizes = {}
-        resizedNewPositions = {}
-        resizedNewSizes = {}
-
-        // We have to "expand" the items, adding parents of resizing handles
-        // instead of the handles themselves
-        expandedSelectedItems = []
-        for selectedItem in self.selectedItems():
-            if isinstance(selectedItem, widgethelpers.Manipulator):
-                expandedSelectedItems.append(selectedItem)
-            elif isinstance(selectedItem, resizable.ResizingHandle):
-                if isinstance(selectedItem.parentItem(), widgethelpers.Manipulator):
-                    expandedSelectedItems.append(selectedItem.parentItem())
-
-        for item in expandedSelectedItems:
-            if isinstance(item, widgethelpers.Manipulator):
-                if item.preMovePos is not None:
-                    widgetPath = item.widget.getNamePath()
-                    movedWidgetPaths.append(widgetPath)
-                    movedOldPositions[widgetPath] = item.preMovePos
-                    movedNewPositions[widgetPath] = item.widget.getPosition()
-
-                    # it won't be needed anymore so we use this to mark we picked this item up
-                    item.preMovePos = None
-
-                if item.preResizePos is not None and item.preResizeSize is not None:
-                    widgetPath = item.widget.getNamePath()
-                    resizedWidgetPaths.append(widgetPath)
-                    resizedOldPositions[widgetPath] = item.preResizePos
-                    resizedOldSizes[widgetPath] = item.preResizeSize
-                    resizedNewPositions[widgetPath] = item.widget.getPosition()
-                    resizedNewSizes[widgetPath] = item.widget.getSize()
-
-                    # it won't be needed anymore so we use this to mark we picked this item up
-                    item.preResizePos = None
-                    item.preResizeSize = None
-
-        if len(movedWidgetPaths) > 0:
-            cmd = undo.MoveCommand(self.visual, movedWidgetPaths, movedOldPositions, movedNewPositions)
-            self.visual.tabbedEditor.undoStack.push(cmd)
 
         if len(resizedWidgetPaths) > 0:
             cmd = undo.ResizeCommand(self.visual, resizedWidgetPaths, resizedOldPositions, resizedOldSizes, resizedNewPositions, resizedNewSizes)
