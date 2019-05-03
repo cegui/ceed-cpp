@@ -1,5 +1,6 @@
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutEditor.h"
+#include "src/editors/layout/LayoutUndoCommands.h"
 #include "src/cegui/CEGUIUtils.h"
 #include "src/ui/CEGUIWidget.h"
 #include "src/ui/CEGUIGraphicsView.h"
@@ -408,21 +409,7 @@ bool LayoutVisualMode::paste()
 
     if (!target) return false;
 
-    //!!!all below to PasteCommand!
-/*
-        cmd = undo.PasteCommand(self, topMostSerialisationData, target.widget.getNamePath())
-        self.tabbedEditor.undoStack.push(cmd)
-*/
-
-    scene->clearSelection();
-
-    QDataStream stream(&bytes, QIODevice::ReadOnly);
-    while (!stream.atEnd())
-    {
-        CEGUI::Window* widget = CEGUIUtils::deserializeWidget(stream, target->getWidget());
-        LayoutManipulator* manipulator = target->createChildManipulator(widget);
-        manipulator->setSelected(true);
-    }
+    _editor.getUndoStack()->push(new LayoutPasteCommand(*this, target->getWidgetPath(), std::move(bytes)));
 
     return true;
 }

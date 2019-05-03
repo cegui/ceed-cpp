@@ -7,12 +7,14 @@
 
 constexpr int LayoutUndoCommandBase = 1200;
 
+class LayoutVisualMode;
+
 // This command pastes clipboard data to the given widget
 class LayoutPasteCommand : public QUndoCommand
 {
 public:
 
-    LayoutPasteCommand(/*LayoutVisualMode& visualMode, std::vector<Record>&& records*/);
+    LayoutPasteCommand(LayoutVisualMode& visualMode, const QString& targetPath, QByteArray&& data);
 
     virtual void undo() override;
     virtual void redo() override;
@@ -20,8 +22,10 @@ public:
 
 protected:
 
-    //LayoutVisualMode& _visualMode;
-    //std::vector<Record> _records;
+    LayoutVisualMode& _visualMode;
+    QString _targetPath;
+    QByteArray _data;
+    std::vector<QString> _createdWidgets;
 };
 
 #endif // LAYOUTUNDOCOMMANDS_H

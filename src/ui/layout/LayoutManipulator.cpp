@@ -198,7 +198,7 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
 
 void LayoutManipulator::detach(bool detachWidget, bool destroyWidget, bool recursive)
 {
-    const bool parentWidgetWasNone = _widget->getParent();
+    const bool parentWidgetWasNone = !_widget->getParent();
 
     CEGUIManipulator::detach(detachWidget, destroyWidget, recursive);
 

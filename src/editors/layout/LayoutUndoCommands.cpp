@@ -1,63 +1,61 @@
 #include "src/editors/layout/LayoutUndoCommands.h"
+#include "src/editors/layout/LayoutVisualMode.h"
+#include "src/ui/layout/LayoutScene.h"
+#include "src/ui/layout/LayoutManipulator.h"
+#include "src/ui/layout/WidgetHierarchyDockWidget.h"
+#include "src/cegui/CEGUIUtils.h"
+#include <CEGUI/Window.h>
 
-LayoutPasteCommand::LayoutPasteCommand(/*LayoutVisualMode& visualMode, std::vector<LayoutPasteCommand::Record>&& imageRecords*/)
-    //: _visualMode(visualMode)
-    //, _records(std::move(imageRecords))
+LayoutPasteCommand::LayoutPasteCommand(LayoutVisualMode& visualMode,
+                                       const QString& targetPath,
+                                       QByteArray&& data)
+    : _visualMode(visualMode)
+    , _targetPath(targetPath)
+    , _data(std::move(data))
 {
-    /*
-        self.visual = visual
-
-        self.clipboardData = clipboardData
-        self.targetWidgetPath = targetWidgetPath
-
-    if (_records.size() == 1)
-        setText(QString("Paste '%s' hierarchy to '%s'").arg(_records[0].name).arg(targetWidgetPath));
-    else
-        setText(QString("Paste %i hierarchies to '%s'").arg(_records.size()).arg(targetWidgetPath));
-    */
 }
 
 void LayoutPasteCommand::undo()
 {
     QUndoCommand::undo();
 
-/*
-        widgetPaths = []
-        for serialisationData in self.clipboardData:
-            widgetPath = serialisationData.parentPath + "/" + serialisationData.name
-            widgetPaths.append(widgetPath)
+    LayoutScene* scene = _visualMode.getScene();
+    for (const QString& path : _createdWidgets)
+        scene->getManipulatorByPath(path)->detach();
 
-            manipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-            wasRootWidget = manipulator.widget.getParent() is None
+    _visualMode.getHierarchyDockWidget()->refresh();
 
-            manipulator.detach(destroyWidget = True)
-
-            if wasRootWidget:
-                # this was a root widget being deleted, handle this accordingly
-                self.visual.setRootWidgetManipulator(None)
-
-        self.visual.hierarchyDockWidget.refresh()
-*/
+    _createdWidgets.clear();
 }
 
 void LayoutPasteCommand::redo()
 {
-/*
-        targetManipulator = self.visual.scene.getManipulatorByPath(self.targetWidgetPath)
+    LayoutScene* scene = _visualMode.getScene();
+    auto target = scene->getManipulatorByPath(_targetPath);
+    if (!target) return;
 
-        for serialisationData in self.clipboardData:
-            # make sure the name is unique and we will be able to paste smoothly
-            serialisationData.name = targetManipulator.getUniqueChildWidgetName(serialisationData.name)
-            serialisationData.setParentPath(self.targetWidgetPath)
+    scene->clearSelection();
 
-            serialisationData.reconstruct(self.visual.scene.rootManipulator)
+    QDataStream stream(&_data, QIODevice::ReadOnly);
+    while (!stream.atEnd())
+    {
+        CEGUI::Window* widget = CEGUIUtils::deserializeWidget(stream, target->getWidget());
+        LayoutManipulator* manipulator = target->createChildManipulator(widget);
+        manipulator->setSelected(true);
+        _createdWidgets.push_back(manipulator->getWidgetPath());
+    }
 
-        # Update the topmost parent widget recursively to get possible resize or
-        # repositions of the pasted widgets into the manipulator data.
-        targetManipulator.updateFromWidget(True, True)
+    // Update the topmost parent widget recursively to get possible resize or
+    // repositions of the pasted widgets into the manipulator data.
+    target->updateFromWidget(true, true);
 
-        self.visual.hierarchyDockWidget.refresh()
-*/
+    _visualMode.getHierarchyDockWidget()->refresh();
+
+    if (_createdWidgets.size() == 1)
+        setText(QString("Paste '%1' hierarchy to '%2'").arg(_createdWidgets[0]).arg(_targetPath));
+    else
+        setText(QString("Paste %1 hierarchies to '%2'").arg(_createdWidgets.size()).arg(_targetPath));
+
     QUndoCommand::redo();
 }
 
