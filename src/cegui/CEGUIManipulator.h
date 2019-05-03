@@ -3,6 +3,7 @@
 
 #include "src/ui/ResizableRectItem.h"
 #include <CEGUI/UVector.h>
+#include <CEGUI/USize.h>
 #include <CEGUI/Sizef.h>
 
 // This is a rectangle that is synchronised with given CEGUI widget,
@@ -59,6 +60,15 @@ public:
     bool shouldBeSkipped() const;
     bool hasNonAutoWidgetDescendants() const;
 
+    bool isMoveStarted() const { return _moveStarted; }
+    void resetMove() { _moveStarted = false; }
+    CEGUI::UVector2 getMoveStartPosition() const { return _preMovePos; }
+
+    bool isResizeStarted() const { return _resizeStarted; }
+    void resetResize() { _resizeStarted = false; }
+    CEGUI::UVector2 getResizeStartPosition() const { return _preResizePos; }
+    CEGUI::USize getResizeStartSize() const { return _preResizeSize; }
+
 protected:
 
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
@@ -67,15 +77,13 @@ protected:
 
     CEGUI::Window* _widget = nullptr;
 
-    // All below must be null at start!
-
+    bool _resizeStarted = false;
+    CEGUI::UVector2 _preResizePos;
+    CEGUI::USize _preResizeSize;
     QPointF _lastResizeNewPos;
     QRectF _lastResizeNewRect;
 
-    /*
-            self.preResizePos = None
-            self.preResizeSize = None
-    */
+    bool _moveStarted = false;
     CEGUI::UVector2 _preMovePos;
     QPointF _lastMoveNewPos;
 };

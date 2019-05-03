@@ -5,6 +5,7 @@
 #include "qvariant.h"
 #include "qrect.h"
 #include <CEGUI/UVector.h>
+#include <CEGUI/USize.h>
 
 constexpr int LayoutUndoCommandBase = 1200;
 
@@ -27,6 +28,33 @@ public:
     virtual void undo() override;
     virtual void redo() override;
     virtual int id() const override { return LayoutUndoCommandBase + 1; }
+    virtual bool mergeWith(const QUndoCommand* other) override;
+
+protected:
+
+    LayoutVisualMode& _visualMode;
+    std::vector<Record> _records;
+};
+
+// This command resizes given widgets from old positions and old sizes to new
+class LayoutResizeCommand : public QUndoCommand
+{
+public:
+
+    struct Record
+    {
+        QString path;
+        CEGUI::UVector2 oldPos;
+        CEGUI::UVector2 newPos;
+        CEGUI::USize oldSize;
+        CEGUI::USize newSize;
+    };
+
+    LayoutResizeCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return LayoutUndoCommandBase + 2; }
     virtual bool mergeWith(const QUndoCommand* other) override;
 
 protected:

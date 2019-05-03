@@ -226,10 +226,10 @@ void CEGUIManipulator::notifyHandleSelected(ResizingHandle* handle)
 void CEGUIManipulator::notifyResizeStarted(ResizingHandle* handle)
 {
     ResizableRectItem::notifyResizeStarted(handle);
-/*
-    self.preResizePos = _widget->getPosition()
-    self.preResizeSize = _widget->getSize()
-*/
+
+    _resizeStarted = true;
+    _preResizePos = _widget->getPosition();
+    _preResizeSize = _widget->getSize();
 
     for (QGraphicsItem* childItem : childItems())
     {
@@ -245,62 +245,81 @@ void CEGUIManipulator::notifyResizeStarted(ResizingHandle* handle)
                 item->setVisible(false);
 }
 
+static inline void roundPointFloor(QPointF& point)
+{
+    point.setX(std::floor(point.x()));
+    point.setY(std::floor(point.y()));
+}
+
+static inline void roundSizeFloor(QSizeF& size)
+{
+    size.setWidth(std::floor(size.width()));
+    size.setHeight(std::floor(size.height()));
+}
+
 void CEGUIManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
 {
     ResizableRectItem::notifyResizeProgress(newPos, newRect);
 
     // Absolute pixel deltas
-/*
-        auto pixelDeltaPos = newPos - _resizeOldPos;
-        auto pixelDeltaSize = newRect.size() - _resizeOldRect.size()
+    auto pixelDeltaPos = newPos - resizeOldPos;
+    auto pixelDeltaSize = newRect.size() - resizeOldRect.size();
 
-        deltaPos = None
-        deltaSize = None
+    CEGUI::UVector2 deltaPos;
+    CEGUI::USize deltaSize;
+    if (useAbsoluteCoordsForResize())
+    {
+        if (useIntegersForAbsoluteResize())
+        {
+            roundPointFloor(pixelDeltaPos);
+            roundSizeFloor(pixelDeltaSize);
+        }
 
-        if self.useAbsoluteCoordsForResize():
-            if self.useIntegersForAbsoluteResize():
-                deltaPos = CEGUI::UVector2(CEGUI::UDim(0, math.floor(pixelDeltaPos.x())), CEGUI::UDim(0, math.floor(pixelDeltaPos.y())))
-                deltaSize = CEGUI::USize(CEGUI::UDim(0, math.floor(pixelDeltaSize.width())), CEGUI::UDim(0, math.floor(pixelDeltaSize.height())))
-            else:
-                deltaPos = CEGUI::UVector2(CEGUI::UDim(0, pixelDeltaPos.x()), CEGUI::UDim(0, pixelDeltaPos.y()))
-                deltaSize = CEGUI::USize(CEGUI::UDim(0, pixelDeltaSize.width()), CEGUI::UDim(0, pixelDeltaSize.height()))
+        deltaPos = CEGUI::UVector2(
+                    CEGUI::UDim(0.f, static_cast<float>(pixelDeltaPos.x())),
+                    CEGUI::UDim(0.f, static_cast<float>(pixelDeltaPos.y())));
+        deltaSize = CEGUI::USize(
+                    CEGUI::UDim(0.f, static_cast<float>(pixelDeltaSize.width())),
+                    CEGUI::UDim(0.f, static_cast<float>(pixelDeltaSize.height())));
+    }
+    else
+    {
+        auto baseSize = getBaseSize();
+        deltaPos = CEGUI::UVector2(
+                    CEGUI::UDim(static_cast<float>(pixelDeltaPos.x()) / baseSize.d_width, 0.f),
+                    CEGUI::UDim(static_cast<float>(pixelDeltaPos.y()) / baseSize.d_height, 0.f));
+        deltaSize = CEGUI::USize(
+                    CEGUI::UDim(static_cast<float>(pixelDeltaSize.width()) / baseSize.d_width, 0.f),
+                    CEGUI::UDim(static_cast<float>(pixelDeltaSize.height()) / baseSize.d_height, 0.f));
+    }
 
-        else:
-            baseSize = self.getBaseSize()
+    // Because the Qt manipulator is always top left aligned in the CEGUI sense,
+    // we have to process the size to factor in alignments if they differ
+    CEGUI::UVector2 processedDeltaPos;
+    switch (_widget->getHorizontalAlignment())
+    {
+        case CEGUI::HorizontalAlignment::Left:
+            processedDeltaPos.d_x = deltaPos.d_x; break;
+        case CEGUI::HorizontalAlignment::Centre:
+            processedDeltaPos.d_x = deltaPos.d_x + CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_width; break;
+        case CEGUI::HorizontalAlignment::Right:
+            processedDeltaPos.d_x = deltaPos.d_x + deltaSize.d_width; break;
+    }
+    switch (_widget->getVerticalAlignment())
+    {
+        case CEGUI::VerticalAlignment::Top:
+            processedDeltaPos.d_y = deltaPos.d_y; break;
+        case CEGUI::VerticalAlignment::Centre:
+            processedDeltaPos.d_y = deltaPos.d_y + CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_height; break;
+        case CEGUI::VerticalAlignment::Bottom:
+            processedDeltaPos.d_y = deltaPos.d_y + deltaSize.d_height; break;
+    }
 
-            deltaPos = CEGUI::UVector2(CEGUI::UDim(pixelDeltaPos.x() / baseSize.d_width, 0), CEGUI::UDim(pixelDeltaPos.y() / baseSize.d_height, 0))
-            deltaSize = CEGUI::USize(CEGUI::UDim(pixelDeltaSize.width() / baseSize.d_width, 0), CEGUI::UDim(pixelDeltaSize.height() / baseSize.d_height, 0))
+    _widget->setPosition(_preResizePos + processedDeltaPos);
+    _widget->setSize(_preResizeSize + deltaSize);
 
-        # because the Qt manipulator is always top left aligned in the CEGUI sense,
-        # we have to process the size to factor in alignments if they differ
-        processedDeltaPos = CEGUI::UVector2()
-
-        hAlignment = _widget->getHorizontalAlignment()
-        if hAlignment == CEGUI::HorizontalAlignment.HA_LEFT:
-            processedDeltaPos.d_x = deltaPos.d_x
-        elif hAlignment == CEGUI::HorizontalAlignment.HA_CENTRE:
-            processedDeltaPos.d_x = deltaPos.d_x + CEGUI::UDim(0.5, 0.5) * deltaSize.d_width
-        elif hAlignment == CEGUI::HorizontalAlignment.HA_RIGHT:
-            processedDeltaPos.d_x = deltaPos.d_x + deltaSize.d_width
-        else:
-            assert(False)
-
-        vAlignment = _widget->getVerticalAlignment()
-        if vAlignment == CEGUI::VerticalAlignment.VA_TOP:
-            processedDeltaPos.d_y = deltaPos.d_y
-        elif vAlignment == CEGUI::VerticalAlignment.VA_CENTRE:
-            processedDeltaPos.d_y = deltaPos.d_y + CEGUI::UDim(0.5, 0.5) * deltaSize.d_height
-        elif vAlignment == CEGUI::VerticalAlignment.VA_BOTTOM:
-            processedDeltaPos.d_y = deltaPos.d_y + deltaSize.d_height
-        else:
-            assert(False)
-
-        _widget->setPosition(self.preResizePos + processedDeltaPos)
-        _widget->setSize(self.preResizeSize + deltaSize)
-
-        self.lastResizeNewPos = newPos
-        self.lastResizeNewRect = newRect
-*/
+    _lastResizeNewPos = newPos;
+    _lastResizeNewRect = newRect;
 }
 
 void CEGUIManipulator::notifyResizeFinished(QPointF newPos, QRectF newRect)
@@ -328,17 +347,13 @@ void CEGUIManipulator::notifyResizeFinished(QPointF newPos, QRectF newRect)
 
     if (parentItem())
         static_cast<CEGUIManipulator*>(parentItem())->updateFromWidget(true);
-
-/*
-        self.lastResizeNewPos = None
-        self.lastResizeNewRect = None
-*/
 }
 
 void CEGUIManipulator::notifyMoveStarted()
 {
     ResizableRectItem::notifyMoveStarted();
 
+    _moveStarted = true;
     _preMovePos = _widget->getPosition();
 
     for (QGraphicsItem* childItem : childItems())
@@ -358,8 +373,7 @@ void CEGUIManipulator::notifyMoveProgress(QPointF newPos)
     CEGUI::UVector2 deltaPos;
     if (useAbsoluteCoordsForMove())
     {
-        if (useIntegersForAbsoluteMove())
-            pixelDeltaPos = QPointF(std::floor(pixelDeltaPos.x()), std::floor(pixelDeltaPos.y()));
+        if (useIntegersForAbsoluteMove()) roundPointFloor(pixelDeltaPos);
 
         deltaPos = CEGUI::UVector2(
                     CEGUI::UDim(0.f, static_cast<float>(pixelDeltaPos.x())),
@@ -393,9 +407,6 @@ void CEGUIManipulator::notifyMoveFinished(QPointF newPos)
             child->setVisible(true);
         }
     }
-/*
-        self.lastMoveNewPos = None
-*/
 }
 
 // Updates this manipulator with associated widget properties. Mainly position and size.

@@ -6,6 +6,7 @@
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutUndoCommands.h"
 #include <CEGUI/GUIContext.h>
+#include <CEGUI/Window.h>
 #include "qgraphicssceneevent.h"
 #include "qevent.h"
 #include "qmimedata.h"
@@ -410,40 +411,38 @@ void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
     }
 
     std::vector<LayoutMoveCommand::Record> move;
-    //std::vector<LayoutResizeCommand::Record> resize;
+    std::vector<LayoutResizeCommand::Record> resize;
 
-    for (LayoutManipulator* manipulator : selection)
+    for (LayoutManipulator* item : selection)
     {
-    /*
-        if item.preMovePos is not None:
-            widgetPath = item.widget.getNamePath()
-            movedWidgetPaths.append(widgetPath)
-            movedOldPositions[widgetPath] = item.preMovePos
-            movedNewPositions[widgetPath] = item.widget.getPosition()
+        if (item->isMoveStarted())
+        {
+            LayoutMoveCommand::Record rec;
+            rec.path = item->getWidgetPath();
+            rec.oldPos = item->getMoveStartPosition();
+            rec.newPos = item->getWidget()->getPosition();
+            move.push_back(std::move(rec));
 
-            # it won't be needed anymore so we use this to mark we picked this item up
-            item.preMovePos = None
+            item->resetMove();
+        }
 
-        if item.preResizePos is not None and item.preResizeSize is not None:
-            widgetPath = item.widget.getNamePath()
-            resizedWidgetPaths.append(widgetPath)
-            resizedOldPositions[widgetPath] = item.preResizePos
-            resizedOldSizes[widgetPath] = item.preResizeSize
-            resizedNewPositions[widgetPath] = item.widget.getPosition()
-            resizedNewSizes[widgetPath] = item.widget.getSize()
+        if (item->isResizeStarted())
+        {
+            LayoutResizeCommand::Record rec;
+            rec.path = item->getWidgetPath();
+            rec.oldPos = item->getResizeStartPosition();
+            rec.newPos = item->getWidget()->getPosition();
+            rec.oldSize = item->getResizeStartSize();
+            rec.newSize = item->getWidget()->getSize();
+            resize.push_back(std::move(rec));
 
-            # it won't be needed anymore so we use this to mark we picked this item up
-            item.preResizePos = None
-            item.preResizeSize = None
-    */
+            item->resetResize();
+        }
     }
 
     if (!move.empty())
         _visualMode.getEditor().getUndoStack()->push(new LayoutMoveCommand(_visualMode, std::move(move)));
-/*
 
-        if len(resizedWidgetPaths) > 0:
-            cmd = undo.ResizeCommand(self.visual, resizedWidgetPaths, resizedOldPositions, resizedOldSizes, resizedNewPositions, resizedNewSizes)
-            self.visual.tabbedEditor.undoStack.push(cmd)
-*/
+    if (!resize.empty())
+        _visualMode.getEditor().getUndoStack()->push(new LayoutResizeCommand(_visualMode, std::move(resize)));
 }
