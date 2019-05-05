@@ -165,17 +165,18 @@ void LayoutScene::roundSizeOfSelectedWidgets()
 
 void LayoutScene::alignSelectionHorizontally(CEGUI::HorizontalAlignment alignment)
 {
+    std::vector<LayoutHorizontalAlignCommand::Record> records;
+    for (QGraphicsItem* item : selectedItems())
+    {
+        if (auto manipulator = dynamic_cast<LayoutManipulator*>(item))
+        {
+            LayoutHorizontalAlignCommand::Record rec;
+            rec.path = manipulator->getWidgetPath();
+            rec.oldAlignment = manipulator->getWidget()->getHorizontalAlignment();
+            records.push_back(std::move(rec));
+        }
+    }
 /*
-        widgetPaths = []
-        oldAlignments = {}
-
-        selection = self.selectedItems()
-        for item in selection:
-            if isinstance(item, widgethelpers.Manipulator):
-                widgetPath = item.widget.getNamePath()
-                widgetPaths.append(widgetPath)
-                oldAlignments[widgetPath] = item.widget.getHorizontalAlignment()
-
         if len(widgetPaths) > 0:
             cmd = undo.HorizontalAlignCommand(self.visual, widgetPaths, oldAlignments, alignment)
             self.visual.tabbedEditor.undoStack.push(cmd)

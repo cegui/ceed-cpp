@@ -53,7 +53,6 @@ SOURCES += \
     src/cegui/CEGUIProjectManager.cpp \
     src/cegui/CEGUIProject.cpp \
     src/cegui/CEGUIProjectItem.cpp \
-    src/cegui/CEGUISerializedWidget.cpp \
     src/cegui/CEGUIManipulator.cpp \
     src/cegui/CEGUIPropertyManager.cpp \
     src/editors/EditorBase.cpp \
@@ -114,7 +113,6 @@ HEADERS += \
     src/cegui/CEGUIProjectItem.h \
     src/cegui/CEGUIManipulator.h \
     src/cegui/CEGUIPropertyManager.h \
-    src/cegui/CEGUISerializedWidget.h \
     src/ui/dialogs/NewProjectDialog.h \
     src/ui/dialogs/ProjectSettingsDialog.h \
     src/ui/FileSystemBrowser.h \

@@ -6,6 +6,8 @@
 #include "qrect.h"
 #include <CEGUI/UVector.h>
 #include <CEGUI/USize.h>
+#include <CEGUI/HorizontalAlignment.h>
+#include <CEGUI/VerticalAlignment.h>
 
 constexpr int LayoutUndoCommandBase = 1200;
 
@@ -98,6 +100,77 @@ protected:
     QString _parentPath;
     QString _type;
     QString _name;
+};
+
+// This command resizes given widgets from old positions and old sizes to new
+class LayoutPropertyEditCommand : public QUndoCommand
+{
+public:
+
+    LayoutPropertyEditCommand(LayoutVisualMode& visualMode);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return LayoutUndoCommandBase + 5; }
+    virtual bool mergeWith(const QUndoCommand* other) override;
+
+protected:
+
+    LayoutVisualMode& _visualMode;
+};
+
+// This command aligns selected widgets accordingly
+class LayoutHorizontalAlignCommand : public QUndoCommand
+{
+public:
+
+    struct Record
+    {
+        QString path;
+        CEGUI::HorizontalAlignment oldAlignment;
+    };
+
+    LayoutHorizontalAlignCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, CEGUI::HorizontalAlignment newAlignment);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return LayoutUndoCommandBase + 6; }
+    virtual bool mergeWith(const QUndoCommand* other) override;
+
+protected:
+
+    void refreshText();
+
+    LayoutVisualMode& _visualMode;
+    std::vector<Record> _records;
+    CEGUI::HorizontalAlignment _newAlignment;
+};
+
+// This command aligns selected widgets accordingly
+class LayoutVerticalAlignCommand : public QUndoCommand
+{
+public:
+
+    struct Record
+    {
+        QString path;
+        CEGUI::VerticalAlignment oldAlignment;
+    };
+
+    LayoutVerticalAlignCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, CEGUI::VerticalAlignment newAlignment);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return LayoutUndoCommandBase + 7; }
+    virtual bool mergeWith(const QUndoCommand* other) override;
+
+protected:
+
+    void refreshText();
+
+    LayoutVisualMode& _visualMode;
+    std::vector<Record> _records;
+    CEGUI::VerticalAlignment _newAlignment;
 };
 
 // This command pastes clipboard data to the given widget

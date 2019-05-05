@@ -275,8 +275,7 @@ void LayoutCreateCommand::undo()
 void LayoutCreateCommand::redo()
 {
     CEGUI::Window* widget = CEGUI::WindowManager::getSingleton().createWindow(
-                CEGUIUtils::qStringToString(_type),
-                CEGUIUtils::qStringToString(_name));
+                CEGUIUtils::qStringToString(_type), CEGUIUtils::qStringToString(_name));
 
     LayoutManipulator* parent = _parentPath.isEmpty() ? nullptr :
                 _visualMode.getScene()->getManipulatorByPath(_parentPath);
@@ -295,6 +294,246 @@ void LayoutCreateCommand::redo()
     _visualMode.getHierarchyDockWidget()->refresh();
 
     QUndoCommand::redo();
+}
+
+//---------------------------------------------------------------------
+
+LayoutPropertyEditCommand::LayoutPropertyEditCommand(LayoutVisualMode& visualMode)
+    : _visualMode(visualMode)
+{
+/*
+    def __init__(self, visual, propertyName, widgetPaths, oldValues, newValue, ignoreNextPropertyManagerCallback=False):
+
+        self.propertyName = propertyName
+        self.widgetPaths = widgetPaths
+        self.oldValues = oldValues
+        self.newValue = newValue
+
+        if len(self.widgetPaths) == 1:
+            self.setText("Change '%s' in '%s'" % (self.propertyName, self.widgetPaths[0]))
+        else:
+            self.setText("Change '%s' in %i widgets" % (self.propertyName, len(self.widgetPaths)))
+
+        self.ignoreNextPropertyManagerCallback = ignoreNextPropertyManagerCallback
+*/
+}
+
+void LayoutPropertyEditCommand::undo()
+{
+    QUndoCommand::undo();
+
+    /*
+        for widgetPath in self.widgetPaths:
+            widgetManipulator = self.visual.scene.getManipulatorByPath(widgetPath)
+            widgetManipulator.widget.setProperty(self.propertyName, self.oldValues[widgetPath])
+            widgetManipulator.updateFromWidget(False, True)
+
+            self.notifyPropertyManager(widgetManipulator, self.ignoreNextPropertyManagerCallback)
+        self.ignoreNextPropertyManagerCallback = False
+
+        # make sure to redraw the scene so the changes are visible
+        self.visual.scene.update()
+    */
+}
+
+void LayoutPropertyEditCommand::redo()
+{
+/*
+        for widgetPath in self.widgetPaths:
+            widgetManipulator = self.visual.scene.getManipulatorByPath(widgetPath)
+            widgetManipulator.widget.setProperty(self.propertyName, self.newValue)
+            widgetManipulator.updateFromWidget(False, True)
+
+            self.notifyPropertyManager(widgetManipulator, self.ignoreNextPropertyManagerCallback)
+        self.ignoreNextPropertyManagerCallback = False
+
+        # make sure to redraw the scene so the changes are visible
+        self.visual.scene.update()
+*/
+
+    QUndoCommand::redo();
+}
+
+bool LayoutPropertyEditCommand::mergeWith(const QUndoCommand* other)
+{
+    /*
+        if self.widgetPaths == cmd.widgetPaths and self.propertyName == cmd.propertyName:
+            self.newValue = cmd.newValue
+
+            return True
+    */
+    return false;
+}
+
+/*
+
+    def notifyPropertyManager(self, widgetManipulator, ignoreTarget):
+        if not ignoreTarget:
+            widgetManipulator.triggerPropertyManagerCallback({self.propertyName})
+        # some properties are related to others so that
+        # when one changes, the others change too.
+        # the following ensures that notifications are sent
+        # about the related properties as well.
+        related = None
+        if self.propertyName == "Size":
+            related = set([ "Area" ])
+        elif self.propertyName == "Area":
+            related = {"Position", "Size"}
+        elif self.propertyName == "Position":
+            related = set([ "Area" ])
+
+        if related is not None:
+            widgetManipulator.triggerPropertyManagerCallback(related)
+*/
+
+//---------------------------------------------------------------------
+
+LayoutHorizontalAlignCommand::LayoutHorizontalAlignCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, CEGUI::HorizontalAlignment newAlignment)
+    : _visualMode(visualMode)
+    , _records(records)
+    , _newAlignment(newAlignment)
+{
+    refreshText();
+}
+
+void LayoutHorizontalAlignCommand::undo()
+{
+    QUndoCommand::undo();
+
+    for (const auto& rec : _records)
+    {
+        auto manipulator = _visualMode.getScene()->getManipulatorByPath(rec.path);
+        manipulator->getWidget()->setHorizontalAlignment(rec.oldAlignment);
+        manipulator->updateFromWidget();
+
+        manipulator->triggerPropertyManagerCallback({"HorizontalAlignment"});
+    }
+}
+
+void LayoutHorizontalAlignCommand::redo()
+{
+    for (const auto& rec : _records)
+    {
+        auto manipulator = _visualMode.getScene()->getManipulatorByPath(rec.path);
+        manipulator->getWidget()->setHorizontalAlignment(_newAlignment);
+        manipulator->updateFromWidget();
+
+        manipulator->triggerPropertyManagerCallback({"HorizontalAlignment"});
+    }
+
+    QUndoCommand::redo();
+}
+
+bool LayoutHorizontalAlignCommand::mergeWith(const QUndoCommand* other)
+{
+    const LayoutHorizontalAlignCommand* otherCmd = dynamic_cast<const LayoutHorizontalAlignCommand*>(other);
+    if (!otherCmd) return false;
+
+    if (_records.size() != otherCmd->_records.size()) return false;
+
+    QStringList pathes;
+    for (const auto& rec : _records)
+        pathes.push_back(rec.path);
+
+    for (const auto& rec : otherCmd->_records)
+        if (!pathes.contains(rec.path)) return false;
+
+    // The same set of widgets, can merge
+
+    _newAlignment = otherCmd->_newAlignment;
+    refreshText();
+    return true;
+}
+
+void LayoutHorizontalAlignCommand::refreshText()
+{
+    QString alignStr;
+    switch (_newAlignment)
+    {
+        case CEGUI::HorizontalAlignment::Left: alignStr = "left"; break;
+        case CEGUI::HorizontalAlignment::Centre: alignStr = "center"; break;
+        case CEGUI::HorizontalAlignment::Right: alignStr = "right"; break;
+    }
+
+    if (_records.size() == 1)
+        setText(QString("Horizontally align '%1' %2").arg(_records[0].path, alignStr));
+    else
+        setText(QString("Horizontally align %1 widgets %2").arg(_records.size()).arg(alignStr));
+}
+
+//---------------------------------------------------------------------
+
+LayoutVerticalAlignCommand::LayoutVerticalAlignCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, CEGUI::VerticalAlignment newAlignment)
+    : _visualMode(visualMode)
+    , _records(records)
+    , _newAlignment(newAlignment)
+{
+    refreshText();
+}
+
+void LayoutVerticalAlignCommand::undo()
+{
+    QUndoCommand::undo();
+
+    for (const auto& rec : _records)
+    {
+        auto manipulator = _visualMode.getScene()->getManipulatorByPath(rec.path);
+        manipulator->getWidget()->setVerticalAlignment(rec.oldAlignment);
+        manipulator->updateFromWidget();
+
+        manipulator->triggerPropertyManagerCallback({"VerticalAlignment"});
+    }
+}
+
+void LayoutVerticalAlignCommand::redo()
+{
+    for (const auto& rec : _records)
+    {
+        auto manipulator = _visualMode.getScene()->getManipulatorByPath(rec.path);
+        manipulator->getWidget()->setVerticalAlignment(_newAlignment);
+        manipulator->updateFromWidget();
+
+        manipulator->triggerPropertyManagerCallback({"VerticalAlignment"});
+    }
+
+    QUndoCommand::redo();
+}
+
+bool LayoutVerticalAlignCommand::mergeWith(const QUndoCommand* other)
+{
+    const LayoutVerticalAlignCommand* otherCmd = dynamic_cast<const LayoutVerticalAlignCommand*>(other);
+    if (!otherCmd) return false;
+
+    if (_records.size() != otherCmd->_records.size()) return false;
+
+    QStringList pathes;
+    for (const auto& rec : _records)
+        pathes.push_back(rec.path);
+
+    for (const auto& rec : otherCmd->_records)
+        if (!pathes.contains(rec.path)) return false;
+
+    // The same set of widgets, can merge
+
+    _newAlignment = otherCmd->_newAlignment;
+    refreshText();
+    return true;
+}
+
+void LayoutVerticalAlignCommand::refreshText()
+{
+    QString alignStr;
+    switch (_newAlignment)
+    {
+        case CEGUI::VerticalAlignment::Top: alignStr = "top"; break;
+        case CEGUI::VerticalAlignment::Centre: alignStr = "center"; break;
+        case CEGUI::VerticalAlignment::Bottom: alignStr = "bottom"; break;
+    }
+
+    if (_records.size() == 1)
+        setText(QString("Vertically align '%1' %2").arg(_records[0].path, alignStr));
+    else
+        setText(QString("Vertically align %1 widgets %2").arg(_records.size()).arg(alignStr));
 }
 
 //---------------------------------------------------------------------
@@ -355,212 +594,6 @@ void LayoutPasteCommand::redo()
 //---------------------------------------------------------------------
 
 /*
-class PropertyEditCommand(commands.UndoCommand):
-    """This command resizes given widgets from old positions and old sizes to new
-    """
-
-    def __init__(self, visual, propertyName, widgetPaths, oldValues, newValue, ignoreNextPropertyManagerCallback=False):
-        super(PropertyEditCommand, self).__init__()
-
-        self.visual = visual
-
-        self.propertyName = propertyName
-        self.widgetPaths = widgetPaths
-        self.oldValues = oldValues
-        self.newValue = newValue
-
-        if len(self.widgetPaths) == 1:
-            self.setText("Change '%s' in '%s'" % (self.propertyName, self.widgetPaths[0]))
-        else:
-            self.setText("Change '%s' in %i widgets" % (self.propertyName, len(self.widgetPaths)))
-
-        self.ignoreNextPropertyManagerCallback = ignoreNextPropertyManagerCallback
-
-    def id(self):
-        return idbase + 5
-
-    def mergeWith(self, cmd):
-        if self.widgetPaths == cmd.widgetPaths and self.propertyName == cmd.propertyName:
-            self.newValue = cmd.newValue
-
-            return True
-
-        return False
-
-    def notifyPropertyManager(self, widgetManipulator, ignoreTarget):
-        if not ignoreTarget:
-            widgetManipulator.triggerPropertyManagerCallback({self.propertyName})
-        # some properties are related to others so that
-        # when one changes, the others change too.
-        # the following ensures that notifications are sent
-        # about the related properties as well.
-        related = None
-        if self.propertyName == "Size":
-            related = set([ "Area" ])
-        elif self.propertyName == "Area":
-            related = {"Position", "Size"}
-        elif self.propertyName == "Position":
-            related = set([ "Area" ])
-
-        if related is not None:
-            widgetManipulator.triggerPropertyManagerCallback(related)
-
-    def undo(self):
-        super(PropertyEditCommand, self).undo()
-
-        for widgetPath in self.widgetPaths:
-            widgetManipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-            widgetManipulator.widget.setProperty(self.propertyName, self.oldValues[widgetPath])
-            widgetManipulator.updateFromWidget(False, True)
-
-            self.notifyPropertyManager(widgetManipulator, self.ignoreNextPropertyManagerCallback)
-        self.ignoreNextPropertyManagerCallback = False
-
-        # make sure to redraw the scene so the changes are visible
-        self.visual.scene.update()
-
-    def redo(self):
-        for widgetPath in self.widgetPaths:
-            widgetManipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-            widgetManipulator.widget.setProperty(self.propertyName, self.newValue)
-            widgetManipulator.updateFromWidget(False, True)
-
-            self.notifyPropertyManager(widgetManipulator, self.ignoreNextPropertyManagerCallback)
-        self.ignoreNextPropertyManagerCallback = False
-
-        # make sure to redraw the scene so the changes are visible
-        self.visual.scene.update()
-
-        super(PropertyEditCommand, self).redo()
-
-
-class HorizontalAlignCommand(commands.UndoCommand):
-    """This command aligns selected widgets accordingly
-    """
-
-    def __init__(self, visual, widgetPaths, oldAlignments, newAlignment):
-        super(HorizontalAlignCommand, self).__init__()
-
-        self.visual = visual
-
-        self.widgetPaths = widgetPaths
-        self.oldAlignments = oldAlignments
-        self.newAlignment = newAlignment
-
-        self.refreshText()
-
-    def refreshText(self):
-        alignStr = ""
-        if self.newAlignment == PyCEGUI.HA_LEFT:
-            alignStr = "left"
-        elif self.newAlignment == PyCEGUI.HA_CENTRE:
-            alignStr = "centre"
-        elif self.newAlignment == PyCEGUI.HA_RIGHT:
-            alignStr = "right"
-        else:
-            raise RuntimeError("Unknown horizontal alignment")
-
-        if len(self.widgetPaths) == 1:
-            self.setText("Horizontally align '%s' %s" % (self.widgetPaths[0], alignStr))
-        else:
-            self.setText("Horizontally align %i widgets %s" % (len(self.widgetPaths), alignStr))
-
-    def id(self):
-        return idbase + 6
-
-    def mergeWith(self, cmd):
-        if self.widgetPaths == cmd.widgetPaths:
-            self.newAlignment = cmd.newAlignment
-            self.refreshText()
-
-            return True
-
-        return False
-
-    def undo(self):
-        super(HorizontalAlignCommand, self).undo()
-
-        for widgetPath in self.widgetPaths:
-            widgetManipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-            widgetManipulator.widget.setHorizontalAlignment(self.oldAlignments[widgetPath])
-            widgetManipulator.updateFromWidget()
-
-            widgetManipulator.triggerPropertyManagerCallback(set(["HorizontalAlignment"]))
-
-    def redo(self):
-        for widgetPath in self.widgetPaths:
-            widgetManipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-            widgetManipulator.widget.setHorizontalAlignment(self.newAlignment)
-            widgetManipulator.updateFromWidget()
-
-            widgetManipulator.triggerPropertyManagerCallback(set(["HorizontalAlignment"]))
-
-        super(HorizontalAlignCommand, self).redo()
-
-class VerticalAlignCommand(commands.UndoCommand):
-    """This command aligns selected widgets accordingly
-    """
-
-    def __init__(self, visual, widgetPaths, oldAlignments, newAlignment):
-        super(VerticalAlignCommand, self).__init__()
-
-        self.visual = visual
-
-        self.widgetPaths = widgetPaths
-        self.oldAlignments = oldAlignments
-        self.newAlignment = newAlignment
-
-        self.refreshText()
-
-    def refreshText(self):
-        alignStr = ""
-        if self.newAlignment == PyCEGUI.VA_TOP:
-            alignStr = "top"
-        elif self.newAlignment == PyCEGUI.VA_CENTRE:
-            alignStr = "centre"
-        elif self.newAlignment == PyCEGUI.VA_BOTTOM:
-            alignStr = "bottom"
-        else:
-            raise RuntimeError("Unknown vertical alignment")
-
-        if len(self.widgetPaths) == 1:
-            self.setText("Vertically align '%s' %s" % (self.widgetPaths[0], alignStr))
-        else:
-            self.setText("Vertically align %i widgets %s" % (len(self.widgetPaths), alignStr))
-
-    def id(self):
-        return idbase + 7
-
-    def mergeWith(self, cmd):
-        if self.widgetPaths == cmd.widgetPaths:
-            self.newAlignment = cmd.newAlignment
-            self.refreshText()
-
-            return True
-
-        return False
-
-    def undo(self):
-        super(VerticalAlignCommand, self).undo()
-
-        for widgetPath in self.widgetPaths:
-            widgetManipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-            widgetManipulator.widget.setVerticalAlignment(self.oldAlignments[widgetPath])
-            widgetManipulator.updateFromWidget()
-
-            widgetManipulator.triggerPropertyManagerCallback(set(["VerticalAlignment"]))
-
-    def redo(self):
-        for widgetPath in self.widgetPaths:
-            widgetManipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-            widgetManipulator.widget.setVerticalAlignment(self.newAlignment)
-            widgetManipulator.updateFromWidget()
-
-            widgetManipulator.triggerPropertyManagerCallback(set(["VerticalAlignment"]))
-
-        super(VerticalAlignCommand, self).redo()
-
-
 class ReparentCommand(commands.UndoCommand):
     """This command changes parent of given windows
     """

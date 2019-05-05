@@ -155,3 +155,30 @@ CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent)
 }
 
 }
+
+/*
+    def createManipulator(self, parentManipulator, widget, recursive = True, skipAutoWidgets = False):
+        """Creates a manipulator suitable for the widget resulting from reconstruction
+        """
+
+        ret = Manipulator(parentManipulator, widget, recursive, skipAutoWidgets)
+        ret.updateFromWidget()
+        return ret
+
+    def reconstruct(self, rootManipulator):
+        ret = super(SerialisationData, self).reconstruct(rootManipulator)
+
+        if ret.parentItem() is None:
+            # this is a root widget being reconstructed, handle this accordingly
+            self.visual.setRootWidgetManipulator(ret)
+
+        ////
+
+        # Extra code because of auto windows
+        # NOTE: We don't have to do rootManipulator.createChildManipulators
+        #       because auto windows never get created outside their parent
+        parentManipulator.createChildManipulators(True, False)
+
+        realPathSplit = widget.getNamePath().split("/", 1)
+        ret = parent.getChildByPath(realPathSplit[1])
+*/
