@@ -244,12 +244,7 @@ bool LayoutScene::deleteSelectedWidgets()
     }
 
     if (!widgetPaths.isEmpty())
-    {
-/*
-            cmd = undo.DeleteCommand(self.visual, widgetPaths)
-            self.visual.tabbedEditor.undoStack.push(cmd)
-*/
-    }
+        _visualMode.getEditor().getUndoStack()->push(new LayoutDeleteCommand(_visualMode, std::move(widgetPaths)));
 
     return true;
 }
@@ -358,10 +353,10 @@ void LayoutScene::dropEvent(QGraphicsSceneDragDropEvent* event)
         if (data.size() > 0)
         {
             QString widgetType = data.data();
-            /*
-                    cmd = undo.CreateCommand(self.visual, "", widgetType, widgetType.rsplit("/", 1)[-1])
-                    self.visual.tabbedEditor.undoStack.push(cmd)
-            */
+            int sepPos = widgetType.lastIndexOf('/');
+            QString widgetName = (sepPos < 0) ? widgetType : widgetType.mid(sepPos + 1);
+            _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, "", widgetType, widgetName));
+
             event->acceptProposedAction();
         }
         else

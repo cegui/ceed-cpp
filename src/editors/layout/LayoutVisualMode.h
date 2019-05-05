@@ -29,7 +29,7 @@ public:
     LayoutVisualMode(LayoutEditor& editor);
 
     void initialize(CEGUI::Window* rootWidget);
-    void setRootWidget(CEGUI::Window* widget);
+    LayoutManipulator* setRootWidget(CEGUI::Window* widget);
     void setRootWidgetManipulator(LayoutManipulator* manipulator);
     CEGUI::Window* getRootWidget() const;
     void rebuildEditorMenu(QMenu* editorMenu);

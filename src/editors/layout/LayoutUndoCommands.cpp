@@ -5,6 +5,7 @@
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
 #include "src/cegui/CEGUIUtils.h"
 #include <CEGUI/Window.h>
+#include <CEGUI/WindowManager.h>
 
 LayoutMoveCommand::LayoutMoveCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records)
     : _visualMode(visualMode)
@@ -175,6 +176,129 @@ bool LayoutResizeCommand::mergeWith(const QUndoCommand* other)
 
 //---------------------------------------------------------------------
 
+LayoutDeleteCommand::LayoutDeleteCommand(LayoutVisualMode& visualMode, QStringList&& paths)
+    : _visualMode(visualMode)
+{
+    // Exclude child widgets of widgets being deleted from the explicit list
+    while (!paths.empty())
+    {
+        QString currPath = paths.back();
+        paths.pop_back();
+
+        bool parentFound = false;
+        for (const QString& potentialParentPath : paths)
+        {
+            if (currPath.startsWith(potentialParentPath + '/'))
+            {
+                parentFound = true;
+                break;
+            }
+        }
+
+        if (!parentFound && !_paths.contains(currPath))
+            _paths.push_back(std::move(currPath));
+    }
+
+    // Serialize deleted hierarchies for undo
+    QDataStream stream(&_data, QIODevice::WriteOnly);
+    for (const QString& path : _paths)
+    {
+        auto manipulator = _visualMode.getScene()->getManipulatorByPath(path);
+        assert(manipulator);
+        CEGUIUtils::serializeWidget(*manipulator->getWidget(), stream, true);
+    }
+
+    if (_paths.size() == 1)
+        setText(QString("Delete '%1'").arg(_paths[0]));
+    else
+        setText(QString("Delete %1 widgets'").arg(_paths.size()));
+}
+
+void LayoutDeleteCommand::undo()
+{
+    QUndoCommand::undo();
+
+    int i = 0;
+    QDataStream stream(&_data, QIODevice::ReadOnly);
+    while (!stream.atEnd())
+    {
+        //!!!TODO: test for root widget!
+        const QString& path = _paths[i++];
+        int sepPos = path.lastIndexOf('/');
+        LayoutManipulator* parent = (sepPos < 0) ? nullptr :
+                    _visualMode.getScene()->getManipulatorByPath(path.left(sepPos));
+
+        CEGUI::Window* widget = CEGUIUtils::deserializeWidget(stream, parent->getWidget());
+        LayoutManipulator* manipulator = parent ? parent->createChildManipulator(widget) : _visualMode.setRootWidget(widget);
+        manipulator->setSelected(true);
+    }
+
+    _visualMode.getHierarchyDockWidget()->refresh();
+}
+
+void LayoutDeleteCommand::redo()
+{
+    for (const QString& path : _paths)
+    {
+        auto manipulator = _visualMode.getScene()->getManipulatorByPath(path);
+        assert(manipulator);
+        manipulator->detach();
+    }
+
+    _visualMode.getHierarchyDockWidget()->refresh();
+
+    QUndoCommand::redo();
+}
+
+//---------------------------------------------------------------------
+
+LayoutCreateCommand::LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath, const QString& type, const QString& name)
+    : _visualMode(visualMode)
+    , _parentPath(parentPath)
+    , _type(type)
+    , _name(name)
+{
+    setText(QString("Create '%1' of type '%2'").arg(name, type));
+}
+
+void LayoutCreateCommand::undo()
+{
+    QUndoCommand::undo();
+
+    const QString fullPath = _parentPath.isEmpty() ? _name : _parentPath + '/' + _name;
+    auto manipulator = _visualMode.getScene()->getManipulatorByPath(fullPath);
+    manipulator->detach();
+
+    _visualMode.getHierarchyDockWidget()->refresh();
+}
+
+void LayoutCreateCommand::redo()
+{
+    CEGUI::Window* widget = CEGUI::WindowManager::getSingleton().createWindow(
+                CEGUIUtils::qStringToString(_type),
+                CEGUIUtils::qStringToString(_name));
+
+    LayoutManipulator* parent = _parentPath.isEmpty() ? nullptr :
+                _visualMode.getScene()->getManipulatorByPath(_parentPath);
+
+    LayoutManipulator* manipulator = parent ? parent->createChildManipulator(widget) : _visualMode.setRootWidget(widget);
+
+    // If the size is 0x0, the widget will be hard to deal with, lets fix that in that case
+    if (widget->getSize() == CEGUI::USize(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)))
+        widget->setSize(CEGUI::USize(CEGUI::UDim(0.f, 50.f), CEGUI::UDim(0.f, 50.f)));
+
+    manipulator->updateFromWidget(true, true); //???need? called on creation
+
+    // Ensure this isn't obscured by it's parent
+    manipulator->moveToFront();
+
+    _visualMode.getHierarchyDockWidget()->refresh();
+
+    QUndoCommand::redo();
+}
+
+//---------------------------------------------------------------------
+
 LayoutPasteCommand::LayoutPasteCommand(LayoutVisualMode& visualMode,
                                        const QString& targetPath,
                                        QByteArray&& data)
@@ -231,146 +355,6 @@ void LayoutPasteCommand::redo()
 //---------------------------------------------------------------------
 
 /*
-class DeleteCommand(commands.UndoCommand):
-    """This command deletes given widgets"""
-
-    def __init__(self, visual, widgetPaths):
-        super(DeleteCommand, self).__init__()
-
-        self.visual = visual
-
-        self.widgetPaths = widgetPaths
-        self.widgetData = {}
-
-        # we have to add all the child widgets of all widgets we are deleting
-        for widgetPath in self.widgetPaths:
-            manipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-            dependencies = manipulator.getAllDescendantManipulators()
-
-            for dependency in dependencies:
-                depencencyNamePath = dependency.widget.getNamePath()
-                if depencencyNamePath not in self.widgetPaths:
-                    self.widgetPaths.append(depencencyNamePath)
-
-        # now we have to sort them in a way that ensures the most depending widgets come first
-        # (the most deeply nested widgets get deleted first before their ancestors get deleted)
-        class ManipulatorDependencyKey(object):
-            def __init__(self, visual, path):
-                self.visual = visual
-
-                self.path = path
-                self.manipulator = self.visual.scene.getManipulatorByPath(path)
-
-            def __lt__(self, otherKey):
-                # if this is the ancestor of other manipulator, it comes after it
-                if self.manipulator.widget.isAncestor(otherKey.manipulator.widget):
-                    return True
-                # vice versa
-                if otherKey.manipulator.widget.isAncestor(self.manipulator.widget):
-                    return False
-
-                # otherwise, we don't care but lets define a precise order
-                return self.path < otherKey.path
-
-        self.widgetPaths = sorted(self.widgetPaths, key = lambda path: ManipulatorDependencyKey(self.visual, path))
-
-        # we have to store everything about these widgets before we destroy them,
-        # we want to be able to restore if user decides to undo
-        for widgetPath in self.widgetPaths:
-            # serialiseChildren is False because we have already included all the children and they are handled separately
-            self.widgetData[widgetPath] = widgethelpers.SerialisationData(self.visual, self.visual.scene.getManipulatorByPath(widgetPath).widget,
-                                                                          serialiseChildren = False)
-
-        self.refreshText()
-
-    def refreshText(self):
-        if len(self.widgetPaths) == 1:
-            self.setText("Delete '%s'" % (self.widgetPaths[0]))
-        else:
-            self.setText("Delete %i widgets" % (len(self.widgetPaths)))
-
-    def id(self):
-        return idbase + 3
-
-    def mergeWith(self, cmd):
-        # we never merge deletes
-        return False
-
-    def undo(self):
-        super(DeleteCommand, self).undo()
-
-        # we have to undo in reverse to ensure widgets have their (potential) dependencies in place when they
-        # are constructed
-        for widgetPath in reversed(self.widgetPaths):
-            data = self.widgetData[widgetPath]
-            result = data.reconstruct(self.visual.scene.rootManipulator)
-
-        self.visual.hierarchyDockWidget.refresh()
-
-    def redo(self):
-        for widgetPath in self.widgetPaths:
-            manipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-            manipulator.detach(destroyWidget = True)
-
-        self.visual.hierarchyDockWidget.refresh()
-
-        super(DeleteCommand, self).redo()
-
-
-class CreateCommand(commands.UndoCommand):
-    """This command creates one widget"""
-
-    def __init__(self, visual, parentWidgetPath, widgetType, widgetName):
-        super(CreateCommand, self).__init__()
-
-        self.visual = visual
-
-        self.parentWidgetPath = parentWidgetPath
-        self.widgetType = widgetType
-        self.widgetName = widgetName
-
-        self.refreshText()
-
-    def refreshText(self):
-        self.setText("Create '%s' of type '%s'" % (self.widgetName, self.widgetType))
-
-    def id(self):
-        return idbase + 4
-
-    def mergeWith(self, cmd):
-        # we never merge creates
-        return False
-
-    def undo(self):
-        super(CreateCommand, self).undo()
-
-        manipulator = self.visual.scene.getManipulatorByPath(self.parentWidgetPath + "/" + self.widgetName if self.parentWidgetPath != "" else self.widgetName)
-        manipulator.detach(destroyWidget = True)
-
-        self.visual.hierarchyDockWidget.refresh()
-
-    def redo(self):
-        data = widgethelpers.SerialisationData(self.visual)
-
-        data.name = self.widgetName
-        data.type = self.widgetType
-        data.parentPath = self.parentWidgetPath
-
-        result = data.reconstruct(self.visual.scene.rootManipulator)
-        # if the size is 0x0, the widget will be hard to deal with, lets fix that in that case
-        if result.widget.getSize() == PyCEGUI.USize(PyCEGUI.UDim(0, 0), PyCEGUI.UDim(0, 0)):
-            result.widget.setSize(PyCEGUI.USize(PyCEGUI.UDim(0, 50), PyCEGUI.UDim(0, 50)))
-
-        result.updateFromWidget(True, True)
-
-        # ensure this isn't obscured by it's parent
-        result.moveToFront()
-
-        self.visual.hierarchyDockWidget.refresh()
-
-        super(CreateCommand, self).redo()
-
-
 class PropertyEditCommand(commands.UndoCommand):
     """This command resizes given widgets from old positions and old sizes to new
     """
@@ -385,15 +369,12 @@ class PropertyEditCommand(commands.UndoCommand):
         self.oldValues = oldValues
         self.newValue = newValue
 
-        self.refreshText()
-
-        self.ignoreNextPropertyManagerCallback = ignoreNextPropertyManagerCallback
-
-    def refreshText(self):
         if len(self.widgetPaths) == 1:
             self.setText("Change '%s' in '%s'" % (self.propertyName, self.widgetPaths[0]))
         else:
             self.setText("Change '%s' in %i widgets" % (self.propertyName, len(self.widgetPaths)))
+
+        self.ignoreNextPropertyManagerCallback = ignoreNextPropertyManagerCallback
 
     def id(self):
         return idbase + 5
@@ -700,13 +681,8 @@ class NormaliseSizeCommand(ResizeCommand):
         # we use oldPositions as newPositions because this command never changes positions of anything
         super(NormaliseSizeCommand, self).__init__(visual, widgetPaths, oldPositions, oldSizes, oldPositions, newSizes)
 
-        self.refreshText()
-
     def normaliseSize(self, widgetPath):
         raise NotImplementedError("Each subclass of NormaliseSizeCommand must implement the normaliseSize method")
-
-    def refreshText(self):
-        raise NotImplementedError("Each subclass of NormaliseSizeCommand must implement the refreshText method")
 
     def id(self):
         raise NotImplementedError("Each subclass of NormaliseSizeCommand must implement the id method")
@@ -722,6 +698,11 @@ class NormaliseSizeToRelativeCommand(NormaliseSizeCommand):
         # because otherwise the normaliseSize will not work!
         self.visual = visual
 
+        if len(self.widgetPaths) == 1:
+            self.setText("Normalise size of '%s' to relative" % (self.widgetPaths[0]))
+        else:
+            self.setText("Normalise size of %i widgets to relative" % (len(self.widgetPaths)))
+
         super(NormaliseSizeToRelativeCommand, self).__init__(visual, widgetPaths, oldPositions, oldSizes)
 
     def normaliseSize(self, widgetPath):
@@ -731,12 +712,6 @@ class NormaliseSizeToRelativeCommand(NormaliseSizeCommand):
 
         return PyCEGUI.USize(PyCEGUI.UDim(pixelSize.d_width / baseSize.d_width, 0),
                              PyCEGUI.UDim(pixelSize.d_height / baseSize.d_height, 0))
-
-    def refreshText(self):
-        if len(self.widgetPaths) == 1:
-            self.setText("Normalise size of '%s' to relative" % (self.widgetPaths[0]))
-        else:
-            self.setText("Normalise size of %i widgets to relative" % (len(self.widgetPaths)))
 
     def id(self):
         return idbase + 10
@@ -748,6 +723,11 @@ class NormaliseSizeToAbsoluteCommand(NormaliseSizeCommand):
         # because otherwise the normaliseSize will not work!
         self.visual = visual
 
+        if len(self.widgetPaths) == 1:
+            self.setText("Normalise size of '%s' to absolute" % (self.widgetPaths[0]))
+        else:
+            self.setText("Normalise size of %i widgets to absolute" % (len(self.widgetPaths)))
+
         super(NormaliseSizeToAbsoluteCommand, self).__init__(visual, widgetPaths, oldPositions, oldSizes)
 
     def normaliseSize(self, widgetPath):
@@ -756,12 +736,6 @@ class NormaliseSizeToAbsoluteCommand(NormaliseSizeCommand):
 
         return PyCEGUI.USize(PyCEGUI.UDim(0, pixelSize.d_width),
                              PyCEGUI.UDim(0, pixelSize.d_height))
-
-    def refreshText(self):
-        if len(self.widgetPaths) == 1:
-            self.setText("Normalise size of '%s' to absolute" % (self.widgetPaths[0]))
-        else:
-            self.setText("Normalise size of %i widgets to absolute" % (len(self.widgetPaths)))
 
     def id(self):
         return idbase + 11
@@ -775,13 +749,8 @@ class NormalisePositionCommand(MoveCommand):
 
         super(NormalisePositionCommand, self).__init__(visual, widgetPaths, oldPositions, newPositions)
 
-        self.refreshText()
-
     def normalisePosition(self, widgetPath, oldPosition):
         raise NotImplementedError("Each subclass of NormalisePositionCommand must implement the normalisePosition method")
-
-    def refreshText(self):
-        raise NotImplementedError("Each subclass of NormalisePositionCommand must implement the refreshText method")
 
     def id(self):
         raise NotImplementedError("Each subclass of NormalisePositionCommand must implement the id method")
@@ -797,6 +766,11 @@ class NormalisePositionToRelativeCommand(NormalisePositionCommand):
         # because otherwise the normalisePosition method will not work!
         self.visual = visual
 
+        if len(self.widgetPaths) == 1:
+            self.setText("Normalise position of '%s' to relative" % (self.widgetPaths[0]))
+        else:
+            self.setText("Normalise position of %i widgets to relative" % (len(self.widgetPaths)))
+
         super(NormalisePositionToRelativeCommand, self).__init__(visual, widgetPaths, oldPositions)
 
     def normalisePosition(self, widgetPath, position):
@@ -805,12 +779,6 @@ class NormalisePositionToRelativeCommand(NormalisePositionCommand):
 
         return PyCEGUI.UVector2(PyCEGUI.UDim((position.d_x.d_offset + position.d_x.d_scale * baseSize.d_width) / baseSize.d_width, 0),
                                 PyCEGUI.UDim((position.d_y.d_offset + position.d_y.d_scale * baseSize.d_height) / baseSize.d_height, 0))
-
-    def refreshText(self):
-        if len(self.widgetPaths) == 1:
-            self.setText("Normalise position of '%s' to relative" % (self.widgetPaths[0]))
-        else:
-            self.setText("Normalise position of %i widgets to relative" % (len(self.widgetPaths)))
 
     def id(self):
         return idbase + 12
@@ -822,6 +790,11 @@ class NormalisePositionToAbsoluteCommand(NormalisePositionCommand):
         # because otherwise the normalisePosition method will not work!
         self.visual = visual
 
+        if len(self.widgetPaths) == 1:
+            self.setText("Normalise position of '%s' to absolute" % (self.widgetPaths[0]))
+        else:
+            self.setText("Normalise position of %i widgets to absolute" % (len(self.widgetPaths)))
+
         super(NormalisePositionToAbsoluteCommand, self).__init__(visual, widgetPaths, oldPositions)
 
     def normalisePosition(self, widgetPath, position):
@@ -830,12 +803,6 @@ class NormalisePositionToAbsoluteCommand(NormalisePositionCommand):
 
         return PyCEGUI.UVector2(PyCEGUI.UDim(0, position.d_x.d_offset + position.d_x.d_scale * baseSize.d_width),
                                 PyCEGUI.UDim(0, position.d_y.d_offset + position.d_y.d_scale * baseSize.d_height))
-
-    def refreshText(self):
-        if len(self.widgetPaths) == 1:
-            self.setText("Normalise position of '%s' to absolute" % (self.widgetPaths[0]))
-        else:
-            self.setText("Normalise position of %i widgets to absolute" % (len(self.widgetPaths)))
 
     def id(self):
         return idbase + 13
@@ -916,18 +883,15 @@ class RoundPositionCommand(MoveCommand):
 
         super(RoundPositionCommand, self).__init__(visual, widgetPaths, oldPositions, newPositions)
 
-        self.refreshText()
+        if len(self.widgetPaths) == 1:
+            self.setText("Round absolute position of '%s' to nearest integer" % (self.widgetPaths[0]))
+        else:
+            self.setText("Round absolute positions of %i widgets to nearest integers" % (len(self.widgetPaths)))
 
     @staticmethod
     def roundAbsolutePosition(oldPosition):
         return PyCEGUI.UVector2(PyCEGUI.UDim(oldPosition.d_x.d_scale, PyCEGUI.CoordConverter.alignToPixels(oldPosition.d_x.d_offset)),
                                 PyCEGUI.UDim(oldPosition.d_y.d_scale, PyCEGUI.CoordConverter.alignToPixels(oldPosition.d_y.d_offset)))
-
-    def refreshText(self):
-        if len(self.widgetPaths) == 1:
-            self.setText("Round absolute position of '%s' to nearest integer" % (self.widgetPaths[0]))
-        else:
-            self.setText("Round absolute positions of %i widgets to nearest integers" % (len(self.widgetPaths)))
 
     def id(self):
         return idbase + 15
@@ -951,18 +915,15 @@ class RoundSizeCommand(ResizeCommand):
         # we use oldPositions as newPositions because this command never changes positions of anything
         super(RoundSizeCommand, self).__init__(visual, widgetPaths, oldPositions, oldSizes, oldPositions, newSizes)
 
-        self.refreshText()
+        if len(self.widgetPaths) == 1:
+            self.setText("Round absolute size of '%s' to nearest integer" % (self.widgetPaths[0]))
+        else:
+            self.setText("Round absolute sizes of %i widgets to nearest integers" % (len(self.widgetPaths)))
 
     @staticmethod
     def roundAbsoluteSize(oldSize):
         return PyCEGUI.USize(PyCEGUI.UDim(oldSize.d_width.d_scale, PyCEGUI.CoordConverter.alignToPixels(oldSize.d_width.d_offset)),
                              PyCEGUI.UDim(oldSize.d_height.d_scale, PyCEGUI.CoordConverter.alignToPixels(oldSize.d_height.d_offset)))
-
-    def refreshText(self):
-        if len(self.widgetPaths) == 1:
-            self.setText("Round absolute size of '%s' to nearest integer" % (self.widgetPaths[0]))
-        else:
-            self.setText("Round absolute sizes of %i widgets to nearest integers" % (len(self.widgetPaths)))
 
     def id(self):
         return idbase + 16

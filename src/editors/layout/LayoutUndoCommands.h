@@ -63,6 +63,43 @@ protected:
     std::vector<Record> _records;
 };
 
+// This command deletes given widgets
+class LayoutDeleteCommand : public QUndoCommand
+{
+public:
+
+    LayoutDeleteCommand(LayoutVisualMode& visualMode, QStringList&& paths);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return LayoutUndoCommandBase + 3; }
+
+protected:
+
+    LayoutVisualMode& _visualMode;
+    QStringList _paths;
+    QByteArray _data;
+};
+
+// This command creates one widget
+class LayoutCreateCommand : public QUndoCommand
+{
+public:
+
+    LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath, const QString& type, const QString& name);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return LayoutUndoCommandBase + 4; }
+
+protected:
+
+    LayoutVisualMode& _visualMode;
+    QString _parentPath;
+    QString _type;
+    QString _name;
+};
+
 // This command pastes clipboard data to the given widget
 class LayoutPasteCommand : public QUndoCommand
 {
