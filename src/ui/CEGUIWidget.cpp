@@ -10,6 +10,13 @@ CEGUIWidget::CEGUIWidget(QWidget *parent) :
     ui->setupUi(this);
 
     ui->view->setBackgroundRole(QPalette::Dark);
+    ui->lblCursorPosition->setText("");
+
+    connect(ui->view, &CEGUIGraphicsView::cursorPositionChanged, [this](int x, int y)
+    {
+        QString text("Cursor: x %1, y %2");
+        ui->lblCursorPosition->setText(text.arg(x).arg(y));
+    });
 
     /*
         self.debugInfo = DebugInfo(self)

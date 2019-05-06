@@ -165,13 +165,27 @@ void CEGUIGraphicsView::drawBackground(QPainter* painter, const QRectF& rect)
     }
 }
 
-void CEGUIGraphicsView::mouseMoveEvent(QMouseEvent* event)
+void CEGUIGraphicsView::wheelEvent(QWheelEvent* event)
 {
     bool handled = false;
 
     if (_injectInput && ceguiInput)
     {
-        QPointF point = mapToScene(event->pos());
+        handled = ceguiInput->injectMouseWheelChange(static_cast<float>(event->delta()));
+    }
+
+    if (!handled) ResizableGraphicsView::wheelEvent(event);
+}
+
+void CEGUIGraphicsView::mouseMoveEvent(QMouseEvent* event)
+{
+    bool handled = false;
+
+    QPointF point = mapToScene(event->pos());
+    emit cursorPositionChanged(static_cast<int>(point.x()), static_cast<int>(point.y()));
+
+    if (_injectInput && ceguiInput)
+    {
         handled = ceguiInput->injectMousePosition(static_cast<float>(point.x()), static_cast<float>(point.y()));
     }
 
@@ -204,8 +218,6 @@ void CEGUIGraphicsView::mouseReleaseEvent(QMouseEvent* event)
 
     if (!handled) ResizableGraphicsView::mouseReleaseEvent(event);
 }
-
-// TODO: injectMouseWheelChange
 
 void CEGUIGraphicsView::keyPressEvent(QKeyEvent* event)
 {

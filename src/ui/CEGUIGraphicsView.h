@@ -32,8 +32,13 @@ public slots:
 
     void updateSelfAndScene();
 
+signals:
+
+    void cursorPositionChanged(float x, float y);
+
 private:
 
+    virtual void wheelEvent(QWheelEvent *event) override;
     virtual void mouseMoveEvent(QMouseEvent* event) override;
     virtual void mousePressEvent(QMouseEvent* event) override;
     virtual void mouseReleaseEvent(QMouseEvent* event) override;
