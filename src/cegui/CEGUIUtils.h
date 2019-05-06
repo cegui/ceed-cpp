@@ -2,6 +2,7 @@
 #define CEGUIUTILS_H
 
 #include "qstring.h"
+#include <CEGUI/InputEvent.h>
 
 namespace CEGUI
 {
@@ -21,6 +22,9 @@ namespace CEGUIUtils
 
     bool serializeWidget(const CEGUI::Window& widget, QDataStream& stream, bool recursive);
     CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent = nullptr);
+
+    CEGUI::MouseButton qtMouseButtonToMouseButton(Qt::MouseButton button);
+    CEGUI::Key::Scan qtKeyToKey(int key);
 };
 
 #endif // CEGUIUTILS_H

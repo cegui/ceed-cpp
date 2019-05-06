@@ -46,7 +46,6 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     layout->addWidget(ceguiWidget);
     ceguiWidget->setScene(scene);
     ceguiWidget->setViewFeatures(true, true, continuousRendering);
-    ceguiWidget->setInputEnabled(true);
 
     setupActions();
     setupToolBar();
@@ -267,33 +266,6 @@ void LayoutVisualMode::setupActions()
 
         self.focusPropertyInspectorFilterBoxAction = action.getAction("layout/focus_property_inspector_filter_box")
         self.connectionGroup.add(self.focusPropertyInspectorFilterBoxAction, receiver = lambda: self.focusPropertyInspectorFilterBox())
-    */
-
-    /*
-        //???to corresponding widget?
-        cat.createAction(name = "copy_widget_path", label = "C&opy Widget Paths",
-                         help_ = "Copies the 'NamePath' properties of the selected widgets to the clipboard.",
-                         icon = QtGui.QIcon("icons/actions/copy.png"))
-
-        cat.createAction(name = "rename", label = "&Rename Widget",
-                         help_ = "Edits the selected widget's name.",
-                         icon = QtGui.QIcon("icons/layout_editing/rename.png"))
-
-        cat.createAction(name = "lock_widget", label = "&Lock Widget",
-                         help_ = "Locks the widget for moving and resizing in the visual editing mode.",
-                         icon = QtGui.QIcon("icons/layout_editing/lock_widget.png"))
-
-        cat.createAction(name = "unlock_widget", label = "&Unlock Widget",
-                         help_ = "Unlocks the widget for moving and resizing in the visual editing mode.",
-                         icon = QtGui.QIcon("icons/layout_editing/unlock_widget.png"))
-
-        cat.createAction(name = "recursively_lock_widget", label = "&Lock Widget (recursively)",
-                         help_ = "Locks the widget and all its child widgets for moving and resizing in the visual editing mode.",
-                         icon = QtGui.QIcon("icons/layout_editing/lock_widget_recursively.png"))
-
-        cat.createAction(name = "recursively_unlock_widget", label = "&Unlock Widget (recursively)",
-                         help_ = "Unlocks the widget and all its child widgets for moving and resizing in the visual editing mode.",
-                         icon = QtGui.QIcon("icons/layout_editing/unlock_widget_recursively.png"))
     */
 }
 
