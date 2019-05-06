@@ -300,58 +300,58 @@ void LayoutCreateCommand::redo()
 
 //---------------------------------------------------------------------
 
-LayoutPropertyEditCommand::LayoutPropertyEditCommand(LayoutVisualMode& visualMode)
+LayoutPropertyEditCommand::LayoutPropertyEditCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, const QString& propertyName, const QString& newValue)
     : _visualMode(visualMode)
+    , _records(std::move(records))
+    , _propertyName(CEGUIUtils::qStringToString(propertyName))
+    , _newValue(CEGUIUtils::qStringToString(newValue))
 {
-/*
-    def __init__(self, visual, propertyName, widgetPaths, oldValues, newValue, ignoreNextPropertyManagerCallback=False):
-
-        self.propertyName = propertyName
-        self.widgetPaths = widgetPaths
-        self.oldValues = oldValues
-        self.newValue = newValue
-
-        if len(self.widgetPaths) == 1:
-            self.setText("Change '%s' in '%s'" % (self.propertyName, self.widgetPaths[0]))
-        else:
-            self.setText("Change '%s' in %i widgets" % (self.propertyName, len(self.widgetPaths)))
-
-        self.ignoreNextPropertyManagerCallback = ignoreNextPropertyManagerCallback
-*/
+    if (_records.size() == 1)
+        setText(QString("Change '%1' in '%2'").arg(propertyName, _records[0].path));
+    else
+        setText(QString("Change '%1' in %2 widgets").arg(propertyName).arg(_records.size()));
 }
 
 void LayoutPropertyEditCommand::undo()
 {
     QUndoCommand::undo();
 
-    /*
-        for widgetPath in self.widgetPaths:
-            widgetManipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-            widgetManipulator.widget.setProperty(self.propertyName, self.oldValues[widgetPath])
-            widgetManipulator.updateFromWidget(False, True)
+    QStringList properties;
+    fillInfluencedPropertyList(properties);
 
-            self.notifyPropertyManager(widgetManipulator, self.ignoreNextPropertyManagerCallback)
-        self.ignoreNextPropertyManagerCallback = False
+    for (const auto& rec : _records)
+    {
+        auto manipulator = _visualMode.getScene()->getManipulatorByPath(rec.path);
+        assert(manipulator);
+        manipulator->getWidget()->setProperty(_propertyName, rec.oldValue);
+        manipulator->updateFromWidget(false, true);
+        manipulator->triggerPropertyManagerCallback(properties);
+    }
 
-        # make sure to redraw the scene so the changes are visible
-        self.visual.scene.update()
-    */
+    //_firstCall = false;
+
+    // Make sure to redraw the scene so the changes are visible
+    _visualMode.getScene()->update();
 }
 
 void LayoutPropertyEditCommand::redo()
 {
-/*
-        for widgetPath in self.widgetPaths:
-            widgetManipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-            widgetManipulator.widget.setProperty(self.propertyName, self.newValue)
-            widgetManipulator.updateFromWidget(False, True)
+    QStringList properties;
+    fillInfluencedPropertyList(properties);
 
-            self.notifyPropertyManager(widgetManipulator, self.ignoreNextPropertyManagerCallback)
-        self.ignoreNextPropertyManagerCallback = False
+    for (const auto& rec : _records)
+    {
+        auto manipulator = _visualMode.getScene()->getManipulatorByPath(rec.path);
+        assert(manipulator);
+        manipulator->getWidget()->setProperty(_propertyName, _newValue);
+        manipulator->updateFromWidget(false, true);
+        manipulator->triggerPropertyManagerCallback(properties);
+    }
 
-        # make sure to redraw the scene so the changes are visible
-        self.visual.scene.update()
-*/
+    //_firstCall = false;
+
+    // Make sure to redraw the scene so the changes are visible
+    _visualMode.getScene()->update();
 
     QUndoCommand::redo();
 }
@@ -363,7 +363,6 @@ bool LayoutPropertyEditCommand::mergeWith(const QUndoCommand* other)
 
     if (_propertyName != otherCmd->_propertyName) return false;
 
-    /*
     if (_records.size() != otherCmd->_records.size()) return false;
 
     QStringList paths;
@@ -372,36 +371,25 @@ bool LayoutPropertyEditCommand::mergeWith(const QUndoCommand* other)
 
     for (const auto& rec : otherCmd->_records)
         if (!paths.contains(rec.path)) return false;
-    */
 
     // The same set of widgets, can merge
 
-    /*
-            self.newValue = cmd.newValue
-    */
+    _newValue = otherCmd->_newValue;
     return true;
 }
 
-/*
+// Some properties are related to others so that when one changes, the others change too.
+// The following ensures that notifications are sent about the related properties as well.
+void LayoutPropertyEditCommand::fillInfluencedPropertyList(QStringList& list)
+{
+    if (true) //!_firstCall)
+        list.append(CEGUIUtils::stringToQString(_propertyName));
 
-    def notifyPropertyManager(self, widgetManipulator, ignoreTarget):
-        if not ignoreTarget:
-            widgetManipulator.triggerPropertyManagerCallback({self.propertyName})
-        # some properties are related to others so that
-        # when one changes, the others change too.
-        # the following ensures that notifications are sent
-        # about the related properties as well.
-        related = None
-        if self.propertyName == "Size":
-            related = set([ "Area" ])
-        elif self.propertyName == "Area":
-            related = {"Position", "Size"}
-        elif self.propertyName == "Position":
-            related = set([ "Area" ])
-
-        if related is not None:
-            widgetManipulator.triggerPropertyManagerCallback(related)
-*/
+    if (_propertyName == "Size" || _propertyName == "Position")
+        list.append("Area");
+    else if (_propertyName == "Area")
+        list.append({"Position", "Size"});
+}
 
 //---------------------------------------------------------------------
 

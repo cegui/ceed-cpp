@@ -1,9 +1,8 @@
 #include "src/editors/layout/LayoutPreviewerMode.h"
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutEditor.h"
-#include "src/cegui/CEGUIProjectManager.h"
-#include "src/ui/CEGUIGraphicsScene.h"
 #include "src/ui/CEGUIWidget.h"
+#include "src/ui/CEGUIGraphicsScene.h"
 #include "qboxlayout.h"
 #include <CEGUI/Window.h>
 #include <CEGUI/WindowManager.h>

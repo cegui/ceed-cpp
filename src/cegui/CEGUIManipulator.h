@@ -56,7 +56,7 @@ public:
 
     void createChildManipulators(bool recursive, bool skipAutoWidgets, bool checkExisting = true);
     void moveToFront();
-    void triggerPropertyManagerCallback(QStringList propertyNames);
+    void triggerPropertyManagerCallback(const QStringList& propertyNames);
     bool shouldBeSkipped() const;
     bool hasNonAutoWidgetDescendants() const;
 

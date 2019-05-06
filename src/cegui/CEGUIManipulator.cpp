@@ -635,7 +635,7 @@ void CEGUIManipulator::moveToFront()
 }
 
 // Notify the property manager that the values of the given properties have changed for this widget
-void CEGUIManipulator::triggerPropertyManagerCallback(QStringList propertyNames)
+void CEGUIManipulator::triggerPropertyManagerCallback(const QStringList& propertyNames)
 {
 /*
         widget = self.widget

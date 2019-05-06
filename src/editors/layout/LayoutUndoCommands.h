@@ -108,7 +108,13 @@ class LayoutPropertyEditCommand : public QUndoCommand
 {
 public:
 
-    LayoutPropertyEditCommand(LayoutVisualMode& visualMode);
+    struct Record
+    {
+        QString path;
+        CEGUI::String oldValue;
+    };
+
+    LayoutPropertyEditCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, const QString& propertyName, const QString& newValue);
 
     virtual void undo() override;
     virtual void redo() override;
@@ -117,8 +123,15 @@ public:
 
 protected:
 
+    void fillInfluencedPropertyList(QStringList& list);
+
     LayoutVisualMode& _visualMode;
+    std::vector<Record> _records;
     CEGUI::String _propertyName;
+    CEGUI::String _newValue;
+
+    // FIXME: in a new implementation it may or may not work the same way!
+    //bool _firstCall = true; // The first time this command is created the property is already set to the new value
 };
 
 // This command aligns selected widgets accordingly
