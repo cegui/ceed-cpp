@@ -6,6 +6,7 @@
 #include "src/cegui/CEGUIUtils.h"
 #include <CEGUI/Window.h>
 #include <CEGUI/WindowManager.h>
+#include "qtreeview.h"
 
 LayoutMoveCommand::LayoutMoveCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records)
     : _visualMode(visualMode)
@@ -356,13 +357,28 @@ void LayoutPropertyEditCommand::redo()
 
 bool LayoutPropertyEditCommand::mergeWith(const QUndoCommand* other)
 {
-    /*
-        if self.widgetPaths == cmd.widgetPaths and self.propertyName == cmd.propertyName:
-            self.newValue = cmd.newValue
+    const LayoutPropertyEditCommand* otherCmd = dynamic_cast<const LayoutPropertyEditCommand*>(other);
+    if (!otherCmd) return false;
 
-            return True
+    if (_propertyName != otherCmd->_propertyName) return false;
+
+    /*
+    if (_records.size() != otherCmd->_records.size()) return false;
+
+    QStringList pathes;
+    for (const auto& rec : _records)
+        pathes.push_back(rec.path);
+
+    for (const auto& rec : otherCmd->_records)
+        if (!pathes.contains(rec.path)) return false;
     */
-    return false;
+
+    // The same set of widgets, can merge
+
+    /*
+            self.newValue = cmd.newValue
+    */
+    return true;
 }
 
 /*
@@ -390,7 +406,7 @@ bool LayoutPropertyEditCommand::mergeWith(const QUndoCommand* other)
 
 LayoutHorizontalAlignCommand::LayoutHorizontalAlignCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, CEGUI::HorizontalAlignment newAlignment)
     : _visualMode(visualMode)
-    , _records(records)
+    , _records(std::move(records))
     , _newAlignment(newAlignment)
 {
     refreshText();
@@ -465,7 +481,7 @@ void LayoutHorizontalAlignCommand::refreshText()
 
 LayoutVerticalAlignCommand::LayoutVerticalAlignCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, CEGUI::VerticalAlignment newAlignment)
     : _visualMode(visualMode)
-    , _records(records)
+    , _records(std::move(records))
     , _newAlignment(newAlignment)
 {
     refreshText();
@@ -538,6 +554,83 @@ void LayoutVerticalAlignCommand::refreshText()
 
 //---------------------------------------------------------------------
 
+LayoutReparentCommand::LayoutReparentCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, const QString& newParentPath)
+    : _visualMode(visualMode)
+    , _records(std::move(records))
+    , _newParentPath(newParentPath)
+{
+    if (_records.size() == 1)
+        setText(QString("Reparent '%1' to '%2'").arg(_records[0].oldName, _newParentPath));
+    else
+        setText(QString("Reparent %1 widgets").arg(_records.size()));
+}
+
+void LayoutReparentCommand::undo()
+{
+    QUndoCommand::undo();
+
+    _visualMode.getScene()->clearSelection();
+    _visualMode.getHierarchyDockWidget()->getTreeView()->clearSelection();
+
+    for (const auto& rec : _records)
+    {
+        auto widgetManipulator = _visualMode.getScene()->getManipulatorByPath(_newParentPath + '/' + rec.newName);
+        auto oldParentManipulator = _visualMode.getScene()->getManipulatorByPath(rec.oldParentPath);
+
+        // Remove it from the current CEGUI parent widget
+        auto parentWidget = widgetManipulator->getWidget()->getParent();
+        if (parentWidget) parentWidget->removeChild(widgetManipulator->getWidget());
+
+        // Rename it if necessary
+        if (rec.oldName != rec.newName)
+            widgetManipulator->getWidget()->setProperty("Name", CEGUIUtils::qStringToString(rec.oldName));
+
+        // Add it to the old CEGUI parent widget
+        oldParentManipulator->getWidget()->addChild(widgetManipulator->getWidget());
+
+        // And sort out the manipulators
+        widgetManipulator->setParentItem(oldParentManipulator);
+
+        widgetManipulator->updateFromWidget(true, true);
+    }
+
+    _visualMode.getHierarchyDockWidget()->refresh();
+}
+
+void LayoutReparentCommand::redo()
+{
+    _visualMode.getScene()->clearSelection();
+    _visualMode.getHierarchyDockWidget()->getTreeView()->clearSelection();
+
+    for (const auto& rec : _records)
+    {
+        auto widgetManipulator = _visualMode.getScene()->getManipulatorByPath(rec.oldParentPath + '/' + rec.newName);
+        auto newParentManipulator = _visualMode.getScene()->getManipulatorByPath(_newParentPath);
+
+        // Remove it from the current CEGUI parent widget
+        auto parentWidget = widgetManipulator->getWidget()->getParent();
+        if (parentWidget) parentWidget->removeChild(widgetManipulator->getWidget());
+
+        // Rename it if necessary
+        if (rec.oldName != rec.newName)
+            widgetManipulator->getWidget()->setProperty("Name", CEGUIUtils::qStringToString(rec.newName));
+
+        // Add it to the new CEGUI parent widget
+        newParentManipulator->getWidget()->addChild(widgetManipulator->getWidget());
+
+        // And sort out the manipulators
+        widgetManipulator->setParentItem(newParentManipulator);
+
+        widgetManipulator->updateFromWidget(true, true);
+    }
+
+    _visualMode.getHierarchyDockWidget()->refresh();
+
+    QUndoCommand::redo();
+}
+
+//---------------------------------------------------------------------
+
 LayoutPasteCommand::LayoutPasteCommand(LayoutVisualMode& visualMode,
                                        const QString& targetPath,
                                        QByteArray&& data)
@@ -594,117 +687,6 @@ void LayoutPasteCommand::redo()
 //---------------------------------------------------------------------
 
 /*
-class ReparentCommand(commands.UndoCommand):
-    """This command changes parent of given windows
-    """
-
-    def __init__(self, visual, oldWidgetPaths, newWidgetPaths):
-        super(ReparentCommand, self).__init__()
-
-        self.visual = visual
-
-        self.oldWidgetPaths = oldWidgetPaths
-        self.newWidgetPaths = newWidgetPaths
-
-        self.refreshText()
-
-    def refreshText(self):
-        if len(self.oldWidgetPaths) == 1:
-            self.setText("Reparent '%s' to '%s'" % (self.oldWidgetPaths[0], self.newWidgetPaths[0]))
-        else:
-            self.setText("Reparent %i widgets" % (len(self.oldWidgetPaths)))
-
-    def id(self):
-        return idbase + 8
-
-    def mergeWith(self, cmd):
-        if self.newWidgetPaths == cmd.oldWidgetPaths:
-            self.newWidgetPaths = cmd.newWidgetPaths
-            self.refreshText()
-
-            return True
-
-        return False
-
-    def undo(self):
-        super(ReparentCommand, self).undo()
-
-        self.visual.scene.clearSelection()
-        self.visual.hierarchyDockWidget.treeView.clearSelection()
-
-        i = 0
-        while i < len(self.newWidgetPaths):
-            widgetPath = self.newWidgetPaths[i]
-            oldWidgetPath = self.oldWidgetPaths[i]
-            newWidgetName = widgetPath[widgetPath.rfind("/") + 1:]
-            oldWidgetName = oldWidgetPath[oldWidgetPath.rfind("/") + 1:]
-
-            widgetManipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-            oldParentPath = oldWidgetPath[0:oldWidgetPath.rfind("/")]
-            oldParentManipulator = self.visual.scene.getManipulatorByPath(oldParentPath)
-
-            # remove it from the current CEGUI parent widget
-            ceguiParentWidget = widgetManipulator.widget.getParent()
-            if ceguiParentWidget is not None:
-                ceguiParentWidget.removeChild(widgetManipulator.widget)
-
-            # rename it if necessary
-            if oldWidgetName != newWidgetName:
-                widgetManipulator.widget.setProperty("Name", oldWidgetName)
-
-            # add it to the old CEGUI parent widget
-            ceguiOldParentWidget = oldParentManipulator.widget
-            ceguiOldParentWidget.addChild(widgetManipulator.widget)
-
-            # and sort out the manipulators
-            widgetManipulator.setParentItem(oldParentManipulator)
-
-            widgetManipulator.updateFromWidget(True, True)
-
-            i += 1
-
-        self.visual.hierarchyDockWidget.refresh()
-
-    def redo(self):
-        self.visual.scene.clearSelection()
-        self.visual.hierarchyDockWidget.treeView.clearSelection()
-
-        i = 0
-        while i < len(self.oldWidgetPaths):
-            widgetPath = self.oldWidgetPaths[i]
-            newWidgetPath = self.newWidgetPaths[i]
-            oldWidgetName = widgetPath[widgetPath.rfind("/") + 1:]
-            newWidgetName = newWidgetPath[newWidgetPath.rfind("/") + 1:]
-
-            widgetManipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-            newParentPath = newWidgetPath[0:newWidgetPath.rfind("/")]
-            newParentManipulator = self.visual.scene.getManipulatorByPath(newParentPath)
-
-            # remove it from the current CEGUI parent widget
-            ceguiParentWidget = widgetManipulator.widget.getParent()
-            if ceguiParentWidget is not None:
-                ceguiParentWidget.removeChild(widgetManipulator.widget)
-
-            # rename it if necessary
-            if oldWidgetName != newWidgetName:
-                widgetManipulator.widget.setProperty("Name", newWidgetName)
-
-            # add it to the new CEGUI parent widget
-            ceguiNewParentWidget = newParentManipulator.widget
-            ceguiNewParentWidget.addChild(widgetManipulator.widget)
-
-            # and sort out the manipulators
-            widgetManipulator.setParentItem(newParentManipulator)
-
-            widgetManipulator.updateFromWidget(True, True)
-
-            i += 1
-
-        self.visual.hierarchyDockWidget.refresh()
-        super(ReparentCommand, self).redo()
-
-
-
 class NormaliseSizeCommand(ResizeCommand):
     def __init__(self, visual, widgetPaths, oldPositions, oldSizes):
         newSizes = {}
@@ -716,13 +698,6 @@ class NormaliseSizeCommand(ResizeCommand):
 
     def normaliseSize(self, widgetPath):
         raise NotImplementedError("Each subclass of NormaliseSizeCommand must implement the normaliseSize method")
-
-    def id(self):
-        raise NotImplementedError("Each subclass of NormaliseSizeCommand must implement the id method")
-
-    def mergeWith(self, cmd):
-        # we never merge size normalising commands
-        return False
 
 
 class NormaliseSizeToRelativeCommand(NormaliseSizeCommand):
@@ -784,13 +759,6 @@ class NormalisePositionCommand(MoveCommand):
 
     def normalisePosition(self, widgetPath, oldPosition):
         raise NotImplementedError("Each subclass of NormalisePositionCommand must implement the normalisePosition method")
-
-    def id(self):
-        raise NotImplementedError("Each subclass of NormalisePositionCommand must implement the id method")
-
-    def mergeWith(self, cmd):
-        # we never merge position normalising commands
-        return False
 
 
 class NormalisePositionToRelativeCommand(NormalisePositionCommand):

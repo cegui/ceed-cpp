@@ -4,6 +4,7 @@
 #include "qundostack.h"
 #include "qvariant.h"
 #include "qrect.h"
+#include <CEGUI/String.h>
 #include <CEGUI/UVector.h>
 #include <CEGUI/USize.h>
 #include <CEGUI/HorizontalAlignment.h>
@@ -117,6 +118,7 @@ public:
 protected:
 
     LayoutVisualMode& _visualMode;
+    CEGUI::String _propertyName;
 };
 
 // This command aligns selected widgets accordingly
@@ -171,6 +173,34 @@ protected:
     LayoutVisualMode& _visualMode;
     std::vector<Record> _records;
     CEGUI::VerticalAlignment _newAlignment;
+};
+
+// This command changes parent of given windows
+// NB: we don't merge these commands
+class LayoutReparentCommand : public QUndoCommand
+{
+public:
+
+    struct Record
+    {
+        QString oldParentPath;
+        QString oldName;
+        QString newName;
+    };
+
+    LayoutReparentCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, const QString& newParentPath);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return LayoutUndoCommandBase + 8; }
+
+protected:
+
+    void refreshText();
+
+    LayoutVisualMode& _visualMode;
+    std::vector<Record> _records;
+    QString _newParentPath;
 };
 
 // This command pastes clipboard data to the given widget

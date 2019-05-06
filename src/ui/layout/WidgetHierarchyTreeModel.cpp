@@ -3,6 +3,7 @@
 #include "src/ui/layout/LayoutManipulator.h"
 #include "src/ui/layout/LayoutScene.h"
 #include "src/editors/layout/LayoutVisualMode.h"
+#include "src/editors/layout/LayoutUndoCommands.h"
 #include "src/cegui/CEGUIUtils.h"
 #include <CEGUI/Window.h>
 #include "qmessagebox.h"
@@ -145,6 +146,8 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
             widgetPaths.append(name);
         }
 
+        if (widgetPaths.empty()) return false;
+
         auto newParent = itemFromIndex(parent);
         if (!newParent) return false;
 
@@ -159,9 +162,13 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
             return false;
         }
 
+        std::vector<LayoutReparentCommand::Record> records;
+
         for (const QString& widgetPath : widgetPaths)
         {
-            const QString oldWidgetName = widgetPath.mid(widgetPath.lastIndexOf('/') + 1);
+            int sepPos = widgetPath.lastIndexOf('/');
+            const QString oldWidgetName = widgetPath.mid(sepPos + 1);
+            const QString oldWidgetParentPath = widgetPath.left(sepPos);
 
             // Prevent name clashes at the new parent
             // When a name clash occurs, we suggest a new name to the user and
@@ -232,14 +239,17 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
 
             usedNames.insert(suggestedName);
             targetWidgetPaths.append(newParentPath + "/" + suggestedName);
+
+            LayoutReparentCommand::Record rec;
+            rec.oldName = oldWidgetName;
+            rec.newName = suggestedName;
+            rec.oldParentPath = oldWidgetParentPath;
+            records.push_back(std::move(rec));
         }
 
         if (action == Qt::MoveAction)
         {
-            /*
-                cmd = undo.ReparentCommand(self.dockWidget.visual, widgetPaths, targetWidgetPaths)
-                self.dockWidget.visual.tabbedEditor.undoStack.push(cmd)
-            */
+            _visualMode.getEditor().getUndoStack()->push(new LayoutReparentCommand(_visualMode, std::move(records), newParentPath));
             return true;
         }
         else if (action == Qt::CopyAction)
@@ -264,10 +274,8 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
         QString uniqueName = widgetType.mid(widgetType.lastIndexOf('/') + 1);
         if (parentManipulator)
             uniqueName = CEGUIUtils::getUniqueChildWidgetName(*parentManipulator->getWidget(), uniqueName);
-        /*
-            cmd = undo.CreateCommand(self.dockWidget.visual, parentItemPath, widgetType, uniqueName)
-            self.dockWidget.visual.tabbedEditor.undoStack.push(cmd)
-        */
+
+        _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, parentItemPath, widgetType, uniqueName));
 
         return true;
     }
