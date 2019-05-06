@@ -30,7 +30,7 @@ public:
 
 public slots:
 
-    void updateSelfAndScene();
+    void causeFullRedraw();
 
 signals:
 

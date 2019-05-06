@@ -22,6 +22,9 @@ public:
     void zoomOut();
     void zoomReset();
 
+    void setWheelZoomEnabled(bool enabled) { wheelZoomEnabled = enabled; }
+    void setMiddleButtonDragScrollEnabled(bool enabled) { middleButtonDragScrollEnabled = enabled; }
+
     virtual void wheelEvent(QWheelEvent *event) override;
     virtual void mousePressEvent(QMouseEvent *event) override;
     virtual void mouseReleaseEvent(QMouseEvent *event) override;

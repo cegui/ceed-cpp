@@ -27,9 +27,6 @@ public:
     CEGUIGraphicsScene* getScene() const;
     CEGUIGraphicsView* getView() const;
 
-    void activate(QWidget* newParent, CEGUIGraphicsScene* scene = nullptr);
-    void deactivate(QWidget* oldParent);
-
     void setViewFeatures(bool wheelZoom = false, bool middleButtonScroll = false, bool continuousRendering = true);
     void setInputEnabled(bool enable);
 

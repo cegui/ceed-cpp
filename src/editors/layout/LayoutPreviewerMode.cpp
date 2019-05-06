@@ -33,6 +33,9 @@ void LayoutPreviewerMode::activate()
     rootWidget = currentRootWidget ? currentRootWidget->clone() : nullptr;
     ceguiWidget->getScene()->getCEGUIContext()->setRootWindow(rootWidget);
     rootWidget->setCursorPassThroughEnabled(true);
+
+    // FIXME: need default cursor for each look'n'feel or one super-default cursor
+    //ceguiWidget->getScene()->getCEGUIContext()->getCursor().setDefaultImage("TaharezLook/MouseArrow");
 }
 
 bool LayoutPreviewerMode::deactivate()

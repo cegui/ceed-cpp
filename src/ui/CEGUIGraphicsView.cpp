@@ -73,7 +73,8 @@ void CEGUIGraphicsView::injectInput(bool inject)
     }
 }
 
-void CEGUIGraphicsView::updateSelfAndScene()
+// FIXME: now in Qt5 this doesn't do what it is intended to do!
+void CEGUIGraphicsView::causeFullRedraw()
 {
     update();
     if (scene())
@@ -145,7 +146,7 @@ void CEGUIGraphicsView::drawBackground(QPainter* painter, const QRectF& rect)
     {
         if (continuousRenderingTargetFPS <= 0)
         {
-            updateSelfAndScene();
+            causeFullRedraw();
         }
         else
         {
@@ -155,11 +156,11 @@ void CEGUIGraphicsView::drawBackground(QPainter* painter, const QRectF& rect)
             if (frameTime > lastDelta)
             {
                 // * 1000 because QTimer thinks in milliseconds
-                QTimer::singleShot(static_cast<int>((frameTime - lastDelta) * 1000.f), this, SLOT(updateSelfAndScene()));
+                QTimer::singleShot(static_cast<int>((frameTime - lastDelta) * 1000.f), this, &CEGUIGraphicsView::causeFullRedraw);
             }
             else
             {
-                updateSelfAndScene();
+                causeFullRedraw();
             }
         }
     }
