@@ -222,4 +222,46 @@ protected:
     std::vector<QString> _createdWidgets;
 };
 
+// TThis command changes the name of the given widget
+// NB: we don't merge these commands
+class LayoutRenameCommand : public QUndoCommand
+{
+public:
+
+    LayoutRenameCommand(LayoutVisualMode& visualMode, const QString& path, const QString& newName);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return LayoutUndoCommandBase + 14; }
+
+protected:
+
+    void refreshText();
+
+    LayoutVisualMode& _visualMode;
+    QString _parentPath;
+    QString _oldName;
+    QString _newName;
+};
+
+class MoveInParentWidgetListCommand : public QUndoCommand
+{
+public:
+
+    MoveInParentWidgetListCommand(LayoutVisualMode& visualMode, QStringList&& paths, int delta);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return LayoutUndoCommandBase + 17; }
+    virtual bool mergeWith(const QUndoCommand* other) override;
+
+protected:
+
+    void refreshText();
+
+    LayoutVisualMode& _visualMode;
+    QStringList _paths;
+    int _delta = 0;
+};
+
 #endif // LAYOUTUNDOCOMMANDS_H

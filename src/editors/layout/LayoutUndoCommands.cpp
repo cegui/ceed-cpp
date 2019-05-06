@@ -3,8 +3,9 @@
 #include "src/ui/layout/LayoutScene.h"
 #include "src/ui/layout/LayoutManipulator.h"
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
+#include "src/ui/layout/WidgetHierarchyItem.h"
 #include "src/cegui/CEGUIUtils.h"
-#include <CEGUI/Window.h>
+#include <CEGUI/widgets/SequentialLayoutContainer.h>
 #include <CEGUI/WindowManager.h>
 #include "qtreeview.h"
 
@@ -65,12 +66,12 @@ bool LayoutMoveCommand::mergeWith(const QUndoCommand* other)
 
     if (_records.size() != otherCmd->_records.size()) return false;
 
-    QStringList pathes;
+    QStringList paths;
     for (const auto& rec : _records)
-        pathes.push_back(rec.path);
+        paths.push_back(rec.path);
 
     for (const auto& rec : otherCmd->_records)
-        if (!pathes.contains(rec.path)) return false;
+        if (!paths.contains(rec.path)) return false;
 
     // The same set of widgets, can merge
 
@@ -150,12 +151,12 @@ bool LayoutResizeCommand::mergeWith(const QUndoCommand* other)
 
     if (_records.size() != otherCmd->_records.size()) return false;
 
-    QStringList pathes;
+    QStringList paths;
     for (const auto& rec : _records)
-        pathes.push_back(rec.path);
+        paths.push_back(rec.path);
 
     for (const auto& rec : otherCmd->_records)
-        if (!pathes.contains(rec.path)) return false;
+        if (!paths.contains(rec.path)) return false;
 
     // The same set of widgets, can merge
 
@@ -365,12 +366,12 @@ bool LayoutPropertyEditCommand::mergeWith(const QUndoCommand* other)
     /*
     if (_records.size() != otherCmd->_records.size()) return false;
 
-    QStringList pathes;
+    QStringList paths;
     for (const auto& rec : _records)
-        pathes.push_back(rec.path);
+        paths.push_back(rec.path);
 
     for (const auto& rec : otherCmd->_records)
-        if (!pathes.contains(rec.path)) return false;
+        if (!paths.contains(rec.path)) return false;
     */
 
     // The same set of widgets, can merge
@@ -447,12 +448,12 @@ bool LayoutHorizontalAlignCommand::mergeWith(const QUndoCommand* other)
 
     if (_records.size() != otherCmd->_records.size()) return false;
 
-    QStringList pathes;
+    QStringList paths;
     for (const auto& rec : _records)
-        pathes.push_back(rec.path);
+        paths.push_back(rec.path);
 
     for (const auto& rec : otherCmd->_records)
-        if (!pathes.contains(rec.path)) return false;
+        if (!paths.contains(rec.path)) return false;
 
     // The same set of widgets, can merge
 
@@ -522,12 +523,12 @@ bool LayoutVerticalAlignCommand::mergeWith(const QUndoCommand* other)
 
     if (_records.size() != otherCmd->_records.size()) return false;
 
-    QStringList pathes;
+    QStringList paths;
     for (const auto& rec : _records)
-        pathes.push_back(rec.path);
+        paths.push_back(rec.path);
 
     for (const auto& rec : otherCmd->_records)
-        if (!pathes.contains(rec.path)) return false;
+        if (!paths.contains(rec.path)) return false;
 
     // The same set of widgets, can merge
 
@@ -686,316 +687,125 @@ void LayoutPasteCommand::redo()
 
 //---------------------------------------------------------------------
 
-/*
-class NormaliseSizeCommand(ResizeCommand):
-    def __init__(self, visual, widgetPaths, oldPositions, oldSizes):
-        newSizes = {}
-        for widgetPath in widgetPaths:
-            newSizes[widgetPath] = self.normaliseSize(widgetPath)
+LayoutRenameCommand::LayoutRenameCommand(LayoutVisualMode& visualMode, const QString& path, const QString& newName)
+    : _visualMode(visualMode)
+    , _newName(newName)
+{
+    int sepPos = path.lastIndexOf('/');
+    if (sepPos < 0)
+    {
+        _oldName = path;
+    }
+    else
+    {
+        _oldName = path.mid(sepPos + 1);
+        _parentPath = path.left(sepPos);
+    }
+
+    setText(QString("Rename '%1' to '%2'").arg(_oldName, _newName));
+}
+
+void LayoutRenameCommand::undo()
+{
+    QUndoCommand::undo();
+
+    auto manipulator = _visualMode.getScene()->getManipulatorByPath(_parentPath + '/' + _newName);
+    assert(manipulator->getTreeItem());
+    manipulator->getWidget()->setName(CEGUIUtils::qStringToString(_oldName));
+    manipulator->getTreeItem()->setText(_oldName);
+    manipulator->getTreeItem()->refreshPathData();
+    manipulator->triggerPropertyManagerCallback({"Name", "NamePath"});
+}
+
+void LayoutRenameCommand::redo()
+{
+    auto manipulator = _visualMode.getScene()->getManipulatorByPath(_parentPath + '/' + _oldName);
+    assert(manipulator->getTreeItem());
+    manipulator->getWidget()->setName(CEGUIUtils::qStringToString(_newName));
+    manipulator->getTreeItem()->setText(_newName);
+    manipulator->getTreeItem()->refreshPathData();
+    manipulator->triggerPropertyManagerCallback({"Name", "NamePath"});
+
+    QUndoCommand::redo();
+}
+
+//---------------------------------------------------------------------
+
+MoveInParentWidgetListCommand::MoveInParentWidgetListCommand(LayoutVisualMode& visualMode, QStringList&& paths, int delta)
+    : _visualMode(visualMode)
+    , _paths(std::move(paths))
+    , _delta(delta)
+{
+    refreshText();
+}
+
+void MoveInParentWidgetListCommand::undo()
+{
+    QUndoCommand::undo();
+
+    if (!_delta) return;
+
+    for (const QString& path : _paths)
+    {
+        auto manipulator = _visualMode.getScene()->getManipulatorByPath(path);
+        auto parentManipulator = static_cast<LayoutManipulator*>(manipulator->parentItem());
+        auto container = static_cast<CEGUI::SequentialLayoutContainer*>(parentManipulator->getWidget());
+
+        size_t oldPos = container->getPositionOfChild(manipulator->getWidget());
+        size_t newPos = static_cast<size_t>(static_cast<int>(oldPos) - _delta);
+        container->swapChildPositions(oldPos, newPos);
+        assert(newPos == container->getPositionOfChild(manipulator->getWidget()));
+
+        parentManipulator->updateFromWidget(true, true);
+        parentManipulator->getTreeItem()->refreshOrderingData();
+    }
+}
+
+void MoveInParentWidgetListCommand::redo()
+{
+    if (!_delta) return;
+
+    for (const QString& path : _paths)
+    {
+        auto manipulator = _visualMode.getScene()->getManipulatorByPath(path);
+        auto parentManipulator = static_cast<LayoutManipulator*>(manipulator->parentItem());
+        auto container = static_cast<CEGUI::SequentialLayoutContainer*>(parentManipulator->getWidget());
+
+        size_t oldPos = container->getPositionOfChild(manipulator->getWidget());
+        size_t newPos = static_cast<size_t>(static_cast<int>(oldPos) + _delta);
+        container->swapChildPositions(oldPos, newPos);
+        assert(newPos == container->getPositionOfChild(manipulator->getWidget()));
+
+        parentManipulator->updateFromWidget(true, true);
+        parentManipulator->getTreeItem()->refreshOrderingData();
+    }
+
+    QUndoCommand::redo();
+}
+
+bool MoveInParentWidgetListCommand::mergeWith(const QUndoCommand* other)
+{
+    const MoveInParentWidgetListCommand* otherCmd = dynamic_cast<const MoveInParentWidgetListCommand*>(other);
+    if (!otherCmd) return false;
+
+    if (_paths.size() != otherCmd->_paths.size()) return false;
 
-        # we use oldPositions as newPositions because this command never changes positions of anything
-        super(NormaliseSizeCommand, self).__init__(visual, widgetPaths, oldPositions, oldSizes, oldPositions, newSizes)
+    for (const auto& rec : otherCmd->_paths)
+        if (!_paths.contains(rec)) return false;
 
-    def normaliseSize(self, widgetPath):
-        raise NotImplementedError("Each subclass of NormaliseSizeCommand must implement the normaliseSize method")
+    // The same set of widgets, can merge
 
+    _delta = otherCmd->_delta;
+    refreshText();
+    return true;
+}
 
-class NormaliseSizeToRelativeCommand(NormaliseSizeCommand):
-    def __init__(self, visual, widgetPaths, oldPositions, oldSizes):
-        # even though this will be set again in the ResizeCommand constructor we need to set it right now
-        # because otherwise the normaliseSize will not work!
-        self.visual = visual
+void MoveInParentWidgetListCommand::refreshText()
+{
+    if (_paths.size() == 1)
+        setText(QString("Move '%1' by %2 in parent widget list").arg(_paths[0]).arg(_delta));
+    else
+        setText(QString("Move %1 widgets by %2 in parent widget list").arg(_paths.size()).arg(_delta));
+}
 
-        if len(self.widgetPaths) == 1:
-            self.setText("Normalise size of '%s' to relative" % (self.widgetPaths[0]))
-        else:
-            self.setText("Normalise size of %i widgets to relative" % (len(self.widgetPaths)))
-
-        super(NormaliseSizeToRelativeCommand, self).__init__(visual, widgetPaths, oldPositions, oldSizes)
-
-    def normaliseSize(self, widgetPath):
-        manipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-        pixelSize = manipulator.widget.getPixelSize()
-        baseSize = manipulator.getBaseSize()
-
-        return PyCEGUI.USize(PyCEGUI.UDim(pixelSize.d_width / baseSize.d_width, 0),
-                             PyCEGUI.UDim(pixelSize.d_height / baseSize.d_height, 0))
-
-    def id(self):
-        return idbase + 10
-
-
-class NormaliseSizeToAbsoluteCommand(NormaliseSizeCommand):
-    def __init__(self, visual, widgetPaths, oldPositions, oldSizes):
-        # even though this will be set again in the ResizeCommand constructor we need to set it right now
-        # because otherwise the normaliseSize will not work!
-        self.visual = visual
-
-        if len(self.widgetPaths) == 1:
-            self.setText("Normalise size of '%s' to absolute" % (self.widgetPaths[0]))
-        else:
-            self.setText("Normalise size of %i widgets to absolute" % (len(self.widgetPaths)))
-
-        super(NormaliseSizeToAbsoluteCommand, self).__init__(visual, widgetPaths, oldPositions, oldSizes)
-
-    def normaliseSize(self, widgetPath):
-        manipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-        pixelSize = manipulator.widget.getPixelSize()
-
-        return PyCEGUI.USize(PyCEGUI.UDim(0, pixelSize.d_width),
-                             PyCEGUI.UDim(0, pixelSize.d_height))
-
-    def id(self):
-        return idbase + 11
-
-
-class NormalisePositionCommand(MoveCommand):
-    def __init__(self, visual, widgetPaths, oldPositions):
-        newPositions = {}
-        for widgetPath, oldPosition in oldPositions.iteritems():
-            newPositions[widgetPath] = self.normalisePosition(widgetPath, oldPosition)
-
-        super(NormalisePositionCommand, self).__init__(visual, widgetPaths, oldPositions, newPositions)
-
-    def normalisePosition(self, widgetPath, oldPosition):
-        raise NotImplementedError("Each subclass of NormalisePositionCommand must implement the normalisePosition method")
-
-
-class NormalisePositionToRelativeCommand(NormalisePositionCommand):
-    def __init__(self, visual, widgetPaths, oldPositions):
-        # even though this will be set again in the MoveCommand constructor we need to set it right now
-        # because otherwise the normalisePosition method will not work!
-        self.visual = visual
-
-        if len(self.widgetPaths) == 1:
-            self.setText("Normalise position of '%s' to relative" % (self.widgetPaths[0]))
-        else:
-            self.setText("Normalise position of %i widgets to relative" % (len(self.widgetPaths)))
-
-        super(NormalisePositionToRelativeCommand, self).__init__(visual, widgetPaths, oldPositions)
-
-    def normalisePosition(self, widgetPath, position):
-        manipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-        baseSize = manipulator.getBaseSize()
-
-        return PyCEGUI.UVector2(PyCEGUI.UDim((position.d_x.d_offset + position.d_x.d_scale * baseSize.d_width) / baseSize.d_width, 0),
-                                PyCEGUI.UDim((position.d_y.d_offset + position.d_y.d_scale * baseSize.d_height) / baseSize.d_height, 0))
-
-    def id(self):
-        return idbase + 12
-
-
-class NormalisePositionToAbsoluteCommand(NormalisePositionCommand):
-    def __init__(self, visual, widgetPaths, oldPositions):
-        # even though this will be set again in the MoveCommand constructor we need to set it right now
-        # because otherwise the normalisePosition method will not work!
-        self.visual = visual
-
-        if len(self.widgetPaths) == 1:
-            self.setText("Normalise position of '%s' to absolute" % (self.widgetPaths[0]))
-        else:
-            self.setText("Normalise position of %i widgets to absolute" % (len(self.widgetPaths)))
-
-        super(NormalisePositionToAbsoluteCommand, self).__init__(visual, widgetPaths, oldPositions)
-
-    def normalisePosition(self, widgetPath, position):
-        manipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-        baseSize = manipulator.getBaseSize()
-
-        return PyCEGUI.UVector2(PyCEGUI.UDim(0, position.d_x.d_offset + position.d_x.d_scale * baseSize.d_width),
-                                PyCEGUI.UDim(0, position.d_y.d_offset + position.d_y.d_scale * baseSize.d_height))
-
-    def id(self):
-        return idbase + 13
-
-
-class RenameCommand(commands.UndoCommand):
-    """This command changes the name of the given widget
-    """
-
-    def __init__(self, visual, oldWidgetPath, newWidgetName):
-        super(RenameCommand, self).__init__()
-
-        self.visual = visual
-
-        # NOTE: rfind returns -1 when '/' can't be found, so in case the widget
-        #       is the root widget, -1 + 1 = 0 and the slice just returns
-        #       full name of the widget
-
-        self.oldWidgetPath = oldWidgetPath
-        self.oldWidgetName = oldWidgetPath[oldWidgetPath.rfind("/") + 1:]
-
-        self.newWidgetPath = oldWidgetPath[:oldWidgetPath.rfind("/") + 1] + newWidgetName
-        self.newWidgetName = newWidgetName
-
-        self.refreshText()
-
-    def refreshText(self):
-        self.setText("Rename '%s' to '%s'" % (self.oldWidgetName, self.newWidgetName))
-
-    def id(self):
-        return idbase + 14
-
-    def mergeWith(self, cmd):
-        # don't merge if the new rename command will simply revert to previous commands old name
-        if self.newWidgetPath == cmd.oldWidgetPath and self.oldWidgetName != cmd.newWidgetName:
-            self.newWidgetName = cmd.newWidgetName
-            self.newWidgetPath = self.oldWidgetPath[0:self.oldWidgetPath.rfind("/") + 1] + self.newWidgetName
-
-            self.refreshText()
-            return True
-
-        return False
-
-    def undo(self):
-        super(RenameCommand, self).undo()
-
-        widgetManipulator = self.visual.scene.getManipulatorByPath(self.newWidgetPath)
-        assert(hasattr(widgetManipulator, "treeItem"))
-        assert(widgetManipulator.treeItem is not None)
-
-        widgetManipulator.widget.setName(self.oldWidgetName)
-        widgetManipulator.treeItem.setText(self.oldWidgetName)
-        widgetManipulator.treeItem.refreshPathData()
-
-        widgetManipulator.triggerPropertyManagerCallback({"Name", "NamePath"})
-
-    def redo(self):
-        widgetManipulator = self.visual.scene.getManipulatorByPath(self.oldWidgetPath)
-        assert(hasattr(widgetManipulator, "treeItem"))
-        assert(widgetManipulator.treeItem is not None)
-
-        widgetManipulator.widget.setName(self.newWidgetName)
-        widgetManipulator.treeItem.setText(self.newWidgetName)
-        widgetManipulator.treeItem.refreshPathData()
-
-        widgetManipulator.triggerPropertyManagerCallback({"Name", "NamePath"})
-
-        super(RenameCommand, self).redo()
-
-
-class RoundPositionCommand(MoveCommand):
-    def __init__(self, visual, widgetPaths, oldPositions):
-
-        # calculate the new, rounded positions for the widget(s)
-        newPositions = {}
-        for widgetPath, oldPosition in oldPositions.iteritems():
-            newPositions[widgetPath] = self.roundAbsolutePosition(oldPosition)
-
-        super(RoundPositionCommand, self).__init__(visual, widgetPaths, oldPositions, newPositions)
-
-        if len(self.widgetPaths) == 1:
-            self.setText("Round absolute position of '%s' to nearest integer" % (self.widgetPaths[0]))
-        else:
-            self.setText("Round absolute positions of %i widgets to nearest integers" % (len(self.widgetPaths)))
-
-    @staticmethod
-    def roundAbsolutePosition(oldPosition):
-        return PyCEGUI.UVector2(PyCEGUI.UDim(oldPosition.d_x.d_scale, PyCEGUI.CoordConverter.alignToPixels(oldPosition.d_x.d_offset)),
-                                PyCEGUI.UDim(oldPosition.d_y.d_scale, PyCEGUI.CoordConverter.alignToPixels(oldPosition.d_y.d_offset)))
-
-    def id(self):
-        return idbase + 15
-
-    def mergeWith(self, cmd):
-        # merge if the new round position command will apply to the same widget
-        if self.widgetPaths == cmd.widgetPaths:
-            return True
-        else:
-            return False
-
-
-class RoundSizeCommand(ResizeCommand):
-    def __init__(self, visual, widgetPaths, oldPositions, oldSizes):
-
-        # calculate the new, rounded sizes for the widget(s)
-        newSizes = {}
-        for widgetPath, oldSize in oldSizes.iteritems():
-            newSizes[widgetPath] = self.roundAbsoluteSize(oldSize)
-
-        # we use oldPositions as newPositions because this command never changes positions of anything
-        super(RoundSizeCommand, self).__init__(visual, widgetPaths, oldPositions, oldSizes, oldPositions, newSizes)
-
-        if len(self.widgetPaths) == 1:
-            self.setText("Round absolute size of '%s' to nearest integer" % (self.widgetPaths[0]))
-        else:
-            self.setText("Round absolute sizes of %i widgets to nearest integers" % (len(self.widgetPaths)))
-
-    @staticmethod
-    def roundAbsoluteSize(oldSize):
-        return PyCEGUI.USize(PyCEGUI.UDim(oldSize.d_width.d_scale, PyCEGUI.CoordConverter.alignToPixels(oldSize.d_width.d_offset)),
-                             PyCEGUI.UDim(oldSize.d_height.d_scale, PyCEGUI.CoordConverter.alignToPixels(oldSize.d_height.d_offset)))
-
-    def id(self):
-        return idbase + 16
-
-    def mergeWith(self, cmd):
-        # merge if the new round size command will apply to the same widget
-        if self.widgetPaths == cmd.widgetPaths:
-            return True
-        else:
-            return False
-
-class MoveInParentWidgetListCommand(commands.UndoCommand):
-    def __init__(self, visual, widgetPaths, delta):
-        super(MoveInParentWidgetListCommand, self).__init__()
-
-        self.visual = visual
-        self.widgetPaths = widgetPaths
-        self.delta = delta
-
-        self.refreshText()
-
-    def refreshText(self):
-        if len(self.widgetPaths) == 1:
-            self.setText("Move '%s' by %i in parent widget list" % (self.widgetPaths[0], self.delta))
-        else:
-            self.setText("Move %i widgets by %i in parent widget list" % (len(self.widgetPaths), self.delta))
-
-    def id(self):
-        return idbase + 17
-
-    def mergeWith(self, cmd):
-        if self.widgetPaths == cmd.widgetPaths:
-            self.delta += cmd.delta
-            self.refreshText()
-            return True
-
-        return False
-
-    def undo(self):
-        super(MoveInParentWidgetListCommand, self).undo()
-
-        if self.delta != 0:
-            for widgetPath in reversed(self.widgetPaths):
-                widgetManipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-                parentManipulator = widgetManipulator.parentItem()
-                assert(isinstance(parentManipulator, widgethelpers.Manipulator))
-                assert(isinstance(parentManipulator.widget, PyCEGUI.SequentialLayoutContainer))
-
-                oldPosition = parentManipulator.widget.getPositionOfChild(widgetManipulator.widget)
-                newPosition = oldPosition - self.delta
-                parentManipulator.widget.swapChildPositions(oldPosition, newPosition)
-                assert(newPosition == parentManipulator.widget.getPositionOfChild(widgetManipulator.widget))
-
-                parentManipulator.updateFromWidget(True, True)
-                parentManipulator.treeItem.refreshOrderingData(True, True)
-
-    def redo(self):
-        if self.delta != 0:
-            for widgetPath in self.widgetPaths:
-                widgetManipulator = self.visual.scene.getManipulatorByPath(widgetPath)
-                parentManipulator = widgetManipulator.parentItem()
-                assert(isinstance(parentManipulator, widgethelpers.Manipulator))
-                assert(isinstance(parentManipulator.widget, PyCEGUI.SequentialLayoutContainer))
-
-                oldPosition = parentManipulator.widget.getPositionOfChild(widgetManipulator.widget)
-                newPosition = oldPosition + self.delta
-                parentManipulator.widget.swapChildPositions(oldPosition, newPosition)
-                assert(newPosition == parentManipulator.widget.getPositionOfChild(widgetManipulator.widget))
-
-                parentManipulator.updateFromWidget(True, True)
-                parentManipulator.treeItem.refreshOrderingData(True, True)
-
-        super(MoveInParentWidgetListCommand, self).redo()
-*/
+//---------------------------------------------------------------------

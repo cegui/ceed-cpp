@@ -61,11 +61,8 @@ bool WidgetHierarchyTreeModel::setData(const QModelIndex& index, const QVariant&
             return false;
         }
 
-        /*
-            // The name is good, apply it
-            cmd = undo.RenameCommand(self.dockWidget.visual, item.manipulator.widget.getNamePath(), value)
-            self.dockWidget.visual.tabbedEditor.undoStack.push(cmd)
-        */
+        // The name is good, apply it
+        _visualMode.getEditor().getUndoStack()->push(new LayoutRenameCommand(_visualMode, item->getManipulator()->getWidgetPath(), newName));
 
         // Return false because the undo command has changed the text of the item already
         return false;
