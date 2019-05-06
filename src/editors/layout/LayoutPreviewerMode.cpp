@@ -32,6 +32,7 @@ void LayoutPreviewerMode::activate()
     auto currentRootWidget = static_cast<LayoutEditor&>(_editor).getVisualMode()->getRootWidget();
     rootWidget = currentRootWidget ? currentRootWidget->clone() : nullptr;
     ceguiWidget->getScene()->getCEGUIContext()->setRootWindow(rootWidget);
+    rootWidget->setCursorPassThroughEnabled(true);
 }
 
 bool LayoutPreviewerMode::deactivate()

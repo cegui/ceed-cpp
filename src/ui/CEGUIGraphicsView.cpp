@@ -66,7 +66,8 @@ void CEGUIGraphicsView::injectInput(bool inject)
     if (_injectInput && scene())
     {
         if (ceguiInput) delete ceguiInput;
-        ceguiInput = new CEGUI::InputAggregator(static_cast<CEGUIGraphicsScene*>(scene())->getCEGUIContext());
+        auto ctx = static_cast<CEGUIGraphicsScene*>(scene())->getCEGUIContext();
+        ceguiInput = new CEGUI::InputAggregator(ctx);
         ceguiInput->initialise();
         ceguiInput->setMouseClickEventGenerationEnabled(true);
     }
@@ -203,6 +204,8 @@ void CEGUIGraphicsView::mouseReleaseEvent(QMouseEvent* event)
 
     if (!handled) ResizableGraphicsView::mouseReleaseEvent(event);
 }
+
+// TODO: injectMouseWheelChange
 
 void CEGUIGraphicsView::keyPressEvent(QKeyEvent* event)
 {
