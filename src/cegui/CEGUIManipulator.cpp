@@ -10,6 +10,8 @@
 #include <CEGUI/widgets/LayoutContainer.h>
 #include <CEGUI/WindowManager.h>
 #include <CEGUI/CoordConverter.h>
+#include "3rdParty/QtnProperty/Core/PropertySet.h"
+#include "3rdParty/QtnProperty/Core/Core/PropertyQString.h"
 
 // recursive - if true, even children of given widget are wrapped
 // skipAutoWidgets - if true, auto widgets are skipped (only applicable if recursive is True)
@@ -18,6 +20,13 @@ CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent, CEGUI::Window* widget)
     , _widget(widget)
 {
     setFlags(ItemIsFocusable | ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
+
+    createPropertySet();
+}
+
+CEGUIManipulator::~CEGUIManipulator()
+{
+    delete _propertySet;
 }
 
 void CEGUIManipulator::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
@@ -635,7 +644,7 @@ void CEGUIManipulator::moveToFront()
 }
 
 // Notify the property manager that the values of the given properties have changed for this widget
-void CEGUIManipulator::triggerPropertyManagerCallback(const QStringList& propertyNames)
+void CEGUIManipulator::updatePropertiesFromWidget(const QStringList& propertyNames)
 {
 /*
         widget = self.widget
@@ -648,6 +657,25 @@ void CEGUIManipulator::triggerPropertyManagerCallback(const QStringList& propert
                     # call it
                     widget.propertyManagerCallbacks[propertyName]()
 */
+}
+
+void CEGUIManipulator::createPropertySet()
+{
+    if (_propertySet) delete _propertySet;
+
+    if (!_widget)
+    {
+        _propertySet = nullptr;
+        return;
+    }
+
+    _propertySet = new QtnPropertySet(nullptr);
+
+    auto propName = new QtnPropertyQString(_propertySet);
+    propName->setName("Name");
+    propName->setDescription("CEGUI widget name");
+    propName->setValue(getWidgetName());
+    _propertySet->addChildProperty(propName, true);
 }
 
 bool CEGUIManipulator::shouldBeSkipped() const

@@ -113,7 +113,7 @@ void LayoutManipulator::notifyResizeStarted(ResizingHandle* handle)
 void LayoutManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
 {
     CEGUIManipulator::notifyResizeProgress(newPos, newRect);
-    triggerPropertyManagerCallback({"Size", "Position", "Area"});
+    updatePropertiesFromWidget({"Size", "Position", "Area"});
 }
 
 void LayoutManipulator::notifyResizeFinished(QPointF newPos, QRectF newRect)
@@ -135,7 +135,7 @@ void LayoutManipulator::notifyMoveStarted()
 void LayoutManipulator::notifyMoveProgress(QPointF newPos)
 {
     CEGUIManipulator::notifyMoveProgress(newPos);
-    triggerPropertyManagerCallback({"Position", "Area"});
+    updatePropertiesFromWidget({"Position", "Area"});
 }
 
 void LayoutManipulator::notifyMoveFinished(QPointF newPos)

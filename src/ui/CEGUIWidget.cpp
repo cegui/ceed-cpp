@@ -74,7 +74,9 @@ void CEGUIWidget::setInputEnabled(bool enable)
 
 void CEGUIWidget::on_debugInfoButton_clicked()
 {
-    //self.debugInfo.show()
+    /*
+        self.debugInfo.show()
+    */
 }
 
 void CEGUIWidget::on_resolutionBox_editTextChanged(const QString& /*arg1*/)

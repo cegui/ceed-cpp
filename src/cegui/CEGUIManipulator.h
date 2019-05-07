@@ -14,11 +14,14 @@ namespace CEGUI
     class Window;
 }
 
+class QtnPropertySet;
+
 class CEGUIManipulator : public ResizableRectItem
 {
 public:
 
     CEGUIManipulator(QGraphicsItem* parent = nullptr, CEGUI::Window* widget = nullptr);
+    virtual ~CEGUIManipulator() override;
 
     virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
 
@@ -56,9 +59,11 @@ public:
 
     void createChildManipulators(bool recursive, bool skipAutoWidgets, bool checkExisting = true);
     void moveToFront();
-    void triggerPropertyManagerCallback(const QStringList& propertyNames);
     bool shouldBeSkipped() const;
     bool hasNonAutoWidgetDescendants() const;
+
+    void updatePropertiesFromWidget(const QStringList& propertyNames);
+    QtnPropertySet* getPropertySet() const { return _propertySet; }
 
     bool isMoveStarted() const { return _moveStarted; }
     void resetMove() { _moveStarted = false; }
@@ -71,11 +76,14 @@ public:
 
 protected:
 
+    void createPropertySet();
+
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
 
     virtual void impl_paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr);
 
     CEGUI::Window* _widget = nullptr;
+    QtnPropertySet* _propertySet = nullptr;
 
     bool _resizeStarted = false;
     CEGUI::UVector2 _preResizePos;

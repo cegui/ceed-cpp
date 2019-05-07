@@ -33,7 +33,7 @@ void LayoutMoveCommand::undo()
         // In case the pixel position didn't change but the absolute and negative components changed and canceled each other out
         manipulator->update();
 
-        manipulator->triggerPropertyManagerCallback({"Position", "Area"});
+        manipulator->updatePropertiesFromWidget({"Position", "Area"});
     }
 }
 
@@ -49,7 +49,7 @@ void LayoutMoveCommand::redo()
         // In case the pixel position didn't change but the absolute and negative components changed and canceled each other out
         manipulator->update();
 
-        manipulator->triggerPropertyManagerCallback({"Position", "Area"});
+        manipulator->updatePropertiesFromWidget({"Position", "Area"});
     }
 
     QUndoCommand::redo();
@@ -117,7 +117,7 @@ void LayoutResizeCommand::undo()
         // In case the pixel position didn't change but the absolute and negative components changed and canceled each other out
         manipulator->update();
 
-        manipulator->triggerPropertyManagerCallback({"Size", "Position", "Area"});
+        manipulator->updatePropertiesFromWidget({"Size", "Position", "Area"});
     }
 }
 
@@ -134,7 +134,7 @@ void LayoutResizeCommand::redo()
         // In case the pixel position didn't change but the absolute and negative components changed and canceled each other out
         manipulator->update();
 
-        manipulator->triggerPropertyManagerCallback({"Size", "Position", "Area"});
+        manipulator->updatePropertiesFromWidget({"Size", "Position", "Area"});
     }
 
     QUndoCommand::redo();
@@ -325,7 +325,7 @@ void LayoutPropertyEditCommand::undo()
         assert(manipulator);
         manipulator->getWidget()->setProperty(_propertyName, rec.oldValue);
         manipulator->updateFromWidget(false, true);
-        manipulator->triggerPropertyManagerCallback(properties);
+        manipulator->updatePropertiesFromWidget(properties);
     }
 
     //_firstCall = false;
@@ -345,7 +345,7 @@ void LayoutPropertyEditCommand::redo()
         assert(manipulator);
         manipulator->getWidget()->setProperty(_propertyName, _newValue);
         manipulator->updateFromWidget(false, true);
-        manipulator->triggerPropertyManagerCallback(properties);
+        manipulator->updatePropertiesFromWidget(properties);
     }
 
     //_firstCall = false;
@@ -411,7 +411,7 @@ void LayoutHorizontalAlignCommand::undo()
         manipulator->getWidget()->setHorizontalAlignment(rec.oldAlignment);
         manipulator->updateFromWidget();
 
-        manipulator->triggerPropertyManagerCallback({"HorizontalAlignment"});
+        manipulator->updatePropertiesFromWidget({"HorizontalAlignment"});
     }
 }
 
@@ -423,7 +423,7 @@ void LayoutHorizontalAlignCommand::redo()
         manipulator->getWidget()->setHorizontalAlignment(_newAlignment);
         manipulator->updateFromWidget();
 
-        manipulator->triggerPropertyManagerCallback({"HorizontalAlignment"});
+        manipulator->updatePropertiesFromWidget({"HorizontalAlignment"});
     }
 
     QUndoCommand::redo();
@@ -486,7 +486,7 @@ void LayoutVerticalAlignCommand::undo()
         manipulator->getWidget()->setVerticalAlignment(rec.oldAlignment);
         manipulator->updateFromWidget();
 
-        manipulator->triggerPropertyManagerCallback({"VerticalAlignment"});
+        manipulator->updatePropertiesFromWidget({"VerticalAlignment"});
     }
 }
 
@@ -498,7 +498,7 @@ void LayoutVerticalAlignCommand::redo()
         manipulator->getWidget()->setVerticalAlignment(_newAlignment);
         manipulator->updateFromWidget();
 
-        manipulator->triggerPropertyManagerCallback({"VerticalAlignment"});
+        manipulator->updatePropertiesFromWidget({"VerticalAlignment"});
     }
 
     QUndoCommand::redo();
@@ -702,7 +702,7 @@ void LayoutRenameCommand::undo()
     manipulator->getWidget()->setName(CEGUIUtils::qStringToString(_oldName));
     manipulator->getTreeItem()->setText(_oldName);
     manipulator->getTreeItem()->refreshPathData();
-    manipulator->triggerPropertyManagerCallback({"Name", "NamePath"});
+    manipulator->updatePropertiesFromWidget({"Name", "NamePath"});
 }
 
 void LayoutRenameCommand::redo()
@@ -712,7 +712,7 @@ void LayoutRenameCommand::redo()
     manipulator->getWidget()->setName(CEGUIUtils::qStringToString(_newName));
     manipulator->getTreeItem()->setText(_newName);
     manipulator->getTreeItem()->refreshPathData();
-    manipulator->triggerPropertyManagerCallback({"Name", "NamePath"});
+    manipulator->updatePropertiesFromWidget({"Name", "NamePath"});
 
     QUndoCommand::redo();
 }

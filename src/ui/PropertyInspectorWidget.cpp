@@ -147,7 +147,4 @@ void PropertyInspectorWidget::updateSelectionLabelElidedText()
         self.ptree.load(categories)
 
         self.currentSource = source
-
-    def getSources(self):
-        return self.currentSource
 */

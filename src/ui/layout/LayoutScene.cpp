@@ -15,6 +15,11 @@
 #include "qstandarditemmodel.h"
 #include <set>
 
+// For properties (may be incapsulated somewhere):
+#include "src/ui/MainWindow.h"
+#include "src/Application.h"
+#include "PropertyWidget/PropertyWidget.h"
+
 LayoutScene::LayoutScene(LayoutVisualMode& visualMode)
     : _visualMode(visualMode)
 {
@@ -294,25 +299,33 @@ static void ensureParentIsExpanded(QTreeView* view, QStandardItem* treeItem)
 
 void LayoutScene::slot_selectionChanged()
 {
-    std::set<CEGUI::Window*> selectedWidgets;
+    std::set<QtnPropertySet*> selectedWidgets;
 
     auto selection = selectedItems();
     for (QGraphicsItem* item : selection)
     {
         if (auto manipulator = dynamic_cast<LayoutManipulator*>(item))
         {
-            selectedWidgets.insert(manipulator->getWidget());
+            selectedWidgets.insert(manipulator->getPropertySet());
         }
         else if (dynamic_cast<ResizingHandle*>(item))
         {
             if (auto manipulator = dynamic_cast<LayoutManipulator*>(item->parentItem()))
-                selectedWidgets.insert(manipulator->getWidget());
+                selectedWidgets.insert(manipulator->getPropertySet());
         }
     }
-/*
-        auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
-        mainWindow.propertiesDockWidget.inspector.setSource(sets)
-*/
+
+    // TODO: to method (whose?)
+    QtnPropertySet* propertySet = nullptr;
+    for (QtnPropertySet* set : selectedWidgets)
+    {
+        // TODO: create multi property set
+        //!!!pass vector of sources & combine inside an entry point method!
+        propertySet = set;
+    }
+    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
+    auto propertyWidget = static_cast<QtnPropertyWidget*>(mainWindow->getPropertyDockWidget()->widget());
+    propertyWidget->setPropertySet(propertySet);
 
     // We always sync the properties dock widget, we only ignore the hierarchy synchro if told so
     if (!_ignoreSelectionChanges)
