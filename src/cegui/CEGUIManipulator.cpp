@@ -657,6 +657,12 @@ void CEGUIManipulator::updatePropertiesFromWidget(const QStringList& propertyNam
                     # call it
                     widget.propertyManagerCallbacks[propertyName]()
 */
+    //!!!DBG TMP!
+    for (const QString& propertyName : propertyNames)
+    {
+        if (propertyName == "Name")
+            static_cast<QtnPropertyQString*>(_propertySet->childProperties()[0])->setValue(getWidgetName());
+    }
 }
 
 void CEGUIManipulator::createPropertySet()
@@ -671,11 +677,46 @@ void CEGUIManipulator::createPropertySet()
 
     _propertySet = new QtnPropertySet(nullptr);
 
-    auto propName = new QtnPropertyQString(_propertySet);
-    propName->setName("Name");
-    propName->setDescription("CEGUI widget name");
-    propName->setValue(getWidgetName());
-    _propertySet->addChildProperty(propName, true);
+    // TODO: to CEGUIUtils - create Qtn property set from CEGUI property set
+    std::map<QString, QtnPropertySet*> subsets;
+    auto it = _widget->getPropertyIterator();
+    while (!it.isAtEnd())
+    {
+        CEGUI::Property* ceguiProp = it.getCurrentValue();
+        //guid = ceguiProperty.getOrigin() + '/' + ceguiProperty.getName() + '/' + ceguiProperty.getDataType()
+        if (!ceguiProp->isReadable())
+        {
+            ++it;
+            continue;
+        }
+
+        QtnPropertySet* parentSet = _propertySet;
+        QString category = CEGUIUtils::stringToQString(ceguiProp->getOrigin());
+        if (!category.isEmpty())
+        {
+            auto it = subsets.find(category);
+            if (it == subsets.end())
+            {
+                parentSet = new QtnPropertySet(_propertySet);
+                parentSet->setName(category);
+                _propertySet->addChildProperty(parentSet, true);
+                subsets.emplace(std::move(category), parentSet);
+            }
+            else parentSet = it->second;
+        }
+
+        //const auto& propertyDataType = ceguiProp->getDataType(); // could be overridden through a property map
+
+        auto prop = new QtnPropertyQString(parentSet);
+        prop->setName(CEGUIUtils::stringToQString(ceguiProp->getName()));
+        prop->setDescription(CEGUIUtils::stringToQString(ceguiProp->getHelp()));
+        prop->fromStr(CEGUIUtils::stringToQString(ceguiProp->get(_widget)));
+        if (!ceguiProp->isWritable())
+            prop->addState(QtnPropertyStateImmutable);
+        parentSet->addChildProperty(prop, true);
+
+        ++it;
+    }
 }
 
 bool CEGUIManipulator::shouldBeSkipped() const
