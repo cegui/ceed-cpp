@@ -12,6 +12,7 @@
 #include <CEGUI/CoordConverter.h>
 #include "3rdParty/QtnProperty/Core/PropertySet.h"
 #include "3rdParty/QtnProperty/Core/Core/PropertyQString.h"
+#include "3rdParty/QtnProperty/Core/Core/PropertyBool.h"
 
 // recursive - if true, even children of given widget are wrapped
 // skipAutoWidgets - if true, auto widgets are skipped (only applicable if recursive is True)
@@ -690,6 +691,7 @@ void CEGUIManipulator::createPropertySet()
             continue;
         }
 
+        // Categorize properties by CEGUI property origin
         QtnPropertySet* parentSet = _propertySet;
         QString category = CEGUIUtils::stringToQString(ceguiProp->getOrigin());
         if (!category.isEmpty())
@@ -705,9 +707,13 @@ void CEGUIManipulator::createPropertySet()
             else parentSet = it->second;
         }
 
-        //const auto& propertyDataType = ceguiProp->getDataType(); // could be overridden through a property map
+        QtnProperty* prop = nullptr;
+        const auto& propertyDataType = ceguiProp->getDataType(); // could be overridden through a property map
+        if (propertyDataType == "bool")
+            prop = new QtnPropertyBool(parentSet);
+        else
+            prop = new QtnPropertyQString(parentSet);
 
-        auto prop = new QtnPropertyQString(parentSet);
         prop->setName(CEGUIUtils::stringToQString(ceguiProp->getName()));
         prop->setDescription(CEGUIUtils::stringToQString(ceguiProp->getHelp()));
         prop->fromStr(CEGUIUtils::stringToQString(ceguiProp->get(_widget)));
