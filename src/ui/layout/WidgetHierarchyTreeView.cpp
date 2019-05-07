@@ -140,7 +140,7 @@ void WidgetHierarchyTreeView::selectionChanged(const QItemSelection& selected, c
     QTreeView::selectionChanged(selected, deselected);
 
     // We are running synchronization the other way, this prevents infinite loops and recursion
-    WidgetHierarchyDockWidget* widget = dynamic_cast<WidgetHierarchyDockWidget*>(parentWidget());
+    WidgetHierarchyDockWidget* widget = dynamic_cast<WidgetHierarchyDockWidget*>(parentWidget()->parentWidget());
     if (!widget || widget->isIgnoringSelectionChanges()) return;
 
     widget->ignoreSelectionChangesInScene(true);

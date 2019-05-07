@@ -648,23 +648,18 @@ void CEGUIManipulator::moveToFront()
 void CEGUIManipulator::updatePropertiesFromWidget(const QStringList& propertyNames)
 {
 /*
-        widget = self.widget
-
         # if the property manager has set callbacks on this widget
-        if hasattr(widget, "propertyManagerCallbacks"):
+        if hasattr(_widget, "propertyManagerCallbacks"):
             for propertyName in propertyNames:
-                # if there's a callback for this property
                 if propertyName in widget.propertyManagerCallbacks:
-                    # call it
-                    widget.propertyManagerCallbacks[propertyName]()
+                    _widget.propertyManagerCallbacks[propertyName]()
 */
-    //!!!DBG TMP!
     for (const QString& propertyName : propertyNames)
     {
-        if (propertyName == "Name")
-            static_cast<QtnPropertyQString*>(_propertySet->childProperties()[0])->setValue(getWidgetName());
     }
 }
+
+// TODO: updateAllPropertiesFromWidget()
 
 void CEGUIManipulator::createPropertySet()
 {
@@ -684,12 +679,17 @@ void CEGUIManipulator::createPropertySet()
     while (!it.isAtEnd())
     {
         CEGUI::Property* ceguiProp = it.getCurrentValue();
-        //guid = ceguiProperty.getOrigin() + '/' + ceguiProperty.getName() + '/' + ceguiProperty.getDataType()
+
         if (!ceguiProp->isReadable())
         {
             ++it;
             continue;
         }
+
+        /*
+        guid = ceguiProperty.getOrigin() + '/' + ceguiProperty.getName() + '/' + ceguiProperty.getDataType()
+        defaultValue = valueCreator(ceguiProperty.getDefault(ceguiSet))
+        */
 
         // Categorize properties by CEGUI property origin
         QtnPropertySet* parentSet = _propertySet;
@@ -714,12 +714,40 @@ void CEGUIManipulator::createPropertySet()
         else
             prop = new QtnPropertyQString(parentSet);
 
+        /*
+USize
+URect
+float
+HorizontalAlignment
+VerticalAlignment
+UVector2
+String
+Image
+AspectMode
+quat
+UVector3
+UBox
+DefaultParagraphDirection
+Font
+std::uint32_t
+WindowUpdateMode
+ColourRect
+VerticalFormatting
+HorizontalFormatting
+HorizontalTextFormatting
+VerticalTextFormatting
+        */
+
         prop->setName(CEGUIUtils::stringToQString(ceguiProp->getName()));
         prop->setDescription(CEGUIUtils::stringToQString(ceguiProp->getHelp()));
         prop->fromStr(CEGUIUtils::stringToQString(ceguiProp->get(_widget)));
         if (!ceguiProp->isWritable())
             prop->addState(QtnPropertyStateImmutable);
         parentSet->addChildProperty(prop, true);
+
+        /*
+            ceguiSet.propertyManagerCallbacks[name] = innerProperty.setValue(valueCreator(ceguiProperty.get(ceguiSet)))
+        */
 
         ++it;
     }
