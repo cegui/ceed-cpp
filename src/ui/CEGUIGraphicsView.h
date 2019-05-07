@@ -28,10 +28,6 @@ public:
 
     virtual void drawBackground(QPainter* painter, const QRectF& rect) override;
 
-public slots:
-
-    void causeFullRedraw();
-
 signals:
 
     void cursorPositionChanged(float x, float y);
@@ -55,7 +51,6 @@ private:
     // if true, we render always (possibly capped to some FPS) - suitable for live preview
     // if false, we render only when update() is called - suitable for visual editing
     bool continuousRendering = true;
-    size_t continuousRenderingTargetFPS = 60;
 };
 
 #endif // CEGUIGRAPHICSVIEW_H

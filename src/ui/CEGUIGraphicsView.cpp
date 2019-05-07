@@ -73,14 +73,6 @@ void CEGUIGraphicsView::injectInput(bool inject)
     }
 }
 
-// FIXME: now in Qt5 this doesn't do what it is intended to do!
-void CEGUIGraphicsView::causeFullRedraw()
-{
-    update();
-    if (scene())
-        scene()->update();
-}
-
 // We override this and draw CEGUI instead of the whole background.
 // This method uses a FBO to implement zooming, scrolling around, etc...
 // FBOs are therefore required by CEED and it won't run without a GPU that supports them.
@@ -144,25 +136,20 @@ void CEGUIGraphicsView::drawBackground(QPainter* painter, const QRectF& rect)
 
     if (continuousRendering)
     {
-        if (continuousRenderingTargetFPS <= 0)
-        {
-            causeFullRedraw();
-        }
-        else
-        {
-            const float lastDelta = static_cast<float>(ceguiScene->getLastDelta());
-            const float frameTime = 1.0f / static_cast<float>(continuousRenderingTargetFPS);
+        constexpr float desiredFPS = 60.f;
+        constexpr float frameTimeMsec = (desiredFPS <= 0.f) ? 0.f : (1000.0f / desiredFPS);
 
-            if (frameTime > lastDelta)
-            {
-                // * 1000 because QTimer thinks in milliseconds
-                QTimer::singleShot(static_cast<int>((frameTime - lastDelta) * 1000.f), this, &CEGUIGraphicsView::causeFullRedraw);
-            }
-            else
-            {
-                causeFullRedraw();
-            }
-        }
+        const float lastDeltaMSec = static_cast<float>(ceguiScene->getLastDeltaMSec()); //???per-view?
+        const qint64 msecLeft = std::max(static_cast<qint64>(0), static_cast<qint64>(frameTimeMsec - lastDeltaMSec));
+
+        // Direct call to update() from inside here doesn't seem to work, so we schedule a
+        // timer signal even if the time of the next frame has come.
+        QTimer::singleShot(msecLeft, [this]()
+        {
+            update();
+            if (scene())
+                scene()->update();
+        });
     }
 }
 

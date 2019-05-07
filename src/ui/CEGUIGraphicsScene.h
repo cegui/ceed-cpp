@@ -21,7 +21,7 @@ public:
     virtual void setCEGUIDisplaySize(float width, float height);
     void drawCEGUIContext();
 
-    time_t getLastDelta() const { return lastDelta; }
+    qint64 getLastDeltaMSec() const { return lastDelta; }
     CEGUI::GUIContext* getCEGUIContext() const { return ceguiContext; }
     float getContextWidth() const { return contextWidth; }
     float getContextHeight() const { return contextHeight; }
@@ -30,8 +30,8 @@ protected:
 
     CEGUI::GUIContext* ceguiContext = nullptr;
 
-    time_t lastDelta = 0;
-    time_t timeOfLastRender;
+    qint64 lastDelta = 0;
+    qint64 timeOfLastRender;
 
     qreal padding = 30.0;
     float contextWidth = 0.f;

@@ -5,7 +5,7 @@
 #include <CEGUI/RendererModules/OpenGL/ViewportTarget.h>
 #include <CEGUI/System.h>
 #include <CEGUI/GUIContext.h>
-#include <ctime>
+#include <qdatetime.h>
 
 static inline bool compareFloat(float a, float b) { return std::fabs(a - b) < 0.0001f; }
 
@@ -28,7 +28,7 @@ static void validateResolution(float& width, float& height)
 }
 
 CEGUIGraphicsScene::CEGUIGraphicsScene(float width, float height)
-    : timeOfLastRender(time(nullptr))
+    : timeOfLastRender(QDateTime::currentMSecsSinceEpoch())
 {
     validateResolution(width, height);
     contextWidth = width;
@@ -82,7 +82,7 @@ void CEGUIGraphicsScene::drawCEGUIContext()
 {
     if (!ceguiContext) return;
 
-    auto currTime = time(nullptr);
+    qint64 currTime = QDateTime::currentMSecsSinceEpoch();
     lastDelta = currTime - timeOfLastRender;
     timeOfLastRender = currTime;
 
