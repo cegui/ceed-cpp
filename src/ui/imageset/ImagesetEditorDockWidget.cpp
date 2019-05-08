@@ -1,7 +1,7 @@
 #include "src/ui/imageset/ImagesetEditorDockWidget.h"
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/imageset/ImageEntry.h"
-#include "src/cegui/CEGUIProjectManager.h"
+#include "src/cegui/CEGUIManager.h"
 #include "src/cegui/CEGUIProject.h"
 #include "src/editors/imageset/ImagesetVisualMode.h"
 #include "src/editors/imageset/ImagesetUndoCommands.h"
@@ -42,7 +42,7 @@ ImagesetEditorDockWidget::ImagesetEditorDockWidget(ImagesetVisualMode& visualMod
 
     ui->image->setInitialDirectoryDelegate([]()
     {
-        auto project = CEGUIProjectManager::Instance().getCurrentProject();
+        auto project = CEGUIManager::Instance().getCurrentProject();
         return project ? project->getResourceFilePath("", "imagesets") : "";
     });
 

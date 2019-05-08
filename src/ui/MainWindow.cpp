@@ -14,7 +14,7 @@
 #include "src/util/Settings.h"
 #include "src/util/SettingsEntry.h"
 #include "src/util/RecentlyUsed.h"
-#include "src/cegui/CEGUIProjectManager.h"
+#include "src/cegui/CEGUIManager.h"
 #include "src/cegui/CEGUIProject.h"
 #include "src/editors/NoEditor.h"
 #include "src/editors/TextEditor.h"
@@ -290,7 +290,7 @@ bool MainWindow::on_actionQuit_triggered()
     settings->setValue("window-state", saveState());
 
     // Close project after all tabs have been closed, there may be tabs requiring a project opened!
-    if (CEGUIProjectManager::Instance().isProjectLoaded())
+    if (CEGUIManager::Instance().isProjectLoaded())
     {
         // In case user pressed cancel the entire quitting processed has to be terminated
         if (!on_actionCloseProject_triggered())
@@ -337,7 +337,7 @@ void MainWindow::updateProjectDependentUI(CEGUIProject* newProject)
 
 void MainWindow::on_actionNewProject_triggered()
 {
-    if (CEGUIProjectManager::Instance().isProjectLoaded())
+    if (CEGUIManager::Instance().isProjectLoaded())
     {
         // Another project is already opened!
         auto result = QMessageBox::question(this,
@@ -358,10 +358,10 @@ void MainWindow::on_actionNewProject_triggered()
 
     // The dialog was accepted, close any open project
     updateProjectDependentUI(nullptr);
-    CEGUIProjectManager::Instance().unloadProject();
+    CEGUIManager::Instance().unloadProject();
 
     // Create a new project
-    auto newProject = CEGUIProjectManager::Instance().createProject(newProjectDialog.getFilePath(), newProjectDialog.isCreateResourceDirsSelected());
+    auto newProject = CEGUIManager::Instance().createProject(newProjectDialog.getFilePath(), newProjectDialog.isCreateResourceDirsSelected());
 
     // Open project settings dialog
     on_actionProjectSettings_triggered();
@@ -372,7 +372,7 @@ void MainWindow::on_actionNewProject_triggered()
 
 void MainWindow::on_actionOpenProject_triggered()
 {
-    if (CEGUIProjectManager::Instance().isProjectLoaded())
+    if (CEGUIManager::Instance().isProjectLoaded())
     {
         // Another project is already opened!
         auto result = QMessageBox::question(this,
@@ -385,7 +385,7 @@ void MainWindow::on_actionOpenProject_triggered()
         if (result != QMessageBox::Yes) return;
 
         updateProjectDependentUI(nullptr);
-        CEGUIProjectManager::Instance().unloadProject();
+        CEGUIManager::Instance().unloadProject();
     }
 
     auto fileName = QFileDialog::getOpenFileName(this,
@@ -395,14 +395,14 @@ void MainWindow::on_actionOpenProject_triggered()
 
     if (!fileName.isEmpty())
     {
-        CEGUIProjectManager::Instance().loadProject(fileName);
-        updateProjectDependentUI(CEGUIProjectManager::Instance().getCurrentProject());
+        CEGUIManager::Instance().loadProject(fileName);
+        updateProjectDependentUI(CEGUIManager::Instance().getCurrentProject());
     }
 }
 
 void MainWindow::on_actionProjectSettings_triggered()
 {
-    if (!CEGUIProjectManager::Instance().isProjectLoaded()) return;
+    if (!CEGUIManager::Instance().isProjectLoaded()) return;
 
     // Since we are effectively unloading the project and potentially nuking resources of it
     // we should definitely unload all tabs that rely on it to prevent segfaults and other
@@ -416,11 +416,11 @@ void MainWindow::on_actionProjectSettings_triggered()
         return;
     }
 
-    ProjectSettingsDialog dialog(*CEGUIProjectManager::Instance().getCurrentProject(), this);
+    ProjectSettingsDialog dialog(*CEGUIManager::Instance().getCurrentProject(), this);
     if (dialog.exec() == QDialog::Accepted)
     {
-        dialog.apply(*CEGUIProjectManager::Instance().getCurrentProject());
-        CEGUIProjectManager::Instance().syncProjectToCEGUIInstance();
+        dialog.apply(*CEGUIManager::Instance().getCurrentProject());
+        CEGUIManager::Instance().syncProjectToCEGUIInstance();
     }
 }
 
@@ -791,8 +791,8 @@ EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
     EditorBasePtr ret = nullptr;
 
     QString projectRelativePath;
-    if (CEGUIProjectManager::Instance().isProjectLoaded())
-        projectRelativePath = QDir(CEGUIProjectManager::Instance().getCurrentProject()->getAbsolutePathOf("")).relativeFilePath(absolutePath);
+    if (CEGUIManager::Instance().isProjectLoaded())
+        projectRelativePath = QDir(CEGUIManager::Instance().getCurrentProject()->getAbsolutePathOf("")).relativeFilePath(absolutePath);
     else
         projectRelativePath = "<No project opened>";
 
@@ -868,7 +868,7 @@ EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
     assert(ret);
     if (!ret) return nullptr;
 
-    if (!CEGUIProjectManager::Instance().isProjectLoaded() && ret->requiresProject())
+    if (!CEGUIManager::Instance().isProjectLoaded() && ret->requiresProject())
     {
         ret.reset(new NoEditor(absolutePath,
             "Opening this file requires you to have a project opened!"));
@@ -890,8 +890,8 @@ EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
 void MainWindow::on_actionOpenFile_triggered()
 {
     QString defaultDir;
-    if (CEGUIProjectManager::Instance().isProjectLoaded())
-        defaultDir = CEGUIProjectManager::Instance().getCurrentProject()->getAbsolutePathOf("");
+    if (CEGUIManager::Instance().isProjectLoaded())
+        defaultDir = CEGUIManager::Instance().getCurrentProject()->getAbsolutePathOf("");
 
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     "Open File",
@@ -906,7 +906,7 @@ void MainWindow::openRecentProject(const QString& path)
 {
     if (QFileInfo(path).exists())
     {
-        auto project = CEGUIProjectManager::Instance().getCurrentProject();
+        auto project = CEGUIManager::Instance().getCurrentProject();
         if (project)
         {
             // Give user a chance to save changes if needed
@@ -914,8 +914,8 @@ void MainWindow::openRecentProject(const QString& path)
                 return;
         }
 
-        CEGUIProjectManager::Instance().loadProject(path);
-        updateProjectDependentUI(CEGUIProjectManager::Instance().getCurrentProject());
+        CEGUIManager::Instance().loadProject(path);
+        updateProjectDependentUI(CEGUIManager::Instance().getCurrentProject());
     }
     else
     {
@@ -1100,7 +1100,7 @@ void MainWindow::on_actionSaveAs_triggered()
 // Saves all opened tabbed editors and opened project (if any)
 void MainWindow::on_actionSaveAll_triggered()
 {
-    auto project =  CEGUIProjectManager::Instance().getCurrentProject();
+    auto project =  CEGUIManager::Instance().getCurrentProject();
     if (project) project->save();
 
     for (auto&& editor : activeEditors)
@@ -1109,13 +1109,13 @@ void MainWindow::on_actionSaveAll_triggered()
 
 void MainWindow::on_actionSaveProject_triggered()
 {
-    auto project =  CEGUIProjectManager::Instance().getCurrentProject();
+    auto project =  CEGUIManager::Instance().getCurrentProject();
     if (project) project->save();
 }
 
 bool MainWindow::on_actionCloseProject_triggered()
 {
-    auto project = CEGUIProjectManager::Instance().getCurrentProject();
+    auto project = CEGUIManager::Instance().getCurrentProject();
     if (!project) return true;
 
     if (project->isModified())
@@ -1135,7 +1135,7 @@ bool MainWindow::on_actionCloseProject_triggered()
     }
 
     updateProjectDependentUI(nullptr);
-    CEGUIProjectManager::Instance().unloadProject();
+    CEGUIManager::Instance().unloadProject();
 
     return true;
 }
@@ -1169,7 +1169,7 @@ void MainWindow::on_actionReloadResources_triggered()
         return;
     }
 
-    CEGUIProjectManager::Instance().syncProjectToCEGUIInstance();
+    CEGUIManager::Instance().syncProjectToCEGUIInstance();
 
     // Load previously loaded tabs requiring a project opened
     for (auto& filePath : filePathsToLoad)
@@ -1198,8 +1198,8 @@ void MainWindow::on_actionNewOtherFile_triggered()
 void MainWindow::createNewFile(const QString& title, const QStringList& filters, int currFilter, const QString& autoSuffix)
 {
     QString defaultDir;
-    if (CEGUIProjectManager::Instance().isProjectLoaded())
-        defaultDir = CEGUIProjectManager::Instance().getCurrentProject()->getAbsolutePathOf("");
+    if (CEGUIManager::Instance().isProjectLoaded())
+        defaultDir = CEGUIManager::Instance().getCurrentProject()->getAbsolutePathOf("");
 
 /*
     # Qt (as of 4.8) does not support default suffix (extension) unless you use

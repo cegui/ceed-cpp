@@ -1,5 +1,5 @@
 #include "src/ui/layout/CreateWidgetDockWidget.h"
-#include "src/cegui/CEGUIProjectManager.h"
+#include "src/cegui/CEGUIManager.h"
 #include "ui_CreateWidgetDockWidget.h"
 
 CreateWidgetDockWidget::CreateWidgetDockWidget(QWidget *parent) :
@@ -19,7 +19,7 @@ void CreateWidgetDockWidget::populate()
     ui->tree->clear();
 
     std::map<QString, QStringList> widgetsBySkin;
-    CEGUIProjectManager::Instance().getAvailableWidgetsBySkin(widgetsBySkin);
+    CEGUIManager::Instance().getAvailableWidgetsBySkin(widgetsBySkin);
 
     for (auto& pair : widgetsBySkin)
     {

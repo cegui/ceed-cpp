@@ -1,5 +1,5 @@
-#ifndef CEGUIPROJECTMANAGER_H
-#define CEGUIPROJECTMANAGER_H
+#ifndef CEGUIManager_H
+#define CEGUIManager_H
 #include "qstring.h"
 #include "qimage.h"
 #include <memory>
@@ -9,28 +9,26 @@
 // future though, then CEGUI instance may be allocated per project.
 // TODO: support multiple projects (switchable on demand)
 
-//???rename to CEGUIManager?
-
 class CEGUIProject;
-class CEGUIWidget; // TODO: one CEGUI widget per editor instead of the global one?
+class QtnEnumInfo;
 class QOpenGLContext;
 class QOffscreenSurface;
 
-class CEGUIProjectManager
+class CEGUIManager
 {
 public:
 
     static QString getEditorIDStringPrefix() { return "ceed_internal-"; }
 
-    CEGUIProjectManager();
-    CEGUIProjectManager(const CEGUIProjectManager&) = delete;
-    ~CEGUIProjectManager();
+    CEGUIManager();
+    CEGUIManager(const CEGUIManager&) = delete;
+    ~CEGUIManager();
 
-    CEGUIProjectManager& operator =(const CEGUIProjectManager&) = delete;
+    CEGUIManager& operator =(const CEGUIManager&) = delete;
 
-    static CEGUIProjectManager& Instance()
+    static CEGUIManager& Instance()
     {
-        static CEGUIProjectManager mgr;
+        static CEGUIManager mgr;
         return mgr;
     }
 
@@ -51,15 +49,35 @@ public:
     bool makeOpenGLContextCurrent();
     void doneOpenGLContextCurrent();
 
+    // Property framework support
+    const QtnEnumInfo& enumHorizontalAlignment();
+    const QtnEnumInfo& enumVerticalAlignment();
+    const QtnEnumInfo& enumAspectMode();
+    const QtnEnumInfo& enumDefaultParagraphDirection();
+    const QtnEnumInfo& enumWindowUpdateMode();
+    const QtnEnumInfo& enumHorizontalFormatting();
+    const QtnEnumInfo& enumVerticalFormatting();
+    const QtnEnumInfo& enumHorizontalTextFormatting();
+    const QtnEnumInfo& enumVerticalTextFormatting();
+
 protected:
 
     void cleanCEGUIResources();
 
     QOpenGLContext* glContext = nullptr;
     QOffscreenSurface* surface = nullptr;
+    QtnEnumInfo* _enumHorizontalAlignment = nullptr;
+    QtnEnumInfo* _enumVerticalAlignment = nullptr;
+    QtnEnumInfo* _enumAspectMode = nullptr;
+    QtnEnumInfo* _enumDefaultParagraphDirection = nullptr;
+    QtnEnumInfo* _enumWindowUpdateMode = nullptr;
+    QtnEnumInfo* _enumHorizontalFormatting = nullptr;
+    QtnEnumInfo* _enumVerticalFormatting = nullptr;
+    QtnEnumInfo* _enumHorizontalTextFormatting = nullptr;
+    QtnEnumInfo* _enumVerticalTextFormatting = nullptr;
 
     std::unique_ptr<CEGUIProject> currentProject;
     bool initialized = false;
 };
 
-#endif // CEGUIPROJECTMANAGER_H
+#endif // CEGUIManager_H

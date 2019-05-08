@@ -3,7 +3,6 @@
 
 #include "qstring.h"
 #include <CEGUI/InputEvent.h>
-#include "3rdParty/QtnProperty/Core/Enum.h"
 
 namespace CEGUI
 {
@@ -26,17 +25,6 @@ namespace CEGUIUtils
 
     CEGUI::MouseButton qtMouseButtonToMouseButton(Qt::MouseButton button);
     CEGUI::Key::Scan qtKeyToKey(int key);
-
-    // Property framework support
-    const QtnEnumInfo& enumHorizontalAlignment();
-    const QtnEnumInfo& enumVerticalAlignment();
-    const QtnEnumInfo& enumAspectMode();
-    const QtnEnumInfo& enumDefaultParagraphDirection();
-    const QtnEnumInfo& enumWindowUpdateMode();
-    const QtnEnumInfo& enumHorizontalFormatting();
-    const QtnEnumInfo& enumVerticalFormatting();
-    const QtnEnumInfo& enumHorizontalTextFormatting();
-    const QtnEnumInfo& enumVerticalTextFormatting();
 };
 
 #endif // CEGUIUTILS_H

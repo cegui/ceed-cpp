@@ -2,7 +2,7 @@
 #include "src/editors/layout/LayoutCodeMode.h"
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutPreviewerMode.h"
-#include "src/cegui/CEGUIProjectManager.h"
+#include "src/cegui/CEGUIManager.h"
 #include "src/cegui/CEGUIProject.h"
 #include "src/cegui/CEGUIUtils.h"
 #include "src/util/Settings.h"
@@ -46,7 +46,7 @@ void LayoutEditor::initialize()
     try
     {
         // FIXME: open manually and load from string?
-        auto layoutFileName = QDir(CEGUIProjectManager::Instance().getCurrentProject()->getResourceFilePath("", "layouts")).relativeFilePath(_filePath);
+        auto layoutFileName = QDir(CEGUIManager::Instance().getCurrentProject()->getResourceFilePath("", "layouts")).relativeFilePath(_filePath);
         CEGUI::Window* root = CEGUI::WindowManager::getSingleton().loadLayoutFromFile(CEGUIUtils::qStringToString(layoutFileName));
         visualMode->initialize(root);
     }

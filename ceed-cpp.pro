@@ -50,7 +50,7 @@ SOURCES += \
     src/ui/dialogs/KeySequenceDialog.cpp \
     src/ui/UndoViewer.cpp \
     src/ui/widgets/BitmapEditorWidget.cpp \
-    src/cegui/CEGUIProjectManager.cpp \
+    src/cegui/CEGUIManager.cpp \
     src/cegui/CEGUIProject.cpp \
     src/cegui/CEGUIProjectItem.cpp \
     src/cegui/CEGUIManipulator.cpp \
@@ -108,7 +108,7 @@ HEADERS += \
     src/ui/CEGUIWidget.h \
     src/ui/CEGUIGraphicsView.h \
     src/ui/CEGUIGraphicsScene.h \
-    src/cegui/CEGUIProjectManager.h \
+    src/cegui/CEGUIManager.h \
     src/cegui/CEGUIProject.h \
     src/cegui/CEGUIProjectItem.h \
     src/cegui/CEGUIManipulator.h \

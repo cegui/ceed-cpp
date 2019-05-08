@@ -1,5 +1,5 @@
 #include "src/ui/layout/WidgetTypeTreeWidget.h"
-#include "src/cegui/CEGUIProjectManager.h"
+#include "src/cegui/CEGUIManager.h"
 #include "qevent.h"
 #include "qmimedata.h"
 #include "qpainter.h"
@@ -67,7 +67,7 @@ bool WidgetTypeTreeWidget::viewportEvent(QEvent* event)
                     QByteArray bytes;
                     QBuffer buffer(&bytes);
                     buffer.open(QIODevice::WriteOnly);
-                    CEGUIProjectManager::Instance().getWidgetPreviewImage(fullWidgetType, 256, 128).save(&buffer, "PNG");
+                    CEGUIManager::Instance().getWidgetPreviewImage(fullWidgetType, 256, 128).save(&buffer, "PNG");
                     buffer.close();
 
                     tooltipText = QString("<img src=\"data:image/png;base64,%1\" />").arg(QString(bytes.toBase64()));

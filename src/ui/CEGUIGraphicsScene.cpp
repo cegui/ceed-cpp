@@ -1,5 +1,5 @@
 #include "src/ui/CEGUIGraphicsScene.h"
-#include "src/cegui/CEGUIProjectManager.h"
+#include "src/cegui/CEGUIManager.h"
 #include "src/cegui/CEGUIProject.h"
 #include <CEGUI/RendererModules/OpenGL/GLRenderer.h>
 #include <CEGUI/RendererModules/OpenGL/ViewportTarget.h>
@@ -13,7 +13,7 @@ static void validateResolution(float& width, float& height)
 {
     if (width < 1.f || height < 1.f)
     {
-        auto project = CEGUIProjectManager::Instance().getCurrentProject();
+        auto project = CEGUIManager::Instance().getCurrentProject();
         if (project)
         {
             width = project->getDefaultResolution().width();

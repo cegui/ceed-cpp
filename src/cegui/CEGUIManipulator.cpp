@@ -1,5 +1,6 @@
 #include "src/cegui/CEGUIManipulator.h"
 #include "src/cegui/CEGUIUtils.h"
+#include "src/cegui/CEGUIManager.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
 #include "qgraphicsscene.h"
@@ -16,6 +17,7 @@
 #include "3rdParty/QtnProperty/Core/Core/PropertyUInt.h"
 #include "3rdParty/QtnProperty/Core/Core/PropertyFloat.h"
 #include "3rdParty/QtnProperty/Core/Core/PropertyEnum.h"
+#include "3rdParty/QtnProperty/PropertyWidget/Delegates/Core/PropertyDelegateQString.h"
 
 // recursive - if true, even children of given widget are wrapped
 // skipAutoWidgets - if true, auto widgets are skipped (only applicable if recursive is True)
@@ -721,71 +723,97 @@ void CEGUIManipulator::createPropertySet()
         else if (propertyDataType == "HorizontalAlignment")
         {
             auto enumProp = new QtnPropertyEnum(parentSet);
-            enumProp->setEnumInfo(&CEGUIUtils::enumHorizontalAlignment());
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumHorizontalAlignment());
             prop = enumProp;
         }
         else if (propertyDataType == "VerticalAlignment")
         {
             auto enumProp = new QtnPropertyEnum(parentSet);
-            enumProp->setEnumInfo(&CEGUIUtils::enumVerticalAlignment());
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumVerticalAlignment());
             prop = enumProp;
         }
         else if (propertyDataType == "AspectMode")
         {
             auto enumProp = new QtnPropertyEnum(parentSet);
-            enumProp->setEnumInfo(&CEGUIUtils::enumAspectMode());
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumAspectMode());
             prop = enumProp;
         }
         else if (propertyDataType == "DefaultParagraphDirection")
         {
             auto enumProp = new QtnPropertyEnum(parentSet);
-            enumProp->setEnumInfo(&CEGUIUtils::enumDefaultParagraphDirection());
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumDefaultParagraphDirection());
             prop = enumProp;
         }
         else if (propertyDataType == "WindowUpdateMode")
         {
             auto enumProp = new QtnPropertyEnum(parentSet);
-            enumProp->setEnumInfo(&CEGUIUtils::enumWindowUpdateMode());
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumWindowUpdateMode());
             prop = enumProp;
         }
         else if (propertyDataType == "VerticalFormatting")
         {
             auto enumProp = new QtnPropertyEnum(parentSet);
-            enumProp->setEnumInfo(&CEGUIUtils::enumVerticalFormatting());
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumVerticalFormatting());
             prop = enumProp;
         }
         else if (propertyDataType == "HorizontalFormatting")
         {
             auto enumProp = new QtnPropertyEnum(parentSet);
-            enumProp->setEnumInfo(&CEGUIUtils::enumHorizontalFormatting());
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumHorizontalFormatting());
             prop = enumProp;
         }
         else if (propertyDataType == "VerticalTextFormatting")
         {
             auto enumProp = new QtnPropertyEnum(parentSet);
-            enumProp->setEnumInfo(&CEGUIUtils::enumVerticalTextFormatting());
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumVerticalTextFormatting());
             prop = enumProp;
         }
         else if (propertyDataType == "HorizontalTextFormatting")
         {
             auto enumProp = new QtnPropertyEnum(parentSet);
-            enumProp->setEnumInfo(&CEGUIUtils::enumHorizontalTextFormatting());
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumHorizontalTextFormatting());
             prop = enumProp;
+        }
+        else if (propertyDataType == "Font")
+        {
+            prop = new QtnPropertyQString(parentSet);
+            prop->setDelegate({"Callback"});
+
+            //???FIXME: Qtn - can use central string list without per-property copying?
+            QtnGetCandidatesFn getCb = []() { return CEGUIManager::Instance().getAvailableFonts(); };
+            prop->setDelegateAttribute("GetCandidatesFn", QVariant::fromValue(getCb));
+
+            QtnCreateCandidateFn createCb = [](QWidget* /*parent*/) { return QString{}; };
+            prop->setDelegateAttribute("CreateCandidateFn", QVariant::fromValue(createCb));
+            prop->setDelegateAttribute("CreateCandidateLabel", "<add font...>");
+        }
+        else if (propertyDataType == "Image")
+        {
+            prop = new QtnPropertyQString(parentSet);
+            prop->setDelegate({"Callback"});
+
+            //???FIXME: Qnt - can use central string list without per-property copying?
+            QtnGetCandidatesFn getCb = []() { return CEGUIManager::Instance().getAvailableImages(); };
+            prop->setDelegateAttribute("GetCandidatesFn", QVariant::fromValue(getCb));
+
+            QtnCreateCandidateFn createCb = [](QWidget* /*parent*/) { return QString{}; };
+            prop->setDelegateAttribute("CreateCandidateFn", QVariant::fromValue(createCb));
+            prop->setDelegateAttribute("CreateCandidateLabel", "<add image...>");
+        }
+        else if (propertyDataType == "UVector2")
+        {
+            prop = new QtnPropertyQString(parentSet);
         }
         else // "String" and any other
             prop = new QtnPropertyQString(parentSet);
 
         /*
-UVector2
 UVector3
 USize
 URect
 UBox
 quat
 ColourRect
-
-Font
-Image
         */
 
         prop->setName(CEGUIUtils::stringToQString(ceguiProp->getName()));

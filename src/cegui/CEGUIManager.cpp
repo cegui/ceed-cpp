@@ -1,36 +1,47 @@
-#include "src/cegui/CEGUIProjectManager.h"
+#include "src/cegui/CEGUIManager.h"
 #include "src/cegui/CEGUIProject.h"
 #include "src/cegui/CEGUIUtils.h"
 #include "src/util/DismissableMessage.h"
 #include "src/Application.h"
-#include "qmessagebox.h"
-#include "qprogressdialog.h"
-#include "qdiriterator.h"
 #include <CEGUI/CEGUI.h>
 #include <CEGUI/RendererModules/OpenGL/GLRenderer.h>
 #include <CEGUI/RendererModules/OpenGL/ViewportTarget.h>
+#include "3rdParty/QtnProperty/Core/Enum.h"
+#include "qmessagebox.h"
+#include "qprogressdialog.h"
+#include "qdiriterator.h"
 #include "qopenglcontext.h"
 #include "qoffscreensurface.h"
 #include "qopenglframebufferobject.h"
 #include "qopenglfunctions.h"
 
-CEGUIProjectManager::CEGUIProjectManager()
+CEGUIManager::CEGUIManager()
 {
 /*
     self.logger = RedirectingCEGUILogger()
 */
 }
 
-CEGUIProjectManager::~CEGUIProjectManager()
+CEGUIManager::~CEGUIManager()
 {
     if (initialized)
     {
         cleanCEGUIResources();
         CEGUI::OpenGLRenderer::destroySystem();
     }
+
+    delete _enumHorizontalAlignment;
+    delete _enumVerticalAlignment;
+    delete _enumAspectMode;
+    delete _enumDefaultParagraphDirection;
+    delete _enumWindowUpdateMode;
+    delete _enumHorizontalFormatting;
+    delete _enumVerticalFormatting;
+    delete _enumHorizontalTextFormatting;
+    delete _enumVerticalTextFormatting;
 }
 
-CEGUIProject* CEGUIProjectManager::createProject(const QString& filePath, bool createResourceDirs)
+CEGUIProject* CEGUIManager::createProject(const QString& filePath, bool createResourceDirs)
 {
     //???force unload prev project?
     assert(!isProjectLoaded());
@@ -77,7 +88,7 @@ CEGUIProject* CEGUIProjectManager::createProject(const QString& filePath, bool c
 // Caller must test if a project is opened and close it accordingly (with a dialog
 // being shown if there are changes to it)
 // Errors aren't indicated by exceptions or return values, dialogs are shown in case of errors.
-void CEGUIProjectManager::loadProject(const QString& filePath)
+void CEGUIManager::loadProject(const QString& filePath)
 {
     if (isProjectLoaded())
     {
@@ -102,7 +113,7 @@ void CEGUIProjectManager::loadProject(const QString& filePath)
 }
 
 // Closes currently opened project. Assumes one is opened at the point this is called.
-void CEGUIProjectManager::unloadProject()
+void CEGUIManager::unloadProject()
 {
     if (!currentProject) return;
 
@@ -114,7 +125,7 @@ void CEGUIProjectManager::unloadProject()
 }
 
 // Ensures this CEGUI instance is properly initialised, if it's not it initialises it right away
-void CEGUIProjectManager::ensureCEGUIInitialized()
+void CEGUIManager::ensureCEGUIInitialized()
 {
     if (initialized) return;
 
@@ -198,18 +209,18 @@ void CEGUIProjectManager::ensureCEGUIInitialized()
     initialized = true;
 }
 
-bool CEGUIProjectManager::makeOpenGLContextCurrent()
+bool CEGUIManager::makeOpenGLContextCurrent()
 {
     return glContext ? glContext->makeCurrent(surface) : false;
 }
 
-void CEGUIProjectManager::doneOpenGLContextCurrent()
+void CEGUIManager::doneOpenGLContextCurrent()
 {
     if (glContext) glContext->doneCurrent();
 }
 
 // Synchronises the CEGUI instance with the current project, respecting it's paths and resources
-bool CEGUIProjectManager::syncProjectToCEGUIInstance()
+bool CEGUIManager::syncProjectToCEGUIInstance()
 {
     if (!currentProject)
     {
@@ -488,7 +499,7 @@ bool CEGUIProjectManager::syncProjectToCEGUIInstance()
 }
 
 // Destroy all previous resources (if any)
-void CEGUIProjectManager::cleanCEGUIResources()
+void CEGUIManager::cleanCEGUIResources()
 {
     if (!initialized) return;
 
@@ -516,7 +527,7 @@ void CEGUIProjectManager::cleanCEGUIResources()
 
 // Retrieves names of skins that are available from the set of schemes that were loaded.
 // see syncProjectToCEGUIInstance
-QStringList CEGUIProjectManager::getAvailableSkins() const
+QStringList CEGUIManager::getAvailableSkins() const
 {
     QStringList skins;
 
@@ -544,7 +555,7 @@ QStringList CEGUIProjectManager::getAvailableSkins() const
 
 // Retrieves names of fonts that are available from the set of schemes that were loaded.
 // see syncProjectToCEGUIInstance
-QStringList CEGUIProjectManager::getAvailableFonts() const
+QStringList CEGUIManager::getAvailableFonts() const
 {
     QStringList fonts;
 
@@ -560,7 +571,7 @@ QStringList CEGUIProjectManager::getAvailableFonts() const
 
 // Retrieves names of images that are available from the set of schemes that were loaded.
 // see syncProjectToCEGUIInstance
-QStringList CEGUIProjectManager::getAvailableImages() const
+QStringList CEGUIManager::getAvailableImages() const
 {
     QStringList images;
 
@@ -577,7 +588,7 @@ QStringList CEGUIProjectManager::getAvailableImages() const
 
 // Retrieves all mappings (string names) of all widgets that can be created
 // see syncProjectToCEGUIInstance
-void CEGUIProjectManager::getAvailableWidgetsBySkin(std::map<QString, QStringList>& out) const
+void CEGUIManager::getAvailableWidgetsBySkin(std::map<QString, QStringList>& out) const
 {
     out["__no_skin__"].append(
     {
@@ -610,7 +621,7 @@ void CEGUIProjectManager::getAvailableWidgetsBySkin(std::map<QString, QStringLis
 }
 
 // Renders and retrieves a widget preview QImage. This is useful for various widget selection lists as a preview.
-QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int previewWidth, int previewHeight)
+QImage CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int previewWidth, int previewHeight)
 {
     ensureCEGUIInitialized();
 
@@ -685,4 +696,141 @@ QImage CEGUIProjectManager::getWidgetPreviewImage(const QString& widgetType, int
         throw error;
 
     return result;
+}
+
+const QtnEnumInfo& CEGUIManager::enumHorizontalAlignment()
+{
+    // TODO: request to Qtn - more convenient static enum declaration / example
+    /*
+    QtnEnumInfo info("HorizontalAlignment",
+    {
+        QtnEnumValueInfo(static_cast<QtnEnumValueType>(CEGUI::HorizontalAlignment::Left), "Left")
+    });
+    */
+
+    if (!_enumHorizontalAlignment)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalAlignment::Left), "Left"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalAlignment::Centre), "Center"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalAlignment::Right), "Right"});
+        _enumHorizontalAlignment = new QtnEnumInfo("HorizontalAlignment", values);
+    }
+    return *_enumHorizontalAlignment;
+}
+
+const QtnEnumInfo& CEGUIManager::enumVerticalAlignment()
+{
+    if (!_enumVerticalAlignment)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalAlignment::Top), "Top"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalAlignment::Centre), "Center"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalAlignment::Bottom), "Bottom"});
+        _enumVerticalAlignment = new QtnEnumInfo("VerticalAlignment", values);
+    }
+    return *_enumVerticalAlignment;
+}
+
+const QtnEnumInfo& CEGUIManager::enumAspectMode()
+{
+    if (!_enumAspectMode)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::AspectMode::Expand), "Expand"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::AspectMode::Ignore), "Ignore"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::AspectMode::Shrink), "Shrink"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::AspectMode::AdjustWidth), "AdjustWidth", "Adjust width"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::AspectMode::AdjustHeight), "AdjustHeight", "Adjust height"});
+        _enumAspectMode = new QtnEnumInfo("AspectMode", values);
+    }
+    return *_enumAspectMode;
+}
+
+const QtnEnumInfo& CEGUIManager::enumDefaultParagraphDirection()
+{
+    if (!_enumDefaultParagraphDirection)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::DefaultParagraphDirection::Automatic), "Automatic"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::DefaultParagraphDirection::LeftToRight), "LeftToRight", "Left to right"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::DefaultParagraphDirection::RightToLeft), "RightToLeft", "Right to left"});
+        _enumDefaultParagraphDirection = new QtnEnumInfo("DefaultParagraphDirection", values);
+    }
+    return *_enumDefaultParagraphDirection;
+}
+
+const QtnEnumInfo& CEGUIManager::enumWindowUpdateMode()
+{
+    if (!_enumWindowUpdateMode)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::WindowUpdateMode::Never), "Never"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::WindowUpdateMode::Always), "Always"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::WindowUpdateMode::Visible), "Visible"});
+        _enumWindowUpdateMode = new QtnEnumInfo("WindowUpdateMode", values);
+    }
+    return *_enumWindowUpdateMode;
+}
+
+const QtnEnumInfo& CEGUIManager::enumHorizontalFormatting()
+{
+    if (!_enumHorizontalFormatting)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalFormatting::Tiled), "Tiled", "Tile"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalFormatting::Stretched), "Stretched", "Stretch"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalFormatting::LeftAligned), "LeftAligned", "Left"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalFormatting::RightAligned), "RightAligned", "Right"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalFormatting::CentreAligned), "CentreAligned", "Center"});
+        _enumHorizontalFormatting = new QtnEnumInfo("HorizontalFormatting", values);
+    }
+    return *_enumHorizontalFormatting;
+}
+
+const QtnEnumInfo& CEGUIManager::enumVerticalFormatting()
+{
+    if (!_enumVerticalFormatting)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalImageFormatting::Tiled), "Tiled", "Tile"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalImageFormatting::Stretched), "Stretched", "Stretch"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalImageFormatting::TopAligned), "TopAligned"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalImageFormatting::BottomAligned), "BottomAligned", "Bottom"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalImageFormatting::CentreAligned), "CentreAligned", "Center"});
+        _enumVerticalFormatting = new QtnEnumInfo("VerticalFormatting", values);
+    }
+    return *_enumVerticalFormatting;
+}
+
+//???TODO: make special property of alignment + word wrap flag?
+const QtnEnumInfo& CEGUIManager::enumHorizontalTextFormatting()
+{
+    if (!_enumHorizontalTextFormatting)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::Justified), "Justified"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::LeftAligned), "LeftAligned", "Left"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::RightAligned), "RightAligned", "Right"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::CentreAligned), "CentreAligned", "Center"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWraperJustified), "WordWraperJustified", "Justified"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapLeftAligned), "WordWrapLeftAligned", "Left word-wrapped"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapRightAligned), "WordWrapRightAligned", "Right word-wrapped"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapCentreAligned), "WordWrapCentreAligned", "Center word-wrapped"});
+        _enumHorizontalTextFormatting = new QtnEnumInfo("HorizontalTextFormatting", values);
+    }
+    return *_enumHorizontalTextFormatting;
+}
+
+const QtnEnumInfo& CEGUIManager::enumVerticalTextFormatting()
+{
+    if (!_enumVerticalTextFormatting)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalTextFormatting::TopAligned), "TopAligned", "Top"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalTextFormatting::BottomAligned), "BottomAligned", "Bottom"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalTextFormatting::CentreAligned), "CentreAligned", "Center"});
+        _enumVerticalTextFormatting = new QtnEnumInfo("VerticalTextFormatting", values);
+    }
+    return *_enumVerticalTextFormatting;
 }
