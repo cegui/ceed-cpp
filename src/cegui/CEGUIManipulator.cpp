@@ -13,6 +13,9 @@
 #include "3rdParty/QtnProperty/Core/PropertySet.h"
 #include "3rdParty/QtnProperty/Core/Core/PropertyQString.h"
 #include "3rdParty/QtnProperty/Core/Core/PropertyBool.h"
+#include "3rdParty/QtnProperty/Core/Core/PropertyUInt.h"
+#include "3rdParty/QtnProperty/Core/Core/PropertyFloat.h"
+#include "3rdParty/QtnProperty/Core/Core/PropertyEnum.h"
 
 // recursive - if true, even children of given widget are wrapped
 // skipAutoWidgets - if true, auto widgets are skipped (only applicable if recursive is True)
@@ -711,31 +714,78 @@ void CEGUIManipulator::createPropertySet()
         const auto& propertyDataType = ceguiProp->getDataType(); // could be overridden through a property map
         if (propertyDataType == "bool")
             prop = new QtnPropertyBool(parentSet);
-        else
+        else if (propertyDataType == "std::uint32_t")
+            prop = new QtnPropertyUInt(parentSet);
+        else if (propertyDataType == "float")
+            prop = new QtnPropertyFloat(parentSet);
+        else if (propertyDataType == "HorizontalAlignment")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIUtils::enumHorizontalAlignment());
+            prop = enumProp;
+        }
+        else if (propertyDataType == "VerticalAlignment")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIUtils::enumVerticalAlignment());
+            prop = enumProp;
+        }
+        else if (propertyDataType == "AspectMode")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIUtils::enumAspectMode());
+            prop = enumProp;
+        }
+        else if (propertyDataType == "DefaultParagraphDirection")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIUtils::enumDefaultParagraphDirection());
+            prop = enumProp;
+        }
+        else if (propertyDataType == "WindowUpdateMode")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIUtils::enumWindowUpdateMode());
+            prop = enumProp;
+        }
+        else if (propertyDataType == "VerticalFormatting")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIUtils::enumVerticalFormatting());
+            prop = enumProp;
+        }
+        else if (propertyDataType == "HorizontalFormatting")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIUtils::enumHorizontalFormatting());
+            prop = enumProp;
+        }
+        else if (propertyDataType == "VerticalTextFormatting")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIUtils::enumVerticalTextFormatting());
+            prop = enumProp;
+        }
+        else if (propertyDataType == "HorizontalTextFormatting")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIUtils::enumHorizontalTextFormatting());
+            prop = enumProp;
+        }
+        else // "String" and any other
             prop = new QtnPropertyQString(parentSet);
 
         /*
+UVector2
+UVector3
 USize
 URect
-float
-HorizontalAlignment
-VerticalAlignment
-UVector2
-String
-Image
-AspectMode
-quat
-UVector3
 UBox
-DefaultParagraphDirection
-Font
-std::uint32_t
-WindowUpdateMode
+quat
 ColourRect
-VerticalFormatting
-HorizontalFormatting
-HorizontalTextFormatting
-VerticalTextFormatting
+
+Font
+Image
         */
 
         prop->setName(CEGUIUtils::stringToQString(ceguiProp->getName()));

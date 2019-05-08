@@ -24,7 +24,7 @@ public:
 
     void setupContextMenu();
 
-    LayoutVisualMode* getVisualMode() const;
+    LayoutVisualMode& getVisualMode() const { return _visualMode; }
     void setRootWidgetManipulator(LayoutManipulator* root);
     void refresh();
 
@@ -44,6 +44,7 @@ private:
 
     Ui::WidgetHierarchyDockWidget *ui;
 
+    LayoutVisualMode& _visualMode;
     bool _ignoreSelectionChanges = false;
     LayoutManipulator* _rootWidgetManipulator = nullptr;
 };

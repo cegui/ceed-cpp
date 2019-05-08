@@ -134,6 +134,20 @@ void WidgetHierarchyTreeView::setSelectedWidgetsLocked(bool locked, bool recursi
     }
 }
 
+LayoutManipulator* WidgetHierarchyTreeView::getManipulatorFromIndex(const QModelIndex& index) const
+{
+    auto item = static_cast<QStandardItemModel*>(model())->itemFromIndex(index);
+
+    auto widgetItem = dynamic_cast<WidgetHierarchyItem*>(item);
+    if (!widgetItem) return nullptr;
+
+    QString manipulatorPath = widgetItem->data(Qt::UserRole).toString();
+    if (manipulatorPath.isEmpty()) return nullptr;
+
+    WidgetHierarchyDockWidget* widget = static_cast<WidgetHierarchyDockWidget*>(parentWidget()->parentWidget());
+    return widget->getVisualMode().getScene()->getManipulatorByPath(manipulatorPath);
+}
+
 // Synchronizes tree selection with scene selection
 void WidgetHierarchyTreeView::selectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
 {
@@ -147,31 +161,13 @@ void WidgetHierarchyTreeView::selectionChanged(const QItemSelection& selected, c
 
     for (auto& index : selected.indexes())
     {
-        auto item = static_cast<QStandardItemModel*>(model())->itemFromIndex(index);
-
-        auto widgetItem = dynamic_cast<WidgetHierarchyItem*>(item);
-        if (!widgetItem) continue;
-
-        QString manipulatorPath = widgetItem->data(Qt::UserRole).toString();
-        LayoutManipulator* manipulator = nullptr;
-        if (!manipulatorPath.isEmpty())
-            manipulator = widget->getVisualMode()->getScene()->getManipulatorByPath(manipulatorPath);
-
+        auto manipulator = getManipulatorFromIndex(index);
         if (manipulator) manipulator->setSelected(true);
     }
 
     for (auto& index : deselected.indexes())
     {
-        auto item = static_cast<QStandardItemModel*>(model())->itemFromIndex(index);
-
-        auto widgetItem = dynamic_cast<WidgetHierarchyItem*>(item);
-        if (!widgetItem) continue;
-
-        QString manipulatorPath = widgetItem->data(Qt::UserRole).toString();
-        LayoutManipulator* manipulator = nullptr;
-        if (!manipulatorPath.isEmpty())
-            manipulator = widget->getVisualMode()->getScene()->getManipulatorByPath(manipulatorPath);
-
+        auto manipulator = getManipulatorFromIndex(index);
         if (manipulator) manipulator->setSelected(false);
     }
 

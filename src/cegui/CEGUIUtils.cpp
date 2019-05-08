@@ -290,6 +290,161 @@ CEGUI::Key::Scan qtKeyToKey(int key)
     }
 }
 
+const QtnEnumInfo& enumHorizontalAlignment()
+{
+    // TODO: request to Qtn - more convenient static enum declaration / example
+    /*
+    static QtnEnumInfo info("HorizontalAlignment",
+    {
+        QtnEnumValueInfo(static_cast<QtnEnumValueType>(CEGUI::HorizontalAlignment::Left), "Left")
+    });
+    */
+
+    // FIXME: never deleted, store the single instance in QApplication instead?
+    static QtnEnumInfo* info = nullptr;
+    if (!info)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalAlignment::Left), "Left"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalAlignment::Centre), "Center"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalAlignment::Right), "Right"});
+        info = new QtnEnumInfo("HorizontalAlignment", values);
+    }
+    return *info;
+}
+
+const QtnEnumInfo& enumVerticalAlignment()
+{
+    // FIXME: never deleted, store the single instance in QApplication instead?
+    static QtnEnumInfo* info = nullptr;
+    if (!info)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalAlignment::Top), "Top"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalAlignment::Centre), "Center"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalAlignment::Bottom), "Bottom"});
+        info = new QtnEnumInfo("VerticalAlignment", values);
+    }
+    return *info;
+}
+
+const QtnEnumInfo& enumAspectMode()
+{
+    // FIXME: never deleted, store the single instance in QApplication instead?
+    static QtnEnumInfo* info = nullptr;
+    if (!info)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::AspectMode::Expand), "Expand"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::AspectMode::Ignore), "Ignore"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::AspectMode::Shrink), "Shrink"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::AspectMode::AdjustWidth), "AdjustWidth", "Adjust width"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::AspectMode::AdjustHeight), "AdjustHeight", "Adjust height"});
+        info = new QtnEnumInfo("AspectMode", values);
+    }
+    return *info;
+}
+
+const QtnEnumInfo& enumDefaultParagraphDirection()
+{
+    // FIXME: never deleted, store the single instance in QApplication instead?
+    static QtnEnumInfo* info = nullptr;
+    if (!info)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::DefaultParagraphDirection::Automatic), "Automatic"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::DefaultParagraphDirection::LeftToRight), "LeftToRight", "Left to right"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::DefaultParagraphDirection::RightToLeft), "RightToLeft", "Right to left"});
+        info = new QtnEnumInfo("DefaultParagraphDirection", values);
+    }
+    return *info;
+}
+
+const QtnEnumInfo& enumWindowUpdateMode()
+{
+    // FIXME: never deleted, store the single instance in QApplication instead?
+    static QtnEnumInfo* info = nullptr;
+    if (!info)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::WindowUpdateMode::Never), "Never"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::WindowUpdateMode::Always), "Always"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::WindowUpdateMode::Visible), "Visible"});
+        info = new QtnEnumInfo("WindowUpdateMode", values);
+    }
+    return *info;
+}
+
+const QtnEnumInfo& enumHorizontalFormatting()
+{
+    // FIXME: never deleted, store the single instance in QApplication instead?
+    static QtnEnumInfo* info = nullptr;
+    if (!info)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalFormatting::Tiled), "Tiled", "Tile"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalFormatting::Stretched), "Stretched", "Stretch"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalFormatting::LeftAligned), "LeftAligned", "Left"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalFormatting::RightAligned), "RightAligned", "Right"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalFormatting::CentreAligned), "CentreAligned", "Center"});
+        info = new QtnEnumInfo("HorizontalFormatting", values);
+    }
+    return *info;
+}
+
+const QtnEnumInfo& enumVerticalFormatting()
+{
+    // FIXME: never deleted, store the single instance in QApplication instead?
+    static QtnEnumInfo* info = nullptr;
+    if (!info)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalImageFormatting::Tiled), "Tiled", "Tile"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalImageFormatting::Stretched), "Stretched", "Stretch"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalImageFormatting::TopAligned), "TopAligned"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalImageFormatting::BottomAligned), "BottomAligned", "Bottom"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalImageFormatting::CentreAligned), "CentreAligned", "Center"});
+        info = new QtnEnumInfo("VerticalFormatting", values);
+    }
+    return *info;
+}
+
+//???TODO: make special property of alignment + word wrap flag?
+const QtnEnumInfo& enumHorizontalTextFormatting()
+{
+    // FIXME: never deleted, store the single instance in QApplication instead?
+    static QtnEnumInfo* info = nullptr;
+    if (!info)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::Justified), "Justified"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::LeftAligned), "LeftAligned", "Left"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::RightAligned), "RightAligned", "Right"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::CentreAligned), "CentreAligned", "Center"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWraperJustified), "WordWraperJustified", "Justified"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapLeftAligned), "WordWrapLeftAligned", "Left word-wrapped"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapRightAligned), "WordWrapRightAligned", "Right word-wrapped"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapCentreAligned), "WordWrapCentreAligned", "Center word-wrapped"});
+        info = new QtnEnumInfo("HorizontalTextFormatting", values);
+    }
+    return *info;
+}
+
+const QtnEnumInfo& enumVerticalTextFormatting()
+{
+    // FIXME: never deleted, store the single instance in QApplication instead?
+    static QtnEnumInfo* info = nullptr;
+    if (!info)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalTextFormatting::TopAligned), "TopAligned", "Top"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalTextFormatting::BottomAligned), "BottomAligned", "Bottom"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalTextFormatting::CentreAligned), "CentreAligned", "Center"});
+        info = new QtnEnumInfo("HorizontalAlignment", values);
+    }
+    return *info;
+}
+
 }
 
 // TODO: look at the new deserialization code, check that all necessary operations are performed
