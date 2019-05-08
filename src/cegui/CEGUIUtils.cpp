@@ -292,6 +292,23 @@ CEGUI::Key::Scan qtKeyToKey(int key)
 
 }
 
+QDataStream& operator <<(QDataStream& stream, const CEGUI::UVector2& value)
+{
+    stream << value.d_x.d_scale;
+    stream << value.d_x.d_offset;
+    stream << value.d_y.d_scale;
+    stream << value.d_y.d_offset;
+    return stream;
+}
+
+QDataStream& operator >>(QDataStream& stream, CEGUI::UVector2& value)
+{
+    stream >> value.d_x.d_scale;
+    stream >> value.d_x.d_offset;
+    stream >> value.d_y.d_scale;
+    stream >> value.d_y.d_offset;
+    return stream;
+}
 // TODO: look at the new deserialization code, check that all necessary operations are performed
 /*
     def createManipulator(self, parentManipulator, widget, recursive = True, skipAutoWidgets = False):

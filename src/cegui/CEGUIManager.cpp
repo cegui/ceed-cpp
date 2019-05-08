@@ -7,6 +7,7 @@
 #include <CEGUI/RendererModules/OpenGL/GLRenderer.h>
 #include <CEGUI/RendererModules/OpenGL/ViewportTarget.h>
 #include "3rdParty/QtnProperty/Core/Enum.h"
+#include "3rdParty/QtnProperty/PropertyWidget/Delegates/PropertyDelegateFactory.h"
 #include "qmessagebox.h"
 #include "qprogressdialog.h"
 #include "qdiriterator.h"
@@ -14,6 +15,8 @@
 #include "qoffscreensurface.h"
 #include "qopenglframebufferobject.h"
 #include "qopenglfunctions.h"
+
+void qtnRegisterUVector2Delegates(QtnPropertyDelegateFactory& factory);
 
 CEGUIManager::CEGUIManager()
 {
@@ -205,6 +208,9 @@ void CEGUIManager::ensureCEGUIInitialized()
     auto parser = CEGUI::System::getSingleton().getXMLParser();
     if (parser && parser->isPropertyPresent("SchemaDefaultResourceGroup"))
         parser->setProperty("SchemaDefaultResourceGroup", "xml_schemas");
+
+    // Must be done once!
+    qtnRegisterUVector2Delegates(QtnPropertyDelegateFactory::staticInstance());
 
     initialized = true;
 }
