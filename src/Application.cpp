@@ -9,7 +9,7 @@
 #include "qsettings.h"
 #include "qdir.h"
 
-Application::Application(int& argc, char** argv, bool debug)
+Application::Application(int& argc, char** argv)
     : QApplication(argc, argv)
 {
     // TODO: move some of this to config file?

@@ -14,7 +14,7 @@ class Application : public QApplication
 
 public:
 
-    Application(int& argc, char** argv, bool debug = false);
+    Application(int& argc, char** argv);
 
     MainWindow* getMainWindow() { return mainWindow; }
     Settings* getSettings() const { return settings; }

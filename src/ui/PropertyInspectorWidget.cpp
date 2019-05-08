@@ -45,6 +45,7 @@ PropertyInspectorWidget::PropertyInspectorWidget(QWidget *parent)
 
 void PropertyInspectorWidget::filterChanged(const QString& filterText)
 {
+    Q_UNUSED(filterText);
 /*
     if (filterText.startsWith(modifiedFilterPrefix))
         self.ptree.setFilter(filterText.midRef(modifiedFilterPrefix.length()), true);
