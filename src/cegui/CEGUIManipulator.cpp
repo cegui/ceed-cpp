@@ -1,6 +1,7 @@
 #include "src/cegui/CEGUIManipulator.h"
 #include "src/cegui/CEGUIUtils.h"
 #include "src/cegui/CEGUIManager.h"
+#include "src/cegui/QtnPropertyUVector2.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
 #include "qgraphicsscene.h"
@@ -638,13 +639,8 @@ void CEGUIManipulator::moveToFront()
     if (!parentItem()) return;
 
     for (auto&& item : parentItem()->childItems())
-    {
-        if (item == this) continue;
-
-        // For some reason this is the opposite of what (IMO) it should be
-        // which is self.stackBefore(item). Is Qt documentation flawed or something?!
-        item->stackBefore(this);
-    }
+        if (item != this)
+            item->stackBefore(this);
 
     static_cast<CEGUIManipulator*>(parentItem())->moveToFront();
 }
@@ -652,19 +648,17 @@ void CEGUIManipulator::moveToFront()
 // Notify the property manager that the values of the given properties have changed for this widget
 void CEGUIManipulator::updatePropertiesFromWidget(const QStringList& propertyNames)
 {
-/*
-        # if the property manager has set callbacks on this widget
-        if hasattr(_widget, "propertyManagerCallbacks"):
-            for propertyName in propertyNames:
-                if propertyName in widget.propertyManagerCallbacks:
-                    _widget.propertyManagerCallbacks[propertyName]()
-*/
     for (const QString& propertyName : propertyNames)
     {
+        //???or make map (name -> property Qtn+CEGUI pair)?
+        //CEGUI::Property* ceguiProp = getCEGUIPropertyByName(propertyName);
+        //QtnProperty* prop = getPropertyByName(propertyName);
+        //prop->fromStr(CEGUIUtils::stringToQString(ceguiProp->get(_widget)));
     }
 }
 
-// TODO: updateAllPropertiesFromWidget()
+// TODO: updatePropertyFromWidget()
+// TODO: updateAllPropertiesFromWidget() -> iterate all CEGUI properties or all map
 
 void CEGUIManipulator::createPropertySet()
 {
@@ -693,7 +687,7 @@ void CEGUIManipulator::createPropertySet()
 
         /*
         guid = ceguiProperty.getOrigin() + '/' + ceguiProperty.getName() + '/' + ceguiProperty.getDataType()
-        defaultValue = valueCreator(ceguiProperty.getDefault(ceguiSet))
+        prop->defaultValueFromString(ceguiProp->getDefault(ceguiSet))
         */
 
         // Categorize properties by CEGUI property origin
@@ -802,7 +796,7 @@ void CEGUIManipulator::createPropertySet()
         }
         else if (propertyDataType == "UVector2")
         {
-            prop = new QtnPropertyQString(parentSet);
+            prop = new QtnPropertyUVector2(parentSet);
         }
         else // "String" and any other
             prop = new QtnPropertyQString(parentSet);
@@ -822,10 +816,6 @@ ColourRect
         if (!ceguiProp->isWritable())
             prop->addState(QtnPropertyStateImmutable);
         parentSet->addChildProperty(prop, true);
-
-        /*
-            ceguiSet.propertyManagerCallbacks[name] = innerProperty.setValue(valueCreator(ceguiProperty.get(ceguiSet)))
-        */
 
         ++it;
     }

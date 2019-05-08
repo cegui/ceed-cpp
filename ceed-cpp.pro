@@ -54,6 +54,7 @@ SOURCES += \
     src/cegui/CEGUIProject.cpp \
     src/cegui/CEGUIProjectItem.cpp \
     src/cegui/CEGUIManipulator.cpp \
+    src/cegui/QtnPropertyUVector2.cpp \
     src/cegui/CEGUIPropertyManager.cpp \
     src/editors/EditorBase.cpp \
     src/editors/TextEditor.cpp \
@@ -112,6 +113,7 @@ HEADERS += \
     src/cegui/CEGUIProject.h \
     src/cegui/CEGUIProjectItem.h \
     src/cegui/CEGUIManipulator.h \
+    src/cegui/QtnPropertyUVector2.h \
     src/cegui/CEGUIPropertyManager.h \
     src/ui/dialogs/NewProjectDialog.h \
     src/ui/dialogs/ProjectSettingsDialog.h \
