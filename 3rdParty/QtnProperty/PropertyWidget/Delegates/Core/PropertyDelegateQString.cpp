@@ -35,12 +35,12 @@ void regQStringDelegates(QtnPropertyDelegateFactory &factory)
               , "LineEdit");
 
     factory.registerDelegate(&QtnPropertyQStringBase::staticMetaObject
-              , &qtnCreateDelegate<QtnPropertyDelegateQStringFile, QtnPropertyQStringBase>
-              , "File");
+		      , &qtnCreateDelegate<QtnPropertyDelegateQStringFile, QtnPropertyQStringBase>
+		      , "File");
 
     factory.registerDelegate(&QtnPropertyQStringBase::staticMetaObject
-              , &qtnCreateDelegate<QtnPropertyDelegateQStringList, QtnPropertyQStringBase>
-              , "List");
+		      , &qtnCreateDelegate<QtnPropertyDelegateQStringList, QtnPropertyQStringBase>
+		      , "List");
 
     factory.registerDelegate(&QtnPropertyQStringBase::staticMetaObject
               , &qtnCreateDelegate<QtnPropertyDelegateQStringCallback, QtnPropertyQStringBase>
@@ -385,12 +385,12 @@ private:
         QCompleter* completer = nullptr;
         if (!m_candidates.isEmpty())
         {
-            completer = new QCompleter(m_candidates, &editor());
+            completer = new QCompleter(m_candidates, editor().lineEdit);
             completer->setFilterMode(Qt::MatchContains);
             completer->setCaseSensitivity(Qt::CaseInsensitive);
         }
 
-        editor().setCompleter(completer);
+        editor().lineEdit->setCompleter(completer);
 
         m_completer = completer;
 

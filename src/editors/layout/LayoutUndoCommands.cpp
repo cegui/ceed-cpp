@@ -325,13 +325,14 @@ void LayoutPropertyEditCommand::undo()
         assert(manipulator);
         manipulator->getWidget()->setProperty(_propertyName, rec.oldValue);
         manipulator->updateFromWidget(false, true);
+        manipulator->update();
         manipulator->updatePropertiesFromWidget(properties);
     }
 
     //_firstCall = false;
 
     // Make sure to redraw the scene so the changes are visible
-    _visualMode.getScene()->update();
+    //_visualMode.getScene()->update();
 }
 
 void LayoutPropertyEditCommand::redo()
@@ -345,13 +346,14 @@ void LayoutPropertyEditCommand::redo()
         assert(manipulator);
         manipulator->getWidget()->setProperty(_propertyName, _newValue);
         manipulator->updateFromWidget(false, true);
+        manipulator->update();
         manipulator->updatePropertiesFromWidget(properties);
     }
 
     //_firstCall = false;
 
     // Make sure to redraw the scene so the changes are visible
-    _visualMode.getScene()->update();
+    //_visualMode.getScene()->update();
 
     QUndoCommand::redo();
 }
@@ -382,6 +384,8 @@ bool LayoutPropertyEditCommand::mergeWith(const QUndoCommand* other)
 // The following ensures that notifications are sent about the related properties as well.
 void LayoutPropertyEditCommand::fillInfluencedPropertyList(QStringList& list)
 {
+    //???to CEGUIManipulator? call its onPropertyChanged?
+    //???is critical not to update changed property value? will send onPropertyDidChange?
     if (true) //!_firstCall)
         list.append(CEGUIUtils::stringToQString(_propertyName));
 

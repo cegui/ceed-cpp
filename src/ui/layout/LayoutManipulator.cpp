@@ -1,9 +1,11 @@
 #include "src/ui/layout/LayoutManipulator.h"
 #include "src/editors/layout/LayoutVisualMode.h"
+#include "src/editors/layout/LayoutUndoCommands.h"
 #include "src/cegui/CEGUIUtils.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
 #include <CEGUI/widgets/LayoutContainer.h>
+#include "3rdParty/QtnProperty/Core/PropertySet.h"
 #include "qpen.h"
 #include "qpainter.h"
 #include "qgraphicssceneevent.h"
@@ -269,15 +271,31 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
     if (data.size() > 0)
     {
         QString widgetType = data.data();
-        /*
-            cmd = undo.CreateCommand(self.visual, self.widget.getNamePath(), widgetType, self.getUniqueChildWidgetName(widgetType.rsplit("/", 1)[-1]))
-            self.visual.tabbedEditor.undoStack.push(cmd)
-        */
+        int sepPos = widgetType.lastIndexOf('/');
+        QString widgetName = CEGUIUtils::getUniqueChildWidgetName(*_widget, (sepPos < 0) ? widgetType : widgetType.mid(sepPos + 1));
+        _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, getWidgetPath(), widgetType, widgetName));
         event->acceptProposedAction();
     }
     else
     {
         event->ignore();
+    }
+}
+
+// TODO: redesign undo for multiproperties, must be one command for all changed manipulators!
+void LayoutManipulator::onPropertyChanged(const QtnPropertyBase* property, CEGUI::Property* ceguiProperty)
+{
+    QString value;
+    if (property->toStr(value))
+    {
+        std::vector<LayoutPropertyEditCommand::Record> records;
+
+        LayoutPropertyEditCommand::Record rec;
+        rec.path = getWidgetPath();
+        rec.oldValue = ceguiProperty->get(_widget);
+        records.push_back(std::move(rec));
+
+        _visualMode.getEditor().getUndoStack()->push(new LayoutPropertyEditCommand(_visualMode, std::move(records), property->name(), value));
     }
 }
 

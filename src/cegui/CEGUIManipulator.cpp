@@ -796,7 +796,7 @@ void CEGUIManipulator::createPropertySet()
             prop = new QtnPropertyQString(parentSet);
             prop->setDelegate({"Callback"});
 
-            //???FIXME: Qnt - can use central string list without per-property copying?
+            //???FIXME: Qtn - can use central string list without per-property copying?
             QtnGetCandidatesFn getCb = []() { return CEGUIManager::Instance().getAvailableImages(); };
             prop->setDelegateAttribute("GetCandidatesFn", QVariant::fromValue(getCb));
 
@@ -851,19 +851,23 @@ void CEGUIManipulator::createPropertySet()
         [this, ceguiProp](const QtnPropertyBase* changedProperty, const QtnPropertyBase* /*firedProperty*/, QtnPropertyChangeReason reason)
         {
             if (!(reason & QtnPropertyChangeReasonValue)) return;
-
-            QString value;
-            if (changedProperty->toStr(value))
-            {
-                ceguiProp->set(_widget, CEGUIUtils::qStringToString(value));
-                updateFromWidget();
-                update();
-            }
+            onPropertyChanged(changedProperty, ceguiProp);
         });
 
         _propertyMap.emplace(prop->name(), std::pair<CEGUI::Property*, QtnProperty*>{ ceguiProp, prop });
 
         ++it;
+    }
+}
+
+void CEGUIManipulator::onPropertyChanged(const QtnPropertyBase* property, CEGUI::Property* ceguiProperty)
+{
+    QString value;
+    if (property->toStr(value))
+    {
+        ceguiProperty->set(_widget, CEGUIUtils::qStringToString(value));
+        updateFromWidget(false, true);
+        update();
     }
 }
 
