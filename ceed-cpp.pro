@@ -54,6 +54,7 @@ SOURCES += \
     src/cegui/CEGUIProject.cpp \
     src/cegui/CEGUIProjectItem.cpp \
     src/cegui/CEGUIManipulator.cpp \
+    src/cegui/QtnPropertyUDim.cpp \
     src/cegui/QtnPropertyUVector2.cpp \
     src/cegui/CEGUIPropertyManager.cpp \
     src/editors/EditorBase.cpp \
@@ -103,6 +104,7 @@ SOURCES += \
     src/ui/PropertyInspectorWidget.cpp
 
 HEADERS += \
+    src/QtStdHash.h \
     src/cegui/CEGUIUtils.h \
     src/ui/ProjectManager.h \
     src/ui/MainWindow.h \
@@ -113,6 +115,7 @@ HEADERS += \
     src/cegui/CEGUIProject.h \
     src/cegui/CEGUIProjectItem.h \
     src/cegui/CEGUIManipulator.h \
+    src/cegui/QtnPropertyUDim.h \
     src/cegui/QtnPropertyUVector2.h \
     src/cegui/CEGUIPropertyManager.h \
     src/ui/dialogs/NewProjectDialog.h \

@@ -5,6 +5,8 @@
 #include <CEGUI/UVector.h>
 #include <CEGUI/USize.h>
 #include <CEGUI/Sizef.h>
+#include "src/QtStdHash.h"
+#include <unordered_map>
 
 // This is a rectangle that is synchronised with given CEGUI widget,
 // it provides moving and resizing functionality
@@ -15,6 +17,7 @@ namespace CEGUI
 }
 
 class QtnPropertySet;
+class QtnProperty;
 
 class CEGUIManipulator : public ResizableRectItem
 {
@@ -63,6 +66,7 @@ public:
     bool hasNonAutoWidgetDescendants() const;
 
     void updatePropertiesFromWidget(const QStringList& propertyNames);
+    void updateAllPropertiesFromWidget();
     QtnPropertySet* getPropertySet() const { return _propertySet; }
 
     bool isMoveStarted() const { return _moveStarted; }
@@ -84,6 +88,7 @@ protected:
 
     CEGUI::Window* _widget = nullptr;
     QtnPropertySet* _propertySet = nullptr;
+    std::unordered_map<QString, std::pair<CEGUI::Property*, QtnProperty*>> _propertyMap;
 
     bool _resizeStarted = false;
     CEGUI::UVector2 _preResizePos;

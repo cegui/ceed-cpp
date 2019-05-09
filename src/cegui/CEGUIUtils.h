@@ -27,6 +27,8 @@ namespace CEGUIUtils
     CEGUI::Key::Scan qtKeyToKey(int key);
 };
 
+QDataStream& operator <<(QDataStream& stream, const CEGUI::UDim& value);
+QDataStream& operator >>(QDataStream& stream, CEGUI::UDim& value);
 QDataStream& operator <<(QDataStream& stream, const CEGUI::UVector2& value);
 QDataStream& operator >>(QDataStream& stream, CEGUI::UVector2& value);
 

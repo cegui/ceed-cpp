@@ -16,6 +16,7 @@
 #include "qopenglframebufferobject.h"
 #include "qopenglfunctions.h"
 
+void qtnRegisterUDimDelegates(QtnPropertyDelegateFactory& factory);
 void qtnRegisterUVector2Delegates(QtnPropertyDelegateFactory& factory);
 
 CEGUIManager::CEGUIManager()
@@ -210,6 +211,7 @@ void CEGUIManager::ensureCEGUIInitialized()
         parser->setProperty("SchemaDefaultResourceGroup", "xml_schemas");
 
     // Must be done once!
+    qtnRegisterUDimDelegates(QtnPropertyDelegateFactory::staticInstance());
     qtnRegisterUVector2Delegates(QtnPropertyDelegateFactory::staticInstance());
 
     initialized = true;

@@ -650,18 +650,29 @@ void CEGUIManipulator::updatePropertiesFromWidget(const QStringList& propertyNam
 {
     for (const QString& propertyName : propertyNames)
     {
-        //???or make map (name -> property Qtn+CEGUI pair)?
-        //CEGUI::Property* ceguiProp = getCEGUIPropertyByName(propertyName);
-        //QtnProperty* prop = getPropertyByName(propertyName);
-        //prop->fromStr(CEGUIUtils::stringToQString(ceguiProp->get(_widget)));
+        auto it = _propertyMap.find(propertyName);
+        if (it != _propertyMap.end())
+        {
+            const CEGUI::Property* ceguiProp = it->second.first;
+            QtnProperty* prop = it->second.second;
+            prop->fromStr(CEGUIUtils::stringToQString(ceguiProp->get(_widget)));
+        }
     }
 }
 
-// TODO: updatePropertyFromWidget()
-// TODO: updateAllPropertiesFromWidget() -> iterate all CEGUI properties or all map
+void CEGUIManipulator::updateAllPropertiesFromWidget()
+{
+    for (const auto& pair : _propertyMap)
+    {
+        const CEGUI::Property* ceguiProp = pair.second.first;
+        QtnProperty* prop = pair.second.second;
+        prop->fromStr(CEGUIUtils::stringToQString(ceguiProp->get(_widget)));
+    }
+}
 
 void CEGUIManipulator::createPropertySet()
 {
+    _propertyMap.clear();
     if (_propertySet) delete _propertySet;
 
     if (!_widget)
@@ -798,17 +809,38 @@ void CEGUIManipulator::createPropertySet()
         {
             prop = new QtnPropertyUVector2(parentSet);
         }
+        else if (propertyDataType == "UVector3")
+        {
+            // TODO: implement
+            prop = new QtnPropertyQString(parentSet);
+        }
+        else if (propertyDataType == "USize")
+        {
+            // TODO: implement
+            prop = new QtnPropertyQString(parentSet);
+        }
+        else if (propertyDataType == "URect")
+        {
+            // TODO: implement
+            prop = new QtnPropertyQString(parentSet);
+        }
+        else if (propertyDataType == "UBox")
+        {
+            // TODO: implement
+            prop = new QtnPropertyQString(parentSet);
+        }
+        else if (propertyDataType == "quat")
+        {
+            // TODO: implement
+            prop = new QtnPropertyQString(parentSet);
+        }
+        else if (propertyDataType == "ColourRect")
+        {
+            // TODO: implement
+            prop = new QtnPropertyQString(parentSet);
+        }
         else // "String" and any other
             prop = new QtnPropertyQString(parentSet);
-
-        /*
-UVector3
-USize
-URect
-UBox
-quat
-ColourRect
-        */
 
         prop->setName(CEGUIUtils::stringToQString(ceguiProp->getName()));
         prop->setDescription(CEGUIUtils::stringToQString(ceguiProp->getHelp()));
@@ -816,6 +848,22 @@ ColourRect
         if (!ceguiProp->isWritable())
             prop->addState(QtnPropertyStateImmutable);
         parentSet->addChildProperty(prop, true);
+
+        QObject::connect(prop, &QtnProperty::propertyDidChange,
+        [this, ceguiProp](const QtnPropertyBase* changedProperty, const QtnPropertyBase* /*firedProperty*/, QtnPropertyChangeReason reason)
+        {
+            if (!(reason & QtnPropertyChangeReasonValue)) return;
+
+            QString value;
+            if (changedProperty->toStr(value))
+            {
+                ceguiProp->set(_widget, CEGUIUtils::qStringToString(value));
+                updateFromWidget();
+                update();
+            }
+        });
+
+        _propertyMap.emplace(prop->name(), std::pair<CEGUI::Property*, QtnProperty*>{ ceguiProp, prop });
 
         ++it;
     }

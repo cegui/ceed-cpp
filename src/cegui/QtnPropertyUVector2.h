@@ -7,6 +7,7 @@
 #include <CEGUI/UVector.h>
 
 //???two UDim properties? UDim may have own widget! operators <<, >> too!
+//only if UDim editor is in-line. 2-level expansion is not user friendly.
 
 class QtnPropertyUVector2Base: public QtnSinglePropertyBase<CEGUI::UVector2>
 {
