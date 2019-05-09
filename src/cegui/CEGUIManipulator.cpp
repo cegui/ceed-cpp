@@ -788,9 +788,8 @@ void CEGUIManipulator::createPropertySet()
             QtnGetCandidatesFn getCb = []() { return CEGUIManager::Instance().getAvailableFonts(); };
             prop->setDelegateAttribute("GetCandidatesFn", QVariant::fromValue(getCb));
 
-            QtnCreateCandidateFn createCb = [](QWidget* /*parent*/) { return QString{}; };
+            QtnCreateCandidateFn createCb = [](QWidget* /*parent*/, QString /*candidate*/) { return QString{}; };
             prop->setDelegateAttribute("CreateCandidateFn", QVariant::fromValue(createCb));
-            prop->setDelegateAttribute("CreateCandidateLabel", "<add font...>");
         }
         else if (propertyDataType == "Image")
         {
@@ -801,9 +800,8 @@ void CEGUIManipulator::createPropertySet()
             QtnGetCandidatesFn getCb = []() { return CEGUIManager::Instance().getAvailableImages(); };
             prop->setDelegateAttribute("GetCandidatesFn", QVariant::fromValue(getCb));
 
-            QtnCreateCandidateFn createCb = [](QWidget* /*parent*/) { return QString{}; };
+            QtnCreateCandidateFn createCb = [](QWidget* /*parent*/, QString /*candidate*/) { return QString{}; };
             prop->setDelegateAttribute("CreateCandidateFn", QVariant::fromValue(createCb));
-            prop->setDelegateAttribute("CreateCandidateLabel", "<add image...>");
         }
         else if (propertyDataType == "UVector2")
         {
