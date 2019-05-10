@@ -4,6 +4,7 @@
 #include "src/cegui/QtnPropertyUVector2.h"
 #include "src/cegui/QtnPropertyUVector3.h"
 #include "src/cegui/QtnPropertyUSize.h"
+#include "src/cegui/QtnPropertyURect.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
 #include "qgraphicsscene.h"
@@ -811,10 +812,7 @@ void CEGUIManipulator::createPropertySet()
         else if (propertyDataType == "USize")
             prop = new QtnPropertyUSize(parentSet);
         else if (propertyDataType == "URect")
-        {
-            // TODO: implement
-            prop = new QtnPropertyQString(parentSet);
-        }
+            prop = new QtnPropertyURect(parentSet);
         else if (propertyDataType == "UBox")
         {
             // TODO: implement

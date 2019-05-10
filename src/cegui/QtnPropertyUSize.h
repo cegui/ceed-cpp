@@ -15,7 +15,6 @@ public:
     explicit QtnPropertyUSizeBase(QObject* parent);
 
 protected:
-    // string conversion implementation
     bool fromStrImpl(const QString& str) override;
     bool toStrImpl(QString& str) const override;
 
@@ -52,7 +51,7 @@ public:
     P_PROPERTY_DECL_MEMBER_OPERATORS2(QtnPropertyUSize, QtnPropertyUSizeBase)
 };
 
-class QTN_PW_EXPORT QtnPropertyDelegateUSize: public QtnPropertyDelegateTypedEx<QtnPropertyUSizeBase>
+class QtnPropertyDelegateUSize: public QtnPropertyDelegateTypedEx<QtnPropertyUSizeBase>
 {
     Q_DISABLE_COPY(QtnPropertyDelegateUSize)
 

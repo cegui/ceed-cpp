@@ -6,9 +6,6 @@
 #include "3rdParty/QtnProperty/PropertyWidget/Delegates/Utils/PropertyDelegateMisc.h"
 #include <CEGUI/UVector.h>
 
-//???two UDim properties? UDim may have own widget! operators <<, >> too!
-//only if UDim editor is in-line. 2-level expansion is not user friendly.
-
 class QtnPropertyUVector2Base: public QtnSinglePropertyBase<CEGUI::UVector2>
 {
     Q_OBJECT
@@ -18,7 +15,6 @@ public:
     explicit QtnPropertyUVector2Base(QObject* parent);
 
 protected:
-    // string conversion implementation
     bool fromStrImpl(const QString& str) override;
     bool toStrImpl(QString& str) const override;
 
@@ -55,7 +51,7 @@ public:
     P_PROPERTY_DECL_MEMBER_OPERATORS2(QtnPropertyUVector2, QtnPropertyUVector2Base)
 };
 
-class QTN_PW_EXPORT QtnPropertyDelegateUVector2: public QtnPropertyDelegateTypedEx<QtnPropertyUVector2Base>
+class QtnPropertyDelegateUVector2: public QtnPropertyDelegateTypedEx<QtnPropertyUVector2Base>
 {
     Q_DISABLE_COPY(QtnPropertyDelegateUVector2)
 

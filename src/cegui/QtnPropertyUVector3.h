@@ -15,7 +15,6 @@ public:
     explicit QtnPropertyUVector3Base(QObject* parent);
 
 protected:
-    // string conversion implementation
     bool fromStrImpl(const QString& str) override;
     bool toStrImpl(QString& str) const override;
 
@@ -52,7 +51,7 @@ public:
     P_PROPERTY_DECL_MEMBER_OPERATORS2(QtnPropertyUVector3, QtnPropertyUVector3Base)
 };
 
-class QTN_PW_EXPORT QtnPropertyDelegateUVector3: public QtnPropertyDelegateTypedEx<QtnPropertyUVector3Base>
+class QtnPropertyDelegateUVector3: public QtnPropertyDelegateTypedEx<QtnPropertyUVector3Base>
 {
     Q_DISABLE_COPY(QtnPropertyDelegateUVector3)
 
