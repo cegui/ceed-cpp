@@ -59,6 +59,7 @@ SOURCES += \
     src/cegui/QtnPropertyUVector3.cpp \
     src/cegui/QtnPropertyUSize.cpp \
     src/cegui/QtnPropertyURect.cpp \
+    src/cegui/QtnPropertyUBox.cpp \
     src/cegui/CEGUIPropertyManager.cpp \
     src/editors/EditorBase.cpp \
     src/editors/TextEditor.cpp \
@@ -123,6 +124,7 @@ HEADERS += \
     src/cegui/QtnPropertyUVector3.h \
     src/cegui/QtnPropertyUSize.h \
     src/cegui/QtnPropertyURect.h \
+    src/cegui/QtnPropertyUBox.h \
     src/cegui/CEGUIPropertyManager.h \
     src/ui/dialogs/NewProjectDialog.h \
     src/ui/dialogs/ProjectSettingsDialog.h \

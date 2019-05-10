@@ -21,6 +21,7 @@ void qtnRegisterUVector2Delegates(QtnPropertyDelegateFactory& factory);
 void qtnRegisterUVector3Delegates(QtnPropertyDelegateFactory& factory);
 void qtnRegisterUSizeDelegates(QtnPropertyDelegateFactory& factory);
 void qtnRegisterURectDelegates(QtnPropertyDelegateFactory& factory);
+void qtnRegisterUBoxDelegates(QtnPropertyDelegateFactory& factory);
 
 CEGUIManager::CEGUIManager()
 {
@@ -219,6 +220,7 @@ void CEGUIManager::ensureCEGUIInitialized()
     qtnRegisterUVector3Delegates(QtnPropertyDelegateFactory::staticInstance());
     qtnRegisterUSizeDelegates(QtnPropertyDelegateFactory::staticInstance());
     qtnRegisterURectDelegates(QtnPropertyDelegateFactory::staticInstance());
+    qtnRegisterUBoxDelegates(QtnPropertyDelegateFactory::staticInstance());
 
     initialized = true;
 }

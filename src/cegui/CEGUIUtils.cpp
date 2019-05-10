@@ -364,6 +364,24 @@ QDataStream& operator >>(QDataStream& stream, CEGUI::URect& value)
     return stream;
 }
 
+QDataStream& operator <<(QDataStream& stream, const CEGUI::UBox& value)
+{
+    stream << value.d_top;
+    stream << value.d_left;
+    stream << value.d_right;
+    stream << value.d_bottom;
+    return stream;
+}
+
+QDataStream& operator >>(QDataStream& stream, CEGUI::UBox& value)
+{
+    stream >> value.d_top;
+    stream >> value.d_left;
+    stream >> value.d_right;
+    stream >> value.d_bottom;
+    return stream;
+}
+
 // TODO: look at the new deserialization code, check that all necessary operations are performed
 /*
     def createManipulator(self, parentManipulator, widget, recursive = True, skipAutoWidgets = False):

@@ -38,5 +38,7 @@ QDataStream& operator <<(QDataStream& stream, const CEGUI::USize& value);
 QDataStream& operator >>(QDataStream& stream, CEGUI::USize& value);
 QDataStream& operator <<(QDataStream& stream, const CEGUI::URect& value);
 QDataStream& operator >>(QDataStream& stream, CEGUI::URect& value);
+QDataStream& operator <<(QDataStream& stream, const CEGUI::UBox& value);
+QDataStream& operator >>(QDataStream& stream, CEGUI::UBox& value);
 
 #endif // CEGUIUTILS_H
