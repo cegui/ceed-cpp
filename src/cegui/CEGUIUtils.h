@@ -8,6 +8,7 @@ namespace CEGUI
 {
     class String;
     class Window;
+    class UVector3;
 }
 
 namespace CEGUIUtils
@@ -31,5 +32,9 @@ QDataStream& operator <<(QDataStream& stream, const CEGUI::UDim& value);
 QDataStream& operator >>(QDataStream& stream, CEGUI::UDim& value);
 QDataStream& operator <<(QDataStream& stream, const CEGUI::UVector2& value);
 QDataStream& operator >>(QDataStream& stream, CEGUI::UVector2& value);
+QDataStream& operator <<(QDataStream& stream, const CEGUI::UVector3& value);
+QDataStream& operator >>(QDataStream& stream, CEGUI::UVector3& value);
+QDataStream& operator <<(QDataStream& stream, const CEGUI::USize& value);
+QDataStream& operator >>(QDataStream& stream, CEGUI::USize& value);
 
 #endif // CEGUIUTILS_H

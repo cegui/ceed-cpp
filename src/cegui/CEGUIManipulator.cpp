@@ -2,6 +2,8 @@
 #include "src/cegui/CEGUIUtils.h"
 #include "src/cegui/CEGUIManager.h"
 #include "src/cegui/QtnPropertyUVector2.h"
+#include "src/cegui/QtnPropertyUVector3.h"
+#include "src/cegui/QtnPropertyUSize.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
 #include "qgraphicsscene.h"
@@ -683,7 +685,6 @@ void CEGUIManipulator::createPropertySet()
 
     _propertySet = new QtnPropertySet(nullptr);
 
-    // TODO: to CEGUIUtils - create Qtn property set from CEGUI property set
     std::map<QString, QtnPropertySet*> subsets;
     auto it = _widget->getPropertyIterator();
     while (!it.isAtEnd())
@@ -804,19 +805,11 @@ void CEGUIManipulator::createPropertySet()
             prop->setDelegateAttribute("CreateCandidateFn", QVariant::fromValue(createCb));
         }
         else if (propertyDataType == "UVector2")
-        {
             prop = new QtnPropertyUVector2(parentSet);
-        }
         else if (propertyDataType == "UVector3")
-        {
-            // TODO: implement
-            prop = new QtnPropertyQString(parentSet);
-        }
+            prop = new QtnPropertyUVector3(parentSet);
         else if (propertyDataType == "USize")
-        {
-            // TODO: implement
-            prop = new QtnPropertyQString(parentSet);
-        }
+            prop = new QtnPropertyUSize(parentSet);
         else if (propertyDataType == "URect")
         {
             // TODO: implement

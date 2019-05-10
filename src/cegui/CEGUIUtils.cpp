@@ -308,19 +308,45 @@ QDataStream& operator >>(QDataStream& stream, CEGUI::UDim& value)
 
 QDataStream& operator <<(QDataStream& stream, const CEGUI::UVector2& value)
 {
-    stream << value.d_x.d_scale;
-    stream << value.d_x.d_offset;
-    stream << value.d_y.d_scale;
-    stream << value.d_y.d_offset;
+    stream << value.d_x;
+    stream << value.d_y;
     return stream;
 }
 
 QDataStream& operator >>(QDataStream& stream, CEGUI::UVector2& value)
 {
-    stream >> value.d_x.d_scale;
-    stream >> value.d_x.d_offset;
-    stream >> value.d_y.d_scale;
-    stream >> value.d_y.d_offset;
+    stream >> value.d_x;
+    stream >> value.d_y;
+    return stream;
+}
+
+QDataStream& operator <<(QDataStream& stream, const CEGUI::UVector3& value)
+{
+    stream << value.d_x;
+    stream << value.d_y;
+    stream << value.d_z;
+    return stream;
+}
+
+QDataStream& operator >>(QDataStream& stream, CEGUI::UVector3& value)
+{
+    stream >> value.d_x;
+    stream >> value.d_y;
+    stream >> value.d_z;
+    return stream;
+}
+
+QDataStream& operator <<(QDataStream& stream, const CEGUI::USize& value)
+{
+    stream << value.d_width;
+    stream << value.d_height;
+    return stream;
+}
+
+QDataStream& operator >>(QDataStream& stream, CEGUI::USize& value)
+{
+    stream >> value.d_width;
+    stream >> value.d_height;
     return stream;
 }
 
