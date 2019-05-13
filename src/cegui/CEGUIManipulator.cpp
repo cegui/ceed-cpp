@@ -707,14 +707,15 @@ void CEGUIManipulator::createPropertySet()
         // Categorize properties by CEGUI property origin
         QtnPropertySet* parentSet = _propertySet;
         QString category = CEGUIUtils::stringToQString(ceguiProp->getOrigin());
+        if (category.startsWith("CEGUI/")) category = category.mid(6);
         if (!category.isEmpty())
         {
             auto it = subsets.find(category);
             if (it == subsets.end())
             {
+                // Insertion delayed for sorting, see below
                 parentSet = new QtnPropertySet(_propertySet);
                 parentSet->setName(category);
-                _propertySet->addChildProperty(parentSet, true);
                 subsets.emplace(std::move(category), parentSet);
             }
             else parentSet = it->second;
@@ -854,6 +855,32 @@ void CEGUIManipulator::createPropertySet()
 
         ++it;
     }
+
+    // We want to see some categories at the beginning of the list
+    const QStringList fixedOrderFirst = { "Element", "NamedElement", "Window" };
+    for (const QString& name : fixedOrderFirst)
+    {
+        auto itSet = subsets.find(name);
+        if (itSet != subsets.end())
+        {
+            _propertySet->addChildProperty(itSet->second, true);
+            subsets.erase(itSet);
+        }
+    }
+
+    // Unknown is always the last
+    QtnPropertySet* unknownSet = nullptr;
+    auto itSet = subsets.find("Unknown");
+    if (itSet != subsets.end())
+    {
+        unknownSet = itSet->second;
+        subsets.erase(itSet);
+    }
+
+    for (const auto& pair : subsets)
+        _propertySet->addChildProperty(pair.second, true);
+
+    if (unknownSet) _propertySet->addChildProperty(unknownSet, true);
 }
 
 void CEGUIManipulator::onPropertyChanged(const QtnPropertyBase* property, CEGUI::Property* ceguiProperty)

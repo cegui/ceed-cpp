@@ -297,6 +297,27 @@ void LayoutManipulator::onPropertyChanged(const QtnPropertyBase* property, CEGUI
 
         _visualMode.getEditor().getUndoStack()->push(new LayoutPropertyEditCommand(_visualMode, std::move(records), property->name(), value));
     }
+
+    // Multi:
+    /*
+            if not super(WidgetMultiPropertyWrapper, self).tryUpdateInner(newValue, reason):
+                return False
+
+            ceguiValue = unicode(newValue)
+
+            # create and execute command
+            widgetPaths = []
+            undoOldValues = {}
+
+            # set the properties where applicable
+            for ceguiSet in self.ceguiSets:
+                widgetPath = ceguiSet.getNamePath()
+                widgetPaths.append(widgetPath)
+                undoOldValues[widgetPath] = self.ceguiProperty.get(ceguiSet)
+
+            cmd = undo.PropertyEditCommand(self.visual, self.ceguiProperty.getName(), widgetPaths, undoOldValues, ceguiValue)
+            self.visual.tabbedEditor.undoStack.push(cmd)
+    */
 }
 
 QPen LayoutManipulator::getNormalPen() const

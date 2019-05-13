@@ -61,12 +61,7 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
 
 void LayoutVisualMode::initialize(CEGUI::Window* rootWidget)
 {
-/*
-    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
-    mainWindow.propertiesDockWidget.inspector.setPropertyManager(CEGUIWidgetPropertyManager(project.propertyMap, self))
-*/
     setRootWidget(rootWidget);
-
     createWidgetDockWidget->populate();
 }
 
@@ -496,97 +491,3 @@ void LayoutVisualMode::hideEvent(QHideEvent* event)
 
     QWidget::hideEvent(event);
 }
-
-
-/*
-from ceed.propertysetinspector import PropertyInspectorWidget
-from ceed.propertysetinspector import CEGUIPropertyManager
-import ceed.propertytree as pt
-from ceed.propertytree.editors import PropertyEditorRegistry
-
-
-class WidgetMultiPropertyWrapper(pt.properties.MultiPropertyWrapper):
-    """Overrides the default MultiPropertyWrapper to update the 'inner properties'
-    and then create undo commands to update the CEGUI widgets.
-    """
-
-    def __init__(self, templateProperty, innerProperties, takeOwnership, ceguiProperty=None, ceguiSets=None, visual=None):
-        super(WidgetMultiPropertyWrapper, self).__init__(templateProperty, innerProperties, takeOwnership)
-
-        self.ceguiProperty = ceguiProperty
-        self.ceguiSets = ceguiSets
-        self.visual = visual
-
-    def tryUpdateInner(self, newValue, reason=pt.properties.Property.ChangeValueReason.Unknown):
-        if super(WidgetMultiPropertyWrapper, self).tryUpdateInner(newValue, reason):
-            ceguiValue = unicode(newValue)
-
-            # create and execute command
-            widgetPaths = []
-            undoOldValues = {}
-
-            # set the properties where applicable
-            for ceguiSet in self.ceguiSets:
-                widgetPath = ceguiSet.getNamePath()
-                widgetPaths.append(widgetPath)
-                undoOldValues[widgetPath] = self.ceguiProperty.get(ceguiSet)
-
-            # create the undoable command
-            # but tell it not to trigger the property changed callback
-            # on first run because our on value has already changed,
-            # we just want to sync the widget value now.
-            cmd = undo.PropertyEditCommand(self.visual, self.ceguiProperty.getName(), widgetPaths, undoOldValues, ceguiValue,
-                                           ignoreNextPropertyManagerCallback = True)
-            self.visual.tabbedEditor.undoStack.push(cmd)
-
-            # make sure to redraw the scene to preview the property
-            self.visual.scene.update()
-
-            return True
-
-        return False
-
-
-class CEGUIWidgetPropertyManager(CEGUIPropertyManager):
-    """Customises the CEGUIPropertyManager by binding to a 'visual'
-    so it can manipulate the widgets via undo commands.
-
-    It also customises the sorting of the categories.
-    """
-
-    def __init__(self, propertyMap, visual):
-        super(CEGUIWidgetPropertyManager, self).__init__(propertyMap)
-        self.visual = visual
-
-    def createProperty(self, ceguiProperty, ceguiSets):
-        prop = super(CEGUIWidgetPropertyManager, self).createProperty(ceguiProperty, ceguiSets, self.propertyMap, WidgetMultiPropertyWrapper)
-        prop.ceguiProperty = ceguiProperty
-        prop.ceguiSets = ceguiSets
-        prop.visual = self.visual
-
-        return prop
-
-    def buildCategories(self, ceguiPropertySets):
-        categories = super(CEGUIWidgetPropertyManager, self).buildCategories(ceguiPropertySets)
-
-        # sort categories by name but keep some special categories on top
-        def getSortKey(t):
-            name, _ = t
-
-            if name == "Element":
-                return "000Element"
-            elif name == "NamedElement":
-                return "001NamedElement"
-            elif name == "Window":
-                return "002Window"
-            elif name.startswith("CEGUI/"):
-                return name[6:]
-            elif name == "Unknown":
-                return "ZZZUnknown"
-            else:
-                return name
-
-        categories = OrderedDict(sorted(categories.items(), key=getSortKey))
-
-        return categories
-*/
