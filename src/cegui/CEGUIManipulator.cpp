@@ -824,10 +824,17 @@ void CEGUIManipulator::createPropertySet()
         else if (propertyDataType == "ColourRect")
         {
             // TODO: implement
+            //!!!4x Color subproperty!
+            //!!!Preview rect. OpenGL triangles rendering? Or QPainter handles gradient?
             prop = new QtnPropertyQString(parentSet);
         }
         else // "String" and any other
             prop = new QtnPropertyQString(parentSet);
+
+        /*
+        "SortMode": ceguitypes.SortMode,
+        "Colour": ceguitypes.Colour,
+        */
 
         prop->setName(CEGUIUtils::stringToQString(ceguiProp->getName()));
         prop->setDescription(CEGUIUtils::stringToQString(ceguiProp->getHelp()));
@@ -839,8 +846,8 @@ void CEGUIManipulator::createPropertySet()
         QObject::connect(prop, &QtnProperty::propertyDidChange,
         [this, ceguiProp](const QtnPropertyBase* changedProperty, const QtnPropertyBase* /*firedProperty*/, QtnPropertyChangeReason reason)
         {
-            if (!(reason & QtnPropertyChangeReasonValue)) return;
-            onPropertyChanged(changedProperty, ceguiProp);
+            if (reason & QtnPropertyChangeReasonValue)
+                onPropertyChanged(changedProperty, ceguiProp);
         });
 
         _propertyMap.emplace(prop->name(), std::pair<CEGUI::Property*, QtnProperty*>{ ceguiProp, prop });

@@ -36,12 +36,12 @@ void regQStringDelegates(QtnPropertyDelegateFactory &factory)
               , "LineEdit");
 
     factory.registerDelegate(&QtnPropertyQStringBase::staticMetaObject
-		      , &qtnCreateDelegate<QtnPropertyDelegateQStringFile, QtnPropertyQStringBase>
-		      , "File");
+              , &qtnCreateDelegate<QtnPropertyDelegateQStringFile, QtnPropertyQStringBase>
+              , "File");
 
     factory.registerDelegate(&QtnPropertyQStringBase::staticMetaObject
-		      , &qtnCreateDelegate<QtnPropertyDelegateQStringList, QtnPropertyQStringBase>
-		      , "List");
+              , &qtnCreateDelegate<QtnPropertyDelegateQStringList, QtnPropertyQStringBase>
+              , "List");
 
     factory.registerDelegate(&QtnPropertyQStringBase::staticMetaObject
               , &qtnCreateDelegate<QtnPropertyDelegateQStringCallback, QtnPropertyQStringBase>
@@ -519,10 +519,7 @@ private:
         editor().comboBox->clear();
         editor().comboBox->addItems(m_candidates);
 
-        QTimer::singleShot(0, editor().comboBox, [this](){
-            editor().comboBox->showPopup();
-            //editor().comboBox->lineEdit()->setFocus();
-        });
+        QTimer::singleShot(0, editor().comboBox, [this](){ editor().setFocus(); });
 
         m_stopSync = false;
     }
