@@ -16,6 +16,7 @@ LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem
     : CEGUIManipulator(parent, widget)
     , _visualMode(visualMode)
 {
+    setPen(getNormalPen()); // We override the pen so we must set it in the constructor
     setAcceptDrops(true);
     QObject::connect(_visualMode.getAbsoluteModeAction(), &QAction::toggled, [this]
     {

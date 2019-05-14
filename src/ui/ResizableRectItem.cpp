@@ -20,7 +20,7 @@ ResizableRectItem::ResizableRectItem(QGraphicsItem* parent)
 
     hideAllHandles();
 
-    setPen(getNormalPen());
+    setPen(getNormalPen()); // Doesn't work for derived classes so we have to call it there manually
     setCursor(Qt::OpenHandCursor);
 }
 
