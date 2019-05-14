@@ -48,7 +48,8 @@ void LayoutEditor::initialize()
         // FIXME: open manually and load from string?
         auto layoutFileName = QDir(CEGUIManager::Instance().getCurrentProject()->getResourceFilePath("", "layouts")).relativeFilePath(_filePath);
         CEGUI::Window* root = CEGUI::WindowManager::getSingleton().loadLayoutFromFile(CEGUIUtils::qStringToString(layoutFileName));
-        visualMode->initialize(root);
+        visualMode->setRootWidget(root);
+        visualMode->getCreateWidgetDockWidget()->populate();
     }
     catch (const std::exception& e)
     {

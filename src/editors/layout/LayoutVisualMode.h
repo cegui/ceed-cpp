@@ -27,10 +27,9 @@ class LayoutVisualMode : public QWidget, public IEditMode
 public:
 
     LayoutVisualMode(LayoutEditor& editor);
+    virtual ~LayoutVisualMode() override;
 
-    void initialize(CEGUI::Window* rootWidget);
     LayoutManipulator* setRootWidget(CEGUI::Window* widget);
-    void setRootWidgetManipulator(LayoutManipulator* manipulator);
     CEGUI::Window* getRootWidget() const;
     void rebuildEditorMenu(QMenu* editorMenu);
     void setActionsEnabled(bool enabled);
@@ -58,7 +57,6 @@ protected:
 
     void setupActions();
     void setupToolBar();
-
     void focusPropertyInspectorFilterBox();
 
     virtual void showEvent(QShowEvent* event) override;

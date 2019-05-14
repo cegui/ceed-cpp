@@ -59,36 +59,31 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     connect(settings->getEntry("layout/visual/snap_grid_point_shadow_colour"), &SettingsEntry::valueChanged, onSnapGridSettingsChanged);
 }
 
-void LayoutVisualMode::initialize(CEGUI::Window* rootWidget)
+LayoutVisualMode::~LayoutVisualMode()
 {
-    setRootWidget(rootWidget);
-    createWidgetDockWidget->populate();
+    auto oldRoot = getRootWidget();
+    if (oldRoot)
+        CEGUI::WindowManager::getSingleton().destroyWindow(oldRoot);
 }
 
 LayoutManipulator* LayoutVisualMode::setRootWidget(CEGUI::Window* widget)
 {
-    if (widget)
-    {
-        auto manipulator = new LayoutManipulator(*this, nullptr, widget);
-        manipulator->createChildManipulators(true, false, false);
-        setRootWidgetManipulator(manipulator);
-        return manipulator;
-    }
-    else
-    {
-        setRootWidgetManipulator(nullptr);
-        return nullptr;
-    }
-}
-
-void LayoutVisualMode::setRootWidgetManipulator(LayoutManipulator* manipulator)
-{
     auto oldRoot = getRootWidget();
 
-    scene->setRootWidgetManipulator(manipulator);
-    hierarchyDockWidget->setRootWidgetManipulator(manipulator);
+    LayoutManipulator* newManipulator = nullptr;
+    if (widget)
+    {
+        newManipulator = new LayoutManipulator(*this, nullptr, widget);
+        newManipulator->createChildManipulators(true, false, false);
+    }
 
-    if (oldRoot) CEGUI::WindowManager::getSingleton().destroyWindow(oldRoot);
+    scene->setRootWidgetManipulator(newManipulator);
+    hierarchyDockWidget->setRootWidgetManipulator(newManipulator);
+
+    if (oldRoot)
+        CEGUI::WindowManager::getSingleton().destroyWindow(oldRoot);
+
+    return newManipulator;
 }
 
 CEGUI::Window* LayoutVisualMode::getRootWidget() const
