@@ -57,8 +57,8 @@ void ResizableRectItem::setResizingEnabled(bool enabled)
 
 void ResizableRectItem::setRect(QRectF newRect)
 {
+    if (newRect != rect()) _handlesDirty = true;
     QGraphicsRectItem::setRect(newRect);
-    _handlesDirty = true;
     updateHandles();
 }
 

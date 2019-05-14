@@ -285,6 +285,10 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
 // TODO: redesign undo for multiproperties, must be one command for all changed manipulators!
 void LayoutManipulator::onPropertyChanged(const QtnPropertyBase* property, CEGUI::Property* ceguiProperty)
 {
+    //!!!DBG TMP!
+    CEGUIManipulator::onPropertyChanged(property, ceguiProperty);
+    return;
+
     QString value;
     if (property->toStr(value))
     {
