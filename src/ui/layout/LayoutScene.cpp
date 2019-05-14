@@ -46,11 +46,12 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
 
     if (rootManipulator)
     {
+        ceguiContext->setRootWindow(rootManipulator->getWidget());
+
         // Root manipulator changed, perform a full update
+        // NB: widget must be already set to a CEGUI context for area calculation
         rootManipulator->updateFromWidget(true);
         addItem(rootManipulator);
-
-        ceguiContext->setRootWindow(rootManipulator->getWidget());
     }
     else
         ceguiContext->setRootWindow(nullptr);
