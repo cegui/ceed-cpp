@@ -28,6 +28,20 @@ ResizingHandle::ResizingHandle(Type type, ResizableRectItem* parent)
 
 }
 
+void ResizingHandle::onScaleChanged(qreal scaleX, qreal scaleY)
+{
+    auto tfm = transform();
+
+    const qreal counterScaleX = isHorizontal() ? 1.0 : (1.0 / scaleX);
+    const qreal counterScaleY = isVertical() ? 1.0 : (1.0 / scaleY);
+
+    tfm = QTransform(counterScaleX, tfm.m12(), tfm.m13(),
+                     tfm.m21(), counterScaleY, tfm.m23(),
+                     tfm.m31(), tfm.m32(), tfm.m33());
+
+    setTransform(tfm);
+}
+
 // Adjusts the parent rectangle and returns a position to use for this handle (with restrictions accounted for)
 QPointF ResizingHandle::performResizing(QPointF value)
 {
@@ -56,21 +70,11 @@ QPointF ResizingHandle::performResizing(QPointF value)
     // Modifies left, right, top & bottom inside, results are actual changes
     parentResizable->performResizing(*this, left, top, right, bottom);
 
+    QPointF parentNewPos = parentResizable->pos() + parentResizable->rect().topLeft();
+    QRectF parentNewRect(0.0, 0.0, parentResizable->rect().width(), parentResizable->rect().height());
+    parentResizable->notifyResizeProgress(parentNewPos, parentNewRect);
+
     return QPointF(left + right + pos().x(), top + bottom + pos().y());
-}
-
-void ResizingHandle::onScaleChanged(qreal scaleX, qreal scaleY)
-{
-    auto tfm = transform();
-
-    const qreal counterScaleX = isHorizontal() ? 1.0 : (1.0 / scaleX);
-    const qreal counterScaleY = isVertical() ? 1.0 : (1.0 / scaleY);
-
-    tfm = QTransform(counterScaleX, tfm.m12(), tfm.m13(),
-                     tfm.m21(), counterScaleY, tfm.m23(),
-                     tfm.m31(), tfm.m32(), tfm.m33());
-
-    setTransform(tfm);
 }
 
 // Called when mouse is released whilst this was selected. This notifies us that resizing might have ended.
@@ -80,9 +84,9 @@ void ResizingHandle::mouseReleaseEventSelected(QMouseEvent* /*event*/)
     if (!parentResizable->resizeInProgress()) return;
 
     // Resize was in progress and just ended
-    QPointF newPos = parentResizable->pos() + parentResizable->rect().topLeft();
-    QRectF newRect(0.0, 0.0, parentResizable->rect().width(), parentResizable->rect().height());
-    parentResizable->notifyResizeFinished(newPos, newRect);
+    QPointF parentNewPos = parentResizable->pos() + parentResizable->rect().topLeft();
+    QRectF parentNewRect(0.0, 0.0, parentResizable->rect().width(), parentResizable->rect().height());
+    parentResizable->notifyResizeFinished(parentNewPos, parentNewRect);
 }
 
 void ResizingHandle::showHandle(bool show)
@@ -134,15 +138,7 @@ QVariant ResizingHandle::itemChange(GraphicsItemChange change, const QVariant& v
             parentResizable->notifyResizeStarted(this);
 
         if (parentResizable->resizeInProgress())
-        {
-            QPointF ret = performResizing(value.toPointF());
-
-            QPointF newPos = parentResizable->pos() + parentResizable->rect().topLeft();
-            QRectF newRect(0.0, 0.0, parentResizable->rect().width(), parentResizable->rect().height());
-            parentResizable->notifyResizeProgress(newPos, newRect);
-
-            return ret;
-        }
+            return performResizing(value.toPointF());
     }
 
     return QGraphicsRectItem::itemChange(change, value);
@@ -151,13 +147,11 @@ QVariant ResizingHandle::itemChange(GraphicsItemChange change, const QVariant& v
 void ResizingHandle::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
 {
     QGraphicsRectItem::hoverEnterEvent(event);
-    _mouseOver = true;
     showHandle(true);
 }
 
 void ResizingHandle::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
 {
     showHandle(false);
-    _mouseOver = false;
     QGraphicsRectItem::hoverLeaveEvent(event);
 }

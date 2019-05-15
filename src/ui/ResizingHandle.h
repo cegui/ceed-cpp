@@ -29,7 +29,6 @@ public:
 
     ResizingHandle(Type type, ResizableRectItem* parent = nullptr);
 
-    QPointF performResizing(QPointF value);
     void onScaleChanged(qreal scaleX, qreal scaleY);
     void mouseReleaseEventSelected(QMouseEvent* event);
 
@@ -43,12 +42,13 @@ public:
 
 protected:
 
+    QPointF performResizing(QPointF value);
+
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
     virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
 
     Type _type = Type::Top;
-    bool _mouseOver = false;
     bool _ignoreGeometryChanges = false;
 };
 
