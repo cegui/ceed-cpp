@@ -18,7 +18,7 @@ public:
     ResizableRectItem(QGraphicsItem *parent = nullptr);
 
     void unselectAllHandles();
-    void hideAllHandles(ResizingHandle* excluding = nullptr);
+    void hideAllHandles(const ResizingHandle* excluding = nullptr);
     void setResizingEnabled(bool enabled = true);
     void setRect(QRectF newRect);
     void setRect(qreal ax, qreal ay, qreal w, qreal h) { setRect(QRectF(ax, ay, w, h)); }
@@ -27,7 +27,10 @@ public:
     QPointF getResizeOldPos() const { return resizeOldPos; }
     QRectF getResizeOldRect() const { return resizeOldRect; }
 
-    virtual void performResizing(const ResizingHandle& handle, qreal& deltaLeft, qreal& deltaTop, qreal& deltaRight, qreal& deltaBottom);
+    void beginResizing(const ResizingHandle& handle);
+    void performResizing(const ResizingHandle& handle, qreal& deltaLeft, qreal& deltaTop, qreal& deltaRight, qreal& deltaBottom);
+    void endResizing();
+
     virtual QPointF constrainMovePoint(QPointF value) { return value; }
     virtual QRectF constrainResizeRect(QRectF rect, QRectF oldRect);
     virtual QSizeF getMinSize() const { return QSizeF(1.0, 1.0); }
@@ -37,7 +40,7 @@ public:
     void mouseReleaseEventSelected(QMouseEvent* event);
 
     virtual void notifyHandleSelected(ResizingHandle* /*handle*/) {}
-    virtual void notifyResizeStarted(ResizingHandle* handle);
+    virtual void notifyResizeStarted() {}
     virtual void notifyResizeProgress(QPointF /*newPos*/, QRectF /*newRect*/) {}
     virtual void notifyResizeFinished(QPointF newPos, QRectF newRect);
     virtual void notifyMoveStarted() {}

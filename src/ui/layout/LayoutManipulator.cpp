@@ -105,9 +105,9 @@ QRectF LayoutManipulator::constrainResizeRect(QRectF rect, QRectF oldRect)
     return CEGUIManipulator::constrainResizeRect(rect, oldRect);
 }
 
-void LayoutManipulator::notifyResizeStarted(ResizingHandle* handle)
+void LayoutManipulator::notifyResizeStarted()
 {
-    CEGUIManipulator::notifyResizeStarted(handle);
+    CEGUIManipulator::notifyResizeStarted();
 
     LayoutManipulator* parentManipulator = dynamic_cast<LayoutManipulator*>(parentItem());
     if (parentManipulator) parentManipulator->_drawSnapGrid = true;

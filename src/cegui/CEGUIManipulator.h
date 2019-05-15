@@ -34,7 +34,7 @@ public:
     CEGUI::Sizef getBaseSize() const;
 
     virtual void notifyHandleSelected(ResizingHandle* handle) override;
-    virtual void notifyResizeStarted(ResizingHandle* handle) override;
+    virtual void notifyResizeStarted() override;
     virtual void notifyResizeProgress(QPointF newPos, QRectF newRect) override;
     virtual void notifyResizeFinished(QPointF newPos, QRectF newRect) override;
     virtual void notifyMoveStarted() override;

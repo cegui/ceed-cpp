@@ -65,14 +65,8 @@ QPointF ResizingHandle::performResizing(QPointF value)
         case Type::TopRight: top = delta.y(); right = delta.x(); break;
     }
 
-    ResizableRectItem* parentResizable = static_cast<ResizableRectItem*>(parentItem());
-
     // Modifies left, right, top & bottom inside, results are actual changes
-    parentResizable->performResizing(*this, left, top, right, bottom);
-
-    QPointF parentNewPos = parentResizable->pos() + parentResizable->rect().topLeft();
-    QRectF parentNewRect(0.0, 0.0, parentResizable->rect().width(), parentResizable->rect().height());
-    parentResizable->notifyResizeProgress(parentNewPos, parentNewRect);
+    static_cast<ResizableRectItem*>(parentItem())->performResizing(*this, left, top, right, bottom);
 
     return QPointF(left + right + pos().x(), top + bottom + pos().y());
 }
@@ -80,13 +74,7 @@ QPointF ResizingHandle::performResizing(QPointF value)
 // Called when mouse is released whilst this was selected. This notifies us that resizing might have ended.
 void ResizingHandle::mouseReleaseEventSelected(QMouseEvent* /*event*/)
 {
-    ResizableRectItem* parentResizable = static_cast<ResizableRectItem*>(parentItem());
-    if (!parentResizable->resizeInProgress()) return;
-
-    // Resize was in progress and just ended
-    QPointF parentNewPos = parentResizable->pos() + parentResizable->rect().topLeft();
-    QRectF parentNewRect(0.0, 0.0, parentResizable->rect().width(), parentResizable->rect().height());
-    parentResizable->notifyResizeFinished(parentNewPos, parentNewRect);
+    static_cast<ResizableRectItem*>(parentItem())->endResizing();
 }
 
 void ResizingHandle::showHandle(bool show)
@@ -135,7 +123,7 @@ QVariant ResizingHandle::itemChange(GraphicsItemChange change, const QVariant& v
         // This is the money code
         // Changing position of the handle resizes the whole resizable
         if (!_ignoreGeometryChanges && !parentResizable->resizeInProgress())
-            parentResizable->notifyResizeStarted(this);
+            parentResizable->beginResizing(*this);
 
         if (parentResizable->resizeInProgress())
             return performResizing(value.toPointF());

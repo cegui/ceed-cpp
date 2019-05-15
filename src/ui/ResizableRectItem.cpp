@@ -35,7 +35,7 @@ void ResizableRectItem::unselectAllHandles()
 }
 
 // Hides all handles. If a handle is given as the 'excluding' parameter, this handle is skipped over when hiding.
-void ResizableRectItem::hideAllHandles(ResizingHandle* excluding)
+void ResizableRectItem::hideAllHandles(const ResizingHandle* excluding)
 {
     for (QGraphicsItem* item : childItems())
     {
@@ -75,6 +75,18 @@ bool ResizableRectItem::isAnyHandleSelected() const
     return false;
 }
 
+void ResizableRectItem::beginResizing(const ResizingHandle& handle)
+{
+    _resizeInProgress = true;
+    resizeOldPos = pos();
+    resizeOldRect = rect();
+
+    setPen(getPenWhileResizing());
+    hideAllHandles(&handle);
+
+    notifyResizeStarted();
+}
+
 // Adjusts the rectangle and returns a 4-tuple of the actual used deltas (with restrictions accounted for)
 // Deltas are in-out, returning the actual change applied. The default implementation doesn't use the handle parameter.
 void ResizableRectItem::performResizing(const ResizingHandle& /*handle*/, qreal& deltaLeft, qreal& deltaTop, qreal& deltaRight, qreal& deltaBottom)
@@ -91,6 +103,23 @@ void ResizableRectItem::performResizing(const ResizingHandle& /*handle*/, qreal&
     deltaBottom = newRect.bottom() - rect().bottom();
 
     setRect(newRect);
+
+    QPointF parentNewPos = pos() + rect().topLeft();
+    QRectF parentNewRect(0.0, 0.0, rect().width(), rect().height());
+    notifyResizeProgress(parentNewPos, parentNewRect);
+}
+
+void ResizableRectItem::endResizing()
+{
+    if (!_resizeInProgress) return;
+
+    _resizeInProgress = false;
+    setPen(_mouseOver ? getHoverPen() : getNormalPen());
+
+    // Resize was in progress and just ended
+    QPointF parentNewPos = pos() + rect().topLeft();
+    QRectF parentNewRect(0.0, 0.0, rect().width(), rect().height());
+    notifyResizeFinished(parentNewPos, parentNewRect);
 }
 
 QRectF ResizableRectItem::constrainResizeRect(QRectF rect, QRectF /*oldRect*/)
@@ -164,21 +193,8 @@ void ResizableRectItem::mouseReleaseEventSelected(QMouseEvent* /*event*/)
     }
 }
 
-void ResizableRectItem::notifyResizeStarted(ResizingHandle* handle)
-{
-    _resizeInProgress = true;
-    resizeOldPos = pos();
-    resizeOldRect = rect();
-
-    setPen(getPenWhileResizing());
-    hideAllHandles(handle);
-}
-
 void ResizableRectItem::notifyResizeFinished(QPointF newPos, QRectF newRect)
 {
-    _resizeInProgress = false;
-    setPen(_mouseOver ? getHoverPen() : getNormalPen());
-
     _ignoreGeometryChanges = true;
     setRect(newRect);
     setPos(newPos);

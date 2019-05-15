@@ -243,9 +243,9 @@ void CEGUIManipulator::notifyHandleSelected(ResizingHandle* handle)
     moveToFront();
 }
 
-void CEGUIManipulator::notifyResizeStarted(ResizingHandle* handle)
+void CEGUIManipulator::notifyResizeStarted()
 {
-    ResizableRectItem::notifyResizeStarted(handle);
+    ResizableRectItem::notifyResizeStarted();
 
     _resizeStarted = true;
     _preResizePos = _widget->getPosition();
