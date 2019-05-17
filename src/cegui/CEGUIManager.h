@@ -3,6 +3,8 @@
 #include "qstring.h"
 #include "qimage.h"
 #include <memory>
+#include <functional>
+#include <CEGUI/Logger.h> // For logger callback args
 
 // A singleton CEGUI manager class controls the loaded project and encapsulates a running CEGUI instance.
 // Right now CEGUI can only be instantiated once because it's full of singletons. This might change in the
@@ -13,6 +15,7 @@ class CEGUIProject;
 class QtnEnumInfo;
 class QOpenGLContext;
 class QOffscreenSurface;
+class RedirectingCEGUILogger;
 
 class CEGUIManager
 {
@@ -48,6 +51,7 @@ public:
     void ensureCEGUIInitialized();
     bool makeOpenGLContextCurrent();
     void doneOpenGLContextCurrent();
+    void subscribeOnLogs(std::function<void(const CEGUI::String&, CEGUI::LoggingLevel)> callback);
 
     // Property framework support
     const QtnEnumInfo& enumHorizontalAlignment();
@@ -66,6 +70,7 @@ protected:
 
     QOpenGLContext* glContext = nullptr;
     QOffscreenSurface* surface = nullptr;
+    RedirectingCEGUILogger* logger = nullptr;
     QtnEnumInfo* _enumHorizontalAlignment = nullptr;
     QtnEnumInfo* _enumVerticalAlignment = nullptr;
     QtnEnumInfo* _enumAspectMode = nullptr;

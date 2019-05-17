@@ -23,11 +23,32 @@ void qtnRegisterUSizeDelegates(QtnPropertyDelegateFactory& factory);
 void qtnRegisterURectDelegates(QtnPropertyDelegateFactory& factory);
 void qtnRegisterUBoxDelegates(QtnPropertyDelegateFactory& factory);
 
+// Allows us to register subscribers that want CEGUI log info
+// This prevents writing CEGUI.log into CWD and allow log display inside the app
+class RedirectingCEGUILogger : public CEGUI::Logger
+{
+public:
+
+    void subscribe(std::function<void(const CEGUI::String&, CEGUI::LoggingLevel)> callback)
+    {
+        if (callback) callbacks.push_back(callback);
+    }
+
+    virtual void logEvent(const CEGUI::String& message, CEGUI::LoggingLevel level = CEGUI::LoggingLevel::Standard) override
+    {
+        for (auto&& callback : callbacks)
+            callback(message, level);
+    }
+
+    virtual void setLogFilename(const CEGUI::String&, bool) override {}
+
+private:
+
+    std::vector<std::function<void(const CEGUI::String&, CEGUI::LoggingLevel)>> callbacks;
+};
+
 CEGUIManager::CEGUIManager()
 {
-/*
-    self.logger = RedirectingCEGUILogger()
-*/
 }
 
 CEGUIManager::~CEGUIManager()
@@ -36,6 +57,8 @@ CEGUIManager::~CEGUIManager()
     {
         cleanCEGUIResources();
         CEGUI::OpenGLRenderer::destroySystem();
+        delete logger;
+        logger = nullptr;
     }
 
     delete _enumHorizontalAlignment;
@@ -174,6 +197,8 @@ void CEGUIManager::ensureCEGUIInitialized()
     // We don't want CEGUI Exceptions to output to stderr every time they are constructed
     CEGUI::Exception::setStdErrEnabled(false);
 
+    logger = new RedirectingCEGUILogger();
+
     CEGUI::OpenGLRenderer* renderer = nullptr;
     try
     {
@@ -233,6 +258,11 @@ bool CEGUIManager::makeOpenGLContextCurrent()
 void CEGUIManager::doneOpenGLContextCurrent()
 {
     if (glContext) glContext->doneCurrent();
+}
+
+void CEGUIManager::subscribeOnLogs(std::function<void (const CEGUI::String&, CEGUI::LoggingLevel)> callback)
+{
+    if (logger && callback) logger->subscribe(callback);
 }
 
 // Synchronises the CEGUI instance with the current project, respecting it's paths and resources

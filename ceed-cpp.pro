@@ -29,6 +29,7 @@ CONFIG += c++11
 SOURCES += \
     src/cegui/CEGUIUtils.cpp \
     src/main.cpp \
+    src/ui/CEGUIDebugInfo.cpp \
     src/ui/MainWindow.cpp \
     src/ui/ProjectManager.cpp \
     src/ui/CEGUIWidget.cpp \
@@ -109,6 +110,7 @@ SOURCES += \
 HEADERS += \
     src/QtStdHash.h \
     src/cegui/CEGUIUtils.h \
+    src/ui/CEGUIDebugInfo.h \
     src/ui/ProjectManager.h \
     src/ui/MainWindow.h \
     src/ui/CEGUIWidget.h \
@@ -187,6 +189,7 @@ HEADERS += \
     src/ui/PropertyInspectorWidget.h
 
 FORMS += \
+    ui/CEGUIDebugInfo.ui \
     ui/MainWindow.ui \
     ui/ProjectManager.ui \
     ui/CEGUIWidget.ui \

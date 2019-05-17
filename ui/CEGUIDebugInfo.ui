@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>CEGUIWidgetInfo</class>
- <widget class="QDialog" name="CEGUIWidgetInfo">
+ <class>CEGUIDebugInfo</class>
+ <widget class="QDialog" name="CEGUIDebugInfo">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -254,7 +254,7 @@
   <connection>
    <sender>closeButton</sender>
    <signal>clicked()</signal>
-   <receiver>CEGUIWidgetInfo</receiver>
+   <receiver>CEGUIDebugInfo</receiver>
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
