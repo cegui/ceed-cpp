@@ -1,46 +1,66 @@
-##############################################################################
-#   created:    25th June 2014
-#   author:     Lukas E Meindl
-##############################################################################
-##############################################################################
-#   CEED - Unified CEGUI asset editor
-#
-#   Copyright (C) 2011-2014   Martin Preisler <martin@preisler.me>
-#                             and contributing authors (see AUTHORS file)
-#
-#   This program is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation, either version 3 of the License, or
-#   (at your option) any later version.
-#
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-##############################################################################
+#include "src/editors/looknfeel/LookNFeelVisualMode.h"
 
+LookNFeelVisualMode::LookNFeelVisualMode()
+{
 
-from PySide import QtCore
-from PySide import QtGui
-import cPickle
+}
 
-import PyCEGUI
+void LookNFeelVisualMode::setupActions()
+{
+/*
+    cat = actionManager.createCategory(name = "looknfeel", label = "Look n' Feel Editor")
 
-from ceed import resizable
+    cat.createAction(name = "align_hleft", label = "Align &Left (horizontally)",
+                     help_ = "Sets horizontal alignment of all selected widgets to left.",
+                     icon = QtGui.QIcon("icons/looknfeel_editing/align_hleft.png"))
+    cat.createAction(name = "align_hcentre", label = "Align Centre (&horizontally)",
+                     help_ = "Sets horizontal alignment of all selected widgets to centre.",
+                     icon = QtGui.QIcon("icons/looknfeel_editing/align_hcentre.png"))
+    cat.createAction(name = "align_hright", label = "Align &Right (horizontally)",
+                     help_ = "Sets horizontal alignment of all selected widgets to right.",
+                     icon = QtGui.QIcon("icons/looknfeel_editing/align_hright.png"))
 
-from ceed.editors import multi
+    cat.createAction(name = "align_vtop", label = "Align &Top (vertically)",
+                     help_ = "Sets vertical alignment of all selected widgets to top.",
+                     icon = QtGui.QIcon("icons/looknfeel_editing/align_vtop.png"))
+    cat.createAction(name = "align_vcentre", label = "Align Centre (&vertically)",
+                     help_ = "Sets vertical alignment of all selected widgets to centre.",
+                     icon = QtGui.QIcon("icons/looknfeel_editing/align_vcentre.png"))
+    cat.createAction(name = "align_vbottom", label = "Align &Bottom (vertically)",
+                     help_ = "Sets vertical alignment of all selected widgets to bottom.",
+                     icon = QtGui.QIcon("icons/looknfeel_editing/align_vbottom.png"))
 
-from ceed.cegui import widgethelpers as cegui_widgethelpers
+    cat.createAction(name = "snap_grid", label = "Snap to &Grid",
+                     help_ = "When resizing and moving widgets, if checked this makes sure they snap to a snap grid (see settings for snap grid related entries), also shows the snap grid if checked.",
+                     icon = QtGui.QIcon("icons/looknfeel_editing/snap_grid.png"),
+                     defaultShortcut = QtGui.QKeySequence(QtCore.Qt.Key_Space)).setCheckable(True)
 
-from ceed.editors.looknfeel import undoable_commands
+    absolute_mode = cat.createAction(
+                     name = "absolute_mode", label = "&Absolute Resizing && Moving Deltas",
+                     help_ = "When resizing and moving widgets, if checked this makes the delta absolute, it is relative if unchecked.",
+                     icon = QtGui.QIcon("icons/looknfeel_editing/absolute_mode.png"),
+                     defaultShortcut = QtGui.QKeySequence(QtCore.Qt.Key_A))
+    absolute_mode.setCheckable(True)
+    absolute_mode.setChecked(True)
 
-from ceed.editors.looknfeel.hierarchy_dock_widget import LookNFeelHierarchyDockWidget
-from ceed.editors.looknfeel.falagard_element_editor import LookNFeelFalagardElementEditorDockWidget
-from ceed.editors.looknfeel.falagard_element_inspector import FalagardElementAttributesManager
+    cat.createAction(name = "normalise_position", label = "Normalise &Position (cycle)",
+                     help_ = "If the position is mixed (absolute and relative) it becomes relative only, if it's relative it becomes absolute, if it's absolute it becomes relative.",
+                     icon = QtGui.QIcon("icons/looknfeel_editing/normalise_position.png"),
+                     defaultShortcut = QtGui.QKeySequence(QtCore.Qt.Key_D))
 
+    cat.createAction(name = "normalise_size", label = "Normalise &Size (cycle)",
+                     help_ = "If the size is mixed (absolute and relative) it becomes relative only, if it's relative it becomes absolute, if it's absolute it becomes relative.",
+                     icon = QtGui.QIcon("icons/looknfeel_editing/normalise_size.png"),
+                     defaultShortcut = QtGui.QKeySequence(QtCore.Qt.Key_S))
+
+    cat.createAction(name = "focus_property_inspector_filter_box", label = "&Focus Property Inspector Filter Box",
+                     help_ = "This allows you to easily press a shortcut and immediately search through properties without having to reach for a mouse.",
+                     icon = QtGui.QIcon("icons/looknfeel_editing/focus_property_inspector_filter_box.png"),
+                     defaultShortcut = QtGui.QKeySequence(QtGui.QKeySequence.Find))
+*/
+}
+
+/*
 
 class LookNFeelVisualEditing(QtGui.QWidget, multi.EditMode):
     """This is the default visual editing mode
@@ -254,116 +274,4 @@ class LookNFeelWidgetLookSelectorWidget(QtGui.QDockWidget):
             self.fileNameLabel.setText(fileNameStr)
 
         self.fileNameLabel.setToolTip(fileNameStr)
-
-
-class EditingScene(cegui_widgethelpers.GraphicsScene):
-    """This scene contains all the manipulators users want to interact it. You can visualise it as the
-    visual editing centre screen where CEGUI is rendered.
-
-    It renders CEGUI on it's background and outlines (via Manipulators) in front of it.
-    """
-
-    def __init__(self, visual):
-        super(EditingScene, self).__init__(mainwindow.MainWindow.instance.ceguiInstance)
-
-        self.visual = visual
-        self.ignoreSelectionChanges = False
-        self.selectionChanged.connect(self.slot_selectionChanged)
-
-    def setCEGUIDisplaySize(self, width, height, lazyUpdate = True):
-        # overridden to keep the manipulators in sync
-
-        super(EditingScene, self).setCEGUIDisplaySize(width, height, lazyUpdate)
-
-    def slot_selectionChanged(self):
-        selection = self.selectedItems()
-
-        sets = []
-        for item in selection:
-            wdt = None
-
-            if isinstance(item, widgethelpers.Manipulator):
-                wdt = item.widget
-
-            elif isinstance(item, resizable.ResizingHandle):
-                if isinstance(item.parentResizable, widgethelpers.Manipulator):
-                    wdt = item.parentResizable.widget
-
-            if wdt is not None and wdt not in sets:
-                sets.append(wdt)
-
-    def mouseReleaseEvent(self, event):
-        super(EditingScene, self).mouseReleaseEvent(event)
-
-        movedWidgetPaths = []
-        movedOldPositions = {}
-        movedNewPositions = {}
-
-        resizedWidgetPaths = []
-        resizedOldPositions = {}
-        resizedOldSizes = {}
-        resizedNewPositions = {}
-        resizedNewSizes = {}
-
-        # we have to "expand" the items, adding parents of resizing handles
-        # instead of the handles themselves
-        expandedSelectedItems = []
-        for selectedItem in self.selectedItems():
-            if isinstance(selectedItem, widgethelpers.Manipulator):
-                expandedSelectedItems.append(selectedItem)
-            elif isinstance(selectedItem, resizable.ResizingHandle):
-                if isinstance(selectedItem.parentItem(), widgethelpers.Manipulator):
-                    expandedSelectedItems.append(selectedItem.parentItem())
-
-        for item in expandedSelectedItems:
-            if isinstance(item, widgethelpers.Manipulator):
-                if item.preMovePos is not None:
-                    widgetPath = item.widget.getNamePath()
-                    movedWidgetPaths.append(widgetPath)
-                    movedOldPositions[widgetPath] = item.preMovePos
-                    movedNewPositions[widgetPath] = item.widget.getPosition()
-
-                    # it won't be needed anymore so we use this to mark we picked this item up
-                    item.preMovePos = None
-
-                if item.preResizePos is not None and item.preResizeSize is not None:
-                    widgetPath = item.widget.getNamePath()
-                    resizedWidgetPaths.append(widgetPath)
-                    resizedOldPositions[widgetPath] = item.preResizePos
-                    resizedOldSizes[widgetPath] = item.preResizeSize
-                    resizedNewPositions[widgetPath] = item.widget.getPosition()
-                    resizedNewSizes[widgetPath] = item.widget.getSize()
-
-                    # it won't be needed anymore so we use this to mark we picked this item up
-                    item.preResizePos = None
-                    item.preResizeSize = None
-
-        if len(movedWidgetPaths) > 0:
-            cmd = undoable_commands.MoveCommand(self.visual, movedWidgetPaths, movedOldPositions, movedNewPositions)
-            self.visual.tabbedEditor.undoStack.push(cmd)
-
-        if len(resizedWidgetPaths) > 0:
-            cmd = undoable_commands.ResizeCommand(self.visual, resizedWidgetPaths, resizedOldPositions, resizedOldSizes, resizedNewPositions, resizedNewSizes)
-            self.visual.tabbedEditor.undoStack.push(cmd)
-
-    def keyReleaseEvent(self, event):
-        handled = False
-
-        if event.key() == QtCore.Qt.Key_Delete:
-            handled = self.deleteSelectedWidgets()
-
-        if not handled:
-            super(EditingScene, self).keyReleaseEvent(event)
-
-        else:
-            event.accept()
-
-# needs to be at the end to sort circular deps
-import ceed.ui.editors.looknfeel.looknfeelhierarchydockwidget
-import ceed.ui.editors.looknfeel.looknfeelwidgetlookselectorwidget
-import ceed.ui.editors.looknfeel.looknfeelpropertyeditordockwidget
-
-# needs to be at the end, import to get the singleton
-from ceed import mainwindow
-from ceed import settings
-from ceed import action
+*/

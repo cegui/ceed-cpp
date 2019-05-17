@@ -28,6 +28,12 @@ CONFIG += c++11
 
 SOURCES += \
     src/cegui/CEGUIUtils.cpp \
+    src/editors/looknfeel/LookNFeelCodeMode.cpp \
+    src/editors/looknfeel/LookNFeelEditor.cpp \
+    src/editors/looknfeel/LookNFeelPreviewMode.cpp \
+    src/editors/looknfeel/LookNFeelScene.cpp \
+    src/editors/looknfeel/LookNFeelUndoCommands.cpp \
+    src/editors/looknfeel/LookNFeelVisualMode.cpp \
     src/main.cpp \
     src/ui/CEGUIDebugInfo.cpp \
     src/ui/MainWindow.cpp \
@@ -107,6 +113,12 @@ SOURCES += \
 HEADERS += \
     src/QtStdHash.h \
     src/cegui/CEGUIUtils.h \
+    src/editors/looknfeel/LookNFeelCodeMode.h \
+    src/editors/looknfeel/LookNFeelEditor.h \
+    src/editors/looknfeel/LookNFeelPreviewMode.h \
+    src/editors/looknfeel/LookNFeelScene.h \
+    src/editors/looknfeel/LookNFeelUndoCommands.h \
+    src/editors/looknfeel/LookNFeelVisualMode.h \
     src/ui/CEGUIDebugInfo.h \
     src/ui/ProjectManager.h \
     src/ui/MainWindow.h \

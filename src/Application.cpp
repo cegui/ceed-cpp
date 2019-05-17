@@ -5,6 +5,7 @@
 #include "src/util/SettingsEntry.h"
 #include "src/editors/imageset/ImagesetEditor.h"
 #include "src/editors/layout/LayoutEditor.h"
+#include "src/editors/looknfeel/LookNFeelEditor.h"
 #include "qsplashscreen.h"
 #include "qsettings.h"
 #include "qdir.h"
@@ -150,8 +151,5 @@ void Application::createSettingsEntries()
 
     ImagesetEditor::createSettings(*settings);
     LayoutEditor::createSettings(*settings);
-
-    /*
-    ceed.editors.looknfeel.settings_decl.declare(self)
-    */
+    LookNFeelEditor::createSettings(*settings);
 }
