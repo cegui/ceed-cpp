@@ -1,61 +1,24 @@
-##############################################################################
-#   CEED - Unified CEGUI asset editor
-#
-#   Copyright (C) 2011-2012   Martin Preisler <martin@preisler.me>
-#                             and contributing authors (see AUTHORS file)
-#
-#   This program is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation, either version 3 of the License, or
-#   (at your option) any later version.
-#
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-##############################################################################
+#include "src/editors/anim/AnimationEditor.h"
+#include "src/util/DismissableMessage.h"
 
-from PySide import QtCore
-from PySide import QtGui
-
-from ceed import editors
-import ceed.compatibility.animation_list as animation_list_compatibility
-from ceed.editors.animation_list import visual
-from ceed.editors.animation_list import code
-
-from ceed import messages
-
-import os.path
-import sys
-from xml.etree import cElementTree as ElementTree
-
-
-class AnimationListTabbedEditor(editors.multi.MultiModeTabbedEditor):
-    """Animation list file editor (XML file containing list of animations)
-    """
-
-    def __init__(self, filePath):
-        super(AnimationListTabbedEditor, self).__init__(animation_list_compatibility.manager, filePath)
-
-        messages.warning(None, self, "Animation List Editor is experimental!",
-                         "This part of CEED is not considered to be ready for "
-                         "production. You have been warned. If everything "
-                         "breaks you get to keep the pieces!",
-                         "animation_list_editor_experimental")
-
-        self.requiresProject = True
-
+AnimationEditor::AnimationEditor(const QString& filePath)
+    : MultiModeEditor(/*animation_list_compatibility.manager, */ filePath)
+{
+    DismissableMessage::warning(nullptr, "Animation List Editor is experimental!",
+                                "This part of CEED is not considered to be ready for "
+                                "production. You have been warned. If everything "
+                                "breaks you get to keep the pieces!",
+                                "animation_list_editor_experimental");
+/*
         self.visual = visual.VisualEditing(self)
         self.addTab(self.visual, "Visual")
 
         self.code = code.CodeEditing(self)
         self.addTab(self.code, "Code")
+*/
+}
 
-        self.tabWidget = self
-
+/*
     def initialise(self, mainWindow):
         super(AnimationListTabbedEditor, self).initialise(mainWindow)
 
@@ -153,21 +116,23 @@ class AnimationListTabbedEditor(editors.multi.MultiModeTabbedEditor):
             return self.visual.zoomReset()
 
         return False
+*/
+//---------------------------------------------------------------------
 
+QString AnimationEditorFactory::getFileTypesDescription() const
+{
+    return "Animation files";
+}
 
-class AnimationListTabbedEditorFactory(editors.TabbedEditorFactory):
-    def getFileExtensions(self):
-        extensions = set(["anims"])
-        return extensions
+QStringList AnimationEditorFactory::getFileExtensions() const
+{
+    /*
+        extensions = animation_list_compatibility.manager.getAllPossibleExtensions()
+    */
+    return { "anims" };
+}
 
-    def canEditFile(self, filePath):
-        extensions = self.getFileExtensions()
-
-        for extension in extensions:
-            if filePath.endswith("." + extension):
-                return True
-
-        return False
-
-    def create(self, filePath):
-        return AnimationListTabbedEditor(filePath)
+EditorBasePtr AnimationEditorFactory::create(const QString& filePath) const
+{
+    return std::make_unique<AnimationEditor>(filePath);
+}
