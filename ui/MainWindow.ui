@@ -651,6 +651,10 @@
    </property>
   </action>
   <action name="actionCEGUIDebugInfo">
+   <property name="icon">
+    <iconset resource="../data/Resources.qrc">
+     <normaloff>:/icons/cegui/debug_info.png</normaloff>:/icons/cegui/debug_info.png</iconset>
+   </property>
    <property name="text">
     <string>CEGUI Debug Info</string>
    </property>

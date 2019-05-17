@@ -1,5 +1,6 @@
 #include "src/ui/CEGUIWidget.h"
 #include "src/ui/CEGUIGraphicsScene.h"
+#include "src/cegui/CEGUIManager.h"
 #include "ui_CEGUIWidget.h"
 #include "qscrollbar.h"
 
@@ -17,10 +18,6 @@ CEGUIWidget::CEGUIWidget(QWidget *parent) :
         QString text("Cursor: x %1, y %2");
         ui->lblCursorPosition->setText(text.arg(x).arg(y));
     });
-
-    /*
-        self.debugInfo = DebugInfo(self)
-    */
 }
 
 CEGUIWidget::~CEGUIWidget()
@@ -74,9 +71,7 @@ void CEGUIWidget::setInputEnabled(bool enable)
 
 void CEGUIWidget::on_debugInfoButton_clicked()
 {
-    /*
-        self.debugInfo.show()
-    */
+    CEGUIManager::Instance().showDebugInfo();
 }
 
 void CEGUIWidget::on_resolutionBox_editTextChanged(const QString& /*arg1*/)

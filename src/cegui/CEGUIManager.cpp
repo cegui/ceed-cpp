@@ -1,6 +1,7 @@
 #include "src/cegui/CEGUIManager.h"
 #include "src/cegui/CEGUIProject.h"
 #include "src/cegui/CEGUIUtils.h"
+#include "src/ui/CEGUIDebugInfo.h"
 #include "src/util/DismissableMessage.h"
 #include "src/Application.h"
 #include <CEGUI/CEGUI.h>
@@ -34,6 +35,13 @@ public:
         if (callback) callbacks.push_back(callback);
     }
 
+    void unsubscribe(std::function<void(const CEGUI::String&, CEGUI::LoggingLevel)> callback)
+    {
+        assert(false);
+    }
+
+    void unsubscribeAll() { callbacks.clear(); }
+
     virtual void logEvent(const CEGUI::String& message, CEGUI::LoggingLevel level = CEGUI::LoggingLevel::Standard) override
     {
         for (auto&& callback : callbacks)
@@ -55,10 +63,11 @@ CEGUIManager::~CEGUIManager()
 {
     if (initialized)
     {
+        logger->unsubscribeAll();
         cleanCEGUIResources();
         CEGUI::OpenGLRenderer::destroySystem();
+        delete debugInfo;
         delete logger;
-        logger = nullptr;
     }
 
     delete _enumHorizontalAlignment;
@@ -198,6 +207,12 @@ void CEGUIManager::ensureCEGUIInitialized()
     CEGUI::Exception::setStdErrEnabled(false);
 
     logger = new RedirectingCEGUILogger();
+    debugInfo = new CEGUIDebugInfo();
+
+    logger->subscribe([this](const CEGUI::String& message, CEGUI::LoggingLevel level)
+    {
+        debugInfo->logEvent(message, level);
+    });
 
     CEGUI::OpenGLRenderer* renderer = nullptr;
     try
@@ -260,9 +275,12 @@ void CEGUIManager::doneOpenGLContextCurrent()
     if (glContext) glContext->doneCurrent();
 }
 
-void CEGUIManager::subscribeOnLogs(std::function<void (const CEGUI::String&, CEGUI::LoggingLevel)> callback)
+void CEGUIManager::showDebugInfo()
 {
-    if (logger && callback) logger->subscribe(callback);
+    if (debugInfo)
+        debugInfo->show();
+    else
+        QMessageBox::warning(nullptr, "CEGUI Debug Info", "CEGUI is not initialized yet. Open a project to launch it.");
 }
 
 // Synchronises the CEGUI instance with the current project, respecting it's paths and resources

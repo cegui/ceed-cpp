@@ -166,8 +166,8 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset>
-          <normaloff>../data/icons/cegui/debug_info.png</normaloff>../data/icons/cegui/debug_info.png</iconset>
+         <iconset resource="../data/Resources.qrc">
+          <normaloff>:/icons/cegui/debug_info.png</normaloff>:/icons/cegui/debug_info.png</iconset>
         </property>
         <property name="autoDefault">
          <bool>false</bool>
@@ -192,6 +192,8 @@
    <header>src/ui/CEGUIGraphicsView.h</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../data/Resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

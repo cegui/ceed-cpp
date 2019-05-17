@@ -474,9 +474,7 @@ void MainWindow::on_actionReportBug_triggered()
 
 void MainWindow::on_actionCEGUIDebugInfo_triggered()
 {
-    /*
-        self.ceguiContainerWidget.debugInfo.show()
-    */
+    CEGUIManager::Instance().showDebugInfo();
 }
 
 void MainWindow::on_actionAbout_triggered()
