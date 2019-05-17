@@ -23,9 +23,6 @@ CEGUIProject::CEGUIProject()
 
     // NB: we must not delete it, Qt does this for us
     setItemPrototype(new CEGUIProjectItem(this));
-/*
-    self.propertyMap = propertymapping.PropertyMap.fromFiles([os.path.abspath(path) for path in set(["mappings/Base.pmappings"])])
-*/
 }
 
 CEGUIProject::~CEGUIProject()

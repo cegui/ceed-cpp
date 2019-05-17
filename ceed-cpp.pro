@@ -74,8 +74,6 @@ SOURCES += \
     src/editors/BitmapEditor.cpp \
     src/editors/MultiModeEditor.cpp \
     src/editors/CodeEditMode.cpp \
-    src/util/ActionManager.cpp \
-    src/util/ActionCategory.cpp \
     src/editors/layout/LayoutEditor.cpp \
     src/editors/imageset/ImagesetEditor.cpp \
     src/editors/layout/LayoutCodeMode.cpp \
@@ -104,8 +102,7 @@ SOURCES += \
     src/ui/XMLSyntaxHighlighter.cpp \
     src/ui/layout/WidgetTypeTreeWidget.cpp \
     src/ui/layout/CreateWidgetDockWidget.cpp \
-    src/ui/layout/WidgetHierarchyItem.cpp \
-    src/ui/PropertyInspectorWidget.cpp
+    src/ui/layout/WidgetHierarchyItem.cpp
 
 HEADERS += \
     src/QtStdHash.h \
@@ -155,8 +152,6 @@ HEADERS += \
     src/editors/BitmapEditor.h \
     src/editors/MultiModeEditor.h \
     src/editors/CodeEditMode.h \
-    src/util/ActionManager.h \
-    src/util/ActionCategory.h \
     src/editors/layout/LayoutEditor.h \
     src/editors/imageset/ImagesetEditor.h \
     src/editors/layout/LayoutCodeMode.h \
@@ -185,8 +180,7 @@ HEADERS += \
     src/ui/XMLSyntaxHighlighter.h \
     src/ui/layout/WidgetTypeTreeWidget.h \
     src/ui/layout/CreateWidgetDockWidget.h \
-    src/ui/layout/WidgetHierarchyItem.h \
-    src/ui/PropertyInspectorWidget.h
+    src/ui/layout/WidgetHierarchyItem.h
 
 FORMS += \
     ui/CEGUIDebugInfo.ui \

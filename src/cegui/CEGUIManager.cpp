@@ -598,18 +598,13 @@ QStringList CEGUIManager::getAvailableSkins() const
     auto it = CEGUI::WindowFactoryManager::getSingleton().getFalagardMappingIterator();
     while (!it.isAtEnd())
     {
-        /*
-            currentSkin = it.getCurrentValue().d_windowType.split('/')[0]
+        QString currentSkin = CEGUIUtils::stringToQString(it.getCurrentValue().d_windowType);
+        auto sepPos = currentSkin.indexOf('/');
+        if (sepPos >= 0) currentSkin = currentSkin.left(sepPos);
 
-            from ceed.editors.looknfeel.tabbed_editor import LookNFeelTabbedEditor
-            ceedInternalEditingPrefix = LookNFeelTabbedEditor.getEditorIDStringPrefix()
-            ceedInternalLNF = False
-            if currentSkin.startswith(ceedInternalEditingPrefix):
-                ceedInternalLNF = True
+        if (!skins.contains(currentSkin) && !currentSkin.startsWith(getEditorIDStringPrefix()))
+            skins.append(currentSkin);
 
-            if currentSkin not in skins and not ceedInternalLNF:
-                skins.append(currentSkin)
-        */
         ++it;
     }
 

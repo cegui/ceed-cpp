@@ -74,7 +74,7 @@ void CEGUIWidget::on_debugInfoButton_clicked()
     CEGUIManager::Instance().showDebugInfo();
 }
 
-void CEGUIWidget::on_resolutionBox_editTextChanged(const QString& /*arg1*/)
+void CEGUIWidget::on_resolutionBox_editTextChanged(const QString&)
 {
     int width = 0;
     int height = 0;

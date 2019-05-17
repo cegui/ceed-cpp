@@ -36,12 +36,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    // We have to construct ActionManager before settings interface (as it alters the settings declaration)!
-    //???is true for C++ version?
-    /*
-        self.actionManager = action.ActionManager(self, self.app.settings)
-    */
-
     settingsDialog = new SettingsDialog(this);
 
     // Register factories
@@ -510,16 +504,16 @@ void MainWindow::slot_tabBarCustomContextMenuRequested(const QPoint& pos)
     menu->addAction(ui->actionCloseOtherTabs);
     menu->addAction(ui->actionCloseAllTabs);
 
+    /*
     if (tabIdx >= 0)
     {
-        /*
-            auto tabWidget = tabs->widget(tabIdx);
-        */
+        auto tabWidget = ui->tabs->widget(tabIdx);
         menu->addSeparator();
-        QAction* dataTypeAction = new QAction("Data type: " /*+ (tabWidget.getDesiredSavingDataType())*/, this);
+        QAction* dataTypeAction = new QAction("Data type: " + tabWidget->getDesiredSavingDataType(), this);
         dataTypeAction->setToolTip("Displays which data type this file will be saved to (the desired saving data type).");
         menu->addAction(dataTypeAction);
     }
+    */
 
     menu->exec(ui->tabs->tabBar()->mapToGlobal(pos));
 }
@@ -873,7 +867,7 @@ EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
     }
 
     // Will cleanup itself inside if something went wrong
-    ret->initialize(/*this*/);
+    ret->initialize();
 
     // Intentionally before addTab for getEditorForTab()
     auto retPtr = ret.get();

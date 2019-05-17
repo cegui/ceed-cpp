@@ -1,5 +1,7 @@
 #include "src/ui/dialogs/AboutDialog.h"
 #include "ui_AboutDialog.h"
+#include "src/Application.h"
+#include <CEGUI/Version.h>
 
 AboutDialog::AboutDialog(QWidget *parent) :
     QDialog(parent),
@@ -10,13 +12,11 @@ AboutDialog::AboutDialog(QWidget *parent) :
     // Background, see the data/images directory for SVG source
     ui->aboutImage->setPixmap(QPixmap(":/images/splashscreen.png"));
 
-    findChild<QLabel*>()->setText("Please report any issues to help this project.");
-/*
-    self.findChild(QtGui.QLabel, "CEEDVersion").setText("CEED: %s" % (version.CEED))
-    self.findChild(QtGui.QLabel, "PySideVersion").setText("PySide: %s" % (version.PYSIDE))
-    self.findChild(QtGui.QLabel, "QtVersion").setText("Qt: %s" % (version.QT))
-    self.findChild(QtGui.QLabel, "PyCEGUIVersion").setText("PyCEGUI: %s" % (version.PYCEGUI))
-*/
+    ui->CEEDDescription->setText("Please report any issues to help this project.");
+
+    ui->CEEDVersion->setText("CEED: " + qApp->applicationVersion());
+    ui->QtVersion->setText("Qt: " + QString(qVersion()));
+    ui->CEGUIVersion->setText(QString("CEGUI: %1.%2.%3").arg(CEGUI_VERSION_MAJOR).arg(CEGUI_VERSION_MINOR).arg(CEGUI_VERSION_PATCH));
 }
 
 AboutDialog::~AboutDialog()

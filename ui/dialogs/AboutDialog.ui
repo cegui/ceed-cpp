@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>253</width>
-    <height>212</height>
+    <height>219</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -38,7 +38,16 @@
    </item>
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <property name="margin">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
       <number>0</number>
      </property>
      <item row="0" column="0">
@@ -65,27 +74,7 @@
       </widget>
      </item>
      <item row="3" column="0">
-      <widget class="QLabel" name="PySideVersion">
-       <property name="text">
-        <string>This is a bug; fix me.</string>
-       </property>
-       <property name="textInteractionFlags">
-        <set>Qt::NoTextInteraction</set>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0">
       <widget class="QLabel" name="QtVersion">
-       <property name="text">
-        <string>This is a bug; fix me.</string>
-       </property>
-       <property name="textInteractionFlags">
-        <set>Qt::NoTextInteraction</set>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="PyCEGUIVersion">
        <property name="text">
         <string>This is a bug; fix me.</string>
        </property>
@@ -106,6 +95,16 @@
         </size>
        </property>
       </spacer>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="CEGUIVersion">
+       <property name="text">
+        <string>This is a bug; fix me.</string>
+       </property>
+       <property name="textInteractionFlags">
+        <set>Qt::NoTextInteraction</set>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>

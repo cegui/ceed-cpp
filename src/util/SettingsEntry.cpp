@@ -86,16 +86,6 @@ void SettingsEntry::load()
     QSettings* qsettings = _section.getCategory().getSettings().getQSettings();
     QVariant val = qsettings->value(getPath());
     if (val.isNull()) val = _defaultValue;
-
-/*
-        # http://bugs.pyside.org/show_bug.cgi?id=345
-        if self.widgetHint == "checkbox":
-            if persistedValue == "false":
-                persistedValue = False
-            elif persistedValue == "true":
-                persistedValue = True
-*/
-
     setValue(val, false);
 }
 

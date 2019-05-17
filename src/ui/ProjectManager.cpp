@@ -95,20 +95,6 @@ void ProjectManager::on_actionCreateFolder_triggered()
         CEGUIProjectItem* parentItem = static_cast<CEGUIProjectItem*>(_project->itemFromIndex(parentIndex));
         assert(parentItem);
         parentItem->appendRow(item);
-
-        /* TODO: remove if not needed. Example of model-agnostic child adding code.
-
-            if (model->columnCount(parentIndex) == 0) {
-                if (!model->insertColumn(0, parentIndex))
-                    return;
-            }
-
-            if (!model->insertRow(0, parentIndex))
-                return;
-
-            QModelIndex newIndex = model->index(0, 0, parentIndex);
-            model->setData(newIndex, QVariant(), Qt::EditRole);
-        */
     }
     else
     {
@@ -330,11 +316,7 @@ void ProjectManager::on_actionRemove_triggered()
     }
 
     if (selectedIndices.size() > removeCount)
-    {
-        /*
-        logging.error("%i selected project items are unknown and can't be deleted", len(selectedIndices))
-        */
-    }
+        qDebug(QString("%1 selected project items are unknown and can't be deleted").arg(selectedIndices.size()).toLocal8Bit().data());
 
     if (removeCount) _project->setModified();
 
