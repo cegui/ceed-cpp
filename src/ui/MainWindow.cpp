@@ -21,6 +21,8 @@
 #include "src/editors/BitmapEditor.h"
 #include "src/editors/layout/LayoutEditor.h"
 #include "src/editors/imageset/ImagesetEditor.h"
+#include "src/editors/looknfeel/LookNFeelEditor.h"
+#include "src/editors/anim/AnimationEditor.h"
 #include "src/ui/dialogs/AboutDialog.h"
 #include "src/ui/dialogs/LicenseDialog.h"
 #include "src/ui/dialogs/NewProjectDialog.h"
@@ -44,10 +46,8 @@ MainWindow::MainWindow(QWidget *parent) :
     editorFactories.push_back(std::make_unique<BitmapEditorFactory>());
     editorFactories.push_back(std::make_unique<LayoutEditorFactory>());
     editorFactories.push_back(std::make_unique<ImagesetEditorFactory>());
-    /*
-        animation_list_editor.AnimationListTabbedEditorFactory(),           // Animation files
-        looknfeel_editor.LookNFeelTabbedEditorFactory(),                    //
-    */
+    editorFactories.push_back(std::make_unique<LookNFeelEditorFactory>());
+    editorFactories.push_back(std::make_unique<AnimationEditorFactory>());
 
     // Register file types from factories as filters
 

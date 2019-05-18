@@ -1,6 +1,10 @@
 #include "src/editors/looknfeel/LookNFeelEditor.h"
+#include "src/editors/looknfeel/LookNFeelVisualMode.h"
+#include "src/editors/looknfeel/LookNFeelCodeMode.h"
+#include "src/editors/looknfeel/LookNFeelPreviewMode.h"
 #include "src/util/DismissableMessage.h"
 #include "src/util/Settings.h"
+#include "qmessagebox.h"
 
 LookNFeelEditor::LookNFeelEditor(const QString& filePath)
     : MultiModeEditor(/*looknfeel_compatibility.manager, */ filePath)
@@ -10,29 +14,27 @@ LookNFeelEditor::LookNFeelEditor(const QString& filePath)
                                 "production. You have been warned. If everything "
                                 "breaks you get to keep the pieces!",
                                 "looknfeel_editor_experimental");
+
+    visualMode = new LookNFeelVisualMode(*this);
+    tabs.addTab(visualMode, "Visual");
+
+    codeMode = new LookNFeelCodeMode(*this);
+    tabs.addTab(codeMode, "Code");
+
+    // Look n' Feel Previewer is not actually an edit mode, you can't edit the Look n' Feel from it,
+    // however for everything to work smoothly we do push edit mode changes to it to the
+    // undo stack.
+    //
+    // TODO: This could be improved at least a little bit if 2 consecutive edit mode changes
+    //       looked like this: A->Preview, Preview->C.  We could simply turn this into A->C,
+    //       and if A = C it would eat the undo command entirely.
+    auto previewer = new LookNFeelPreviewMode(*this);
+    tabs.addTab(previewer, "Live Preview");
+
 /*
         self.editorIDString = CEGUIManager::getEditorIDStringPrefix() + str(id(self))
 
-        // The name of the widget we are targeting for editing
-        self.targetWidgetLook = ""
-
-        visualMode = new LookNFeelVisualMode(*this);
-        tabs.addTab(visualMode, "Visual");
-
-        codeMode = new LookNFeelCodeMode(*this);
-        tabs.addTab(codeMode, "Code");
-
         self.nameMappingsOfOwnedWidgetLooks = []
-
-        // Look n' Feel Previewer is not actually an edit mode, you can't edit the Look n' Feel from it,
-        // however for everything to work smoothly we do push edit mode changes to it to the
-        // undo stack.
-        //
-        // TODO: This could be improved at least a little bit if 2 consecutive edit mode changes
-        //       looked like this: A->Preview, Preview->C.  We could simply turn this into A->C,
-        //       and if A = C it would eat the undo command entirely.
-        auto previewer = new LookNFeelPreviewerMode(*this);
-        tabs.addTab(previewer, "Live Preview");
 
         // set the toolbar icon size according to the setting and subscribe to it
         self.tbIconSizeEntry = settings.getEntry("global/ui/toolbar_icon_size")
@@ -46,44 +48,27 @@ void LookNFeelEditor::initialize()
 {
     MultiModeEditor::initialize();
 
-    /*
-        self.mapAndLoadLookNFeelFileString(self.nativeData)
-        self.visual.initialise()
-    */
+    try
+    {
+        /*
+            self.mapAndLoadLookNFeelFileString(self.nativeData)
+        */
+        /*
+        // FIXME: open manually and load from string?
+        auto layoutFileName = QDir(CEGUIManager::Instance().getCurrentProject()->getResourceFilePath("", "layouts")).relativeFilePath(_filePath);
+        CEGUI::Window* root = CEGUI::WindowManager::getSingleton().loadLayoutFromFile(CEGUIUtils::qStringToString(layoutFileName));
+        */
+        visualMode->initialize();
+    }
+    catch (const std::exception& e)
+    {
+        QMessageBox::warning(nullptr, "Exception", e.what());
+    }
 }
 
+void LookNFeelEditor::mapAndLoadLookNFeelFileString(const QString& lookNFeelXML)
+{
 /*
-    @staticmethod
-    def unmapMappedNameIntoOriginalParts(mappedName):
-        """
-        Returns the original WidgetLookFeel name and the editorID, based on a mapped name
-        :param mappedName: str
-        :return: str, str
-        """
-        mappedNameSplitResult = mappedName.split('/', 1)
-
-        if len(mappedNameSplitResult) != 2:
-            raise Exception('Failed to split the mapped name')
-
-        return mappedNameSplitResult[1], mappedNameSplitResult[0]
-
-    def tryUpdatingWidgetLookFeel(self, sourceCode):
-        """
-        Tries to parse a LNF source code content
-        :param sourceCode:
-        :return:
-        """
-
-        loadingSuccessful = True
-        try:
-            self.mapAndLoadLookNFeelFileString(sourceCode)
-        except:
-            self.mapAndLoadLookNFeelFileString(self.nativeData)
-            loadingSuccessful = False
-
-        return loadingSuccessful
-
-    def mapAndLoadLookNFeelFileString(self, lookNFeelAsXMLString):
         // When we are loading a Look n' Feel file we want to load it into CEED in a way it doesn't collide with other LNF definitions stored into CEGUI.
         // To prevent name collisions and also to prevent live-editing of WidgetLooks that are used somewhere in a layout editor or other look n' feel editor simultaneously,
         // we will map the names that we load from a Look n' Feel file in a way that they are unique. We achieve this by editing the WidgetLook names inside the string we loaded
@@ -122,6 +107,60 @@ void LookNFeelEditor::initialize()
         self.addMappedWidgetLookFalagardMappings()
         // Refreshing the combobox
         self.visual.lookNFeelWidgetLookSelectorWidget.populateWidgetLookComboBox(self.nameMappingsOfOwnedWidgetLooks)
+*/
+}
+
+void LookNFeelEditor::getRawData(QByteArray& outRawData)
+{
+/*
+        codeMode = self.currentWidget() is self.code
+
+        // if user saved in code mode, we process the code by propagating it to visual
+        // (allowing the change propagation to do the code validating and other work for us)
+
+        if codeMode:
+            self.code.propagateToVisual()
+
+        // We add every WidgetLookFeel name of this Look N' Feel to a StringSet
+        nameSet = self.getStringSetOfWidgetLookFeelNames()
+        // We parse all WidgetLookFeels as XML to a string
+        lookAndFeelString = PyCEGUI.WidgetLookManager.getSingleton().getWidgetLookSetAsString(nameSet)
+        self.nativeData = self.unmapWidgetLookReferences(lookAndFeelString)
+
+        return super(LookNFeelTabbedEditor, self).saveAs(targetPath, updateCurrentPath)
+*/
+}
+
+/*
+    @staticmethod
+    def unmapMappedNameIntoOriginalParts(mappedName):
+        """
+        Returns the original WidgetLookFeel name and the editorID, based on a mapped name
+        :param mappedName: str
+        :return: str, str
+        """
+        mappedNameSplitResult = mappedName.split('/', 1)
+
+        if len(mappedNameSplitResult) != 2:
+            raise Exception('Failed to split the mapped name')
+
+        return mappedNameSplitResult[1], mappedNameSplitResult[0]
+
+    def tryUpdatingWidgetLookFeel(self, sourceCode):
+        """
+        Tries to parse a LNF source code content
+        :param sourceCode:
+        :return:
+        """
+
+        loadingSuccessful = True
+        try:
+            self.mapAndLoadLookNFeelFileString(sourceCode)
+        except:
+            self.mapAndLoadLookNFeelFileString(self.nativeData)
+            loadingSuccessful = False
+
+        return loadingSuccessful
 
     def mapWidgetLookReferences(self, lookNFeelString):
         """
@@ -269,23 +308,6 @@ void LookNFeelEditor::initialize()
             nameSet.add(nameTuple[1])
 
         return nameSet
-
-    def saveAs(self, targetPath, updateCurrentPath=True):
-        codeMode = self.currentWidget() is self.code
-
-        // if user saved in code mode, we process the code by propagating it to visual
-        // (allowing the change propagation to do the code validating and other work for us)
-
-        if codeMode:
-            self.code.propagateToVisual()
-
-        // We add every WidgetLookFeel name of this Look N' Feel to a StringSet
-        nameSet = self.getStringSetOfWidgetLookFeelNames()
-        // We parse all WidgetLookFeels as XML to a string
-        lookAndFeelString = PyCEGUI.WidgetLookManager.getSingleton().getWidgetLookSetAsString(nameSet)
-        self.nativeData = self.unmapWidgetLookReferences(lookAndFeelString)
-
-        return super(LookNFeelTabbedEditor, self).saveAs(targetPath, updateCurrentPath)
 
     def performCut(self):
         if self.currentWidget() is self.visual:

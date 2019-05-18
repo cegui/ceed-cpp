@@ -1,12 +1,20 @@
 #ifndef LOOKNFEELVISUALMODE_H
 #define LOOKNFEELVISUALMODE_H
 
+#include "src/editors/MultiModeEditor.h"
+#include "qwidget.h"
 
-class LookNFeelVisualMode
+// This is the default visual editing mode for look'n'feel
+
+class LookNFeelEditor;
+
+class LookNFeelVisualMode : public QWidget, public IEditMode
 {
 public:
 
-    LookNFeelVisualMode();
+    LookNFeelVisualMode(LookNFeelEditor& editor);
+
+    void initialize();
 
 protected:
 

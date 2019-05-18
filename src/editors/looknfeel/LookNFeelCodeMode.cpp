@@ -1,84 +1,99 @@
 #include "src/editors/looknfeel/LookNFeelCodeMode.h"
+#include "src/editors/looknfeel/LookNFeelEditor.h"
 
-LookNFeelCodeMode::LookNFeelCodeMode()
+LookNFeelCodeMode::LookNFeelCodeMode(LookNFeelEditor& editor)
+    : CodeEditMode(editor)
 {
-
+/*
+        self.highlighter = WidgetLookHighlighter(self)
+*/
 }
 
+// Returns the Look n' Feel XML string based on all WidgetLookFeels that belong to the Look n' Feel file according to the editor
+QString LookNFeelCodeMode::getNativeCode()
+{
+    LookNFeelEditor& editor = static_cast<LookNFeelEditor&>(_editor);
+
 /*
-
-class CodeEditing(multi.CodeEditMode):
-    def __init__(self, tabbedEditor):
-        """
-        :param tabbedEditor: LookNFeelTabbedEditor
-        :return:
-        """
-        super(CodeEditing, self).__init__()
-
-        self.tabbedEditor = tabbedEditor
-        self.highlighter = WidgetLookHighlighter(self)
-
-    def getNativeCode(self):
-        # Returns the Look n' Feel XML string based on all WidgetLookFeels that belong to the Look n' Feel file according to the editor
-
-        # We add every WidgetLookFeel name of this Look N' Feel to a StringSet
-        nameSet = self.tabbedEditor.getStringSetOfWidgetLookFeelNames()
-        # We parse all WidgetLookFeels as XML to a string
+        // We add every WidgetLookFeel name of this Look N' Feel to a StringSet
+        nameSet = editor.getStringSetOfWidgetLookFeelNames()
+        // We parse all WidgetLookFeels as XML to a string
         lookAndFeelString = PyCEGUI.WidgetLookManager.getSingleton().getWidgetLookSetAsString(nameSet)
 
-        lookAndFeelString = self.tabbedEditor.unmapWidgetLookReferences(lookAndFeelString)
+        return editor.unmapWidgetLookReferences(lookAndFeelString)
+*/
 
-        return lookAndFeelString
+    assert(false);
+    return "";
+}
 
-    def propagateNativeCode(self, code):
+bool LookNFeelCodeMode::propagateNativeCode(const QString& code)
+{
+    LookNFeelEditor& editor = static_cast<LookNFeelEditor&>(_editor);
+
+/*
         # we have to make the context the current context to ensure textures are fine
         mainwindow.MainWindow.instance.ceguiContainerWidget.makeGLContextCurrent()
 
-        loadingSuccessful = self.tabbedEditor.tryUpdatingWidgetLookFeel(code)
-        self.tabbedEditor.visual.updateToNewTargetWidgetLook()
+        loadingSuccessful = editor.tryUpdatingWidgetLookFeel(code)
+        editor.visual.updateToNewTargetWidgetLook()
 
         return loadingSuccessful
+*/
 
-    def moveToAndSelectWidgetLookFeel(self, widgetLookFeelName):
-        wlfTagStartText = "<WidgetLook name=\"%s\"" % widgetLookFeelName
-        wlfTagEndText = "</WidgetLook>"
+    assert(false);
+    return false;
+}
 
-        # Move cursor to the start of the entire text
-        self.moveCursor(QtGui.QTextCursor.Start)
+// Refreshes this Code editing mode with current native source code and moves to and selects the WidgetLookFeel code
+void LookNFeelCodeMode::refreshFromVisual()
+{
+    LookNFeelEditor& editor = static_cast<LookNFeelEditor&>(_editor);
 
-        # Find the beginning of the WidgetLookFeel element in the text
-        textWasFound = self.find(wlfTagStartText)
-        if not textWasFound:
-            return
+    if (!editor.getTargetWidgetLook().isEmpty())
+    {
+        // Refresh the WidgetLookFeel Highlighter based on the new name of the WidgetLook
+        /*
+        auto originalWidgetLookName = editor.unmapMappedNameIntoOriginalParts(editor.getTargetWidgetLook());
+        highlighter.updateWidgetLookRule(originalWidgetLookName);
+        */
+    }
 
-        # Retrieve the position of the cursor which points to the found text
-        textCursor = self.textCursor()
-        startPos = textCursor.selectionStart()
+    CodeEditMode::refreshFromVisual();
 
-        # Find the end of the WidgetLookFeel element in the text
-        textWasFound = self.find(wlfTagEndText)
-        if not textWasFound:
-            return
+    if (!editor.getTargetWidgetLook().isEmpty())
+    {
+        // Refresh the WidgetLookFeel Highlighter based on the new name of the WidgetLook
+        /*
+        auto originalWidgetLookName = editor.unmapMappedNameIntoOriginalParts(editor.getTargetWidgetLook());
+        moveToAndSelectWidgetLookFeel(originalWidgetLookName);
+        */
+    }
+}
 
-        textCursor.setPosition(startPos)
-        self.setTextCursor(textCursor)
+void LookNFeelCodeMode::moveToAndSelectWidgetLookFeel(QString widgetLookFeelName)
+{
+    QString wlfTagStartText = QString("<WidgetLook name=\"%1\"").arg(widgetLookFeelName);
+    QString wlfTagEndText = "</WidgetLook>";
 
-    def refreshFromVisual(self):
-        """Refreshes this Code editing mode with current native source code and moves to and selects the
-        WidgetLookFeel code."""
+    // Move cursor to the start of the entire text
+    moveCursor(QTextCursor::Start);
 
-        if self.tabbedEditor.targetWidgetLook:
-            # Refresh the WidgetLookFeel Highlighter based on the new name of the WidgetLook
-            originalWidgetLookName, _ = self.tabbedEditor.unmapMappedNameIntoOriginalParts(self.tabbedEditor.targetWidgetLook)
-            self.highlighter.updateWidgetLookRule(originalWidgetLookName)
+    // Find the beginning of the WidgetLookFeel element in the text
+    if (!find(wlfTagStartText)) return;
 
-        super(CodeEditing, self).refreshFromVisual()
+    // Retrieve the position of the cursor which points to the found text
+    auto cursor = textCursor();
+    auto startPos = cursor.selectionStart();
 
-        if self.tabbedEditor.targetWidgetLook:
-            originalWidgetLookName, _ = self.tabbedEditor.unmapMappedNameIntoOriginalParts(self.tabbedEditor.targetWidgetLook)
-            self.moveToAndSelectWidgetLookFeel(originalWidgetLookName)
+    // Find the end of the WidgetLookFeel element in the text
+    if (!find(wlfTagEndText)) return;
 
+    cursor.setPosition(startPos);
+    setTextCursor(cursor);
+}
 
+/*
 class WidgetLookHighlighter(QtGui.QSyntaxHighlighter):
     """
     Highlighter for the LNF code editing

@@ -1,31 +1,19 @@
 #include "src/editors/looknfeel/LookNFeelPreviewMode.h"
+#include "src/editors/looknfeel/LookNFeelEditor.h"
 
-LookNFeelPreviewMode::LookNFeelPreviewMode()
+LookNFeelPreviewMode::LookNFeelPreviewMode(LookNFeelEditor& editor)
+    : IEditMode(editor)
 {
-
-}
-
 /*
-
-class LookNFeelPreviewer(QtGui.QWidget, multi.EditMode):
-    """Provides "Live Preview" which is basically interactive CEGUI rendering
-    without any other outlines or what not over it.
-    """
-
-    def __init__(self, tabbedEditor):
-        """
-        :param tabbedEditor: LookNFeelTabbedEditor
-        :return:
-        """
-        super(LookNFeelPreviewer, self).__init__()
-
-        self.tabbedEditor = tabbedEditor
         self.rootWidget = None
 
         looknfeel = QtGui.QVBoxLayout(self)
         looknfeel.setContentsMargins(0, 0, 0, 0)
         self.setLayout(looknfeel)
+*/
+}
 
+/*
     def activate(self):
         super(LookNFeelPreviewer, self).activate()
 

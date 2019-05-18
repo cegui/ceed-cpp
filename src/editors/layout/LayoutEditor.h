@@ -5,7 +5,6 @@
 
 // Binds all layout editing functionality together
 
-class ActionManager;
 class Settings;
 class LayoutVisualMode;
 class LayoutCodeMode;

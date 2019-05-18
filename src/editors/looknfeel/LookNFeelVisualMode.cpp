@@ -1,8 +1,39 @@
 #include "src/editors/looknfeel/LookNFeelVisualMode.h"
+#include "src/editors/looknfeel/LookNFeelEditor.h"
 
-LookNFeelVisualMode::LookNFeelVisualMode()
+LookNFeelVisualMode::LookNFeelVisualMode(LookNFeelEditor& editor)
+    : IEditMode(editor)
 {
+/*
+        self.tabbedEditor = tabbedEditor
+        self.rootWindow = None
 
+        self.lookNFeelHierarchyDockWidget = LookNFeelHierarchyDockWidget(self, tabbedEditor)
+        self.lookNFeelWidgetLookSelectorWidget = LookNFeelWidgetLookSelectorWidget(self, tabbedEditor)
+        self.falagardElementEditorDockWidget = LookNFeelFalagardElementEditorDockWidget(self, tabbedEditor)
+
+        looknfeel = QtGui.QVBoxLayout(self)
+        looknfeel.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(looknfeel)
+
+        self.scene = EditingScene(self)
+
+        self.setupActions()
+        self.setupToolBar()
+        self.lookNFeelHierarchyDockWidget.treeView.setupContextMenu()
+*/
+}
+
+void LookNFeelVisualMode::initialize()
+{
+/*
+        propertyMap = mainwindow.MainWindow.instance.project.propertyMap
+        widgetLookPropertyManager = FalagardElementAttributesManager(propertyMap, self)
+        self.falagardElementEditorDockWidget.inspector.setPropertyManager(widgetLookPropertyManager)
+
+        self.rootWindow = PyCEGUI.WindowManager.getSingleton().createWindow("DefaultWindow", "LookNFeelEditorRoot")
+        PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(self.rootWindow)
+*/
 }
 
 void LookNFeelVisualMode::setupActions()
@@ -61,44 +92,6 @@ void LookNFeelVisualMode::setupActions()
 }
 
 /*
-
-class LookNFeelVisualEditing(QtGui.QWidget, multi.EditMode):
-    """This is the default visual editing mode
-
-    see ceed.editors.multi.EditMode
-    """
-
-    def __init__(self, tabbedEditor):
-        """
-        :param tabbedEditor: LookNFeelTabbedEditor
-        :return:
-        """
-        super(LookNFeelVisualEditing, self).__init__()
-
-        self.tabbedEditor = tabbedEditor
-        self.rootWindow = None
-
-        self.lookNFeelHierarchyDockWidget = LookNFeelHierarchyDockWidget(self, tabbedEditor)
-        self.lookNFeelWidgetLookSelectorWidget = LookNFeelWidgetLookSelectorWidget(self, tabbedEditor)
-        self.falagardElementEditorDockWidget = LookNFeelFalagardElementEditorDockWidget(self, tabbedEditor)
-
-        looknfeel = QtGui.QVBoxLayout(self)
-        looknfeel.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(looknfeel)
-
-        self.scene = EditingScene(self)
-
-        self.setupActions()
-        self.setupToolBar()
-        self.lookNFeelHierarchyDockWidget.treeView.setupContextMenu()
-
-    def initialise(self):
-        propertyMap = mainwindow.MainWindow.instance.project.propertyMap
-        widgetLookPropertyManager = FalagardElementAttributesManager(propertyMap, self)
-        self.falagardElementEditorDockWidget.inspector.setPropertyManager(widgetLookPropertyManager)
-
-        self.rootWindow = PyCEGUI.WindowManager.getSingleton().createWindow("DefaultWindow", "LookNFeelEditorRoot")
-        PyCEGUI.System.getSingleton().getDefaultGUIContext().setRootWindow(self.rootWindow)
 
     def destroy(self):
         # Remove the widget with the previous WidgetLook from the scene
