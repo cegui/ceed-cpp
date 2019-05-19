@@ -201,8 +201,8 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
     {
         _anchors->setAnchors(_widget->getPosition().d_x.d_scale,
                              _widget->getPosition().d_y.d_scale,
-                             _widget->getSize().d_width.d_scale,
-                             _widget->getSize().d_height.d_scale);
+                             _widget->getPosition().d_x.d_scale + _widget->getSize().d_width.d_scale,
+                             _widget->getPosition().d_y.d_scale + _widget->getSize().d_height.d_scale);
         _anchors->setVisible(true);
     }
 

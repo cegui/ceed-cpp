@@ -19,7 +19,7 @@ public:
     AnchorsManipulator(QGraphicsItem* parent);
     //virtual ~AnchorsManipulator() override;
 
-    void setAnchors(float minX, float minY, float sizeX, float sizeY);
+    void setAnchors(float minX, float minY, float maxX, float maxY);
 
     //virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
 

@@ -28,20 +28,20 @@ AnchorsManipulator::AnchorsManipulator(QGraphicsItem* parent)
     _maxY->setCursor(Qt::SizeVerCursor);
 }
 
-void AnchorsManipulator::setAnchors(float minX, float minY, float sizeX, float sizeY)
+void AnchorsManipulator::setAnchors(float minX, float minY, float maxX, float maxY)
 {
-    const QPointF parentPos = parentItem() ? parentItem()->pos() : QPointF();
+    const QPointF offset = mapFromScene(0.0, 0.0);
 
     const float ctxWidth = static_cast<LayoutScene*>(scene())->getContextWidth();
     const float ctxHeight = static_cast<LayoutScene*>(scene())->getContextHeight();
-    const qreal absMinX = static_cast<qreal>(minX * ctxWidth) - parentPos.x();
-    const qreal absMinY = static_cast<qreal>(minY * ctxHeight) - parentPos.y();
-    const qreal absMaxX = absMinX + static_cast<qreal>(sizeX * ctxWidth);
-    const qreal absMaxY = absMinY + static_cast<qreal>(sizeY * ctxHeight);
+    const qreal absMinX = static_cast<qreal>(minX * ctxWidth) + offset.x();
+    const qreal absMinY = static_cast<qreal>(minY * ctxHeight) + offset.y();
+    const qreal absMaxX = static_cast<qreal>(maxX * ctxWidth) + offset.x();
+    const qreal absMaxY = static_cast<qreal>(maxY * ctxHeight) + offset.y();
 
     //???or change position here and change line only when scene size changes?
-    _minX->setLine(absMinX, -parentPos.y(), absMinX, static_cast<qreal>(ctxHeight));
-    _maxX->setLine(absMaxX, -parentPos.y(), absMaxX, static_cast<qreal>(ctxHeight));
-    _minY->setLine(-parentPos.x(), absMinY, static_cast<qreal>(ctxWidth), absMinY);
-    _maxY->setLine(-parentPos.x(), absMaxY, static_cast<qreal>(ctxWidth), absMaxY);
+    _minX->setLine(absMinX, offset.y(), absMinX, static_cast<qreal>(ctxHeight));
+    _maxX->setLine(absMaxX, offset.y(), absMaxX, static_cast<qreal>(ctxHeight));
+    _minY->setLine(offset.x(), absMinY, static_cast<qreal>(ctxWidth), absMinY);
+    _maxY->setLine(offset.x(), absMaxY, static_cast<qreal>(ctxWidth), absMaxY);
 }
