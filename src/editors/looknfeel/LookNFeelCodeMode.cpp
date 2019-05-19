@@ -1,5 +1,6 @@
 #include "src/editors/looknfeel/LookNFeelCodeMode.h"
 #include "src/editors/looknfeel/LookNFeelEditor.h"
+#include <CEGUI/falagard/WidgetLookManager.h>
 
 LookNFeelCodeMode::LookNFeelCodeMode(LookNFeelEditor& editor)
     : CodeEditMode(editor)
@@ -14,17 +15,13 @@ QString LookNFeelCodeMode::getNativeCode()
 {
     LookNFeelEditor& editor = static_cast<LookNFeelEditor&>(_editor);
 
-/*
-        // We add every WidgetLookFeel name of this Look N' Feel to a StringSet
-        nameSet = editor.getStringSetOfWidgetLookFeelNames()
-        // We parse all WidgetLookFeels as XML to a string
-        lookAndFeelString = PyCEGUI.WidgetLookManager.getSingleton().getWidgetLookSetAsString(nameSet)
+    // We add every WidgetLookFeel name of this Look N' Feel to a StringSet
+    std::unordered_set<CEGUI::String> nameSet;
+    editor.getWidgetLookFeelNames(nameSet);
 
-        return editor.unmapWidgetLookReferences(lookAndFeelString)
-*/
-
-    assert(false);
-    return "";
+    // We parse all WidgetLookFeels as XML to a string
+    auto lookAndFeelString = CEGUI::WidgetLookManager::getSingleton().getWidgetLookSetAsString(nameSet);
+    return editor.unmapWidgetLookReferences(lookAndFeelString);
 }
 
 bool LookNFeelCodeMode::propagateNativeCode(const QString& code)

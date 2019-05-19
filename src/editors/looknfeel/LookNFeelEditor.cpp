@@ -2,8 +2,11 @@
 #include "src/editors/looknfeel/LookNFeelVisualMode.h"
 #include "src/editors/looknfeel/LookNFeelCodeMode.h"
 #include "src/editors/looknfeel/LookNFeelPreviewMode.h"
+#include "src/cegui/CEGUIManager.h"
+#include "src/cegui/CEGUIUtils.h"
 #include "src/util/DismissableMessage.h"
 #include "src/util/Settings.h"
+#include <CEGUI/falagard/WidgetLookManager.h>
 #include "qmessagebox.h"
 
 LookNFeelEditor::LookNFeelEditor(const QString& filePath)
@@ -14,6 +17,8 @@ LookNFeelEditor::LookNFeelEditor(const QString& filePath)
                                 "production. You have been warned. If everything "
                                 "breaks you get to keep the pieces!",
                                 "looknfeel_editor_experimental");
+
+    _editorIDString = CEGUIManager::getEditorIDStringPrefix() + QString::number(reinterpret_cast<size_t>(this));
 
     visualMode = new LookNFeelVisualMode(*this);
     tabs.addTab(visualMode, "Visual");
@@ -32,10 +37,6 @@ LookNFeelEditor::LookNFeelEditor(const QString& filePath)
     tabs.addTab(previewer, "Live Preview");
 
 /*
-        self.editorIDString = CEGUIManager::getEditorIDStringPrefix() + str(id(self))
-
-        self.nameMappingsOfOwnedWidgetLooks = []
-
         // set the toolbar icon size according to the setting and subscribe to it
         self.tbIconSizeEntry = settings.getEntry("global/ui/toolbar_icon_size")
         self.updateToolbarSize(self.tbIconSizeEntry.value)
@@ -68,17 +69,16 @@ void LookNFeelEditor::initialize()
 
 void LookNFeelEditor::mapAndLoadLookNFeelFileString(const QString& lookNFeelXML)
 {
+    // When we are loading a Look n' Feel file we want to load it into CEED in a way it doesn't collide with other LNF definitions stored into CEGUI.
+    // To prevent name collisions and also to prevent live-editing of WidgetLooks that are used somewhere in a layout editor or other look n' feel editor simultaneously,
+    // we will map the names that we load from a Look n' Feel file in a way that they are unique. We achieve this by editing the WidgetLook names inside the string we loaded
+    // from the .looknfeel file, so that the LNF Editor instance's python ID will be prepended to the name. ( e.g.: Vanilla/Button will turn into 18273822/Vanilla/Button )
+    // Each Editor is associated with only one LNF file so that this will in effect also guarantee that the WidgetLooks inside the CEGUI system will be uniquely named
+    // for each file
+
+    if (lookNFeelXML.isEmpty()) return;
+
 /*
-        // When we are loading a Look n' Feel file we want to load it into CEED in a way it doesn't collide with other LNF definitions stored into CEGUI.
-        // To prevent name collisions and also to prevent live-editing of WidgetLooks that are used somewhere in a layout editor or other look n' feel editor simultaneously,
-        // we will map the names that we load from a Look n' Feel file in a way that they are unique. We achieve this by editing the WidgetLook names inside the string we loaded
-        // from the .looknfeel file, so that the LNF Editor instance's python ID will be prepended to the name. ( e.g.: Vanilla/Button will turn into 18273822/Vanilla/Button )
-        // Each Editor is associated with only one LNF file so that this will in effect also guarantee that the WidgetLooks inside the CEGUI system will be uniquely named
-        // for each file
-
-        if not lookNFeelAsXMLString:
-            return
-
         //Mapping all occuring references
         modifiedLookNFeelString = self.mapWidgetLookReferences(lookNFeelAsXMLString)
 
@@ -110,25 +110,48 @@ void LookNFeelEditor::mapAndLoadLookNFeelFileString(const QString& lookNFeelXML)
 */
 }
 
+// Fills a CEGUI::StringSet with all (mapped) names of WidgetLookFeels that the file is associated with according to the editor
+void LookNFeelEditor::getWidgetLookFeelNames(std::unordered_set<CEGUI::String>& out) const
+{
+    // We add every WidgetLookFeel name of this Look N' Feel to a StringSet
+    for (const auto& pair : _nameMappingsOfOwnedWidgetLooks)
+        out.insert(pair.second);
+}
+
+// Unmaps all occurances of mapped WidgetLookFeel name references in an XML string by removing the prepended editor ID number
+QString LookNFeelEditor::unmapWidgetLookReferences(const CEGUI::String& lookNFeelString)
+{
+    /*
+            // Modifying the string using regex
+            QString regexPattern = "name=\"" + self.editorIDString + "/";
+            QString replaceString = "name=\"";
+            modifiedLookNFeelString = re.sub(regexPattern, replaceString, lookNFeelString);
+
+            regexPattern = "look=\"" + self.editorIDString + "/";
+            replaceString = "look=\"";
+            modifiedLookNFeelString = re.sub(regexPattern, replaceString, modifiedLookNFeelString);
+
+            return modifiedLookNFeelString;
+    */
+
+    assert(false);
+    return "";
+}
+
 void LookNFeelEditor::getRawData(QByteArray& outRawData)
 {
-/*
-        codeMode = self.currentWidget() is self.code
+    // If user saved in code mode, we process the code by propagating it to visual
+    // (allowing the change propagation to do the code validating and other work for us)
+    if (tabs.currentWidget() == codeMode)
+        codeMode->propagateToVisual();
 
-        // if user saved in code mode, we process the code by propagating it to visual
-        // (allowing the change propagation to do the code validating and other work for us)
+    // We add every WidgetLookFeel name of this Look N' Feel to a StringSet
+    std::unordered_set<CEGUI::String> nameSet;
+    getWidgetLookFeelNames(nameSet);
 
-        if codeMode:
-            self.code.propagateToVisual()
-
-        // We add every WidgetLookFeel name of this Look N' Feel to a StringSet
-        nameSet = self.getStringSetOfWidgetLookFeelNames()
-        // We parse all WidgetLookFeels as XML to a string
-        lookAndFeelString = PyCEGUI.WidgetLookManager.getSingleton().getWidgetLookSetAsString(nameSet)
-        self.nativeData = self.unmapWidgetLookReferences(lookAndFeelString)
-
-        return super(LookNFeelTabbedEditor, self).saveAs(targetPath, updateCurrentPath)
-*/
+    // We parse all WidgetLookFeels as XML to a string
+    auto lookAndFeelString = CEGUI::WidgetLookManager::getSingleton().getWidgetLookSetAsString(nameSet);
+    outRawData = CEGUIUtils::stringToQString(lookAndFeelString).toUtf8();
 }
 
 /*
@@ -175,23 +198,6 @@ void LookNFeelEditor::getRawData(QByteArray& outRawData)
 
         regexPattern = "look\s*=\s*\""
         replaceString = "look=\"" + self.editorIDString + "/"
-        modifiedLookNFeelString = re.sub(regexPattern, replaceString, modifiedLookNFeelString)
-
-        return modifiedLookNFeelString
-
-    def unmapWidgetLookReferences(self, lookNFeelString):
-        """
-        Unmaps all occurances of mapped WidgetLookFeel name references in an XML string by removing the prepended editor ID number
-        :type lookNFeelString: str
-        :return: str
-        """
-        // Modifying the string using regex
-        regexPattern = "name=\"" + self.editorIDString + "/"
-        replaceString = "name=\""
-        modifiedLookNFeelString = re.sub(regexPattern, replaceString, lookNFeelString)
-
-        regexPattern = "look=\"" + self.editorIDString + "/"
-        replaceString = "look=\""
         modifiedLookNFeelString = re.sub(regexPattern, replaceString, modifiedLookNFeelString)
 
         return modifiedLookNFeelString
@@ -295,19 +301,6 @@ void LookNFeelEditor::getRawData(QByteArray& outRawData)
         self.mainWindow.removeToolBar(self.visual.toolBar)
 
         super(LookNFeelTabbedEditor, self).deactivate()
-
-    def getStringSetOfWidgetLookFeelNames(self):
-        """
-        Returns a PyCEGUI.StringSet containing all (mapped) names of WidgetLookFeels that the file is associated with according to the editor
-        :return: PyCEGUI.StringSet
-        """
-
-        // We add every WidgetLookFeel name of this Look N' Feel to a StringSet
-        nameSet = PyCEGUI.StringSet()
-        for nameTuple in self.nameMappingsOfOwnedWidgetLooks:
-            nameSet.add(nameTuple[1])
-
-        return nameSet
 
     def performCut(self):
         if self.currentWidget() is self.visual:

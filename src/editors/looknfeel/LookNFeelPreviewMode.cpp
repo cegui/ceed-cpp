@@ -1,16 +1,16 @@
 #include "src/editors/looknfeel/LookNFeelPreviewMode.h"
 #include "src/editors/looknfeel/LookNFeelEditor.h"
+#include <qboxlayout.h>
 
 LookNFeelPreviewMode::LookNFeelPreviewMode(LookNFeelEditor& editor)
     : IEditMode(editor)
 {
 /*
         self.rootWidget = None
-
-        looknfeel = QtGui.QVBoxLayout(self)
-        looknfeel.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(looknfeel)
 */
+    auto looknfeel = new QVBoxLayout(this);
+    looknfeel->setContentsMargins(0, 0, 0, 0);
+    setLayout(looknfeel);
 }
 
 /*

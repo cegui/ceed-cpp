@@ -158,7 +158,7 @@ class FalagardElementAttributeEdit(commands.UndoCommand):
 
         """
         # We add every WidgetLookFeel name of this Look N' Feel to a StringSet
-        nameSet = self.visual.tabbedEditor.getStringSetOfWidgetLookFeelNames()
+        nameSet = self.visual.tabbedEditor.getWidgetLookFeelNames()
         # We parse all WidgetLookFeels as XML to a string
         import PyCEGUI
         lookAndFeelString = PyCEGUI.WidgetLookManager.getSingleton().getWidgetLookSetAsString(nameSet)
