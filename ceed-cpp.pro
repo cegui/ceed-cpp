@@ -41,6 +41,7 @@ SOURCES += \
     src/editors/looknfeel/LookNFeelVisualMode.cpp \
     src/main.cpp \
     src/ui/CEGUIDebugInfo.cpp \
+    src/ui/GuideLine.cpp \
     src/ui/MainWindow.cpp \
     src/ui/ProjectManager.cpp \
     src/ui/CEGUIWidget.cpp \
@@ -130,6 +131,7 @@ HEADERS += \
     src/editors/looknfeel/LookNFeelUndoCommands.h \
     src/editors/looknfeel/LookNFeelVisualMode.h \
     src/ui/CEGUIDebugInfo.h \
+    src/ui/GuideLine.h \
     src/ui/ProjectManager.h \
     src/ui/MainWindow.h \
     src/ui/CEGUIWidget.h \

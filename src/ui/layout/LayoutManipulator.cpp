@@ -1,7 +1,6 @@
 #include "src/ui/layout/LayoutManipulator.h"
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutUndoCommands.h"
-#include "src/editors/layout/AnchorsManipulator.h"
 #include "src/cegui/CEGUIUtils.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
@@ -33,8 +32,6 @@ LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem
             update();
         }
     });
-
-    _anchors = new AnchorsManipulator(this);
 }
 
 LayoutManipulator::~LayoutManipulator()
@@ -194,16 +191,6 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
 
         // And it makes no sense to resize them, they will just snap back when they relayout
         setResizingEnabled(false);
-    }
-
-    // Update anchors
-    if (_showOutline && scene())
-    {
-        _anchors->setAnchors(_widget->getPosition().d_x.d_scale,
-                             _widget->getPosition().d_y.d_scale,
-                             _widget->getPosition().d_x.d_scale + _widget->getSize().d_width.d_scale,
-                             _widget->getPosition().d_y.d_scale + _widget->getSize().d_height.d_scale);
-        _anchors->setVisible(true);
     }
 
     // If the widget is parented inside a layout container we don't want any drag moving to be possible

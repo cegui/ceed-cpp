@@ -5,6 +5,7 @@
 #include "src/ui/ResizingHandle.h"
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutUndoCommands.h"
+#include "src/ui/GuideLine.h"
 #include <CEGUI/CoordConverter.h>
 #include <CEGUI/GUIContext.h>
 #include <CEGUI/widgets/SequentialLayoutContainer.h>
@@ -52,6 +53,22 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
         // NB: widget must be already set to a CEGUI context for area calculation
         rootManipulator->updateFromWidget(true);
         addItem(rootManipulator);
+
+        //!!!DBG TMP!
+        GuideLine* _anchorMinX = new GuideLine(false, nullptr, 2, Qt::PenStyle::DashLine, Qt::white, Qt::cyan);
+        addItem(_anchorMinX);
+        _anchorMinX->setPos(150.0, 0.0);
+        /*
+            // Update anchors
+            if (_showOutline && scene())
+            {
+                _anchors->setAnchors(_widget->getPosition().d_x.d_scale,
+                                     _widget->getPosition().d_y.d_scale,
+                                     _widget->getPosition().d_x.d_scale + _widget->getSize().d_width.d_scale,
+                                     _widget->getPosition().d_y.d_scale + _widget->getSize().d_height.d_scale);
+                _anchors->setVisible(true);
+            }
+        */
     }
     else
         ceguiContext->setRootWindow(nullptr);

@@ -12,6 +12,8 @@
 
 // Allows user to manipulate CEGUI widget anchors like in Unity3D UI editor
 
+class GuideLine;
+
 class AnchorsManipulator : public QGraphicsItemGroup
 {
 public:
@@ -47,7 +49,7 @@ protected:
     //virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
     //virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
 
-    QGraphicsLineItem* _minX = nullptr;
+    GuideLine* _minX = nullptr;
     QGraphicsLineItem* _maxX = nullptr;
     QGraphicsLineItem* _minY = nullptr;
     QGraphicsLineItem* _maxY = nullptr;

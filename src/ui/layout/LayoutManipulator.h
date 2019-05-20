@@ -6,7 +6,6 @@
 // Layout editing specific widget manipulator
 
 class WidgetHierarchyItem;
-class AnchorsManipulator;
 class LayoutVisualMode;
 
 class LayoutManipulator : public CEGUIManipulator
@@ -62,7 +61,6 @@ protected:
 
     LayoutVisualMode& _visualMode;
     WidgetHierarchyItem* _treeItem = nullptr;
-    AnchorsManipulator* _anchors = nullptr;
     bool _showOutline = true;
     bool _drawSnapGrid = false;
     bool _snapGridNonClientArea = false;
