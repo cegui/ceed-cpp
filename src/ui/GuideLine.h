@@ -11,7 +11,8 @@ class GuideLine : public QGraphicsLineItem
 {
 public:
 
-    GuideLine(bool horizontal, QGraphicsItem* parent = nullptr, size_t width = 1, Qt::PenStyle style = Qt::PenStyle::SolidLine, QColor normalColor = Qt::white, QColor hoverColor = Qt::white, size_t mouseInteractionDistance = 5);
+    GuideLine(bool horizontal, QGraphicsItem* parent = nullptr, int width = 1, Qt::PenStyle style = Qt::PenStyle::SolidLine, QColor normalColor = Qt::white, QColor hoverColor = Qt::white, size_t mouseInteractionDistance = 5);
+    GuideLine(bool horizontal, QGraphicsItem* parent = nullptr, const QPen& pen = QPen(Qt::white), QColor hoverColor = Qt::white, size_t mouseInteractionDistance = 5);
 
     virtual QPainterPath shape() const override;
 
@@ -24,11 +25,9 @@ protected:
     virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
 
-    Qt::PenStyle _style;
-    QColor _normalColor;
+    QPen _normalPen;
     QColor _hoverColor;
 
-    size_t _width = 1;
     size_t _mouseInteractionDistance = 5; // Distance from line in pixels where the mouse interaction starts
     bool _horizontal = false;
 };

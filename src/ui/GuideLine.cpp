@@ -3,12 +3,31 @@
 #include <qcursor.h>
 
 GuideLine::GuideLine(bool horizontal, QGraphicsItem* parent,
-                     size_t width, Qt::PenStyle style, QColor normalColor, QColor hoverColor, size_t mouseInteractionDistance)
+                     int width, Qt::PenStyle style, QColor normalColor, QColor hoverColor, size_t mouseInteractionDistance)
     : QGraphicsLineItem(parent)
-    , _style(style)
-    , _normalColor(normalColor)
     , _hoverColor(hoverColor)
-    , _width(width)
+    , _mouseInteractionDistance(mouseInteractionDistance)
+    , _horizontal(horizontal)
+{
+    _normalPen = QPen(style);
+    _normalPen.setColor(normalColor);
+    _normalPen.setWidth(width);
+    _normalPen.setCosmetic(true);
+
+    setFlags(ItemSendsGeometryChanges | ItemIsMovable);
+    setAcceptHoverEvents(true);
+
+    updateLine();
+    updatePen(false);
+    setCursor(horizontal ? Qt::SizeVerCursor : Qt::SizeHorCursor);
+    //setZValue(100.0);
+}
+
+GuideLine::GuideLine(bool horizontal, QGraphicsItem* parent,
+                     const QPen& pen, QColor hoverColor, size_t mouseInteractionDistance)
+    : QGraphicsLineItem(parent)
+    , _normalPen(pen)
+    , _hoverColor(hoverColor)
     , _mouseInteractionDistance(mouseInteractionDistance)
     , _horizontal(horizontal)
 {
@@ -23,7 +42,7 @@ GuideLine::GuideLine(bool horizontal, QGraphicsItem* parent,
 
 QPainterPath GuideLine::shape() const
 {
-    const qreal thickness = 2.0 * _mouseInteractionDistance + static_cast<qreal>(_width);
+    const qreal thickness = 2.0 * _mouseInteractionDistance + pen().widthF();
 
     QPainterPath path;
     if (_horizontal)
@@ -50,11 +69,14 @@ void GuideLine::updateLine()
 
 void GuideLine::updatePen(bool hovered)
 {
-    QPen newPen(_style);
-    newPen.setColor(hovered ? _hoverColor : _normalColor);
-    newPen.setWidth(static_cast<int>(_width));
-    newPen.setCosmetic(true);
-    setPen(newPen);
+    if (hovered)
+    {
+        QPen newPen(_normalPen);
+        newPen.setColor(_hoverColor);
+        setPen(newPen);
+    }
+    else
+        setPen(_normalPen);
 }
 
 QVariant GuideLine::itemChange(GraphicsItemChange change, const QVariant& value)

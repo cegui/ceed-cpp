@@ -2,6 +2,7 @@
 #include "src/ui/layout/LayoutManipulator.h"
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
 #include "src/ui/layout/WidgetHierarchyItem.h"
+#include "src/ui/layout/AnchorCornerHandle.h"
 #include "src/ui/ResizingHandle.h"
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutUndoCommands.h"
@@ -54,24 +55,75 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
         rootManipulator->updateFromWidget(true);
         addItem(rootManipulator);
 
-        //!!!DBG TMP!
-        GuideLine* _anchorMinX = new GuideLine(false, nullptr, 2, Qt::PenStyle::DashLine, Qt::white, Qt::cyan);
+        // Setup anchor items
+
+        QPen anchorRectPen(Qt::PenStyle::SolidLine);
+        anchorRectPen.setColor(Qt::magenta);
+        anchorRectPen.setWidth(2);
+        anchorRectPen.setCosmetic(true);
+
+        _anchorParentRect = new QGraphicsRectItem();
+        _anchorParentRect->setVisible(false);
+        _anchorParentRect->setPen(anchorRectPen);
+        addItem(_anchorParentRect);
+
+        QPen anchorGuidePen(Qt::PenStyle::CustomDashLine);
+        anchorGuidePen.setDashPattern({ 8.0, 4.0 });
+        anchorGuidePen.setColor(Qt::white);
+        anchorGuidePen.setWidth(2);
+        anchorGuidePen.setCosmetic(true);
+
+        _anchorMinX = new GuideLine(false, nullptr, anchorGuidePen, Qt::cyan);
+        _anchorMinX->setVisible(false);
         addItem(_anchorMinX);
-        _anchorMinX->setPos(150.0, 0.0);
-        /*
-            // Update anchors
-            if (_showOutline && scene())
-            {
-                _anchors->setAnchors(_widget->getPosition().d_x.d_scale,
-                                     _widget->getPosition().d_y.d_scale,
-                                     _widget->getPosition().d_x.d_scale + _widget->getSize().d_width.d_scale,
-                                     _widget->getPosition().d_y.d_scale + _widget->getSize().d_height.d_scale);
-                _anchors->setVisible(true);
-            }
-        */
+
+        _anchorMinY = new GuideLine(true, nullptr, anchorGuidePen, Qt::cyan);
+        _anchorMinY->setVisible(false);
+        addItem(_anchorMinY);
+
+        _anchorMaxX = new GuideLine(false, nullptr, anchorGuidePen, Qt::cyan);
+        _anchorMaxX->setVisible(false);
+        addItem(_anchorMaxX);
+
+        _anchorMaxY = new GuideLine(true, nullptr, anchorGuidePen, Qt::cyan);
+        _anchorMaxY->setVisible(false);
+        addItem(_anchorMaxY);
+
+        QPen anchorCornerPen(Qt::PenStyle::SolidLine);
+        anchorCornerPen.setColor(Qt::white);
+        anchorCornerPen.setWidth(1);
+        anchorCornerPen.setCosmetic(true);
+
+        _anchorMinXMinY = new AnchorCornerHandle(true, true, nullptr, 16.0, anchorCornerPen, Qt::cyan);
+        _anchorMinXMinY->setVisible(false);
+        addItem(_anchorMinXMinY);
+
+        _anchorMaxXMinY = new AnchorCornerHandle(false, true, nullptr, 16.0, anchorCornerPen, Qt::cyan);
+        _anchorMaxXMinY->setVisible(false);
+        addItem(_anchorMaxXMinY);
+
+        _anchorMinXMaxY = new AnchorCornerHandle(true, false, nullptr, 16.0, anchorCornerPen, Qt::cyan);
+        _anchorMinXMaxY->setVisible(false);
+        addItem(_anchorMinXMaxY);
+
+        _anchorMaxXMaxY = new AnchorCornerHandle(false, false, nullptr, 16.0, anchorCornerPen, Qt::cyan);
+        _anchorMaxXMaxY->setVisible(false);
+        addItem(_anchorMaxXMaxY);
     }
     else
+    {
         ceguiContext->setRootWindow(nullptr);
+
+        _anchorParentRect = nullptr;
+        _anchorMinX = nullptr;
+        _anchorMinY = nullptr;
+        _anchorMaxX = nullptr;
+        _anchorMaxY = nullptr;
+        _anchorMinXMinY = nullptr;
+        _anchorMaxXMinY = nullptr;
+        _anchorMinXMaxY = nullptr;
+        _anchorMaxXMaxY = nullptr;
+    }
 }
 
 LayoutManipulator* LayoutScene::getManipulatorByPath(const QString& widgetPath) const
@@ -319,33 +371,81 @@ static void ensureParentIsExpanded(QTreeView* view, QStandardItem* treeItem)
 
 void LayoutScene::slot_selectionChanged()
 {
-    std::set<QtnPropertySet*> selectedWidgets;
+    std::set<LayoutManipulator*> selectedWidgets;
 
     auto selection = selectedItems();
     for (QGraphicsItem* item : selection)
     {
         if (auto manipulator = dynamic_cast<LayoutManipulator*>(item))
         {
-            selectedWidgets.insert(manipulator->getPropertySet());
+            selectedWidgets.insert(manipulator);
         }
         else if (dynamic_cast<ResizingHandle*>(item))
         {
             if (auto manipulator = dynamic_cast<LayoutManipulator*>(item->parentItem()))
-                selectedWidgets.insert(manipulator->getPropertySet());
+                selectedWidgets.insert(manipulator);
         }
     }
 
     // TODO: to method (whose?)
     QtnPropertySet* propertySet = nullptr;
-    for (QtnPropertySet* set : selectedWidgets)
+    for (LayoutManipulator* manipulator : selectedWidgets)
     {
         // TODO: create multi property set
         //!!!pass vector of sources & combine inside an entry point method!
-        propertySet = set;
+        propertySet = manipulator->getPropertySet();
     }
     auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
     auto propertyWidget = static_cast<QtnPropertyWidget*>(mainWindow->getPropertyDockWidget()->widget());
     propertyWidget->setPropertySet(propertySet);
+
+    // Show anchors if only one widget is selected
+    if (_anchorMinX)
+    {
+        const bool showAnchors = (selectedWidgets.size() == 1);
+        _anchorParentRect->setVisible(showAnchors);
+        _anchorMinX->setVisible(showAnchors);
+        _anchorMinY->setVisible(showAnchors);
+        _anchorMaxX->setVisible(showAnchors);
+        _anchorMaxY->setVisible(showAnchors);
+        _anchorMinXMinY->setVisible(showAnchors);
+        _anchorMaxXMinY->setVisible(showAnchors);
+        _anchorMinXMaxY->setVisible(showAnchors);
+        _anchorMaxXMaxY->setVisible(showAnchors);
+        if (showAnchors)
+        {
+            const LayoutManipulator* manipulator = (*selectedWidgets.begin());
+            const LayoutManipulator* parentManipulator = dynamic_cast<const LayoutManipulator*>(manipulator->parentItem());
+            QRectF parentRect;
+            if (parentManipulator)
+            {
+                parentRect = parentManipulator->sceneBoundingRect();
+            }
+            else
+            {
+                parentRect.setWidth(static_cast<qreal>(contextWidth));
+                parentRect.setHeight(static_cast<qreal>(contextHeight));
+            }
+
+            _anchorParentRect->setRect(parentRect);
+
+            const auto& widgetPos = manipulator->getWidget()->getPosition();
+            const auto& widgetSize = manipulator->getWidget()->getSize();
+            const qreal minX = parentRect.x() + parentRect.width() * static_cast<qreal>(widgetPos.d_x.d_scale);
+            const qreal maxX = minX + parentRect.width() * static_cast<qreal>(widgetSize.d_width.d_scale);
+            const qreal minY = parentRect.y() + parentRect.height() * static_cast<qreal>(widgetPos.d_y.d_scale);
+            const qreal maxY = minY + parentRect.height() * static_cast<qreal>(widgetSize.d_height.d_scale);
+
+            _anchorMinX->setPos(minX, 0.0);
+            _anchorMaxX->setPos(maxX, 0.0);
+            _anchorMinY->setPos(0.0, minY);
+            _anchorMaxY->setPos(0.0, maxY);
+            _anchorMinXMinY->setPos(minX, minY);
+            _anchorMaxXMinY->setPos(maxX, minY);
+            _anchorMinXMaxY->setPos(minX, maxY);
+            _anchorMaxXMaxY->setPos(maxX, maxY);
+        }
+    }
 
     // We always sync the properties dock widget, we only ignore the hierarchy synchro if told so
     if (!_ignoreSelectionChanges)

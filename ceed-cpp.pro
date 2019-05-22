@@ -50,6 +50,7 @@ SOURCES += \
     src/ui/dialogs/NewProjectDialog.cpp \
     src/ui/dialogs/ProjectSettingsDialog.cpp \
     src/ui/FileSystemBrowser.cpp \
+    src/ui/layout/AnchorCornerHandle.cpp \
     src/ui/widgets/FileLineEdit.cpp \
     src/ui/dialogs/LicenseDialog.cpp \
     src/ui/dialogs/AboutDialog.cpp \
@@ -150,6 +151,7 @@ HEADERS += \
     src/ui/dialogs/NewProjectDialog.h \
     src/ui/dialogs/ProjectSettingsDialog.h \
     src/ui/FileSystemBrowser.h \
+    src/ui/layout/AnchorCornerHandle.h \
     src/ui/widgets/FileLineEdit.h \
     src/ui/dialogs/LicenseDialog.h \
     src/ui/dialogs/AboutDialog.h \
