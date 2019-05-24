@@ -371,6 +371,8 @@ static void ensureParentIsExpanded(QTreeView* view, QStandardItem* treeItem)
 
 void LayoutScene::slot_selectionChanged()
 {
+    // Collect selected widgets and anchor items
+
     std::set<LayoutManipulator*> selectedWidgets;
     QGraphicsItem* selectedAnchorItem = nullptr;
 
@@ -389,10 +391,13 @@ void LayoutScene::slot_selectionChanged()
         else if (item == _anchorMinX || item == _anchorMinY || item == _anchorMaxX || item == _anchorMaxY ||
                  item == _anchorMinXMinY || item == _anchorMaxXMinY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
         {
+            // Only one selected anchor item at a time is allowed
             assert(!selectedAnchorItem);
             selectedAnchorItem = item;
         }
     }
+
+    // Update anchors state
 
     if (selectedWidgets.size() > 1)
     {
@@ -401,9 +406,12 @@ void LayoutScene::slot_selectionChanged()
     }
     else if (selectedWidgets.size() == 0)
     {
-        // We selected anchor item and therefore deselected an _anchorTarget
+        // If we selected anchor item, we therefore deselected an _anchorTarget,
         // but it must look as selected in a GUI so we don't change anything
         if (selectedAnchorItem) return;
+
+        // Nothing interesting is selected, hide anchors
+        _anchorTarget = nullptr;
     }
     else
     {
@@ -413,6 +421,8 @@ void LayoutScene::slot_selectionChanged()
     }
 
     updateAnchorItems();
+
+    // Update property view for our selection
 
     // TODO: to method (whose?)
     QtnPropertySet* propertySet = nullptr;
@@ -426,7 +436,8 @@ void LayoutScene::slot_selectionChanged()
     auto propertyWidget = static_cast<QtnPropertyWidget*>(mainWindow->getPropertyDockWidget()->widget());
     propertyWidget->setPropertySet(propertySet);
 
-    // We always sync the properties dock widget, we only ignore the hierarchy synchro if told so
+    // Show selection in a hierarchy tree
+
     if (!_ignoreSelectionChanges)
     {
         _visualMode.getHierarchyDockWidget()->ignoreSelectionChanges(true);
