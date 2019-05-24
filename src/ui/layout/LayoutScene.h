@@ -44,6 +44,8 @@ public slots:
 
 protected:
 
+    void updateAnchorItems();
+
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragMoveEvent(QGraphicsSceneDragDropEvent* event) override;
@@ -55,6 +57,7 @@ protected:
     LayoutManipulator* rootManipulator = nullptr;
 
     // Anchor editing items
+    LayoutManipulator* _anchorTarget = nullptr;
     QGraphicsRectItem* _anchorParentRect = nullptr;
     GuideLine* _anchorMinX = nullptr;
     GuideLine* _anchorMinY = nullptr;

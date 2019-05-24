@@ -14,7 +14,7 @@ GuideLine::GuideLine(bool horizontal, QGraphicsItem* parent,
     _normalPen.setWidth(width);
     _normalPen.setCosmetic(true);
 
-    setFlags(ItemSendsGeometryChanges | ItemIsMovable);
+    setFlags(ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
     setAcceptHoverEvents(true);
 
     updateLine();
@@ -31,7 +31,7 @@ GuideLine::GuideLine(bool horizontal, QGraphicsItem* parent,
     , _mouseInteractionDistance(mouseInteractionDistance)
     , _horizontal(horizontal)
 {
-    setFlags(ItemSendsGeometryChanges | ItemIsMovable);
+    setFlags(ItemIsSelectable | ItemSendsGeometryChanges | ItemIsMovable);
     setAcceptHoverEvents(true);
 
     updateLine();

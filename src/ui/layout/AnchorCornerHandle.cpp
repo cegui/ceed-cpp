@@ -6,7 +6,7 @@ AnchorCornerHandle::AnchorCornerHandle(bool left, bool top, QGraphicsItem* paren
     , _normalPen(pen)
     , _hoverColor(hoverColor)
 {
-    setFlags(ItemSendsGeometryChanges | ItemIsMovable);
+    setFlags(ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
     setAcceptHoverEvents(true);
 
     QPolygonF poly;

@@ -372,6 +372,7 @@ static void ensureParentIsExpanded(QTreeView* view, QStandardItem* treeItem)
 void LayoutScene::slot_selectionChanged()
 {
     std::set<LayoutManipulator*> selectedWidgets;
+    QGraphicsItem* selectedAnchorItem = nullptr;
 
     auto selection = selectedItems();
     for (QGraphicsItem* item : selection)
@@ -385,7 +386,33 @@ void LayoutScene::slot_selectionChanged()
             if (auto manipulator = dynamic_cast<LayoutManipulator*>(item->parentItem()))
                 selectedWidgets.insert(manipulator);
         }
+        else if (item == _anchorMinX || item == _anchorMinY || item == _anchorMaxX || item == _anchorMaxY ||
+                 item == _anchorMinXMinY || item == _anchorMaxXMinY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
+        {
+            assert(!selectedAnchorItem);
+            selectedAnchorItem = item;
+        }
     }
+
+    if (selectedWidgets.size() > 1)
+    {
+        // Hide anchors if we selected multiple widgets
+        _anchorTarget = nullptr;
+    }
+    else if (selectedWidgets.size() == 0)
+    {
+        // We selected anchor item and therefore deselected an _anchorTarget
+        // but it must look as selected in a GUI so we don't change anything
+        if (selectedAnchorItem) return;
+    }
+    else
+    {
+        // Show anchors for the only selected widget
+        if (_anchorTarget == *selectedWidgets.begin()) return;
+        _anchorTarget = *selectedWidgets.begin();
+    }
+
+    updateAnchorItems();
 
     // TODO: to method (whose?)
     QtnPropertySet* propertySet = nullptr;
@@ -398,54 +425,6 @@ void LayoutScene::slot_selectionChanged()
     auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
     auto propertyWidget = static_cast<QtnPropertyWidget*>(mainWindow->getPropertyDockWidget()->widget());
     propertyWidget->setPropertySet(propertySet);
-
-    // Show anchors if only one widget is selected
-    if (_anchorMinX)
-    {
-        const bool showAnchors = (selectedWidgets.size() == 1);
-        _anchorParentRect->setVisible(showAnchors);
-        _anchorMinX->setVisible(showAnchors);
-        _anchorMinY->setVisible(showAnchors);
-        _anchorMaxX->setVisible(showAnchors);
-        _anchorMaxY->setVisible(showAnchors);
-        _anchorMinXMinY->setVisible(showAnchors);
-        _anchorMaxXMinY->setVisible(showAnchors);
-        _anchorMinXMaxY->setVisible(showAnchors);
-        _anchorMaxXMaxY->setVisible(showAnchors);
-        if (showAnchors)
-        {
-            const LayoutManipulator* manipulator = (*selectedWidgets.begin());
-            const LayoutManipulator* parentManipulator = dynamic_cast<const LayoutManipulator*>(manipulator->parentItem());
-            QRectF parentRect;
-            if (parentManipulator)
-            {
-                parentRect = parentManipulator->sceneBoundingRect();
-            }
-            else
-            {
-                parentRect.setWidth(static_cast<qreal>(contextWidth));
-                parentRect.setHeight(static_cast<qreal>(contextHeight));
-            }
-
-            _anchorParentRect->setRect(parentRect);
-
-            const auto& widgetPos = manipulator->getWidget()->getPosition();
-            const auto& widgetSize = manipulator->getWidget()->getSize();
-            const qreal minX = parentRect.x() + parentRect.width() * static_cast<qreal>(widgetPos.d_x.d_scale);
-            const qreal maxX = minX + parentRect.width() * static_cast<qreal>(widgetSize.d_width.d_scale);
-            const qreal minY = parentRect.y() + parentRect.height() * static_cast<qreal>(widgetPos.d_y.d_scale);
-            const qreal maxY = minY + parentRect.height() * static_cast<qreal>(widgetSize.d_height.d_scale);
-
-            _anchorMinX->setPos(minX, 0.0);
-            _anchorMaxX->setPos(maxX, 0.0);
-            _anchorMinY->setPos(0.0, minY);
-            _anchorMaxY->setPos(0.0, maxY);
-            _anchorMinXMinY->setPos(minX, minY);
-            _anchorMaxXMinY->setPos(maxX, minY);
-            _anchorMinXMaxY->setPos(minX, maxY);
-            _anchorMaxXMaxY->setPos(maxX, maxY);
-        }
-    }
 
     // We always sync the properties dock widget, we only ignore the hierarchy synchro if told so
     if (!_ignoreSelectionChanges)
@@ -472,6 +451,67 @@ void LayoutScene::slot_selectionChanged()
 
         _visualMode.getHierarchyDockWidget()->ignoreSelectionChanges(false);
     }
+}
+
+void LayoutScene::updateAnchorItems()
+{
+    const bool showAnchors = (_anchorTarget != nullptr);
+
+    if (_anchorParentRect)
+    {
+        _anchorParentRect->setVisible(showAnchors);
+        _anchorMinX->setVisible(showAnchors);
+        _anchorMinY->setVisible(showAnchors);
+        _anchorMaxX->setVisible(showAnchors);
+        _anchorMaxY->setVisible(showAnchors);
+        _anchorMinXMinY->setVisible(showAnchors);
+        _anchorMaxXMinY->setVisible(showAnchors);
+        _anchorMinXMaxY->setVisible(showAnchors);
+        _anchorMaxXMaxY->setVisible(showAnchors);
+    }
+
+    if (!showAnchors || !_anchorParentRect)
+    {
+        _anchorMinX->setSelected(false);
+        _anchorMinY->setSelected(false);
+        _anchorMaxX->setSelected(false);
+        _anchorMaxY->setSelected(false);
+        _anchorMinXMinY->setSelected(false);
+        _anchorMaxXMinY->setSelected(false);
+        _anchorMinXMaxY->setSelected(false);
+        _anchorMaxXMaxY->setSelected(false);
+        return;
+    }
+
+    const LayoutManipulator* parentManipulator = dynamic_cast<const LayoutManipulator*>(_anchorTarget->parentItem());
+    QRectF parentRect;
+    if (parentManipulator)
+    {
+        parentRect = parentManipulator->sceneBoundingRect();
+    }
+    else
+    {
+        parentRect.setWidth(static_cast<qreal>(contextWidth));
+        parentRect.setHeight(static_cast<qreal>(contextHeight));
+    }
+
+    _anchorParentRect->setRect(parentRect);
+
+    const auto& widgetPos = _anchorTarget->getWidget()->getPosition();
+    const auto& widgetSize = _anchorTarget->getWidget()->getSize();
+    const qreal minX = parentRect.x() + parentRect.width() * static_cast<qreal>(widgetPos.d_x.d_scale);
+    const qreal maxX = minX + parentRect.width() * static_cast<qreal>(widgetSize.d_width.d_scale);
+    const qreal minY = parentRect.y() + parentRect.height() * static_cast<qreal>(widgetPos.d_y.d_scale);
+    const qreal maxY = minY + parentRect.height() * static_cast<qreal>(widgetSize.d_height.d_scale);
+
+    _anchorMinX->setPos(minX, 0.0);
+    _anchorMaxX->setPos(maxX, 0.0);
+    _anchorMinY->setPos(0.0, minY);
+    _anchorMaxY->setPos(0.0, maxY);
+    _anchorMinXMinY->setPos(minX, minY);
+    _anchorMaxXMinY->setPos(maxX, minY);
+    _anchorMinXMaxY->setPos(minX, maxY);
+    _anchorMaxXMaxY->setPos(maxX, maxY);
 }
 
 void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)

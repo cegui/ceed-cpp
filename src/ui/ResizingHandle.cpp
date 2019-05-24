@@ -71,12 +71,6 @@ QPointF ResizingHandle::performResizing(QPointF value)
     return QPointF(left + right + pos().x(), top + bottom + pos().y());
 }
 
-// Called when mouse is released whilst this was selected. This notifies us that resizing might have ended.
-void ResizingHandle::mouseReleaseEventSelected(QMouseEvent* /*event*/)
-{
-    static_cast<ResizableRectItem*>(parentItem())->endResizing();
-}
-
 void ResizingHandle::showHandle(bool show)
 {
     QPen pen;
@@ -92,6 +86,12 @@ void ResizingHandle::showHandle(bool show)
     }
 
     setPen(pen);
+}
+
+// Called when mouse is released whilst this was selected. This notifies us that resizing might have ended.
+void ResizingHandle::mouseReleaseEventSelected(QMouseEvent* /*event*/)
+{
+    static_cast<ResizableRectItem*>(parentItem())->endResizing();
 }
 
 // This method does most of the resize work
