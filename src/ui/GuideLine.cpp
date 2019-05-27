@@ -1,4 +1,5 @@
 #include "src/ui/GuideLine.h"
+#include "src/ui/layout/LayoutScene.h"
 #include <qgraphicsscene.h>
 #include <qcursor.h>
 
@@ -56,6 +57,20 @@ QPainterPath GuideLine::shape() const
     return path;
 }
 
+void GuideLine::setPosSilent(const QPointF& newPos)
+{
+    setFlag(ItemSendsGeometryChanges, false);
+    setPos(newPos);
+    setFlag(ItemSendsGeometryChanges, true);
+}
+
+void GuideLine::setPosSilent(qreal x, qreal y)
+{
+    setFlag(ItemSendsGeometryChanges, false);
+    setPos(x, y);
+    setFlag(ItemSendsGeometryChanges, true);
+}
+
 void GuideLine::updateLine()
 {
     //???base on parent and not on a scene? Use scene when no parent?
@@ -89,11 +104,14 @@ QVariant GuideLine::itemChange(GraphicsItemChange change, const QVariant& value)
     }
     else if (change == ItemPositionChange)
     {
-        auto newPos = value.toPointF();
-        if (_horizontal) newPos.setX(pos().x());
-        else newPos.setY(pos().y());
+        QPointF delta = value.toPointF() - pos();
+        if (_horizontal)
+            delta.setX(0.f);
+        else
+            delta.setY(0.f);
 
-        return newPos;
+        static_cast<LayoutScene*>(scene())->anchorHandleMoved(this, delta);
+        return pos() + delta;
     }
 
     return QGraphicsLineItem::itemChange(change, value);

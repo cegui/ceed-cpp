@@ -16,6 +16,9 @@ public:
 
     virtual QPainterPath shape() const override;
 
+    void setPosSilent(const QPointF& newPos);
+    void setPosSilent(qreal x, qreal y);
+
 protected:
 
     void updateLine();

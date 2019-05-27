@@ -1,4 +1,5 @@
 #include "src/ui/layout/AnchorCornerHandle.h"
+#include "src/ui/layout/LayoutScene.h"
 #include <qcursor.h>
 
 AnchorCornerHandle::AnchorCornerHandle(bool left, bool top, QGraphicsItem* parent, qreal size, const QPen& pen, QColor hoverColor)
@@ -19,6 +20,20 @@ AnchorCornerHandle::AnchorCornerHandle(bool left, bool top, QGraphicsItem* paren
     setCursor(Qt::SizeAllCursor);
 }
 
+void AnchorCornerHandle::setPosSilent(const QPointF& newPos)
+{
+    setFlag(ItemSendsGeometryChanges, false);
+    setPos(newPos);
+    setFlag(ItemSendsGeometryChanges, true);
+}
+
+void AnchorCornerHandle::setPosSilent(qreal x, qreal y)
+{
+    setFlag(ItemSendsGeometryChanges, false);
+    setPos(x, y);
+    setFlag(ItemSendsGeometryChanges, true);
+}
+
 void AnchorCornerHandle::updatePen(bool hovered)
 {
     if (hovered)
@@ -35,7 +50,9 @@ QVariant AnchorCornerHandle::itemChange(GraphicsItemChange change, const QVarian
 {
     if (change == ItemPositionChange)
     {
-        //
+        QPointF delta = value.toPointF() - pos();
+        static_cast<LayoutScene*>(scene())->anchorHandleMoved(this, delta);
+        return pos() + delta;
     }
 
     return QGraphicsPolygonItem::itemChange(change, value);

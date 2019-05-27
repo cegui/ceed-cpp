@@ -10,6 +10,9 @@ public:
 
     AnchorCornerHandle(bool left, bool top, QGraphicsItem* parent = nullptr, qreal size = 12.0, const QPen& pen = QPen(Qt::white), QColor hoverColor = Qt::white);
 
+    void setPosSilent(const QPointF& newPos);
+    void setPosSilent(qreal x, qreal y);
+
 protected:
 
     void updatePen(bool hovered);

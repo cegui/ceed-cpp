@@ -464,7 +464,7 @@ void LayoutScene::slot_selectionChanged()
     }
 }
 
-void LayoutScene::updateAnchorItems()
+void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
 {
     const bool showAnchors = (_anchorTarget != nullptr);
 
@@ -515,14 +515,147 @@ void LayoutScene::updateAnchorItems()
     const qreal minY = parentRect.y() + parentRect.height() * static_cast<qreal>(widgetPos.d_y.d_scale);
     const qreal maxY = minY + parentRect.height() * static_cast<qreal>(widgetSize.d_height.d_scale);
 
-    _anchorMinX->setPos(minX, 0.0);
-    _anchorMaxX->setPos(maxX, 0.0);
-    _anchorMinY->setPos(0.0, minY);
-    _anchorMaxY->setPos(0.0, maxY);
-    _anchorMinXMinY->setPos(minX, minY);
-    _anchorMaxXMinY->setPos(maxX, minY);
-    _anchorMinXMaxY->setPos(minX, maxY);
-    _anchorMaxXMaxY->setPos(maxX, maxY);
+    // Position handles without firing move events
+    if (movedItem != _anchorMinX) _anchorMinX->setPosSilent(minX, 0.0);
+    if (movedItem != _anchorMaxX) _anchorMaxX->setPosSilent(maxX, 0.0);
+    if (movedItem != _anchorMinY) _anchorMinY->setPosSilent(0.0, minY);
+    if (movedItem != _anchorMaxY) _anchorMaxY->setPosSilent(0.0, maxY);
+    if (movedItem != _anchorMinXMinY) _anchorMinXMinY->setPosSilent(minX, minY);
+    if (movedItem != _anchorMaxXMinY) _anchorMaxXMinY->setPosSilent(maxX, minY);
+    if (movedItem != _anchorMinXMaxY) _anchorMinXMaxY->setPosSilent(minX, maxY);
+    if (movedItem != _anchorMaxXMaxY) _anchorMaxXMaxY->setPosSilent(maxX, maxY);
+}
+
+// TODO: on mouse up create undo command, look at ResizingHandle
+void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta)
+{
+    if (!_anchorTarget || !item) return;
+
+    // Do limiting on a pixel level, it is more convenient
+    if (item == _anchorMinX)
+    {
+        if (_anchorMinX->pos().x() + delta.x() > _anchorMaxX->pos().x())
+            delta.setX(_anchorMaxX->pos().x() - _anchorMinX->pos().x());
+    }
+    else if (item == _anchorMaxX)
+    {
+        if (_anchorMaxX->pos().x() + delta.x() < _anchorMinX->pos().x())
+            delta.setX(_anchorMinX->pos().x() - _anchorMaxX->pos().x());
+    }
+    else if (item == _anchorMinY)
+    {
+        if (_anchorMinY->pos().y() + delta.y() > _anchorMaxY->pos().y())
+            delta.setY(_anchorMaxY->pos().y() - _anchorMinY->pos().y());
+    }
+    else if (item == _anchorMaxY)
+    {
+        if (_anchorMaxY->pos().y() + delta.y() < _anchorMinY->pos().y())
+            delta.setY(_anchorMinY->pos().y() - _anchorMaxY->pos().y());
+    }
+    else if (item == _anchorMinXMinY)
+    {
+        if (_anchorMinXMinY->pos().x() + delta.x() > _anchorMaxX->pos().x())
+            delta.setX(_anchorMaxX->pos().x() - _anchorMinXMinY->pos().x());
+        if (_anchorMinXMinY->pos().y() + delta.y() > _anchorMaxY->pos().y())
+            delta.setY(_anchorMaxY->pos().y() - _anchorMinXMinY->pos().y());
+    }
+    else if (item == _anchorMaxXMinY)
+    {
+        if (_anchorMaxXMinY->pos().x() + delta.x() < _anchorMinX->pos().x())
+            delta.setX(_anchorMinX->pos().x() - _anchorMaxXMinY->pos().x());
+        if (_anchorMaxXMinY->pos().y() + delta.y() > _anchorMaxY->pos().y())
+            delta.setY(_anchorMaxY->pos().y() - _anchorMaxXMinY->pos().y());
+    }
+    else if (item == _anchorMinXMaxY)
+    {
+        if (_anchorMinXMaxY->pos().x() + delta.x() > _anchorMaxX->pos().x())
+            delta.setX(_anchorMaxX->pos().x() - _anchorMinXMaxY->pos().x());
+        if (_anchorMinXMaxY->pos().y() + delta.y() < _anchorMinY->pos().y())
+            delta.setY(_anchorMinY->pos().y() - _anchorMinXMaxY->pos().y());
+    }
+    else if (item == _anchorMaxXMaxY)
+    {
+        if (_anchorMaxXMaxY->pos().x() + delta.x() < _anchorMinX->pos().x())
+            delta.setX(_anchorMinX->pos().x() - _anchorMaxXMaxY->pos().x());
+        if (_anchorMaxXMaxY->pos().y() + delta.y() < _anchorMinY->pos().y())
+            delta.setY(_anchorMinY->pos().y() - _anchorMaxXMaxY->pos().y());
+    }
+
+    // Early exit if nothing changed effectively
+    // FIXME: integer VS float modes? float - don't round
+    if (item->pos().toPoint() == (item->pos() + delta).toPoint())
+        return;
+
+    // Perform actual changes
+
+    // CEGUIManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
+    // CEGUIManipulator::notifyResizeFinished(QPointF newPos, QRectF newRect)
+    //_anchorTarget->updatePropertiesFromWidget({"Position", "Area"});
+
+    // TODO: common code!
+    /*
+    // Absolute pixel deltas
+    auto pixelDeltaPos = newPos - resizeOldPos;
+    auto pixelDeltaSize = newRect.size() - resizeOldRect.size();
+
+    CEGUI::UVector2 deltaPos;
+    CEGUI::USize deltaSize;
+    if (useAbsoluteCoordsForResize())
+    {
+        if (useIntegersForAbsoluteResize())
+        {
+            roundPointFloor(pixelDeltaPos);
+            roundSizeFloor(pixelDeltaSize);
+        }
+
+        deltaPos = CEGUI::UVector2(
+                    CEGUI::UDim(0.f, static_cast<float>(pixelDeltaPos.x())),
+                    CEGUI::UDim(0.f, static_cast<float>(pixelDeltaPos.y())));
+        deltaSize = CEGUI::USize(
+                    CEGUI::UDim(0.f, static_cast<float>(pixelDeltaSize.width())),
+                    CEGUI::UDim(0.f, static_cast<float>(pixelDeltaSize.height())));
+    }
+    else
+    {
+        auto baseSize = getBaseSize();
+        deltaPos = CEGUI::UVector2(
+                    CEGUI::UDim(static_cast<float>(pixelDeltaPos.x()) / baseSize.d_width, 0.f),
+                    CEGUI::UDim(static_cast<float>(pixelDeltaPos.y()) / baseSize.d_height, 0.f));
+        deltaSize = CEGUI::USize(
+                    CEGUI::UDim(static_cast<float>(pixelDeltaSize.width()) / baseSize.d_width, 0.f),
+                    CEGUI::UDim(static_cast<float>(pixelDeltaSize.height()) / baseSize.d_height, 0.f));
+    }
+
+    // Because the Qt manipulator is always top left aligned in the CEGUI sense,
+    // we have to process the size to factor in alignments if they differ
+    CEGUI::UVector2 processedDeltaPos;
+    switch (_widget->getHorizontalAlignment())
+    {
+        case CEGUI::HorizontalAlignment::Left:
+            processedDeltaPos.d_x = deltaPos.d_x; break;
+        case CEGUI::HorizontalAlignment::Centre:
+            processedDeltaPos.d_x = deltaPos.d_x + CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_width; break;
+        case CEGUI::HorizontalAlignment::Right:
+            processedDeltaPos.d_x = deltaPos.d_x + deltaSize.d_width; break;
+    }
+    switch (_widget->getVerticalAlignment())
+    {
+        case CEGUI::VerticalAlignment::Top:
+            processedDeltaPos.d_y = deltaPos.d_y; break;
+        case CEGUI::VerticalAlignment::Centre:
+            processedDeltaPos.d_y = deltaPos.d_y + CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_height; break;
+        case CEGUI::VerticalAlignment::Bottom:
+            processedDeltaPos.d_y = deltaPos.d_y + deltaSize.d_height; break;
+    }
+
+    _widget->setPosition(_preResizePos + processedDeltaPos);
+    _widget->setSize(_preResizeSize + deltaSize);
+
+    _lastResizeNewPos = newPos;
+    _lastResizeNewRect = newRect;
+    */
+
+    updateAnchorItems(item);
 }
 
 void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)

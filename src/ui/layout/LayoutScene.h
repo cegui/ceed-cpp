@@ -38,13 +38,15 @@ public:
 
     void ignoreSelectionChanges(bool ignore) { _ignoreSelectionChanges = ignore; }
 
+    void anchorHandleMoved(QGraphicsItem* item, QPointF& delta);
+
 public slots:
 
     void slot_selectionChanged();
 
 protected:
 
-    void updateAnchorItems();
+    void updateAnchorItems(QGraphicsItem* movedItem = nullptr);
 
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;
