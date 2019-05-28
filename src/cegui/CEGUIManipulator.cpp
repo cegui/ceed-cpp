@@ -6,6 +6,7 @@
 #include "src/cegui/QtnPropertyUSize.h"
 #include "src/cegui/QtnPropertyURect.h"
 #include "src/cegui/QtnPropertyUBox.h"
+#include "src/ui/CEGUIGraphicsScene.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
 #include "qgraphicsscene.h"
@@ -235,6 +236,20 @@ CEGUI::Sizef CEGUIManipulator::getBaseSize() const
         return  _widget->getParent()->getUnclippedInnerRect().get().getSize();
     else
         return _widget->getParentPixelSize();
+}
+
+QRectF CEGUIManipulator::getParentRect() const
+{
+    const CEGUIManipulator* parentManipulator = dynamic_cast<const CEGUIManipulator*>(parentItem());
+    if (parentManipulator)
+    {
+        return parentManipulator->sceneBoundingRect();
+    }
+    else
+    {
+        auto ceguiScene = static_cast<const CEGUIGraphicsScene*>(scene());
+        return QRectF(0.0, 0.0, static_cast<qreal>(ceguiScene->getContextWidth()), static_cast<qreal>(ceguiScene->getContextHeight()));
+    }
 }
 
 void CEGUIManipulator::notifyHandleSelected(ResizingHandle* handle)

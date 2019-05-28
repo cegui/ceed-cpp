@@ -54,6 +54,10 @@ QVariant AnchorCornerHandle::itemChange(GraphicsItemChange change, const QVarian
         static_cast<LayoutScene*>(scene())->anchorHandleMoved(this, delta);
         return pos() + delta;
     }
+    else if (change == ItemSelectedHasChanged)
+    {
+        static_cast<LayoutScene*>(scene())->anchorHandleSelected(this);
+    }
 
     return QGraphicsPolygonItem::itemChange(change, value);
 }

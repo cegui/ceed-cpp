@@ -494,17 +494,7 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
         return;
     }
 
-    const LayoutManipulator* parentManipulator = dynamic_cast<const LayoutManipulator*>(_anchorTarget->parentItem());
-    QRectF parentRect;
-    if (parentManipulator)
-    {
-        parentRect = parentManipulator->sceneBoundingRect();
-    }
-    else
-    {
-        parentRect.setWidth(static_cast<qreal>(contextWidth));
-        parentRect.setHeight(static_cast<qreal>(contextHeight));
-    }
+    QRectF parentRect = _anchorTarget->getParentRect();
 
     _anchorParentRect->setRect(parentRect);
 
@@ -526,31 +516,51 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
     if (movedItem != _anchorMaxXMaxY) _anchorMaxXMaxY->setPosSilent(maxX, maxY);
 }
 
+//!!!FIXME: working with deltas may lead to error accumulation!
 // TODO: on mouse up create undo command, look at ResizingHandle
 void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta)
 {
     if (!_anchorTarget || !item) return;
+
+    CEGUI::Window* widget = _anchorTarget->getWidget();
+    if (!widget) return;
+
+    auto baseSize = _anchorTarget->getBaseSize();
+    if (baseSize.d_width <= 0.f || baseSize.d_height <= 0.f) return;
+
+    float deltaMinX = 0.f;
+    float deltaMinY = 0.f;
+    float deltaMaxX = 0.f;
+    float deltaMaxY = 0.f;
 
     // Do limiting on a pixel level, it is more convenient
     if (item == _anchorMinX)
     {
         if (_anchorMinX->pos().x() + delta.x() > _anchorMaxX->pos().x())
             delta.setX(_anchorMaxX->pos().x() - _anchorMinX->pos().x());
+
+        deltaMinX = static_cast<float>(delta.x());
     }
     else if (item == _anchorMaxX)
     {
         if (_anchorMaxX->pos().x() + delta.x() < _anchorMinX->pos().x())
             delta.setX(_anchorMinX->pos().x() - _anchorMaxX->pos().x());
+
+        deltaMaxX = static_cast<float>(delta.x());
     }
     else if (item == _anchorMinY)
     {
         if (_anchorMinY->pos().y() + delta.y() > _anchorMaxY->pos().y())
             delta.setY(_anchorMaxY->pos().y() - _anchorMinY->pos().y());
+
+        deltaMinY = static_cast<float>(delta.y());
     }
     else if (item == _anchorMaxY)
     {
         if (_anchorMaxY->pos().y() + delta.y() < _anchorMinY->pos().y())
             delta.setY(_anchorMinY->pos().y() - _anchorMaxY->pos().y());
+
+        deltaMaxY = static_cast<float>(delta.y());
     }
     else if (item == _anchorMinXMinY)
     {
@@ -558,6 +568,9 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta)
             delta.setX(_anchorMaxX->pos().x() - _anchorMinXMinY->pos().x());
         if (_anchorMinXMinY->pos().y() + delta.y() > _anchorMaxY->pos().y())
             delta.setY(_anchorMaxY->pos().y() - _anchorMinXMinY->pos().y());
+
+        deltaMinX = static_cast<float>(delta.x());
+        deltaMinY = static_cast<float>(delta.y());
     }
     else if (item == _anchorMaxXMinY)
     {
@@ -565,6 +578,9 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta)
             delta.setX(_anchorMinX->pos().x() - _anchorMaxXMinY->pos().x());
         if (_anchorMaxXMinY->pos().y() + delta.y() > _anchorMaxY->pos().y())
             delta.setY(_anchorMaxY->pos().y() - _anchorMaxXMinY->pos().y());
+
+        deltaMaxX = static_cast<float>(delta.x());
+        deltaMinY = static_cast<float>(delta.y());
     }
     else if (item == _anchorMinXMaxY)
     {
@@ -572,6 +588,9 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta)
             delta.setX(_anchorMaxX->pos().x() - _anchorMinXMaxY->pos().x());
         if (_anchorMinXMaxY->pos().y() + delta.y() < _anchorMinY->pos().y())
             delta.setY(_anchorMinY->pos().y() - _anchorMinXMaxY->pos().y());
+
+        deltaMinX = static_cast<float>(delta.x());
+        deltaMaxY = static_cast<float>(delta.y());
     }
     else if (item == _anchorMaxXMaxY)
     {
@@ -579,27 +598,51 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta)
             delta.setX(_anchorMinX->pos().x() - _anchorMaxXMaxY->pos().x());
         if (_anchorMaxXMaxY->pos().y() + delta.y() < _anchorMinY->pos().y())
             delta.setY(_anchorMinY->pos().y() - _anchorMaxXMaxY->pos().y());
-    }
 
-    // Early exit if nothing changed effectively
-    // FIXME: integer VS float modes? float - don't round
-    if (item->pos().toPoint() == (item->pos() + delta).toPoint())
-        return;
+        deltaMaxX = static_cast<float>(delta.x());
+        deltaMaxY = static_cast<float>(delta.y());
+    }
 
     // Perform actual changes
 
-    // CEGUIManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
-    // CEGUIManipulator::notifyResizeFinished(QPointF newPos, QRectF newRect)
-    //_anchorTarget->updatePropertiesFromWidget({"Position", "Area"});
-
-    // TODO: common code!
-    /*
-    // Absolute pixel deltas
-    auto pixelDeltaPos = newPos - resizeOldPos;
-    auto pixelDeltaSize = newRect.size() - resizeOldRect.size();
-
     CEGUI::UVector2 deltaPos;
     CEGUI::USize deltaSize;
+
+    const float reDeltaMinX = deltaMinX / baseSize.d_width;
+    deltaPos.d_x.d_scale += reDeltaMinX;
+    deltaSize.d_width.d_scale += -reDeltaMinX;
+    if (QApplication::keyboardModifiers() & Qt::ControlModifier)
+    {
+        deltaPos.d_x.d_offset += -deltaMinX;
+        deltaSize.d_width.d_offset += deltaMinX;
+    }
+
+    const float reDeltaMinY = deltaMinY / baseSize.d_height;
+    deltaPos.d_y.d_scale += reDeltaMinY;
+    deltaSize.d_height.d_scale += -reDeltaMinY;
+    if (QApplication::keyboardModifiers() & Qt::ControlModifier)
+    {
+        deltaPos.d_y.d_offset += -deltaMinY;
+        deltaSize.d_height.d_offset += deltaMinY;
+    }
+
+    const float reDeltaMaxX = deltaMaxX / baseSize.d_width;
+    deltaSize.d_width.d_scale += reDeltaMaxX;
+    if (QApplication::keyboardModifiers() & Qt::ControlModifier)
+    {
+        deltaSize.d_width.d_offset += -deltaMaxX;
+    }
+
+    const float reDeltaMaxY = deltaMaxY / baseSize.d_height;
+    deltaSize.d_height.d_scale += reDeltaMaxY;
+    if (QApplication::keyboardModifiers() & Qt::ControlModifier)
+    {
+        deltaSize.d_height.d_offset += -deltaMaxY;
+    }
+
+    // TODO: common code?
+    /*
+    deltas = current - initial, NOT current - previous
     if (useAbsoluteCoordsForResize())
     {
         if (useIntegersForAbsoluteResize())
@@ -608,54 +651,56 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta)
             roundSizeFloor(pixelDeltaSize);
         }
 
-        deltaPos = CEGUI::UVector2(
-                    CEGUI::UDim(0.f, static_cast<float>(pixelDeltaPos.x())),
-                    CEGUI::UDim(0.f, static_cast<float>(pixelDeltaPos.y())));
-        deltaSize = CEGUI::USize(
-                    CEGUI::UDim(0.f, static_cast<float>(pixelDeltaSize.width())),
-                    CEGUI::UDim(0.f, static_cast<float>(pixelDeltaSize.height())));
+        ... (abs);
     }
     else
     {
         auto baseSize = getBaseSize();
-        deltaPos = CEGUI::UVector2(
-                    CEGUI::UDim(static_cast<float>(pixelDeltaPos.x()) / baseSize.d_width, 0.f),
-                    CEGUI::UDim(static_cast<float>(pixelDeltaPos.y()) / baseSize.d_height, 0.f));
-        deltaSize = CEGUI::USize(
-                    CEGUI::UDim(static_cast<float>(pixelDeltaSize.width()) / baseSize.d_width, 0.f),
-                    CEGUI::UDim(static_cast<float>(pixelDeltaSize.height()) / baseSize.d_height, 0.f));
+        ... (rel);
     }
+    */
+
+    //!!!FIXME: duplicated code!
 
     // Because the Qt manipulator is always top left aligned in the CEGUI sense,
     // we have to process the size to factor in alignments if they differ
-    CEGUI::UVector2 processedDeltaPos;
-    switch (_widget->getHorizontalAlignment())
+    switch (widget->getHorizontalAlignment())
     {
-        case CEGUI::HorizontalAlignment::Left:
-            processedDeltaPos.d_x = deltaPos.d_x; break;
         case CEGUI::HorizontalAlignment::Centre:
-            processedDeltaPos.d_x = deltaPos.d_x + CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_width; break;
+            deltaPos.d_x += CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_width; break;
         case CEGUI::HorizontalAlignment::Right:
-            processedDeltaPos.d_x = deltaPos.d_x + deltaSize.d_width; break;
+            deltaPos.d_x += deltaSize.d_width; break;
+        default: break;
     }
-    switch (_widget->getVerticalAlignment())
+    switch (widget->getVerticalAlignment())
     {
-        case CEGUI::VerticalAlignment::Top:
-            processedDeltaPos.d_y = deltaPos.d_y; break;
         case CEGUI::VerticalAlignment::Centre:
-            processedDeltaPos.d_y = deltaPos.d_y + CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_height; break;
+            deltaPos.d_y += CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_height; break;
         case CEGUI::VerticalAlignment::Bottom:
-            processedDeltaPos.d_y = deltaPos.d_y + deltaSize.d_height; break;
+            deltaPos.d_y += deltaSize.d_height; break;
+        default: break;
     }
 
-    _widget->setPosition(_preResizePos + processedDeltaPos);
-    _widget->setSize(_preResizeSize + deltaSize);
+    widget->setPosition(widget->getPosition() + deltaPos);
+    widget->setSize(widget->getSize() + deltaSize);
 
-    _lastResizeNewPos = newPos;
-    _lastResizeNewRect = newRect;
-    */
+    _anchorTarget->updateFromWidget();
+    _anchorTarget->updatePropertiesFromWidget({"Position", "Area"});
 
     updateAnchorItems(item);
+}
+
+// Only one anchor handle may be selected at a time
+void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
+{
+    if (item != _anchorMinX) _anchorMinX->setSelected(false);
+    if (item != _anchorMinY) _anchorMinY->setSelected(false);
+    if (item != _anchorMaxX) _anchorMaxX->setSelected(false);
+    if (item != _anchorMaxY) _anchorMaxY->setSelected(false);
+    if (item != _anchorMinXMinY) _anchorMinXMinY->setSelected(false);
+    if (item != _anchorMaxXMinY) _anchorMaxXMinY->setSelected(false);
+    if (item != _anchorMinXMaxY) _anchorMinXMaxY->setSelected(false);
+    if (item != _anchorMaxXMaxY) _anchorMaxXMaxY->setSelected(false);
 }
 
 void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)

@@ -106,12 +106,18 @@ QVariant GuideLine::itemChange(GraphicsItemChange change, const QVariant& value)
     {
         QPointF delta = value.toPointF() - pos();
         if (_horizontal)
-            delta.setX(0.f);
+            delta.setX(0.0);
         else
-            delta.setY(0.f);
+            delta.setY(0.0);
 
+        // FIXME: universal GuideLine must not know anything about anchors. To derived class?
         static_cast<LayoutScene*>(scene())->anchorHandleMoved(this, delta);
         return pos() + delta;
+    }
+    else if (change == ItemSelectedHasChanged)
+    {
+        // FIXME: universal GuideLine must not know anything about anchors. To derived class?
+        static_cast<LayoutScene*>(scene())->anchorHandleSelected(this);
     }
 
     return QGraphicsLineItem::itemChange(change, value);
