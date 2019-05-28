@@ -642,7 +642,7 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta)
 
     // TODO: common code?
     /*
-    deltas = current - initial, NOT current - previous
+    deltas = current - initial, NOT current - previous. It prevents error accumulation and makes rounding work correctly!
     if (useAbsoluteCoordsForResize())
     {
         if (useIntegersForAbsoluteResize())
@@ -685,7 +685,7 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta)
     widget->setSize(widget->getSize() + deltaSize);
 
     _anchorTarget->updateFromWidget();
-    _anchorTarget->updatePropertiesFromWidget({"Position", "Area"});
+    _anchorTarget->updatePropertiesFromWidget({"Size", "Position", "Area"});
 
     updateAnchorItems(item);
 }
