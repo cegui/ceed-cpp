@@ -517,8 +517,11 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
 }
 
 //!!!FIXME: working with deltas may lead to error accumulation!
+//!!!FIXME: manipulator dragging is broken, strange limiting, no anchor items updating!
+// TODO: keep drawing red & green outlines when work with anchors
+// TODO: move both anchors if selected near the tip / guides overlap(?)
 // TODO: on mouse up create undo command, look at ResizingHandle
-void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta)
+void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool /*moveOpposite*/)
 {
     if (!_anchorTarget || !item) return;
 
@@ -536,68 +539,68 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta)
     // Do limiting on a pixel level, it is more convenient
     if (item == _anchorMinX)
     {
-        if (_anchorMinX->pos().x() + delta.x() > _anchorMaxX->pos().x())
-            delta.setX(_anchorMaxX->pos().x() - _anchorMinX->pos().x());
+        if (item->pos().x() + delta.x() > _anchorMaxX->pos().x())
+            delta.setX(_anchorMaxX->pos().x() - item->pos().x());
 
         deltaMinX = static_cast<float>(delta.x());
     }
     else if (item == _anchorMaxX)
     {
-        if (_anchorMaxX->pos().x() + delta.x() < _anchorMinX->pos().x())
-            delta.setX(_anchorMinX->pos().x() - _anchorMaxX->pos().x());
+        if (item->pos().x() + delta.x() < _anchorMinX->pos().x())
+            delta.setX(_anchorMinX->pos().x() - item->pos().x());
 
         deltaMaxX = static_cast<float>(delta.x());
     }
     else if (item == _anchorMinY)
     {
-        if (_anchorMinY->pos().y() + delta.y() > _anchorMaxY->pos().y())
-            delta.setY(_anchorMaxY->pos().y() - _anchorMinY->pos().y());
+        if (item->pos().y() + delta.y() > _anchorMaxY->pos().y())
+            delta.setY(_anchorMaxY->pos().y() - item->pos().y());
 
         deltaMinY = static_cast<float>(delta.y());
     }
     else if (item == _anchorMaxY)
     {
-        if (_anchorMaxY->pos().y() + delta.y() < _anchorMinY->pos().y())
-            delta.setY(_anchorMinY->pos().y() - _anchorMaxY->pos().y());
+        if (item->pos().y() + delta.y() < _anchorMinY->pos().y())
+            delta.setY(_anchorMinY->pos().y() - item->pos().y());
 
         deltaMaxY = static_cast<float>(delta.y());
     }
     else if (item == _anchorMinXMinY)
     {
-        if (_anchorMinXMinY->pos().x() + delta.x() > _anchorMaxX->pos().x())
-            delta.setX(_anchorMaxX->pos().x() - _anchorMinXMinY->pos().x());
-        if (_anchorMinXMinY->pos().y() + delta.y() > _anchorMaxY->pos().y())
-            delta.setY(_anchorMaxY->pos().y() - _anchorMinXMinY->pos().y());
+        if (item->pos().x() + delta.x() > _anchorMaxX->pos().x())
+            delta.setX(_anchorMaxX->pos().x() - item->pos().x());
+        if (item->pos().y() + delta.y() > _anchorMaxY->pos().y())
+            delta.setY(_anchorMaxY->pos().y() - item->pos().y());
 
         deltaMinX = static_cast<float>(delta.x());
         deltaMinY = static_cast<float>(delta.y());
     }
     else if (item == _anchorMaxXMinY)
     {
-        if (_anchorMaxXMinY->pos().x() + delta.x() < _anchorMinX->pos().x())
-            delta.setX(_anchorMinX->pos().x() - _anchorMaxXMinY->pos().x());
-        if (_anchorMaxXMinY->pos().y() + delta.y() > _anchorMaxY->pos().y())
-            delta.setY(_anchorMaxY->pos().y() - _anchorMaxXMinY->pos().y());
+        if (item->pos().x() + delta.x() < _anchorMinX->pos().x())
+            delta.setX(_anchorMinX->pos().x() - item->pos().x());
+        if (item->pos().y() + delta.y() > _anchorMaxY->pos().y())
+            delta.setY(_anchorMaxY->pos().y() - item->pos().y());
 
         deltaMaxX = static_cast<float>(delta.x());
         deltaMinY = static_cast<float>(delta.y());
     }
     else if (item == _anchorMinXMaxY)
     {
-        if (_anchorMinXMaxY->pos().x() + delta.x() > _anchorMaxX->pos().x())
-            delta.setX(_anchorMaxX->pos().x() - _anchorMinXMaxY->pos().x());
-        if (_anchorMinXMaxY->pos().y() + delta.y() < _anchorMinY->pos().y())
-            delta.setY(_anchorMinY->pos().y() - _anchorMinXMaxY->pos().y());
+        if (item->pos().x() + delta.x() > _anchorMaxX->pos().x())
+            delta.setX(_anchorMaxX->pos().x() - item->pos().x());
+        if (item->pos().y() + delta.y() < _anchorMinY->pos().y())
+            delta.setY(_anchorMinY->pos().y() - item->pos().y());
 
         deltaMinX = static_cast<float>(delta.x());
         deltaMaxY = static_cast<float>(delta.y());
     }
     else if (item == _anchorMaxXMaxY)
     {
-        if (_anchorMaxXMaxY->pos().x() + delta.x() < _anchorMinX->pos().x())
-            delta.setX(_anchorMinX->pos().x() - _anchorMaxXMaxY->pos().x());
-        if (_anchorMaxXMaxY->pos().y() + delta.y() < _anchorMinY->pos().y())
-            delta.setY(_anchorMinY->pos().y() - _anchorMaxXMaxY->pos().y());
+        if (item->pos().x() + delta.x() < _anchorMinX->pos().x())
+            delta.setX(_anchorMinX->pos().x() - item->pos().x());
+        if (item->pos().y() + delta.y() < _anchorMinY->pos().y())
+            delta.setY(_anchorMinY->pos().y() - item->pos().y());
 
         deltaMaxX = static_cast<float>(delta.x());
         deltaMaxY = static_cast<float>(delta.y());
@@ -608,10 +611,12 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta)
     CEGUI::UVector2 deltaPos;
     CEGUI::USize deltaSize;
 
+    const bool preserveEffectiveSize = !(QApplication::keyboardModifiers() & Qt::ShiftModifier);
+
     const float reDeltaMinX = deltaMinX / baseSize.d_width;
     deltaPos.d_x.d_scale += reDeltaMinX;
     deltaSize.d_width.d_scale += -reDeltaMinX;
-    if (QApplication::keyboardModifiers() & Qt::ControlModifier)
+    if (preserveEffectiveSize)
     {
         deltaPos.d_x.d_offset += -deltaMinX;
         deltaSize.d_width.d_offset += deltaMinX;
@@ -620,7 +625,7 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta)
     const float reDeltaMinY = deltaMinY / baseSize.d_height;
     deltaPos.d_y.d_scale += reDeltaMinY;
     deltaSize.d_height.d_scale += -reDeltaMinY;
-    if (QApplication::keyboardModifiers() & Qt::ControlModifier)
+    if (preserveEffectiveSize)
     {
         deltaPos.d_y.d_offset += -deltaMinY;
         deltaSize.d_height.d_offset += deltaMinY;
@@ -628,14 +633,14 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta)
 
     const float reDeltaMaxX = deltaMaxX / baseSize.d_width;
     deltaSize.d_width.d_scale += reDeltaMaxX;
-    if (QApplication::keyboardModifiers() & Qt::ControlModifier)
+    if (preserveEffectiveSize)
     {
         deltaSize.d_width.d_offset += -deltaMaxX;
     }
 
     const float reDeltaMaxY = deltaMaxY / baseSize.d_height;
     deltaSize.d_height.d_scale += reDeltaMaxY;
-    if (QApplication::keyboardModifiers() & Qt::ControlModifier)
+    if (preserveEffectiveSize)
     {
         deltaSize.d_height.d_offset += -deltaMaxY;
     }
@@ -643,9 +648,9 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta)
     // TODO: common code?
     /*
     deltas = current - initial, NOT current - previous. It prevents error accumulation and makes rounding work correctly!
-    if (useAbsoluteCoordsForResize())
+    if (useAbsoluteCoordsForResize()) // _visualMode.isAbsoluteMode()
     {
-        if (useIntegersForAbsoluteResize())
+        if (useIntegersForAbsoluteResize()) // _visualMode.isAbsoluteIntegerMode()
         {
             roundPointFloor(pixelDeltaPos);
             roundSizeFloor(pixelDeltaSize);

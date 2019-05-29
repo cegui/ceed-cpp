@@ -38,7 +38,7 @@ public:
 
     void ignoreSelectionChanges(bool ignore) { _ignoreSelectionChanges = ignore; }
 
-    void anchorHandleMoved(QGraphicsItem* item, QPointF& delta);
+    void anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool moveOpposite);
     void anchorHandleSelected(QGraphicsItem* item);
 
 public slots:
