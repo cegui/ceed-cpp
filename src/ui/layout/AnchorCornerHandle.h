@@ -16,13 +16,17 @@ public:
 protected:
 
     void updatePen(bool hovered);
+    void updateBrush();
 
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
     virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
+    virtual void hoverMoveEvent(QGraphicsSceneHoverEvent* event) override;
 
     QPen _normalPen;
     QColor _hoverColor;
+    qreal _moveOppositeThreshold;
+    bool _moveOpposite = false; // When overlap with opposite items, move them or stop moving self?
 };
 
 #endif // ANCHORCORNERHANDLE_H

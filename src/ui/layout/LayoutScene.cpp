@@ -521,7 +521,7 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
 // TODO: keep drawing red & green outlines when work with anchors
 // TODO: move both anchors if selected near the tip / guides overlap(?)
 // TODO: on mouse up create undo command, look at ResizingHandle
-void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool /*moveOpposite*/)
+void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool moveOpposite)
 {
     if (!_anchorTarget || !item) return;
 
@@ -536,74 +536,66 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool /*
     float deltaMaxX = 0.f;
     float deltaMaxY = 0.f;
 
+    const QPointF newItemPos = item->pos() + delta;
+
     // Do limiting on a pixel level, it is more convenient
-    if (item == _anchorMinX)
-    {
-        if (item->pos().x() + delta.x() > _anchorMaxX->pos().x())
-            delta.setX(_anchorMaxX->pos().x() - item->pos().x());
 
+    if (item == _anchorMinX || item == _anchorMinXMinY || item == _anchorMinXMaxY)
+    {
         deltaMinX = static_cast<float>(delta.x());
+        const float overlap = static_cast<float>(newItemPos.x() - _anchorMaxX->pos().x());
+        if (overlap > 0.f)
+        {
+            if (moveOpposite) deltaMaxX += overlap;
+            else
+            {
+                deltaMinX -= overlap;
+                delta.setX(static_cast<qreal>(deltaMinX));
+            }
+        }
     }
-    else if (item == _anchorMaxX)
+    else if (item == _anchorMaxX || item == _anchorMaxXMinY || item == _anchorMaxXMaxY)
     {
-        if (item->pos().x() + delta.x() < _anchorMinX->pos().x())
-            delta.setX(_anchorMinX->pos().x() - item->pos().x());
-
         deltaMaxX = static_cast<float>(delta.x());
+        const float overlap = static_cast<float>(_anchorMinX->pos().x() - newItemPos.x());
+        if (overlap > 0.f)
+        {
+            if (moveOpposite) deltaMinX -= overlap;
+            else
+            {
+                deltaMaxX += overlap;
+                delta.setX(static_cast<qreal>(deltaMaxX));
+            }
+        }
     }
-    else if (item == _anchorMinY)
-    {
-        if (item->pos().y() + delta.y() > _anchorMaxY->pos().y())
-            delta.setY(_anchorMaxY->pos().y() - item->pos().y());
 
+    if (item == _anchorMinY || item == _anchorMinXMinY || item == _anchorMaxXMinY)
+    {
         deltaMinY = static_cast<float>(delta.y());
+        const float overlap = static_cast<float>(newItemPos.y() - _anchorMaxY->pos().y());
+        if (overlap > 0.f)
+        {
+            if (moveOpposite) deltaMaxY += overlap;
+            else
+            {
+                deltaMinY -= overlap;
+                delta.setY(static_cast<qreal>(deltaMinY));
+            }
+        }
     }
-    else if (item == _anchorMaxY)
+    else if (item == _anchorMaxY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
     {
-        if (item->pos().y() + delta.y() < _anchorMinY->pos().y())
-            delta.setY(_anchorMinY->pos().y() - item->pos().y());
-
         deltaMaxY = static_cast<float>(delta.y());
-    }
-    else if (item == _anchorMinXMinY)
-    {
-        if (item->pos().x() + delta.x() > _anchorMaxX->pos().x())
-            delta.setX(_anchorMaxX->pos().x() - item->pos().x());
-        if (item->pos().y() + delta.y() > _anchorMaxY->pos().y())
-            delta.setY(_anchorMaxY->pos().y() - item->pos().y());
-
-        deltaMinX = static_cast<float>(delta.x());
-        deltaMinY = static_cast<float>(delta.y());
-    }
-    else if (item == _anchorMaxXMinY)
-    {
-        if (item->pos().x() + delta.x() < _anchorMinX->pos().x())
-            delta.setX(_anchorMinX->pos().x() - item->pos().x());
-        if (item->pos().y() + delta.y() > _anchorMaxY->pos().y())
-            delta.setY(_anchorMaxY->pos().y() - item->pos().y());
-
-        deltaMaxX = static_cast<float>(delta.x());
-        deltaMinY = static_cast<float>(delta.y());
-    }
-    else if (item == _anchorMinXMaxY)
-    {
-        if (item->pos().x() + delta.x() > _anchorMaxX->pos().x())
-            delta.setX(_anchorMaxX->pos().x() - item->pos().x());
-        if (item->pos().y() + delta.y() < _anchorMinY->pos().y())
-            delta.setY(_anchorMinY->pos().y() - item->pos().y());
-
-        deltaMinX = static_cast<float>(delta.x());
-        deltaMaxY = static_cast<float>(delta.y());
-    }
-    else if (item == _anchorMaxXMaxY)
-    {
-        if (item->pos().x() + delta.x() < _anchorMinX->pos().x())
-            delta.setX(_anchorMinX->pos().x() - item->pos().x());
-        if (item->pos().y() + delta.y() < _anchorMinY->pos().y())
-            delta.setY(_anchorMinY->pos().y() - item->pos().y());
-
-        deltaMaxX = static_cast<float>(delta.x());
-        deltaMaxY = static_cast<float>(delta.y());
+        const float overlap = static_cast<float>(_anchorMinY->pos().y() - newItemPos.y());
+        if (overlap > 0.f)
+        {
+            if (moveOpposite) deltaMinY -= overlap;
+            else
+            {
+                deltaMaxY += overlap;
+                delta.setY(static_cast<qreal>(deltaMaxY));
+            }
+        }
     }
 
     // Perform actual changes

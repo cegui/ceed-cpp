@@ -1,11 +1,13 @@
 #include "src/ui/layout/AnchorCornerHandle.h"
 #include "src/ui/layout/LayoutScene.h"
 #include <qcursor.h>
+#include <qgraphicssceneevent.h>
 
 AnchorCornerHandle::AnchorCornerHandle(bool left, bool top, QGraphicsItem* parent, qreal size, const QPen& pen, QColor hoverColor)
     : QGraphicsPolygonItem(parent)
     , _normalPen(pen)
     , _hoverColor(hoverColor)
+    , _moveOppositeThreshold(size * size * 1.5)
 {
     setFlags(ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
     setAcceptHoverEvents(true);
@@ -46,12 +48,17 @@ void AnchorCornerHandle::updatePen(bool hovered)
         setPen(_normalPen);
 }
 
+void AnchorCornerHandle::updateBrush()
+{
+    setBrush(_moveOpposite ? QBrush(QColor(_hoverColor.red(), _hoverColor.green(), _hoverColor.blue(), 127)) : QBrush());
+}
+
 QVariant AnchorCornerHandle::itemChange(GraphicsItemChange change, const QVariant& value)
 {
     if (change == ItemPositionChange)
     {
         QPointF delta = value.toPointF() - pos();
-        static_cast<LayoutScene*>(scene())->anchorHandleMoved(this, delta, false);
+        static_cast<LayoutScene*>(scene())->anchorHandleMoved(this, delta, _moveOpposite);
         return pos() + delta;
     }
     else if (change == ItemSelectedHasChanged)
@@ -66,10 +73,27 @@ void AnchorCornerHandle::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
 {
     QGraphicsPolygonItem::hoverEnterEvent(event);
     updatePen(true);
+    //???call some LayoutScene method to set status message in a main window?
 }
 
 void AnchorCornerHandle::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
 {
+    //???call some LayoutScene method to clear status message in a main window?
+    _moveOpposite = false;
+    updateBrush();
     updatePen(false);
     QGraphicsPolygonItem::hoverLeaveEvent(event);
+}
+
+void AnchorCornerHandle::hoverMoveEvent(QGraphicsSceneHoverEvent* event)
+{
+    //!!!ONLY WHEN NOT DRAGGING! start drag is easy, stop drag must be catched!
+    const bool newMoveOpposite = QPointF::dotProduct(event->pos(), event->pos()) < _moveOppositeThreshold;
+    if (_moveOpposite != newMoveOpposite)
+    {
+        //???call some LayoutScene method to set status message in a main window?
+        _moveOpposite = newMoveOpposite;
+        updateBrush();
+    }
+    QGraphicsPolygonItem::hoverMoveEvent(event);
 }
