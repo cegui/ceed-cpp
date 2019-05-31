@@ -557,13 +557,13 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
     else if (item == _anchorMaxX || item == _anchorMaxXMinY || item == _anchorMaxXMaxY)
     {
         deltaMaxX = static_cast<float>(delta.x());
-        const float overlap = static_cast<float>(_anchorMinX->pos().x() - newItemPos.x());
-        if (overlap > 0.f)
+        const float overlap = static_cast<float>(newItemPos.x() - _anchorMinX->pos().x());
+        if (overlap < 0.f)
         {
-            if (moveOpposite) deltaMinX -= overlap;
+            if (moveOpposite) deltaMinX += overlap;
             else
             {
-                deltaMaxX += overlap;
+                deltaMaxX -= overlap;
                 delta.setX(static_cast<qreal>(deltaMaxX));
             }
         }
@@ -586,13 +586,13 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
     else if (item == _anchorMaxY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
     {
         deltaMaxY = static_cast<float>(delta.y());
-        const float overlap = static_cast<float>(_anchorMinY->pos().y() - newItemPos.y());
-        if (overlap > 0.f)
+        const float overlap = static_cast<float>(newItemPos.y() - _anchorMinY->pos().y());
+        if (overlap < 0.f)
         {
-            if (moveOpposite) deltaMinY -= overlap;
+            if (moveOpposite) deltaMinY += overlap;
             else
             {
-                deltaMaxY += overlap;
+                deltaMaxY -= overlap;
                 delta.setY(static_cast<qreal>(deltaMaxY));
             }
         }
