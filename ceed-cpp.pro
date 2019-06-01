@@ -43,6 +43,7 @@ SOURCES += \
     src/ui/CEGUIDebugInfo.cpp \
     src/ui/GuideLine.cpp \
     src/ui/MainWindow.cpp \
+    src/ui/NumericValueItem.cpp \
     src/ui/ProjectManager.cpp \
     src/ui/CEGUIWidget.cpp \
     src/ui/CEGUIGraphicsView.cpp \
@@ -51,6 +52,7 @@ SOURCES += \
     src/ui/dialogs/ProjectSettingsDialog.cpp \
     src/ui/FileSystemBrowser.cpp \
     src/ui/layout/AnchorCornerHandle.cpp \
+    src/ui/layout/AnchorEdgeHandle.cpp \
     src/ui/widgets/FileLineEdit.cpp \
     src/ui/dialogs/LicenseDialog.cpp \
     src/ui/dialogs/AboutDialog.cpp \
@@ -133,6 +135,7 @@ HEADERS += \
     src/editors/looknfeel/LookNFeelVisualMode.h \
     src/ui/CEGUIDebugInfo.h \
     src/ui/GuideLine.h \
+    src/ui/NumericValueItem.h \
     src/ui/ProjectManager.h \
     src/ui/MainWindow.h \
     src/ui/CEGUIWidget.h \
@@ -152,6 +155,7 @@ HEADERS += \
     src/ui/dialogs/ProjectSettingsDialog.h \
     src/ui/FileSystemBrowser.h \
     src/ui/layout/AnchorCornerHandle.h \
+    src/ui/layout/AnchorEdgeHandle.h \
     src/ui/widgets/FileLineEdit.h \
     src/ui/dialogs/LicenseDialog.h \
     src/ui/dialogs/AboutDialog.h \

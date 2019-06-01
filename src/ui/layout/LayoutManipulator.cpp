@@ -74,6 +74,8 @@ QPointF LayoutManipulator::constrainMovePoint(QPointF value)
     return CEGUIManipulator::constrainMovePoint(value);
 }
 
+// qFuzzyCompare doesn't work with doubles when one of them may be 0.0
+// See docs: https://doc.qt.io/qt-5/qtglobal.html#qFuzzyCompare
 static inline bool compareReal(qreal a, qreal b) { return std::abs(a - b) < static_cast<qreal>(0.0001); }
 
 QRectF LayoutManipulator::constrainResizeRect(QRectF rect, QRectF oldRect)

@@ -7,8 +7,6 @@
 #include <CEGUI/GUIContext.h>
 #include <qdatetime.h>
 
-static inline bool compareFloat(float a, float b) { return std::fabs(a - b) < 0.0001f; }
-
 static void validateResolution(float& width, float& height)
 {
     if (width < 1.f || height < 1.f)
@@ -58,7 +56,7 @@ void CEGUIGraphicsScene::setCEGUIDisplaySize(float width, float height)
 {
     validateResolution(width, height);
 
-    if (compareFloat(contextWidth, width) && compareFloat(contextHeight, height)) return;
+    if (qFuzzyCompare(contextWidth, width) && qFuzzyCompare(contextHeight, height)) return;
 
     contextWidth = width;
     contextHeight = height;

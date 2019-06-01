@@ -11,8 +11,9 @@
 
 class LayoutVisualMode;
 class LayoutManipulator;
-class GuideLine;
+class AnchorEdgeHandle;
 class AnchorCornerHandle;
+class NumericValueItem;
 
 class LayoutScene : public CEGUIGraphicsScene
 {
@@ -62,14 +63,15 @@ protected:
     // Anchor editing items
     LayoutManipulator* _anchorTarget = nullptr;
     QGraphicsRectItem* _anchorParentRect = nullptr;
-    GuideLine* _anchorMinX = nullptr;
-    GuideLine* _anchorMinY = nullptr;
-    GuideLine* _anchorMaxX = nullptr;
-    GuideLine* _anchorMaxY = nullptr;
+    AnchorEdgeHandle* _anchorMinX = nullptr;
+    AnchorEdgeHandle* _anchorMinY = nullptr;
+    AnchorEdgeHandle* _anchorMaxX = nullptr;
+    AnchorEdgeHandle* _anchorMaxY = nullptr;
     AnchorCornerHandle* _anchorMinXMinY = nullptr;
     AnchorCornerHandle* _anchorMaxXMinY = nullptr;
     AnchorCornerHandle* _anchorMinXMaxY = nullptr;
     AnchorCornerHandle* _anchorMaxXMaxY = nullptr;
+    NumericValueItem* _currItemText = nullptr;
 
     bool _ignoreSelectionChanges = false;
 };

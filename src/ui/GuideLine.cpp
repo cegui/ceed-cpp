@@ -1,5 +1,4 @@
 #include "src/ui/GuideLine.h"
-#include "src/ui/layout/LayoutScene.h"
 #include <qgraphicsscene.h>
 #include <qcursor.h>
 
@@ -110,14 +109,9 @@ QVariant GuideLine::itemChange(GraphicsItemChange change, const QVariant& value)
         else
             delta.setY(0.0);
 
-        // FIXME: universal GuideLine must not know anything about anchors. To derived class?
-        static_cast<LayoutScene*>(scene())->anchorHandleMoved(this, delta, false);
+        onMoving(delta);
+
         return pos() + delta;
-    }
-    else if (change == ItemSelectedHasChanged)
-    {
-        // FIXME: universal GuideLine must not know anything about anchors. To derived class?
-        static_cast<LayoutScene*>(scene())->anchorHandleSelected(this);
     }
 
     return QGraphicsLineItem::itemChange(change, value);

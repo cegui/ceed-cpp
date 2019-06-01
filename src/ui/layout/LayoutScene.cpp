@@ -3,10 +3,11 @@
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
 #include "src/ui/layout/WidgetHierarchyItem.h"
 #include "src/ui/layout/AnchorCornerHandle.h"
+#include "src/ui/layout/AnchorEdgeHandle.h"
+#include "src/ui/NumericValueItem.h"
 #include "src/ui/ResizingHandle.h"
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutUndoCommands.h"
-#include "src/ui/GuideLine.h"
 #include <CEGUI/CoordConverter.h>
 #include <CEGUI/GUIContext.h>
 #include <CEGUI/widgets/SequentialLayoutContainer.h>
@@ -73,19 +74,19 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
         anchorGuidePen.setWidth(2);
         anchorGuidePen.setCosmetic(true);
 
-        _anchorMinX = new GuideLine(false, nullptr, anchorGuidePen, Qt::cyan);
+        _anchorMinX = new AnchorEdgeHandle(false, nullptr, anchorGuidePen, Qt::cyan);
         _anchorMinX->setVisible(false);
         addItem(_anchorMinX);
 
-        _anchorMinY = new GuideLine(true, nullptr, anchorGuidePen, Qt::cyan);
+        _anchorMinY = new AnchorEdgeHandle(true, nullptr, anchorGuidePen, Qt::cyan);
         _anchorMinY->setVisible(false);
         addItem(_anchorMinY);
 
-        _anchorMaxX = new GuideLine(false, nullptr, anchorGuidePen, Qt::cyan);
+        _anchorMaxX = new AnchorEdgeHandle(false, nullptr, anchorGuidePen, Qt::cyan);
         _anchorMaxX->setVisible(false);
         addItem(_anchorMaxX);
 
-        _anchorMaxY = new GuideLine(true, nullptr, anchorGuidePen, Qt::cyan);
+        _anchorMaxY = new AnchorEdgeHandle(true, nullptr, anchorGuidePen, Qt::cyan);
         _anchorMaxY->setVisible(false);
         addItem(_anchorMaxY);
 
@@ -520,7 +521,13 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
 //!!!FIXME: manipulator dragging is broken, strange limiting, no anchor items updating!
 // TODO: keep drawing red & green outlines when work with anchors
 // TODO: move both anchors if selected near the tip / guides overlap(?)
-// TODO: on mouse up create undo command, look at ResizingHandle
+// TODO: on mouse up create undo command, look at ResizingHandle. ONLY if actually changed!
+// TODO: integer mode?
+// TODO: Validator for text
+// TODO: esc or enter - remove input focus from text
+// TODO: Snap to siblings
+// TODO: Lock axis
+// TODO: presets in virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *event) override?
 void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool moveOpposite)
 {
     if (!_anchorTarget || !item) return;
@@ -685,6 +692,26 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
     _anchorTarget->updatePropertiesFromWidget({"Size", "Position", "Area"});
 
     updateAnchorItems(item);
+
+    //???or create in constructor & then show/hide?
+    if (!_currItemText)
+    {
+        _currItemText = new NumericValueItem();
+        _currItemText->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextEditable);
+        _currItemText->setFont(QFont("Arial", 12, QFont::Bold));
+        _currItemText->setDefaultTextColor(Qt::white);
+        addItem(_currItemText);
+
+        _currItemText->setTextTemplate("Value: %1%");
+        _currItemText->setPrecision(2);
+
+        //!!!on activated select all text! also change pretty message to value only!
+        //???derive and store format template + value? setValue(x), when focused render it, send
+        //message about its change, when not focused print template with value substituted?
+    }
+    //!!!more clever position calculation! choose side (left, right etc)
+    _currItemText->setPos(item->scenePos() + delta);
+    _currItemText->setValue(static_cast<qreal>(widget->getPosition().d_x.d_scale) * 100.0);
 }
 
 // Only one anchor handle may be selected at a time
