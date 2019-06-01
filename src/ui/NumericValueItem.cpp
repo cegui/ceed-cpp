@@ -7,6 +7,8 @@
 NumericValueItem::NumericValueItem(QGraphicsItem* parent)
     : QGraphicsTextItem(parent)
 {
+    setTextInteractionFlags(Qt::TextEditorInteraction);
+
     _inputValidator = new QDoubleValidator();
     _inputValidator->setDecimals(_precision < 0 ? 20 : _precision);
     _inputValidator->setNotation(QDoubleValidator::StandardNotation);
@@ -102,7 +104,7 @@ void NumericValueItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
     if (_ignoreNextMouseRelease)
     {
         _ignoreNextMouseRelease = false;
-        event->ignore();
+        event->accept();
         return;
     }
 

@@ -697,17 +697,11 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
     if (!_currItemText)
     {
         _currItemText = new NumericValueItem();
-        _currItemText->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextEditable);
         _currItemText->setFont(QFont("Arial", 12, QFont::Bold));
         _currItemText->setDefaultTextColor(Qt::white);
-        addItem(_currItemText);
-
         _currItemText->setTextTemplate("Value: %1%");
         _currItemText->setPrecision(2);
-
-        //!!!on activated select all text! also change pretty message to value only!
-        //???derive and store format template + value? setValue(x), when focused render it, send
-        //message about its change, when not focused print template with value substituted?
+        addItem(_currItemText);
     }
     //!!!more clever position calculation! choose side (left, right etc)
     _currItemText->setPos(item->scenePos() + delta);
