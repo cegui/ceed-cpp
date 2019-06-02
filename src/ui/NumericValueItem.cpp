@@ -1,22 +1,14 @@
 #include "src/ui/NumericValueItem.h"
 #include "qtextcursor.h"
-#include "qvalidator.h"
 #include "qevent.h"
 #include "qgraphicssceneevent.h"
+#include "qtextdocument.h"
+#include "qlocale.h"
 
 NumericValueItem::NumericValueItem(QGraphicsItem* parent)
     : QGraphicsTextItem(parent)
 {
     setTextInteractionFlags(Qt::TextEditorInteraction);
-
-    _inputValidator = new QDoubleValidator();
-    _inputValidator->setDecimals(_precision < 0 ? 20 : _precision);
-    _inputValidator->setNotation(QDoubleValidator::StandardNotation);
-}
-
-NumericValueItem::~NumericValueItem()
-{
-    delete _inputValidator;
 }
 
 void NumericValueItem::setValue(qreal value)
@@ -28,7 +20,6 @@ void NumericValueItem::setValue(qreal value)
 void NumericValueItem::setPrecision(int fracDigits)
 {
     _precision = fracDigits;
-    _inputValidator->setDecimals(_precision < 0 ? 20 : _precision);
     updateText();
 }
 
@@ -38,65 +29,131 @@ void NumericValueItem::setTextTemplate(const QString& tpl)
     updateText();
 }
 
+void NumericValueItem::onTextChanged()
+{
+    bool ok = false;
+    textToValue(&ok);
+    if (!ok)
+    {
+        disconnect(document(), &QTextDocument::contentsChange, this, &NumericValueItem::onTextChanged);
+        setPlainText(_lastValidText);
+        connect(document(), &QTextDocument::contentsChange, this, &NumericValueItem::onTextChanged);
+
+        QTextCursor cursor = textCursor();
+        cursor.setPosition(_lastValidCursorPos);
+        setTextCursor(cursor);
+    }
+    else
+    {
+        _lastValidText = toPlainText();
+        _lastValidCursorPos = textCursor().position();
+    }
+}
+
 void NumericValueItem::updateText()
 {
-    const QString tpl = _isFocused ? "%1" : _template;
-    setPlainText(tpl.arg(_value, 0, 'f', _isFocused ? -1 : _precision));
-}
-
-void NumericValueItem::focusInEvent(QFocusEvent* event)
-{
-    QGraphicsTextItem::focusInEvent(event);
-    _isFocused = true;
-    updateText();
-
-    // Select all text
-    auto cursor = textCursor();
-    cursor.select(QTextCursor::Document);
-    setTextCursor(cursor);
-    _ignoreNextMouseRelease = true;
-}
-
-void NumericValueItem::focusOutEvent(QFocusEvent* event)
-{
-    _isFocused = false;
-    updateText();
-    QGraphicsTextItem::focusOutEvent(event);
+    const bool focused = hasFocus();
+    const QString tpl = focused ? "%1" : _template;
+    setPlainText(tpl.arg(_value, 0, 'f', focused ? -1 : _precision));
 }
 
 // qFuzzyCompare doesn't work with doubles when one of them may be 0.0
 // See docs: https://doc.qt.io/qt-5/qtglobal.html#qFuzzyCompare
 static inline bool compareReal(qreal a, qreal b) { return std::abs(a - b) < static_cast<qreal>(0.0001); }
 
+void NumericValueItem::acceptNewValue()
+{
+    bool ok = false;
+    qreal newValue = textToValue(&ok);
+    if (ok && !compareReal(_value, newValue))
+    {
+        _value = newValue;
+        emit valueChanged(newValue);
+    }
+}
+
+// The most user-friendly string to qreal conversion
+qreal NumericValueItem::textToValue(bool* ok) const
+{
+    QLocale locale;
+    const QChar decimalPt = locale.decimalPoint();
+
+    QString text = toPlainText();
+
+    // Enforce single line
+    if (text.indexOf('\n') >= 0 || text.indexOf('\r') >= 0)
+    {
+        if (ok) *ok = false;
+        return 0.0;
+    }
+
+    text.replace('.', decimalPt);
+    text.replace(',', decimalPt);
+
+    return locale.toDouble(text, ok);
+}
+
+void NumericValueItem::focusInEvent(QFocusEvent* event)
+{
+    QGraphicsTextItem::focusInEvent(event);
+
+    updateText();
+
+    _lastValidText = toPlainText();
+    _lastValidCursorPos = textCursor().position();
+
+    _acceptValueOnFocusOut = true;
+
+    // Select all text
+    auto cursor = textCursor();
+    cursor.select(QTextCursor::Document);
+    setTextCursor(cursor);
+    _ignoreNextMouseRelease = true;
+
+    connect(document(), &QTextDocument::contentsChange, this, &NumericValueItem::onTextChanged);
+}
+
+void NumericValueItem::focusOutEvent(QFocusEvent* event)
+{
+    disconnect(document(), &QTextDocument::contentsChange, this, &NumericValueItem::onTextChanged);
+
+    QGraphicsTextItem::focusOutEvent(event);
+
+    if (_acceptValueOnFocusOut) acceptNewValue();
+
+    updateText();
+}
+
 void NumericValueItem::keyPressEvent(QKeyEvent* event)
 {
     switch (event->key())
     {
         case Qt::Key_Escape:
-        {
-            clearFocus();
-            event->accept();
-            return;
-        }
         case Qt::Key_Enter:
         {
-            bool ok = false;
-            qreal newValue = toPlainText().toDouble(&ok);
-            if (ok && !compareReal(_value, newValue))
-            {
-                _value = newValue;
-                emit valueChanged(newValue);
-            }
-
+            event->accept();
+            _acceptValueOnFocusOut = (event->key() == Qt::Key_Enter);
             clearFocus();
+            return;
+        }
+    }
+
+    QGraphicsTextItem::keyPressEvent(event);
+}
+
+void NumericValueItem::keyReleaseEvent(QKeyEvent* event)
+{
+    switch (event->key())
+    {
+        case Qt::Key_Escape:
+        case Qt::Key_Enter:
+        {
             event->accept();
             return;
         }
     }
 
-    //_inputValidator->validate(), fixup()?
-
-    QGraphicsTextItem::keyPressEvent(event);
+    QGraphicsTextItem::keyReleaseEvent(event);
 }
 
 void NumericValueItem::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)

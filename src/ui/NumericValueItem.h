@@ -5,8 +5,9 @@
 
 // Graphics scene item which represents a numeric value with optional editing capability.
 // When not edited, value can be accompanied by some additional text information.
-
-class QDoubleValidator;
+// Enter is used to accept edited value, Esc to discard. Sometimes Enter breaks due to some
+// internal Qt problem. Just click anywhere outside an item for it to lose focus, and value
+// will be accepted.
 
 class NumericValueItem : public QGraphicsTextItem
 {
@@ -15,7 +16,6 @@ class NumericValueItem : public QGraphicsTextItem
 public:
 
     NumericValueItem(QGraphicsItem* parent = nullptr);
-    virtual ~NumericValueItem() override;
 
     void setValue(qreal value);
     void setPrecision(int fracDigits);
@@ -25,21 +25,29 @@ Q_SIGNALS:
 
     void valueChanged(qreal newValue);
 
+protected slots:
+
+    void onTextChanged();
+
 protected:
 
     void updateText();
+    void acceptNewValue();
+    qreal textToValue(bool* ok = nullptr) const;
 
     virtual void focusInEvent(QFocusEvent* event) override;
     virtual void focusOutEvent(QFocusEvent* event) override;
     virtual void keyPressEvent(QKeyEvent* event) override;
+    virtual void keyReleaseEvent(QKeyEvent* event) override;
     virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override;
 
-    QDoubleValidator* _inputValidator = nullptr;
+    QString _lastValidText;
+    int _lastValidCursorPos = 0;
     qreal _value = 0.0;
     int _precision = -1;
     QString _template = "%1";
-    bool _isFocused = false;
     bool _ignoreNextMouseRelease = false;
+    bool _acceptValueOnFocusOut = true;
 };
 
 #endif // NUMERICVALUEITEM_H
