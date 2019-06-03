@@ -29,6 +29,17 @@ void NumericValueItem::setTextTemplate(const QString& tpl)
     updateText();
 }
 
+void NumericValueItem::setHorizontalAlignment(Qt::Alignment alignment)
+{
+    QTextBlockFormat format;
+    format.setAlignment(alignment);
+    QTextCursor cursor = textCursor();
+    cursor.select(QTextCursor::Document);
+    cursor.mergeBlockFormat(format);
+    cursor.clearSelection();
+    setTextCursor(cursor);
+}
+
 void NumericValueItem::onTextChanged()
 {
     bool ok = false;

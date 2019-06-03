@@ -20,6 +20,7 @@ public:
     void setValue(qreal value);
     void setPrecision(int fracDigits);
     void setTextTemplate(const QString& tpl);
+    void setHorizontalAlignment(Qt::Alignment alignment);
 
 Q_SIGNALS:
 

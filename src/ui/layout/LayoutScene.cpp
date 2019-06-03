@@ -43,6 +43,9 @@ void LayoutScene::setCEGUIDisplaySize(float width, float height)
 
 void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
 {
+    if (_anchorTextX) disconnect(_anchorTextX, &NumericValueItem::valueChanged, nullptr, nullptr);
+    if (_anchorTextY) disconnect(_anchorTextY, &NumericValueItem::valueChanged, nullptr, nullptr);
+
     clear();
 
     rootManipulator = manipulator;
@@ -56,60 +59,7 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
         rootManipulator->updateFromWidget(true);
         addItem(rootManipulator);
 
-        // Setup anchor items
-
-        QPen anchorRectPen(Qt::PenStyle::SolidLine);
-        anchorRectPen.setColor(Qt::magenta);
-        anchorRectPen.setWidth(2);
-        anchorRectPen.setCosmetic(true);
-
-        _anchorParentRect = new QGraphicsRectItem();
-        _anchorParentRect->setVisible(false);
-        _anchorParentRect->setPen(anchorRectPen);
-        addItem(_anchorParentRect);
-
-        QPen anchorGuidePen(Qt::PenStyle::CustomDashLine);
-        anchorGuidePen.setDashPattern({ 8.0, 4.0 });
-        anchorGuidePen.setColor(Qt::white);
-        anchorGuidePen.setWidth(2);
-        anchorGuidePen.setCosmetic(true);
-
-        _anchorMinX = new AnchorEdgeHandle(false, nullptr, anchorGuidePen, Qt::cyan);
-        _anchorMinX->setVisible(false);
-        addItem(_anchorMinX);
-
-        _anchorMinY = new AnchorEdgeHandle(true, nullptr, anchorGuidePen, Qt::cyan);
-        _anchorMinY->setVisible(false);
-        addItem(_anchorMinY);
-
-        _anchorMaxX = new AnchorEdgeHandle(false, nullptr, anchorGuidePen, Qt::cyan);
-        _anchorMaxX->setVisible(false);
-        addItem(_anchorMaxX);
-
-        _anchorMaxY = new AnchorEdgeHandle(true, nullptr, anchorGuidePen, Qt::cyan);
-        _anchorMaxY->setVisible(false);
-        addItem(_anchorMaxY);
-
-        QPen anchorCornerPen(Qt::PenStyle::SolidLine);
-        anchorCornerPen.setColor(Qt::white);
-        anchorCornerPen.setWidth(1);
-        anchorCornerPen.setCosmetic(true);
-
-        _anchorMinXMinY = new AnchorCornerHandle(true, true, nullptr, 16.0, anchorCornerPen, Qt::cyan);
-        _anchorMinXMinY->setVisible(false);
-        addItem(_anchorMinXMinY);
-
-        _anchorMaxXMinY = new AnchorCornerHandle(false, true, nullptr, 16.0, anchorCornerPen, Qt::cyan);
-        _anchorMaxXMinY->setVisible(false);
-        addItem(_anchorMaxXMinY);
-
-        _anchorMinXMaxY = new AnchorCornerHandle(true, false, nullptr, 16.0, anchorCornerPen, Qt::cyan);
-        _anchorMinXMaxY->setVisible(false);
-        addItem(_anchorMinXMaxY);
-
-        _anchorMaxXMaxY = new AnchorCornerHandle(false, false, nullptr, 16.0, anchorCornerPen, Qt::cyan);
-        _anchorMaxXMaxY->setVisible(false);
-        addItem(_anchorMaxXMaxY);
+        createAnchorItems();
     }
     else
     {
@@ -124,6 +74,8 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
         _anchorMaxXMinY = nullptr;
         _anchorMinXMaxY = nullptr;
         _anchorMaxXMaxY = nullptr;
+        _anchorTextX = nullptr;
+        _anchorTextY = nullptr;
     }
 }
 
@@ -421,6 +373,9 @@ void LayoutScene::slot_selectionChanged()
         _anchorTarget = *selectedWidgets.begin();
     }
 
+    _anchorTextX->setVisible(false);
+    _anchorTextY->setVisible(false);
+
     updateAnchorItems();
 
     // Update property view for our selection
@@ -465,6 +420,84 @@ void LayoutScene::slot_selectionChanged()
     }
 }
 
+void LayoutScene::createAnchorItems()
+{
+    QPen anchorRectPen(Qt::PenStyle::SolidLine);
+    anchorRectPen.setColor(Qt::magenta);
+    anchorRectPen.setWidth(2);
+    anchorRectPen.setCosmetic(true);
+
+    _anchorParentRect = new QGraphicsRectItem();
+    _anchorParentRect->setVisible(false);
+    _anchorParentRect->setPen(anchorRectPen);
+    addItem(_anchorParentRect);
+
+    QPen anchorGuidePen(Qt::PenStyle::CustomDashLine);
+    anchorGuidePen.setDashPattern({ 8.0, 4.0 });
+    anchorGuidePen.setColor(Qt::white);
+    anchorGuidePen.setWidth(2);
+    anchorGuidePen.setCosmetic(true);
+
+    _anchorMinX = new AnchorEdgeHandle(false, nullptr, anchorGuidePen, Qt::cyan);
+    _anchorMinX->setVisible(false);
+    addItem(_anchorMinX);
+
+    _anchorMinY = new AnchorEdgeHandle(true, nullptr, anchorGuidePen, Qt::cyan);
+    _anchorMinY->setVisible(false);
+    addItem(_anchorMinY);
+
+    _anchorMaxX = new AnchorEdgeHandle(false, nullptr, anchorGuidePen, Qt::cyan);
+    _anchorMaxX->setVisible(false);
+    addItem(_anchorMaxX);
+
+    _anchorMaxY = new AnchorEdgeHandle(true, nullptr, anchorGuidePen, Qt::cyan);
+    _anchorMaxY->setVisible(false);
+    addItem(_anchorMaxY);
+
+    QPen anchorCornerPen(Qt::PenStyle::SolidLine);
+    anchorCornerPen.setColor(Qt::white);
+    anchorCornerPen.setWidth(1);
+    anchorCornerPen.setCosmetic(true);
+
+    _anchorMinXMinY = new AnchorCornerHandle(true, true, nullptr, 16.0, anchorCornerPen, Qt::cyan);
+    _anchorMinXMinY->setVisible(false);
+    addItem(_anchorMinXMinY);
+
+    _anchorMaxXMinY = new AnchorCornerHandle(false, true, nullptr, 16.0, anchorCornerPen, Qt::cyan);
+    _anchorMaxXMinY->setVisible(false);
+    addItem(_anchorMaxXMinY);
+
+    _anchorMinXMaxY = new AnchorCornerHandle(true, false, nullptr, 16.0, anchorCornerPen, Qt::cyan);
+    _anchorMinXMaxY->setVisible(false);
+    addItem(_anchorMinXMaxY);
+
+    _anchorMaxXMaxY = new AnchorCornerHandle(false, false, nullptr, 16.0, anchorCornerPen, Qt::cyan);
+    _anchorMaxXMaxY->setVisible(false);
+    addItem(_anchorMaxXMaxY);
+
+    QFont anchorFont("Arial", 10, QFont::Bold);
+
+    _anchorTextX = new NumericValueItem();
+    _anchorTextX->setFont(anchorFont);
+    _anchorTextX->setDefaultTextColor(Qt::white);
+    _anchorTextX->setToolTip("Click to edit");
+    _anchorTextX->setTextTemplate("Value: %1%");
+    _anchorTextX->setHorizontalAlignment(Qt::AlignCenter);
+    _anchorTextX->setPrecision(2);
+    _anchorTextX->setVisible(false);
+    addItem(_anchorTextX);
+
+    _anchorTextY = new NumericValueItem();
+    _anchorTextY->setFont(anchorFont);
+    _anchorTextY->setDefaultTextColor(Qt::white);
+    _anchorTextY->setToolTip("Click to edit");
+    _anchorTextY->setTextTemplate("Value: %1%");
+    _anchorTextY->setHorizontalAlignment(Qt::AlignCenter);
+    _anchorTextY->setPrecision(2);
+    _anchorTextY->setVisible(false);
+    addItem(_anchorTextY);
+}
+
 void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
 {
     const bool showAnchors = (_anchorTarget != nullptr);
@@ -484,6 +517,9 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
 
     if (!showAnchors || !_anchorParentRect)
     {
+        _anchorTextX->setVisible(false);
+        _anchorTextY->setVisible(false);
+
         _anchorMinX->setSelected(false);
         _anchorMinY->setSelected(false);
         _anchorMaxX->setSelected(false);
@@ -492,6 +528,9 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
         _anchorMaxXMinY->setSelected(false);
         _anchorMinXMaxY->setSelected(false);
         _anchorMaxXMaxY->setSelected(false);
+        _anchorTextX->setSelected(false);
+        _anchorTextY->setSelected(false);
+
         return;
     }
 
@@ -517,14 +556,47 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
     if (movedItem != _anchorMaxXMaxY) _anchorMaxXMaxY->setPosSilent(maxX, maxY);
 }
 
+// Updates position and value of anchor texts corresponding to the anchor item passed
+void LayoutScene::updateAnchorValueItems(QGraphicsItem* item)
+{
+    if (!_anchorTarget || !item) return;
+
+    const auto widgetCenter = _anchorTarget->sceneBoundingRect().center();
+    const auto& ceguiPos = _anchorTarget->getWidget()->getPosition();
+    const auto& ceguiSize = _anchorTarget->getWidget()->getSize();
+
+    if (item == _anchorMinX || item == _anchorMinXMinY || item == _anchorMinXMaxY)
+    {
+        _anchorTextX->setValue(static_cast<qreal>(ceguiPos.d_x.d_scale) * 100.0);
+        _anchorTextX->setX(_anchorMinX->sceneBoundingRect().left() - _anchorTextX->sceneBoundingRect().width());// - 10);
+        _anchorTextX->setY(widgetCenter.y() - _anchorTextX->sceneBoundingRect().height() / 2.0);
+    }
+    else if (item == _anchorMaxX || item == _anchorMaxXMinY || item == _anchorMaxXMaxY)
+    {
+        _anchorTextX->setValue(static_cast<qreal>(ceguiPos.d_x.d_scale + ceguiSize.d_width.d_scale) * 100.0);
+        _anchorTextX->setX(_anchorMaxX->sceneBoundingRect().right());// + 10);
+        _anchorTextX->setY(widgetCenter.y() - _anchorTextX->sceneBoundingRect().height() / 2.0);
+    }
+
+    if (item == _anchorMinY || item == _anchorMinXMinY || item == _anchorMaxXMinY)
+    {
+        _anchorTextY->setValue(static_cast<qreal>(ceguiPos.d_y.d_scale) * 100.0);
+        _anchorTextY->setX(widgetCenter.x() - _anchorTextY->sceneBoundingRect().width() / 2.0);
+        _anchorTextY->setY(_anchorMinY->sceneBoundingRect().top() - _anchorTextY->sceneBoundingRect().height()); // - 10
+    }
+    else if (item == _anchorMaxY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
+    {
+        _anchorTextY->setValue(static_cast<qreal>(ceguiPos.d_y.d_scale + ceguiSize.d_height.d_scale) * 100.0);
+        _anchorTextY->setX(widgetCenter.x() - _anchorTextY->sceneBoundingRect().width() / 2.0);
+        _anchorTextY->setY(_anchorMaxY->sceneBoundingRect().bottom()); // + 10
+    }
+}
+
 //!!!FIXME: working with deltas may lead to error accumulation!
 //!!!FIXME: manipulator dragging is broken, strange limiting, no anchor items updating!
-// TODO: keep drawing red & green outlines when work with anchors
-// TODO: move both anchors if selected near the tip / guides overlap(?)
 // TODO: on mouse up create undo command, look at ResizingHandle. ONLY if actually changed!
+// TODO: on external changes update anchor items
 // TODO: integer mode?
-// TODO: Validator for text
-// TODO: esc or enter - remove input focus from text
 // TODO: Snap to siblings
 // TODO: Lock axis
 // TODO: presets in virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *event) override?
@@ -538,14 +610,21 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
     auto baseSize = _anchorTarget->getBaseSize();
     if (baseSize.d_width <= 0.f || baseSize.d_height <= 0.f) return;
 
+    // Snap to siblings (vector of siblings, exclude self, pixel distance)
+
+    // if secondary coord is in range of edge and primary is near enough then snap
+    // delta.rx()
+    // delta.ry()
+
+    // Calculate actual deltas for anchors.
+    // Do limiting on a pixel level, it is more convenient.
+
     float deltaMinX = 0.f;
     float deltaMinY = 0.f;
     float deltaMaxX = 0.f;
     float deltaMaxY = 0.f;
 
     const QPointF newItemPos = item->pos() + delta;
-
-    // Do limiting on a pixel level, it is more convenient
 
     if (item == _anchorMinX || item == _anchorMinXMinY || item == _anchorMinXMaxY)
     {
@@ -605,6 +684,8 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
         }
     }
 
+    //!!!if integer mode round all 4 deltas!
+
     // Perform actual changes
 
     CEGUI::UVector2 deltaPos;
@@ -646,7 +727,7 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
 
     // TODO: common code?
     /*
-    deltas = current - initial, NOT current - previous. It prevents error accumulation and makes rounding work correctly!
+    deltas = (current - initial), NOT (current - previous). It prevents error accumulation and makes rounding work correctly!
     if (useAbsoluteCoordsForResize()) // _visualMode.isAbsoluteMode()
     {
         if (useIntegersForAbsoluteResize()) // _visualMode.isAbsoluteIntegerMode()
@@ -692,25 +773,12 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
     _anchorTarget->updatePropertiesFromWidget({"Size", "Position", "Area"});
 
     updateAnchorItems(item);
-
-    //???or create in constructor & then show/hide?
-    if (!_currItemText)
-    {
-        _currItemText = new NumericValueItem();
-        _currItemText->setFont(QFont("Arial", 12, QFont::Bold));
-        _currItemText->setDefaultTextColor(Qt::white);
-        _currItemText->setTextTemplate("Value: %1%");
-        _currItemText->setPrecision(2);
-        addItem(_currItemText);
-    }
-    //!!!more clever position calculation! choose side (left, right etc)
-    _currItemText->setPos(item->scenePos() + delta);
-    _currItemText->setValue(static_cast<qreal>(widget->getPosition().d_x.d_scale) * 100.0);
+    updateAnchorValueItems(item);
 }
 
-// Only one anchor handle may be selected at a time
 void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
 {
+    // Only one anchor handle may be selected at a time
     if (item != _anchorMinX) _anchorMinX->setSelected(false);
     if (item != _anchorMinY) _anchorMinY->setSelected(false);
     if (item != _anchorMaxX) _anchorMaxX->setSelected(false);
@@ -719,6 +787,66 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
     if (item != _anchorMaxXMinY) _anchorMaxXMinY->setSelected(false);
     if (item != _anchorMinXMaxY) _anchorMinXMaxY->setSelected(false);
     if (item != _anchorMaxXMaxY) _anchorMaxXMaxY->setSelected(false);
+
+    // Show editable values for the handle selected
+
+    disconnect(_anchorTextX, &NumericValueItem::valueChanged, nullptr, nullptr);
+    disconnect(_anchorTextY, &NumericValueItem::valueChanged, nullptr, nullptr);
+
+    if (!_anchorTarget)
+    {
+        _anchorTextX->setVisible(false);
+        _anchorTextY->setVisible(false);
+        return;
+    }
+
+    if (item == _anchorMinX || item == _anchorMinXMinY || item == _anchorMinXMaxY)
+    {
+        _anchorTextX->setVisible(true);
+        _anchorTextX->setHorizontalAlignment(Qt::AlignRight);
+        _anchorTextX->setTextTemplate("%1%");
+        connect(_anchorTextX, &NumericValueItem::valueChanged, [this, item](qreal newValue)
+        {
+            // change min X
+            updateAnchorValueItems(item);
+        });
+     }
+    else if (item == _anchorMaxX || item == _anchorMaxXMinY || item == _anchorMaxXMaxY)
+    {
+        _anchorTextX->setVisible(true);
+        _anchorTextX->setHorizontalAlignment(Qt::AlignLeft);
+        _anchorTextX->setTextTemplate("%1%");
+        connect(_anchorTextX, &NumericValueItem::valueChanged, [this, item](qreal newValue)
+        {
+            // change max X
+            updateAnchorValueItems(item);
+        });
+    }
+    else _anchorTextX->setVisible(false);
+
+    if (item == _anchorMinY || item == _anchorMinXMinY || item == _anchorMaxXMinY)
+    {
+        _anchorTextY->setVisible(true);
+        _anchorTextY->setTextTemplate("%1%");
+        connect(_anchorTextY, &NumericValueItem::valueChanged, [this, item](qreal newValue)
+        {
+            // change min Y
+            updateAnchorValueItems(item);
+        });
+    }
+    else if (item == _anchorMaxY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
+    {
+        _anchorTextY->setVisible(true);
+        _anchorTextY->setTextTemplate("%1%");
+        connect(_anchorTextY, &NumericValueItem::valueChanged, [this, item](qreal newValue)
+        {
+            // change max Y
+            updateAnchorValueItems(item);
+        });
+    }
+    else _anchorTextY->setVisible(false);
+
+    updateAnchorValueItems(item);
 }
 
 void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)

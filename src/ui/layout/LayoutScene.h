@@ -48,7 +48,9 @@ public slots:
 
 protected:
 
+    void createAnchorItems();
     void updateAnchorItems(QGraphicsItem* movedItem = nullptr);
+    void updateAnchorValueItems(QGraphicsItem* item);
 
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;
@@ -71,7 +73,8 @@ protected:
     AnchorCornerHandle* _anchorMaxXMinY = nullptr;
     AnchorCornerHandle* _anchorMinXMaxY = nullptr;
     AnchorCornerHandle* _anchorMaxXMaxY = nullptr;
-    NumericValueItem* _currItemText = nullptr;
+    NumericValueItem* _anchorTextX = nullptr;
+    NumericValueItem* _anchorTextY = nullptr;
 
     bool _ignoreSelectionChanges = false;
 };
