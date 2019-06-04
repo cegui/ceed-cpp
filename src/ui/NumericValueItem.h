@@ -36,6 +36,7 @@ protected:
     void acceptNewValue();
     qreal textToValue(bool* ok = nullptr) const;
 
+    virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
     virtual void focusInEvent(QFocusEvent* event) override;
     virtual void focusOutEvent(QFocusEvent* event) override;
     virtual void keyPressEvent(QKeyEvent* event) override;

@@ -557,34 +557,34 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
 }
 
 // Updates position and value of anchor texts corresponding to the anchor item passed
-void LayoutScene::updateAnchorValueItems(QGraphicsItem* item)
+void LayoutScene::updateAnchorValueItems(bool minX, bool maxX, bool minY, bool maxY)
 {
-    if (!_anchorTarget || !item) return;
+    if (!_anchorTarget) return;
 
     const auto widgetCenter = _anchorTarget->sceneBoundingRect().center();
     const auto& ceguiPos = _anchorTarget->getWidget()->getPosition();
     const auto& ceguiSize = _anchorTarget->getWidget()->getSize();
 
-    if (item == _anchorMinX || item == _anchorMinXMinY || item == _anchorMinXMaxY)
+    if (minX)
     {
         _anchorTextX->setValue(static_cast<qreal>(ceguiPos.d_x.d_scale) * 100.0);
         _anchorTextX->setX(_anchorMinX->sceneBoundingRect().left() - _anchorTextX->sceneBoundingRect().width());// - 10);
         _anchorTextX->setY(widgetCenter.y() - _anchorTextX->sceneBoundingRect().height() / 2.0);
     }
-    else if (item == _anchorMaxX || item == _anchorMaxXMinY || item == _anchorMaxXMaxY)
+    else if (maxX)
     {
         _anchorTextX->setValue(static_cast<qreal>(ceguiPos.d_x.d_scale + ceguiSize.d_width.d_scale) * 100.0);
         _anchorTextX->setX(_anchorMaxX->sceneBoundingRect().right());// + 10);
         _anchorTextX->setY(widgetCenter.y() - _anchorTextX->sceneBoundingRect().height() / 2.0);
     }
 
-    if (item == _anchorMinY || item == _anchorMinXMinY || item == _anchorMaxXMinY)
+    if (minY)
     {
         _anchorTextY->setValue(static_cast<qreal>(ceguiPos.d_y.d_scale) * 100.0);
         _anchorTextY->setX(widgetCenter.x() - _anchorTextY->sceneBoundingRect().width() / 2.0);
         _anchorTextY->setY(_anchorMinY->sceneBoundingRect().top() - _anchorTextY->sceneBoundingRect().height()); // - 10
     }
-    else if (item == _anchorMaxY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
+    else if (maxY)
     {
         _anchorTextY->setValue(static_cast<qreal>(ceguiPos.d_y.d_scale + ceguiSize.d_height.d_scale) * 100.0);
         _anchorTextY->setX(widgetCenter.x() - _anchorTextY->sceneBoundingRect().width() / 2.0);
@@ -694,8 +694,10 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
 
     const QPointF newItemPos = item->pos() + delta;
 
+    bool minX = false, maxX = false, minY = false, maxY = false;
     if (item == _anchorMinX || item == _anchorMinXMinY || item == _anchorMinXMaxY)
     {
+        minX = true;
         deltaMinX = static_cast<float>(delta.x());
         const float overlap = static_cast<float>(newItemPos.x() - _anchorMaxX->pos().x());
         if (overlap > 0.f)
@@ -710,6 +712,7 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
     }
     else if (item == _anchorMaxX || item == _anchorMaxXMinY || item == _anchorMaxXMaxY)
     {
+        maxX = true;
         deltaMaxX = static_cast<float>(delta.x());
         const float overlap = static_cast<float>(newItemPos.x() - _anchorMinX->pos().x());
         if (overlap < 0.f)
@@ -725,6 +728,7 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
 
     if (item == _anchorMinY || item == _anchorMinXMinY || item == _anchorMaxXMinY)
     {
+        minY = true;
         deltaMinY = static_cast<float>(delta.y());
         const float overlap = static_cast<float>(newItemPos.y() - _anchorMaxY->pos().y());
         if (overlap > 0.f)
@@ -739,6 +743,7 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
     }
     else if (item == _anchorMaxY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
     {
+        maxY = true;
         deltaMaxY = static_cast<float>(delta.y());
         const float overlap = static_cast<float>(newItemPos.y() - _anchorMinY->pos().y());
         if (overlap < 0.f)
@@ -767,7 +772,7 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
     applyAnchorDeltas(deltaMinX, deltaMaxX, deltaMinY, deltaMaxY, preserveEffectiveSize);
 
     updateAnchorItems(item);
-    updateAnchorValueItems(item);
+    updateAnchorValueItems(minX, maxX, minY, maxY);
 }
 
 void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
@@ -794,12 +799,14 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
         return;
     }
 
+    bool minX = false, maxX = false, minY = false, maxY = false;
     if (item == _anchorMinX || item == _anchorMinXMinY || item == _anchorMinXMaxY)
     {
+        minX = true;
         _anchorTextX->setVisible(true);
         _anchorTextX->setHorizontalAlignment(Qt::AlignRight);
         _anchorTextX->setTextTemplate("%1%");
-        connect(_anchorTextX, &NumericValueItem::valueChanged, [this, item](qreal newValue)
+        connect(_anchorTextX, &NumericValueItem::valueChanged, [this](qreal newValue)
         {
             const float minX = _anchorTarget->getWidget()->getPosition().d_x.d_scale;
             const float maxX = minX + _anchorTarget->getWidget()->getSize().d_width.d_scale;
@@ -807,45 +814,48 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
             const float deltaMaxX = std::min(0.f, minX + deltaMinX - maxX);
             applyAnchorDeltas(deltaMinX, deltaMaxX, 0.f, 0.f, false);
             updateAnchorItems();
-            updateAnchorValueItems(item);
+            updateAnchorValueItems(true, false, false, false);
         });
      }
     else if (item == _anchorMaxX || item == _anchorMaxXMinY || item == _anchorMaxXMaxY)
     {
+        maxX = true;
         _anchorTextX->setVisible(true);
         _anchorTextX->setHorizontalAlignment(Qt::AlignLeft);
         _anchorTextX->setTextTemplate("%1%");
-        connect(_anchorTextX, &NumericValueItem::valueChanged, [this, item](qreal newValue)
+        connect(_anchorTextX, &NumericValueItem::valueChanged, [this](qreal newValue)
         {
             // change max X
-            updateAnchorValueItems(item);
+            //updateAnchorValueItems(item);
         });
     }
     else _anchorTextX->setVisible(false);
 
     if (item == _anchorMinY || item == _anchorMinXMinY || item == _anchorMaxXMinY)
     {
+        minY = true;
         _anchorTextY->setVisible(true);
         _anchorTextY->setTextTemplate("%1%");
-        connect(_anchorTextY, &NumericValueItem::valueChanged, [this, item](qreal newValue)
+        connect(_anchorTextY, &NumericValueItem::valueChanged, [this](qreal newValue)
         {
             // change min Y
-            updateAnchorValueItems(item);
+            //updateAnchorValueItems(item);
         });
     }
     else if (item == _anchorMaxY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
     {
+        maxY = true;
         _anchorTextY->setVisible(true);
         _anchorTextY->setTextTemplate("%1%");
-        connect(_anchorTextY, &NumericValueItem::valueChanged, [this, item](qreal newValue)
+        connect(_anchorTextY, &NumericValueItem::valueChanged, [this](qreal newValue)
         {
             // change max Y
-            updateAnchorValueItems(item);
+            //updateAnchorValueItems(item);
         });
     }
     else _anchorTextY->setVisible(false);
 
-    updateAnchorValueItems(item);
+    updateAnchorValueItems(minX, maxX, minY, maxY);
 }
 
 void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)

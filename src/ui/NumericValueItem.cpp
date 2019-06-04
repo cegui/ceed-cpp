@@ -4,11 +4,14 @@
 #include "qgraphicssceneevent.h"
 #include "qtextdocument.h"
 #include "qlocale.h"
+#include "qpainter.h"
+#include "qcursor.h"
 
 NumericValueItem::NumericValueItem(QGraphicsItem* parent)
     : QGraphicsTextItem(parent)
 {
     setTextInteractionFlags(Qt::TextEditorInteraction);
+    setCursor(Qt::IBeamCursor);
 }
 
 void NumericValueItem::setValue(qreal value)
@@ -102,6 +105,24 @@ qreal NumericValueItem::textToValue(bool* ok) const
     text.replace(',', decimalPt);
 
     return locale.toDouble(text, ok);
+}
+
+// FIXME: Qt 5.12.3 crashes in unmodified QGraphicsTextItem::paint when rendering to OpenGL in edit mode.
+void NumericValueItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
+{
+    if (!painter) return;
+
+    if (hasFocus())
+    {
+        QImage image(boundingRect().size().toSize(), QImage::Format_ARGB32);
+        image.fill(QColor(255, 255, 255, 0));
+        QPainter imagePainter(&image);
+        QGraphicsTextItem::paint(&imagePainter, option, widget);
+        imagePainter.end();
+
+        painter->drawImage(boundingRect(), image, image.rect());
+    }
+    else QGraphicsTextItem::paint(painter, option, widget);
 }
 
 void NumericValueItem::focusInEvent(QFocusEvent* event)
