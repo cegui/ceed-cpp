@@ -671,6 +671,7 @@ void LayoutScene::applyAnchorDeltas(float deltaMinX, float deltaMaxX, float delt
 // TODO: Snap to siblings
 // TODO: Lock axis
 // TODO: presets in virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *event) override?
+// TODO: create undo command when edited through numeric value items!
 void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool moveOpposite)
 {
     if (!_anchorTarget || !item) return;
@@ -811,8 +812,9 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
             const float minX = _anchorTarget->getWidget()->getPosition().d_x.d_scale;
             const float maxX = minX + _anchorTarget->getWidget()->getSize().d_width.d_scale;
             const float deltaMinX = static_cast<float>(newValue) / 100.f - minX;
-            const float deltaMaxX = std::min(0.f, minX + deltaMinX - maxX);
-            applyAnchorDeltas(deltaMinX, deltaMaxX, 0.f, 0.f, false);
+            const float deltaMaxX = std::max(0.f, (minX + deltaMinX) - maxX);
+            const float baseWidth = _anchorTarget->getBaseSize().d_width;
+            applyAnchorDeltas(deltaMinX * baseWidth, deltaMaxX * baseWidth, 0.f, 0.f, false);
             updateAnchorItems();
             updateAnchorValueItems(true, false, false, false);
         });
@@ -825,8 +827,14 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
         _anchorTextX->setTextTemplate("%1%");
         connect(_anchorTextX, &NumericValueItem::valueChanged, [this](qreal newValue)
         {
-            // change max X
-            //updateAnchorValueItems(item);
+            const float minX = _anchorTarget->getWidget()->getPosition().d_x.d_scale;
+            const float maxX = minX + _anchorTarget->getWidget()->getSize().d_width.d_scale;
+            const float deltaMaxX = static_cast<float>(newValue) / 100.f - maxX;
+            const float deltaMinX = std::min(0.f, (maxX + deltaMaxX) - minX);
+            const float baseWidth = _anchorTarget->getBaseSize().d_width;
+            applyAnchorDeltas(deltaMinX * baseWidth, deltaMaxX * baseWidth, 0.f, 0.f, false);
+            updateAnchorItems();
+            updateAnchorValueItems(false, true, false, false);
         });
     }
     else _anchorTextX->setVisible(false);
@@ -838,8 +846,14 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
         _anchorTextY->setTextTemplate("%1%");
         connect(_anchorTextY, &NumericValueItem::valueChanged, [this](qreal newValue)
         {
-            // change min Y
-            //updateAnchorValueItems(item);
+            const float minY = _anchorTarget->getWidget()->getPosition().d_y.d_scale;
+            const float maxY = minY + _anchorTarget->getWidget()->getSize().d_height.d_scale;
+            const float deltaMinY = static_cast<float>(newValue) / 100.f - minY;
+            const float deltaMaxY = std::max(0.f, (minY + deltaMinY) - maxY);
+            const float baseHeight = _anchorTarget->getBaseSize().d_height;
+            applyAnchorDeltas(0.f, 0.f, deltaMinY * baseHeight, deltaMaxY * baseHeight, false);
+            updateAnchorItems();
+            updateAnchorValueItems(false, false, true, false);
         });
     }
     else if (item == _anchorMaxY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
@@ -849,8 +863,14 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
         _anchorTextY->setTextTemplate("%1%");
         connect(_anchorTextY, &NumericValueItem::valueChanged, [this](qreal newValue)
         {
-            // change max Y
-            //updateAnchorValueItems(item);
+            const float minY = _anchorTarget->getWidget()->getPosition().d_y.d_scale;
+            const float maxY = minY + _anchorTarget->getWidget()->getSize().d_height.d_scale;
+            const float deltaMaxY = static_cast<float>(newValue) / 100.f - maxY;
+            const float deltaMinY = std::min(0.f, (maxY + deltaMaxY) - minY);
+            const float baseHeight = _anchorTarget->getBaseSize().d_height;
+            applyAnchorDeltas(0.f, 0.f, deltaMinY * baseHeight, deltaMaxY * baseHeight, false);
+            updateAnchorItems();
+            updateAnchorValueItems(false, false, false, true);
         });
     }
     else _anchorTextY->setVisible(false);
