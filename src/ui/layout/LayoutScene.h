@@ -51,6 +51,7 @@ protected:
     void createAnchorItems();
     void updateAnchorItems(QGraphicsItem* movedItem = nullptr);
     void updateAnchorValueItems(QGraphicsItem* item);
+    void applyAnchorDeltas(float deltaMinX, float deltaMaxX, float deltaMinY, float deltaMaxY, bool preserveEffectiveSize);
 
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;

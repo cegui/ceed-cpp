@@ -330,27 +330,24 @@ void CEGUIManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
 
     // Because the Qt manipulator is always top left aligned in the CEGUI sense,
     // we have to process the size to factor in alignments if they differ
-    CEGUI::UVector2 processedDeltaPos;
     switch (_widget->getHorizontalAlignment())
     {
-        case CEGUI::HorizontalAlignment::Left:
-            processedDeltaPos.d_x = deltaPos.d_x; break;
         case CEGUI::HorizontalAlignment::Centre:
-            processedDeltaPos.d_x = deltaPos.d_x + CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_width; break;
+            deltaPos.d_x += CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_width; break;
         case CEGUI::HorizontalAlignment::Right:
-            processedDeltaPos.d_x = deltaPos.d_x + deltaSize.d_width; break;
+            deltaPos.d_x += deltaSize.d_width; break;
+        default: break;
     }
     switch (_widget->getVerticalAlignment())
     {
-        case CEGUI::VerticalAlignment::Top:
-            processedDeltaPos.d_y = deltaPos.d_y; break;
         case CEGUI::VerticalAlignment::Centre:
-            processedDeltaPos.d_y = deltaPos.d_y + CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_height; break;
+            deltaPos.d_y += CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_height; break;
         case CEGUI::VerticalAlignment::Bottom:
-            processedDeltaPos.d_y = deltaPos.d_y + deltaSize.d_height; break;
+            deltaPos.d_y += deltaSize.d_height; break;
+        default: break;
     }
 
-    _widget->setPosition(_preResizePos + processedDeltaPos);
+    _widget->setPosition(_preResizePos + deltaPos);
     _widget->setSize(_preResizeSize + deltaSize);
 
     _lastResizeNewPos = newPos;

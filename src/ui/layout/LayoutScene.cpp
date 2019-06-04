@@ -592,6 +592,77 @@ void LayoutScene::updateAnchorValueItems(QGraphicsItem* item)
     }
 }
 
+void LayoutScene::applyAnchorDeltas(float deltaMinX, float deltaMaxX, float deltaMinY, float deltaMaxY, bool preserveEffectiveSize)
+{
+    assert(_anchorTarget);
+
+    CEGUI::Window* widget = _anchorTarget->getWidget();
+    if (!widget) return;
+
+    auto baseSize = _anchorTarget->getBaseSize();
+    if (baseSize.d_width <= 0.f || baseSize.d_height <= 0.f) return;
+
+    CEGUI::UVector2 deltaPos;
+    CEGUI::USize deltaSize;
+
+    const float reDeltaMinX = deltaMinX / baseSize.d_width;
+    deltaPos.d_x.d_scale += reDeltaMinX;
+    deltaSize.d_width.d_scale += -reDeltaMinX;
+    if (preserveEffectiveSize)
+    {
+        deltaPos.d_x.d_offset += -deltaMinX;
+        deltaSize.d_width.d_offset += deltaMinX;
+    }
+
+    const float reDeltaMinY = deltaMinY / baseSize.d_height;
+    deltaPos.d_y.d_scale += reDeltaMinY;
+    deltaSize.d_height.d_scale += -reDeltaMinY;
+    if (preserveEffectiveSize)
+    {
+        deltaPos.d_y.d_offset += -deltaMinY;
+        deltaSize.d_height.d_offset += deltaMinY;
+    }
+
+    const float reDeltaMaxX = deltaMaxX / baseSize.d_width;
+    deltaSize.d_width.d_scale += reDeltaMaxX;
+    if (preserveEffectiveSize)
+    {
+        deltaSize.d_width.d_offset += -deltaMaxX;
+    }
+
+    const float reDeltaMaxY = deltaMaxY / baseSize.d_height;
+    deltaSize.d_height.d_scale += reDeltaMaxY;
+    if (preserveEffectiveSize)
+    {
+        deltaSize.d_height.d_offset += -deltaMaxY;
+    }
+
+    // Because the Qt manipulator is always top left aligned in the CEGUI sense,
+    // we have to process the size to factor in alignments if they differ
+    switch (widget->getHorizontalAlignment())
+    {
+        case CEGUI::HorizontalAlignment::Centre:
+            deltaPos.d_x += CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_width; break;
+        case CEGUI::HorizontalAlignment::Right:
+            deltaPos.d_x += deltaSize.d_width; break;
+        default: break;
+    }
+    switch (widget->getVerticalAlignment())
+    {
+        case CEGUI::VerticalAlignment::Centre:
+            deltaPos.d_y += CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_height; break;
+        case CEGUI::VerticalAlignment::Bottom:
+            deltaPos.d_y += deltaSize.d_height; break;
+        default: break;
+    }
+
+    widget->setPosition(widget->getPosition() + deltaPos);
+    widget->setSize(widget->getSize() + deltaSize);
+
+    _anchorTarget->updateFromWidget();
+    _anchorTarget->updatePropertiesFromWidget({"Size", "Position", "Area"});
+}
+
 //!!!FIXME: working with deltas may lead to error accumulation!
 //!!!FIXME: manipulator dragging is broken, strange limiting, no anchor items updating!
 // TODO: on mouse up create undo command, look at ResizingHandle. ONLY if actually changed!
@@ -606,9 +677,6 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
 
     CEGUI::Window* widget = _anchorTarget->getWidget();
     if (!widget) return;
-
-    auto baseSize = _anchorTarget->getBaseSize();
-    if (baseSize.d_width <= 0.f || baseSize.d_height <= 0.f) return;
 
     // Snap to siblings (vector of siblings, exclude self, pixel distance)
 
@@ -684,93 +752,19 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
         }
     }
 
-    //!!!if integer mode round all 4 deltas!
+    // FIXME: probably will not work properly with delta = curr - prev. May need delta = curr - initial.
+    if (_visualMode.isAbsoluteIntegerMode())
+    {
+        deltaMinX = std::floor(deltaMinX);
+        deltaMinY = std::floor(deltaMinY);
+        deltaMaxX = std::floor(deltaMaxX);
+        deltaMaxY = std::floor(deltaMaxY);
+    }
 
     // Perform actual changes
 
-    CEGUI::UVector2 deltaPos;
-    CEGUI::USize deltaSize;
-
     const bool preserveEffectiveSize = !(QApplication::keyboardModifiers() & Qt::ShiftModifier);
-
-    const float reDeltaMinX = deltaMinX / baseSize.d_width;
-    deltaPos.d_x.d_scale += reDeltaMinX;
-    deltaSize.d_width.d_scale += -reDeltaMinX;
-    if (preserveEffectiveSize)
-    {
-        deltaPos.d_x.d_offset += -deltaMinX;
-        deltaSize.d_width.d_offset += deltaMinX;
-    }
-
-    const float reDeltaMinY = deltaMinY / baseSize.d_height;
-    deltaPos.d_y.d_scale += reDeltaMinY;
-    deltaSize.d_height.d_scale += -reDeltaMinY;
-    if (preserveEffectiveSize)
-    {
-        deltaPos.d_y.d_offset += -deltaMinY;
-        deltaSize.d_height.d_offset += deltaMinY;
-    }
-
-    const float reDeltaMaxX = deltaMaxX / baseSize.d_width;
-    deltaSize.d_width.d_scale += reDeltaMaxX;
-    if (preserveEffectiveSize)
-    {
-        deltaSize.d_width.d_offset += -deltaMaxX;
-    }
-
-    const float reDeltaMaxY = deltaMaxY / baseSize.d_height;
-    deltaSize.d_height.d_scale += reDeltaMaxY;
-    if (preserveEffectiveSize)
-    {
-        deltaSize.d_height.d_offset += -deltaMaxY;
-    }
-
-    // TODO: common code?
-    /*
-    deltas = (current - initial), NOT (current - previous). It prevents error accumulation and makes rounding work correctly!
-    if (useAbsoluteCoordsForResize()) // _visualMode.isAbsoluteMode()
-    {
-        if (useIntegersForAbsoluteResize()) // _visualMode.isAbsoluteIntegerMode()
-        {
-            roundPointFloor(pixelDeltaPos);
-            roundSizeFloor(pixelDeltaSize);
-        }
-
-        ... (abs);
-    }
-    else
-    {
-        auto baseSize = getBaseSize();
-        ... (rel);
-    }
-    */
-
-    //!!!FIXME: duplicated code!
-
-    // Because the Qt manipulator is always top left aligned in the CEGUI sense,
-    // we have to process the size to factor in alignments if they differ
-    switch (widget->getHorizontalAlignment())
-    {
-        case CEGUI::HorizontalAlignment::Centre:
-            deltaPos.d_x += CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_width; break;
-        case CEGUI::HorizontalAlignment::Right:
-            deltaPos.d_x += deltaSize.d_width; break;
-        default: break;
-    }
-    switch (widget->getVerticalAlignment())
-    {
-        case CEGUI::VerticalAlignment::Centre:
-            deltaPos.d_y += CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_height; break;
-        case CEGUI::VerticalAlignment::Bottom:
-            deltaPos.d_y += deltaSize.d_height; break;
-        default: break;
-    }
-
-    widget->setPosition(widget->getPosition() + deltaPos);
-    widget->setSize(widget->getSize() + deltaSize);
-
-    _anchorTarget->updateFromWidget();
-    _anchorTarget->updatePropertiesFromWidget({"Size", "Position", "Area"});
+    applyAnchorDeltas(deltaMinX, deltaMaxX, deltaMinY, deltaMaxY, preserveEffectiveSize);
 
     updateAnchorItems(item);
     updateAnchorValueItems(item);
@@ -807,7 +801,12 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
         _anchorTextX->setTextTemplate("%1%");
         connect(_anchorTextX, &NumericValueItem::valueChanged, [this, item](qreal newValue)
         {
-            // change min X
+            const float minX = _anchorTarget->getWidget()->getPosition().d_x.d_scale;
+            const float maxX = minX + _anchorTarget->getWidget()->getSize().d_width.d_scale;
+            const float deltaMinX = static_cast<float>(newValue) / 100.f - minX;
+            const float deltaMaxX = std::min(0.f, minX + deltaMinX - maxX);
+            applyAnchorDeltas(deltaMinX, deltaMaxX, 0.f, 0.f, false);
+            updateAnchorItems();
             updateAnchorValueItems(item);
         });
      }
