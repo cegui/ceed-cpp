@@ -33,6 +33,7 @@ public:
     virtual QSizeF getMaxSize() const override;
     CEGUI::Sizef getBaseSize() const;
     QRectF getParentRect() const;
+    QRectF getAnchorsRect() const;
 
     virtual void notifyHandleSelected(ResizingHandle* handle) override;
     virtual void notifyResizeStarted() override;

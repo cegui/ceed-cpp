@@ -6,6 +6,7 @@
 #include <CEGUI/System.h>
 #include <CEGUI/GUIContext.h>
 #include <qdatetime.h>
+#include <qgraphicsitem.h>
 
 static void validateResolution(float& width, float& height)
 {
@@ -89,4 +90,16 @@ void CEGUIGraphicsScene::drawCEGUIContext()
     ceguiContext->injectTimePulse(lastDelta);
 
     ceguiContext->draw();
+}
+
+QList<QGraphicsItem*> CEGUIGraphicsScene::topLevelItems() const
+{
+    QList<QGraphicsItem*> ret;
+    for (QGraphicsItem* item : items())
+    {
+        if (!item->parentItem())
+            ret.push_back(item);
+    }
+
+    return ret;
 }

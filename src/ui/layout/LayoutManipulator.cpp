@@ -16,7 +16,7 @@ LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem
     : CEGUIManipulator(parent, widget)
     , _visualMode(visualMode)
 {
-    setPen(getNormalPen()); // We override the pen so we must set it in the constructor
+    resetPen(); // We override the pen so we must set it in the constructor
     setAcceptDrops(true);
     QObject::connect(_visualMode.getAbsoluteModeAction(), &QAction::toggled, [this]
     {
@@ -248,6 +248,11 @@ void LayoutManipulator::setLocked(bool locked)
     update();
 }
 
+void LayoutManipulator::resetPen()
+{
+    setPen(getNormalPen());
+}
+
 void LayoutManipulator::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
 {
     if (event->mimeData()->hasFormat("application/x-ceed-widget-type"))
@@ -263,7 +268,7 @@ void LayoutManipulator::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
 
 void LayoutManipulator::dragLeaveEvent(QGraphicsSceneDragDropEvent* /*event*/)
 {
-    setPen(getNormalPen());
+    resetPen();
 }
 
 // Takes care of creating new widgets when user drops the right mime type here

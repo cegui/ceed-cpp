@@ -238,6 +238,7 @@ CEGUI::Sizef CEGUIManipulator::getBaseSize() const
         return _widget->getParentPixelSize();
 }
 
+// Returns an effective parent rect in a scene coord system
 QRectF CEGUIManipulator::getParentRect() const
 {
     const CEGUIManipulator* parentManipulator = dynamic_cast<const CEGUIManipulator*>(parentItem());
@@ -250,6 +251,18 @@ QRectF CEGUIManipulator::getParentRect() const
         auto ceguiScene = static_cast<const CEGUIGraphicsScene*>(scene());
         return QRectF(0.0, 0.0, static_cast<qreal>(ceguiScene->getContextWidth()), static_cast<qreal>(ceguiScene->getContextHeight()));
     }
+}
+
+// Calculates a rect composed of anchor limits (relative parts of the widget area) in a scene coord system
+QRectF CEGUIManipulator::getAnchorsRect() const
+{
+    const QRectF parentRect = getParentRect();
+    const auto& widgetPos = getWidget()->getPosition();
+    const auto& widgetSize = getWidget()->getSize();
+    return QRectF(parentRect.x() + parentRect.width() * static_cast<qreal>(widgetPos.d_x.d_scale),
+                  parentRect.y() + parentRect.height() * static_cast<qreal>(widgetPos.d_y.d_scale),
+                  parentRect.width() * static_cast<qreal>(widgetSize.d_width.d_scale),
+                  parentRect.height() * static_cast<qreal>(widgetSize.d_height.d_scale));
 }
 
 void CEGUIManipulator::notifyHandleSelected(ResizingHandle* handle)

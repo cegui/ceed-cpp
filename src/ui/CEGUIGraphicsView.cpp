@@ -172,6 +172,9 @@ void CEGUIGraphicsView::mouseMoveEvent(QMouseEvent* event)
     QPointF point = mapToScene(event->pos());
     emit cursorPositionChanged(static_cast<int>(point.x()), static_cast<int>(point.y()));
 
+    auto ceguiScene = static_cast<CEGUIGraphicsScene*>(scene());
+    if (ceguiScene) ceguiScene->setLastCursorPosition(point);
+
     if (_injectInput && ceguiInput)
     {
         handled = ceguiInput->injectMousePosition(static_cast<float>(point.x()), static_cast<float>(point.y()));

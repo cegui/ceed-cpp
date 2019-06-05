@@ -534,26 +534,20 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
         return;
     }
 
-    QRectF parentRect = _anchorTarget->getParentRect();
+    const QRectF parentRect = _anchorTarget->getParentRect();
+    const QRectF anchorsRect = _anchorTarget->getAnchorsRect();
 
     _anchorParentRect->setRect(parentRect);
 
-    const auto& widgetPos = _anchorTarget->getWidget()->getPosition();
-    const auto& widgetSize = _anchorTarget->getWidget()->getSize();
-    const qreal minX = parentRect.x() + parentRect.width() * static_cast<qreal>(widgetPos.d_x.d_scale);
-    const qreal maxX = minX + parentRect.width() * static_cast<qreal>(widgetSize.d_width.d_scale);
-    const qreal minY = parentRect.y() + parentRect.height() * static_cast<qreal>(widgetPos.d_y.d_scale);
-    const qreal maxY = minY + parentRect.height() * static_cast<qreal>(widgetSize.d_height.d_scale);
-
     // Position handles without firing move events
-    if (movedItem != _anchorMinX) _anchorMinX->setPosSilent(minX, 0.0);
-    if (movedItem != _anchorMaxX) _anchorMaxX->setPosSilent(maxX, 0.0);
-    if (movedItem != _anchorMinY) _anchorMinY->setPosSilent(0.0, minY);
-    if (movedItem != _anchorMaxY) _anchorMaxY->setPosSilent(0.0, maxY);
-    if (movedItem != _anchorMinXMinY) _anchorMinXMinY->setPosSilent(minX, minY);
-    if (movedItem != _anchorMaxXMinY) _anchorMaxXMinY->setPosSilent(maxX, minY);
-    if (movedItem != _anchorMinXMaxY) _anchorMinXMaxY->setPosSilent(minX, maxY);
-    if (movedItem != _anchorMaxXMaxY) _anchorMaxXMaxY->setPosSilent(maxX, maxY);
+    if (movedItem != _anchorMinX) _anchorMinX->setPosSilent(anchorsRect.left(), 0.0);
+    if (movedItem != _anchorMaxX) _anchorMaxX->setPosSilent(anchorsRect.right(), 0.0);
+    if (movedItem != _anchorMinY) _anchorMinY->setPosSilent(0.0, anchorsRect.top());
+    if (movedItem != _anchorMaxY) _anchorMaxY->setPosSilent(0.0, anchorsRect.bottom());
+    if (movedItem != _anchorMinXMinY) _anchorMinXMinY->setPosSilent(anchorsRect.left(), anchorsRect.top());
+    if (movedItem != _anchorMaxXMinY) _anchorMaxXMinY->setPosSilent(anchorsRect.right(), anchorsRect.top());
+    if (movedItem != _anchorMinXMaxY) _anchorMinXMaxY->setPosSilent(anchorsRect.left(), anchorsRect.bottom());
+    if (movedItem != _anchorMaxXMaxY) _anchorMaxXMaxY->setPosSilent(anchorsRect.right(), anchorsRect.bottom());
 }
 
 // Updates position and value of anchor texts corresponding to the anchor item passed
@@ -665,10 +659,9 @@ void LayoutScene::applyAnchorDeltas(float deltaMinX, float deltaMaxX, float delt
 
 //!!!FIXME: working with deltas may lead to error accumulation!
 //!!!FIXME: manipulator dragging is broken, strange limiting, no anchor items updating!
+//!!!FIXME: snapping adds 1 px of absolute each time, reducing relative!
 // TODO: on mouse up create undo command, look at ResizingHandle. ONLY if actually changed!
 // TODO: on external changes update anchor items
-// TODO: integer mode?
-// TODO: Snap to siblings
 // TODO: Lock axis
 // TODO: presets in virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *event) override?
 // TODO: create undo command when edited through numeric value items!
@@ -679,14 +672,84 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
     CEGUI::Window* widget = _anchorTarget->getWidget();
     if (!widget) return;
 
-    // Snap to siblings (vector of siblings, exclude self, pixel distance)
+    // Snap to siblings (before limiting to ensure that limits are respected)
 
-    // if secondary coord is in range of edge and primary is near enough then snap
-    // delta.rx()
-    // delta.ry()
+    //???snap corners too? if yes, remove this condition and implement!
+    if (item == _anchorMinX || item == _anchorMaxX || item == _anchorMinY || item == _anchorMaxY)
+    {
+        // TODO: setting!
+        constexpr qreal snapDistance = 10.0;
 
-    // Calculate actual deltas for anchors.
-    // Do limiting on a pixel level, it is more convenient.
+        bool snapped = false;
+        const auto& siblings = _anchorTarget->parentItem() ? _anchorTarget->parentItem()->childItems() : topLevelItems();
+        for (QGraphicsItem* sibling : siblings)
+        {
+            auto siblingManipulator = dynamic_cast<LayoutManipulator*>(sibling);
+            if (!siblingManipulator || _anchorTarget == siblingManipulator) continue;
+
+            const auto siblingRect = siblingManipulator->sceneBoundingRect();
+            const auto siblingAnchorsRect = siblingManipulator->getAnchorsRect();
+            auto anchorPos = item->pos() + delta;
+
+            if (item == _anchorMinX || item == _anchorMaxX)
+            {
+                // Snap only when we are about to intersect a sibling's edge
+                if (_lastCursorPos.y() < siblingRect.top() || _lastCursorPos.y() > siblingRect.bottom()) continue;
+
+                if (std::abs(anchorPos.x() - siblingRect.left()) <= snapDistance)
+                    anchorPos.rx() = siblingRect.left();
+                else if (std::abs(anchorPos.x() - siblingRect.right()) <= snapDistance)
+                    anchorPos.rx() = siblingRect.right();
+                else if (std::abs(anchorPos.x() - siblingAnchorsRect.left()) <= snapDistance)
+                    anchorPos.rx() = siblingAnchorsRect.left();
+                else if (std::abs(anchorPos.x() - siblingAnchorsRect.right()) <= snapDistance)
+                    anchorPos.rx() = siblingAnchorsRect.right();
+                else continue;
+
+                delta = anchorPos - item->pos();
+            }
+            else if (item == _anchorMinY || item == _anchorMaxY)
+            {
+                // Snap only when we are about to intersect a sibling's edge
+                if (_lastCursorPos.x() < siblingRect.left() || _lastCursorPos.x() > siblingRect.right()) continue;
+
+                if (std::abs(anchorPos.y() - siblingRect.top()) <= snapDistance)
+                    anchorPos.ry() = siblingRect.top();
+                else if (std::abs(anchorPos.y() - siblingRect.bottom()) <= snapDistance)
+                    anchorPos.ry() = siblingRect.bottom();
+                else if (std::abs(anchorPos.y() - siblingAnchorsRect.top()) <= snapDistance)
+                    anchorPos.ry() = siblingAnchorsRect.top();
+                else if (std::abs(anchorPos.y() - siblingAnchorsRect.bottom()) <= snapDistance)
+                    anchorPos.ry() = siblingAnchorsRect.bottom();
+                else continue;
+
+                delta = anchorPos - item->pos();
+            }
+            else continue;
+
+            //???change color of snapped guide? item->setSnapped(true); , color in constructor. May help
+            // visualizing snapping to anchor rect of the sibling without drawing it! Or render siblingAnchorsRect?
+            if (_anchorSnapTarget != siblingManipulator)
+            {
+                if (_anchorSnapTarget) _anchorSnapTarget->resetPen();
+                _anchorSnapTarget = siblingManipulator;
+                _anchorSnapTarget->setPen(QColor(Qt::magenta));
+            }
+            snapped = true;
+
+            // Reaching this means we snapped to the current sibling, skip others
+            break;
+        }
+
+        // TODO: the same when anchor handle dragging stops!
+        if (!snapped && _anchorSnapTarget)
+        {
+            _anchorSnapTarget->resetPen();
+            _anchorSnapTarget = nullptr;
+        }
+    }
+
+    // Calculate actual deltas for anchors. Do limiting on a pixel level, it is more convenient.
 
     float deltaMinX = 0.f;
     float deltaMinY = 0.f;

@@ -41,6 +41,8 @@ public:
     void setTreeItem(WidgetHierarchyItem* treeItem) { _treeItem = treeItem; }
     WidgetHierarchyItem* getTreeItem() const { return _treeItem; }
 
+    void resetPen();
+
 protected:
 
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;

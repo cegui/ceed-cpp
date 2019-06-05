@@ -65,6 +65,7 @@ protected:
 
     // Anchor editing items
     LayoutManipulator* _anchorTarget = nullptr;
+    LayoutManipulator* _anchorSnapTarget = nullptr;
     QGraphicsRectItem* _anchorParentRect = nullptr;
     AnchorEdgeHandle* _anchorMinX = nullptr;
     AnchorEdgeHandle* _anchorMinY = nullptr;
