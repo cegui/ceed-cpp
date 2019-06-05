@@ -46,6 +46,9 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
     if (_anchorTextX) disconnect(_anchorTextX, &NumericValueItem::valueChanged, nullptr, nullptr);
     if (_anchorTextY) disconnect(_anchorTextY, &NumericValueItem::valueChanged, nullptr, nullptr);
 
+    _anchorTarget = nullptr;
+    _anchorSnapTarget = nullptr;
+
     clear();
 
     rootManipulator = manipulator;
