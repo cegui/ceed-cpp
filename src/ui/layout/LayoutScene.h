@@ -42,6 +42,8 @@ public:
     void anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool moveOpposite);
     void anchorHandleSelected(QGraphicsItem* item);
 
+    virtual void onMouseReleased() override;
+
 public slots:
 
     void slot_selectionChanged();

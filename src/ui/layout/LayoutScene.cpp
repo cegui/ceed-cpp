@@ -744,7 +744,6 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
             break;
         }
 
-        // TODO: the same when anchor handle dragging stops!
         if (!snapped && _anchorSnapTarget)
         {
             _anchorSnapTarget->resetPen();
@@ -933,6 +932,27 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
     else _anchorTextY->setVisible(false);
 
     updateAnchorValueItems(minX, maxX, minY, maxY);
+}
+
+// The same idea as in ResizableGraphicsView::mouseReleaseEvent(), but more hacky implementation
+void LayoutScene::onMouseReleased()
+{
+    if (_anchorSnapTarget)
+    {
+        _anchorSnapTarget->resetPen();
+        _anchorSnapTarget = nullptr;
+    }
+
+    for (auto& item : selectedItems())
+    {
+        if (item == _anchorMinX || item == _anchorMinY || item == _anchorMaxX || item == _anchorMaxY ||
+            item == _anchorMinXMinY || item == _anchorMaxXMinY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
+        {
+            // stop dragging current anchor item
+            // if pos changed, create undo command for resizing
+            break;
+        }
+    }
 }
 
 void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)

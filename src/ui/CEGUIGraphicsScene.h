@@ -28,8 +28,9 @@ public:
     QList<QGraphicsItem*> topLevelItems() const;
 
     // FIXME: a bit hacky, scene must not know anything about mouse cursor.
-    // Required by anchor snapping algorithm.
+    // Required by anchor snapping algorithm and drag end detection.
     void setLastCursorPosition(QPointF pos) { _lastCursorPos = pos; }
+    virtual void onMouseReleased() {}
 
 protected:
 

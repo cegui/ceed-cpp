@@ -80,7 +80,6 @@ void ResizableGraphicsView::mousePressEvent(QMouseEvent *event)
 // and notify them of the release. This helps track undo movement and undo resize way easier.
 void ResizableGraphicsView::mouseReleaseEvent(QMouseEvent *event)
 {
-    // Handle scale change
     for (auto& selectedItem : scene()->selectedItems())
     {
         auto rectItem = dynamic_cast<ResizableRectItem*>(selectedItem);

@@ -207,7 +207,13 @@ void CEGUIGraphicsView::mouseReleaseEvent(QMouseEvent* event)
         handled = ceguiInput->injectMouseButtonUp(button);
     }
 
-    if (!handled) ResizableGraphicsView::mouseReleaseEvent(event);
+    if (!handled)
+    {
+        auto ceguiScene = static_cast<CEGUIGraphicsScene*>(scene());
+        if (ceguiScene) ceguiScene->onMouseReleased();
+
+        ResizableGraphicsView::mouseReleaseEvent(event);
+    }
 }
 
 void CEGUIGraphicsView::keyPressEvent(QKeyEvent* event)
