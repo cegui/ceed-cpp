@@ -765,72 +765,63 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
     if (item == _anchorMinX || item == _anchorMinXMinY || item == _anchorMinXMaxY)
     {
         minX = true;
-        deltaMinX = static_cast<float>(delta.x());
-        const float overlap = static_cast<float>(newItemPos.x() - _anchorMaxX->pos().x());
-        if (overlap > 0.f)
+        const qreal overlap = newItemPos.x() - _anchorMaxX->pos().x();
+        if (overlap > 0.0)
         {
-            if (moveOpposite) deltaMaxX += overlap;
-            else
-            {
-                deltaMinX -= overlap;
-                delta.setX(static_cast<qreal>(deltaMinX));
-            }
+            if (moveOpposite) deltaMaxX += static_cast<float>(overlap);
+            else delta.rx() -= overlap;
         }
+
+        if (_visualMode.isAbsoluteIntegerMode())
+            delta.rx() = std::floor(delta.x());
+
+        deltaMinX += static_cast<float>(delta.x());
     }
     else if (item == _anchorMaxX || item == _anchorMaxXMinY || item == _anchorMaxXMaxY)
     {
         maxX = true;
-        deltaMaxX = static_cast<float>(delta.x());
-        const float overlap = static_cast<float>(newItemPos.x() - _anchorMinX->pos().x());
-        if (overlap < 0.f)
+        const qreal overlap = newItemPos.x() - _anchorMinX->pos().x();
+        if (overlap < 0.0)
         {
-            if (moveOpposite) deltaMinX += overlap;
-            else
-            {
-                deltaMaxX -= overlap;
-                delta.setX(static_cast<qreal>(deltaMaxX));
-            }
+            if (moveOpposite) deltaMinX += static_cast<float>(overlap);
+            else delta.rx() -= overlap;
         }
+
+        if (_visualMode.isAbsoluteIntegerMode())
+            delta.rx() = std::floor(delta.x());
+
+        deltaMaxX += static_cast<float>(delta.x());
     }
 
     if (item == _anchorMinY || item == _anchorMinXMinY || item == _anchorMaxXMinY)
     {
         minY = true;
-        deltaMinY = static_cast<float>(delta.y());
-        const float overlap = static_cast<float>(newItemPos.y() - _anchorMaxY->pos().y());
-        if (overlap > 0.f)
+        const qreal overlap = newItemPos.y() - _anchorMaxY->pos().y();
+        if (overlap > 0.0)
         {
-            if (moveOpposite) deltaMaxY += overlap;
-            else
-            {
-                deltaMinY -= overlap;
-                delta.setY(static_cast<qreal>(deltaMinY));
-            }
+            if (moveOpposite) deltaMaxY += static_cast<float>(overlap);
+            else delta.ry() -= overlap;
         }
+
+        if (_visualMode.isAbsoluteIntegerMode())
+            delta.ry() = std::floor(delta.y());
+
+        deltaMinY += static_cast<float>(delta.y());
     }
     else if (item == _anchorMaxY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
     {
         maxY = true;
-        deltaMaxY = static_cast<float>(delta.y());
-        const float overlap = static_cast<float>(newItemPos.y() - _anchorMinY->pos().y());
-        if (overlap < 0.f)
+        const qreal overlap = newItemPos.y() - _anchorMinY->pos().y();
+        if (overlap < 0.0)
         {
-            if (moveOpposite) deltaMinY += overlap;
-            else
-            {
-                deltaMaxY -= overlap;
-                delta.setY(static_cast<qreal>(deltaMaxY));
-            }
+            if (moveOpposite) deltaMinY += static_cast<float>(overlap);
+            else delta.ry() -= overlap;
         }
-    }
 
-    // FIXME: probably will not work properly with delta = curr - prev. May need delta = curr - initial.
-    if (_visualMode.isAbsoluteIntegerMode())
-    {
-        deltaMinX = std::floor(deltaMinX);
-        deltaMinY = std::floor(deltaMinY);
-        deltaMaxX = std::floor(deltaMaxX);
-        deltaMaxY = std::floor(deltaMaxY);
+        if (_visualMode.isAbsoluteIntegerMode())
+            delta.ry() = std::floor(delta.y());
+
+        deltaMaxY += static_cast<float>(delta.y());
     }
 
     // Perform actual changes

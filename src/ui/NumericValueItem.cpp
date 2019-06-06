@@ -10,6 +10,7 @@
 NumericValueItem::NumericValueItem(QGraphicsItem* parent)
     : QGraphicsTextItem(parent)
 {
+    //setFlags(ItemIgnoresTransformations); - requires deviceTransform for positioning
     setTextInteractionFlags(Qt::TextEditorInteraction);
     setCursor(Qt::IBeamCursor);
 }
