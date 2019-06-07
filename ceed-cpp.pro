@@ -32,7 +32,6 @@ SOURCES += \
     src/editors/anim/AnimationEditor.cpp \
     src/editors/anim/AnimationUndoCommands.cpp \
     src/editors/anim/AnimationVisualMode.cpp \
-    src/editors/layout/AnchorsManipulator.cpp \
     src/editors/looknfeel/LookNFeelCodeMode.cpp \
     src/editors/looknfeel/LookNFeelEditor.cpp \
     src/editors/looknfeel/LookNFeelPreviewMode.cpp \
@@ -126,7 +125,6 @@ HEADERS += \
     src/editors/anim/AnimationEditor.h \
     src/editors/anim/AnimationUndoCommands.h \
     src/editors/anim/AnimationVisualMode.h \
-    src/editors/layout/AnchorsManipulator.h \
     src/editors/looknfeel/LookNFeelCodeMode.h \
     src/editors/looknfeel/LookNFeelEditor.h \
     src/editors/looknfeel/LookNFeelPreviewMode.h \

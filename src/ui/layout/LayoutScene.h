@@ -42,8 +42,6 @@ public:
     void anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool moveOpposite);
     void anchorHandleSelected(QGraphicsItem* item);
 
-    virtual void onMouseReleased() override;
-
 public slots:
 
     void slot_selectionChanged();
@@ -60,10 +58,13 @@ protected:
     virtual void dragMoveEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dropEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void keyReleaseEvent(QKeyEvent* event) override;
+    virtual void mouseMoveEvent(QGraphicsSceneMouseEvent* event) override;
     virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override;
 
     LayoutVisualMode& _visualMode;
     LayoutManipulator* rootManipulator = nullptr;
+
+    QPointF _lastCursorPos;
 
     // Anchor editing items
     LayoutManipulator* _anchorTarget = nullptr;
@@ -79,6 +80,8 @@ protected:
     AnchorCornerHandle* _anchorMaxXMaxY = nullptr;
     NumericValueItem* _anchorTextX = nullptr;
     NumericValueItem* _anchorTextY = nullptr;
+    QRectF _anchorStartRect;
+    bool _anchorMoveStarted = false;
 
     bool _ignoreSelectionChanges = false;
 };

@@ -675,6 +675,14 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
     CEGUI::Window* widget = _anchorTarget->getWidget();
     if (!widget) return;
 
+    /*
+    if (!_anchorMoveStarted)
+    {
+        _anchorMoveStarted = true;
+        //_anchorStartRect = ;
+    }
+    */
+
     // Snap to siblings (before limiting to ensure that limits are respected)
 
     //???snap corners too? if yes, remove this condition and implement!
@@ -687,8 +695,9 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
         const auto& siblings = _anchorTarget->parentItem() ? _anchorTarget->parentItem()->childItems() : topLevelItems();
         for (QGraphicsItem* sibling : siblings)
         {
+            const bool isSelf = (_anchorTarget == sibling);
             auto siblingManipulator = dynamic_cast<LayoutManipulator*>(sibling);
-            if (!siblingManipulator || _anchorTarget == siblingManipulator) continue;
+            if (!siblingManipulator) continue;
 
             const auto siblingRect = siblingManipulator->sceneBoundingRect();
             const auto siblingAnchorsRect = siblingManipulator->getAnchorsRect();
@@ -703,9 +712,9 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
                     anchorPos.rx() = siblingRect.left();
                 else if (std::abs(anchorPos.x() - siblingRect.right()) <= snapDistance)
                     anchorPos.rx() = siblingRect.right();
-                else if (std::abs(anchorPos.x() - siblingAnchorsRect.left()) <= snapDistance)
+                else if (!isSelf && std::abs(anchorPos.x() - siblingAnchorsRect.left()) <= snapDistance)
                     anchorPos.rx() = siblingAnchorsRect.left();
-                else if (std::abs(anchorPos.x() - siblingAnchorsRect.right()) <= snapDistance)
+                else if (!isSelf && std::abs(anchorPos.x() - siblingAnchorsRect.right()) <= snapDistance)
                     anchorPos.rx() = siblingAnchorsRect.right();
                 else continue;
 
@@ -720,9 +729,9 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
                     anchorPos.ry() = siblingRect.top();
                 else if (std::abs(anchorPos.y() - siblingRect.bottom()) <= snapDistance)
                     anchorPos.ry() = siblingRect.bottom();
-                else if (std::abs(anchorPos.y() - siblingAnchorsRect.top()) <= snapDistance)
+                else if (!isSelf && std::abs(anchorPos.y() - siblingAnchorsRect.top()) <= snapDistance)
                     anchorPos.ry() = siblingAnchorsRect.top();
-                else if (std::abs(anchorPos.y() - siblingAnchorsRect.bottom()) <= snapDistance)
+                else if (!isSelf && std::abs(anchorPos.y() - siblingAnchorsRect.bottom()) <= snapDistance)
                     anchorPos.ry() = siblingAnchorsRect.bottom();
                 else continue;
 
@@ -934,27 +943,6 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
     updateAnchorValueItems(minX, maxX, minY, maxY);
 }
 
-// The same idea as in ResizableGraphicsView::mouseReleaseEvent(), but more hacky implementation
-void LayoutScene::onMouseReleased()
-{
-    if (_anchorSnapTarget)
-    {
-        _anchorSnapTarget->resetPen();
-        _anchorSnapTarget = nullptr;
-    }
-
-    for (auto& item : selectedItems())
-    {
-        if (item == _anchorMinX || item == _anchorMinY || item == _anchorMaxX || item == _anchorMaxY ||
-            item == _anchorMinXMinY || item == _anchorMaxXMinY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
-        {
-            // stop dragging current anchor item
-            // if pos changed, create undo command for resizing
-            break;
-        }
-    }
-}
-
 void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
 {
     // If the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
@@ -1031,9 +1019,21 @@ void LayoutScene::keyReleaseEvent(QKeyEvent* event)
         CEGUIGraphicsScene::keyReleaseEvent(event);
 }
 
+void LayoutScene::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
+{
+    _lastCursorPos = event->lastScenePos();
+    CEGUIGraphicsScene::mouseMoveEvent(event);
+}
+
 void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 {
     CEGUIGraphicsScene::mouseReleaseEvent(event);
+
+    if (_anchorSnapTarget)
+    {
+        _anchorSnapTarget->resetPen();
+        _anchorSnapTarget = nullptr;
+    }
 
     // We have to "expand" the items, adding parents of resizing handles instead of the handles themselves
     std::vector<LayoutManipulator*> selection;
@@ -1054,6 +1054,21 @@ void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
             }
         }
     }
+
+    /*
+    for (auto& item : selectedItems())
+    {
+        if (item == _anchorMinX || item == _anchorMinY || item == _anchorMaxX || item == _anchorMaxY ||
+            item == _anchorMinXMinY || item == _anchorMaxXMinY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
+        {
+            // stop dragging current anchor item
+            // if pos changed, create undo command for resizing
+            break;
+        }
+    }
+
+    _anchorMoveStarted = false;
+    */
 
     std::vector<LayoutMoveCommand::Record> move;
     std::vector<LayoutResizeCommand::Record> resize;

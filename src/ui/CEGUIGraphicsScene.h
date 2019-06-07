@@ -27,16 +27,9 @@ public:
     float getContextHeight() const { return contextHeight; }
     QList<QGraphicsItem*> topLevelItems() const;
 
-    // FIXME: a bit hacky, scene must not know anything about mouse cursor.
-    // Required by anchor snapping algorithm and drag end detection.
-    void setLastCursorPosition(QPointF pos) { _lastCursorPos = pos; }
-    virtual void onMouseReleased() {}
-
 protected:
 
     CEGUI::GUIContext* ceguiContext = nullptr;
-
-    QPointF _lastCursorPos;
 
     qint64 lastDelta = 0;
     qint64 timeOfLastRender;

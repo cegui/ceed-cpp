@@ -172,9 +172,6 @@ void CEGUIGraphicsView::mouseMoveEvent(QMouseEvent* event)
     QPointF point = mapToScene(event->pos());
     emit cursorPositionChanged(static_cast<int>(point.x()), static_cast<int>(point.y()));
 
-    auto ceguiScene = static_cast<CEGUIGraphicsScene*>(scene());
-    if (ceguiScene) ceguiScene->setLastCursorPosition(point);
-
     if (_injectInput && ceguiInput)
     {
         handled = ceguiInput->injectMousePosition(static_cast<float>(point.x()), static_cast<float>(point.y()));
@@ -207,13 +204,7 @@ void CEGUIGraphicsView::mouseReleaseEvent(QMouseEvent* event)
         handled = ceguiInput->injectMouseButtonUp(button);
     }
 
-    if (!handled)
-    {
-        auto ceguiScene = static_cast<CEGUIGraphicsScene*>(scene());
-        if (ceguiScene) ceguiScene->onMouseReleased();
-
-        ResizableGraphicsView::mouseReleaseEvent(event);
-    }
+    if (!handled) ResizableGraphicsView::mouseReleaseEvent(event);
 }
 
 void CEGUIGraphicsView::keyPressEvent(QKeyEvent* event)
