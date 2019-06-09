@@ -85,6 +85,7 @@ protected:
 
     std::unique_ptr<CEGUIProject> currentProject;
     bool initialized = false;
+    bool _isOpenGL3 = false;
 };
 
 #endif // CEGUIManager_H

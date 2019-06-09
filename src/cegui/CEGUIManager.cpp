@@ -6,6 +6,7 @@
 #include "src/Application.h"
 #include <CEGUI/CEGUI.h>
 #include <CEGUI/RendererModules/OpenGL/GLRenderer.h>
+#include <CEGUI/RendererModules/OpenGL/GL3Renderer.h>
 #include <CEGUI/RendererModules/OpenGL/ViewportTarget.h>
 #include "3rdParty/QtnProperty/Core/Enum.h"
 #include "3rdParty/QtnProperty/PropertyWidget/Delegates/PropertyDelegateFactory.h"
@@ -16,6 +17,7 @@
 #include "qoffscreensurface.h"
 #include "qopenglframebufferobject.h"
 #include "qopenglfunctions.h"
+#include <qopenglfunctions_3_2_core.h>
 
 void qtnRegisterUDimDelegates(QtnPropertyDelegateFactory& factory);
 void qtnRegisterUVector2Delegates(QtnPropertyDelegateFactory& factory);
@@ -65,7 +67,10 @@ CEGUIManager::~CEGUIManager()
     {
         logger->unsubscribeAll();
         cleanCEGUIResources();
-        CEGUI::OpenGLRenderer::destroySystem();
+        if (_isOpenGL3)
+            CEGUI::OpenGL3Renderer::destroySystem();
+        else
+            CEGUI::OpenGLRenderer::destroySystem();
         delete debugInfo;
         delete logger;
     }
@@ -214,11 +219,14 @@ void CEGUIManager::ensureCEGUIInitialized()
         debugInfo->logEvent(message, level);
     });
 
-    CEGUI::OpenGLRenderer* renderer = nullptr;
+    CEGUI::OpenGLRendererBase* renderer = nullptr;
     try
     {
-        //??? glContext->format().version() >= 3.2 -> use OpenGL3Renderer?
-        renderer = &CEGUI::OpenGLRenderer::bootstrapSystem(CEGUI::OpenGLRenderer::TextureTargetType::Fbo);
+        _isOpenGL3 = (glContext->versionFunctions<QOpenGLFunctions_3_2_Core>() != nullptr);
+        if (_isOpenGL3)
+            renderer = &CEGUI::OpenGL3Renderer::bootstrapSystem();
+        else
+            renderer = &CEGUI::OpenGLRenderer::bootstrapSystem();
     }
     catch (const std::exception& e)
     {
@@ -689,7 +697,7 @@ QImage CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int previe
 
     //???allocate previews once?
     // TODO: renderer->get/createViewportTarget!
-    auto renderer = static_cast<CEGUI::OpenGLRenderer*>(CEGUI::System::getSingleton().getRenderer());
+    auto renderer = static_cast<CEGUI::OpenGLRendererBase*>(CEGUI::System::getSingleton().getRenderer());
     auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer, CEGUI::Rectf(0.f, 0.f, previewWidthF, previewHeightF));
 
     auto renderingSurface = new CEGUI::RenderingSurface(*renderTarget);

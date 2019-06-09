@@ -1,7 +1,7 @@
 #include "src/ui/CEGUIGraphicsScene.h"
 #include "src/cegui/CEGUIManager.h"
 #include "src/cegui/CEGUIProject.h"
-#include <CEGUI/RendererModules/OpenGL/GLRenderer.h>
+#include <CEGUI/RendererModules/OpenGL/RendererBase.h>
 #include <CEGUI/RendererModules/OpenGL/ViewportTarget.h>
 #include <CEGUI/System.h>
 #include <CEGUI/GUIContext.h>
@@ -38,9 +38,8 @@ CEGUIGraphicsScene::CEGUIGraphicsScene(QObject* parent, float width, float heigh
     const qreal qHeight = static_cast<qreal>(height);
     setSceneRect(QRectF(-padding, -padding, qWidth + 2.0 * padding, qHeight + 2.0 * padding));
 
-    auto renderer = static_cast<CEGUI::OpenGLRenderer*>(CEGUI::System::getSingleton().getRenderer());
-    auto viewportRect = CEGUI::Rectf(0.f, 0.f, contextWidth, contextHeight);
-    auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer, viewportRect);
+    auto renderer = static_cast<CEGUI::OpenGLRendererBase*>(CEGUI::System::getSingleton().getRenderer());
+    auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer, CEGUI::Rectf(0.f, 0.f, contextWidth, contextHeight));
     ceguiContext = &CEGUI::System::getSingleton().createGUIContext(*renderTarget);
 }
 
