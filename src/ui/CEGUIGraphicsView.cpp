@@ -20,12 +20,7 @@
 CEGUIGraphicsView::CEGUIGraphicsView(QWidget *parent) :
     ResizableGraphicsView(parent)
 {
-    QSurfaceFormat format;
-    format.setSamples(0);
-
-    auto vp = new QOpenGLWidget();
-    vp->setFormat(format);
-    setViewport(vp);
+    setViewport(new QOpenGLWidget(this));
     setViewportUpdateMode(FullViewportUpdate);
 
     setOptimizationFlags(DontClipPainter | DontAdjustForAntialiasing);

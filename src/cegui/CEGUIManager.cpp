@@ -174,17 +174,15 @@ void CEGUIManager::ensureCEGUIInitialized()
 {
     if (initialized) return;
 
-    QSurfaceFormat format;
-    format.setSamples(0);
-
     glContext = new QOpenGLContext(); // TODO: destroy
-    glContext->setFormat(format);
     glContext->setShareContext(QOpenGLContext::globalShareContext());
     if (Q_UNLIKELY(!glContext->create()))
     {
         assert(false);
         return;
     }
+
+    _isOpenGL3 = false; //(glContext->versionFunctions<QOpenGLFunctions_3_2_Core>() != nullptr);
 
     surface = new QOffscreenSurface(glContext->screen());
     surface->setFormat(glContext->format());
@@ -222,7 +220,6 @@ void CEGUIManager::ensureCEGUIInitialized()
     CEGUI::OpenGLRendererBase* renderer = nullptr;
     try
     {
-        _isOpenGL3 = (glContext->versionFunctions<QOpenGLFunctions_3_2_Core>() != nullptr);
         if (_isOpenGL3)
             renderer = &CEGUI::OpenGL3Renderer::bootstrapSystem();
         else
