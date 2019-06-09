@@ -299,48 +299,72 @@ void CEGUIManipulator::setAnchors(float minX, float maxX, float minY, float maxY
     CEGUI::UVector2 deltaPos;
     CEGUI::USize deltaSize;
 
-    float deltaMinX = minX - getAnchorMinX();
-    deltaPos.d_x.d_scale += deltaMinX;
-    deltaSize.d_width.d_scale -= deltaMinX;
-    if (preserveEffectiveSize)
+    // Min X
     {
-        float pixelDelta = deltaMinX * baseSize.d_width;
-        if (useIntegersForAbsoluteResize())
-            pixelDelta = std::round(pixelDelta);
-        deltaPos.d_x.d_offset -= pixelDelta;
-        deltaSize.d_width.d_offset += pixelDelta;
+        float deltaMinX = minX - getAnchorMinX();
+        if (preserveEffectiveSize)
+        {
+            float pixelDelta = deltaMinX * baseSize.d_width;
+            if (useIntegersForAbsoluteResize())
+            {
+                pixelDelta = std::round(pixelDelta);
+                deltaMinX = qFuzzyIsNull(baseSize.d_width) ? 0.f : pixelDelta / baseSize.d_width;
+            }
+            deltaPos.d_x.d_offset -= pixelDelta;
+            deltaSize.d_width.d_offset += pixelDelta;
+        }
+        deltaPos.d_x.d_scale += deltaMinX;
+        deltaSize.d_width.d_scale -= deltaMinX;
     }
 
-    float deltaMinY = minY - getAnchorMinY();
-    deltaPos.d_y.d_scale += deltaMinY;
-    deltaSize.d_height.d_scale -= deltaMinY;
-    if (preserveEffectiveSize)
+    // Min Y
     {
-        float pixelDelta = deltaMinY * baseSize.d_height;
-        if (useIntegersForAbsoluteResize())
-            pixelDelta = std::round(pixelDelta);
-        deltaPos.d_y.d_offset -= pixelDelta;
-        deltaSize.d_height.d_offset += pixelDelta;
+        float deltaMinY = minY - getAnchorMinY();
+        if (preserveEffectiveSize)
+        {
+            float pixelDelta = deltaMinY * baseSize.d_height;
+            if (useIntegersForAbsoluteResize())
+            {
+                pixelDelta = std::round(pixelDelta);
+                deltaMinY = qFuzzyIsNull(baseSize.d_height) ? 0.f : pixelDelta / baseSize.d_height;
+            }
+            deltaPos.d_y.d_offset -= pixelDelta;
+            deltaSize.d_height.d_offset += pixelDelta;
+        }
+        deltaPos.d_y.d_scale += deltaMinY;
+        deltaSize.d_height.d_scale -= deltaMinY;
     }
 
-    float deltaMaxX = maxX - getAnchorMaxX();
-    deltaSize.d_width.d_scale += deltaMaxX;
-    if (preserveEffectiveSize)
+    // Max X
     {
-        float pixelDelta = deltaMaxX * baseSize.d_width;
-        if (useIntegersForAbsoluteResize())
-            pixelDelta = std::round(pixelDelta);
-        deltaSize.d_width.d_offset -= pixelDelta;
+        float deltaMaxX = maxX - getAnchorMaxX();
+        if (preserveEffectiveSize)
+        {
+            float pixelDelta = deltaMaxX * baseSize.d_width;
+            if (useIntegersForAbsoluteResize())
+            {
+                pixelDelta = std::round(pixelDelta);
+                deltaMaxX = qFuzzyIsNull(baseSize.d_width) ? 0.f : pixelDelta / baseSize.d_width;
+            }
+            deltaSize.d_width.d_offset -= pixelDelta;
+        }
+        deltaSize.d_width.d_scale += deltaMaxX;
     }
 
-    float deltaMaxY = maxY - getAnchorMaxY();
-    deltaSize.d_height.d_scale += deltaMaxY;
-    if (preserveEffectiveSize)
+    // Max Y
     {
-        float pixelDelta = deltaMaxY * baseSize.d_height;
-        if (useIntegersForAbsoluteResize())
-            pixelDelta = std::round(pixelDelta);
-        deltaSize.d_height.d_offset -= pixelDelta;
+        float deltaMaxY = maxY - getAnchorMaxY();
+        if (preserveEffectiveSize)
+        {
+            float pixelDelta = deltaMaxY * baseSize.d_height;
+            if (useIntegersForAbsoluteResize())
+            {
+                pixelDelta = std::round(pixelDelta);
+                deltaMaxY = qFuzzyIsNull(baseSize.d_height) ? 0.f : pixelDelta / baseSize.d_height;
+            }
+            deltaSize.d_height.d_offset -= pixelDelta;
+        }
+        deltaSize.d_height.d_scale += deltaMaxY;
     }
 
     adjustPositionDeltaOnResize(deltaPos, deltaSize);

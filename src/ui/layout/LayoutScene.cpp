@@ -628,7 +628,6 @@ void LayoutScene::updateAnchorValueItems(bool minX, bool maxX, bool minY, bool m
     }
 }
 
-// FIXME: snapping sometimes has some 0.xx% offset when exact value like 25.0% expected
 // FIXME: when snapping to edge of self with Shift, handle dragging is not smooth
 // TODO: Lock axis
 // TODO: presets in virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *event) override?
