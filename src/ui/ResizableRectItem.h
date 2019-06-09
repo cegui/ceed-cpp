@@ -24,8 +24,8 @@ public:
     void setRect(qreal ax, qreal ay, qreal w, qreal h) { setRect(QRectF(ax, ay, w, h)); }
     bool isAnyHandleSelected() const;
     bool resizeInProgress() const { return _resizeInProgress; }
-    QPointF getResizeOldPos() const { return resizeOldPos; }
-    QRectF getResizeOldRect() const { return resizeOldRect; }
+    QPointF getResizeStartPos() const { return _resizeStartPos; }
+    QRectF getResizeStartRect() const { return _resizeStartRect; }
 
     void beginResizing(const QGraphicsItem& handle);
     void performResizing(const ResizingHandle& handle, qreal& deltaLeft, qreal& deltaTop, qreal& deltaRight, qreal& deltaBottom);
@@ -76,9 +76,9 @@ protected:
     int _innerHandleSize = 10;
     bool _handlesDirty = true;
 
-    QPointF moveOldPos;
-    QPointF resizeOldPos;
-    QRectF resizeOldRect;
+    QPointF _moveStartPos;
+    QPointF _resizeStartPos;
+    QRectF _resizeStartRect;
 
     bool _mouseOver = false;
     bool _moveInProgress = false;

@@ -588,13 +588,13 @@ void ImagesetVisualMode::mouseReleaseEvent(QMouseEvent* event)
         if (imageEntry->isResized())
         {
             // Only include that if the position or rect really changed
-            if (imageEntry->getResizeOldPos() != imageEntry->pos() || imageEntry->getResizeOldRect() != imageEntry->rect())
+            if (imageEntry->getResizeStartPos() != imageEntry->pos() || imageEntry->getResizeStartRect() != imageEntry->rect())
             {
                 ImagesetGeometryChangeCommand::Record rec;
                 rec.name = imageEntry->name();
-                rec.oldPos = imageEntry->getResizeOldPos();
+                rec.oldPos = imageEntry->getResizeStartPos();
                 rec.newPos = imageEntry->pos();
-                rec.oldRect = imageEntry->getResizeOldRect();
+                rec.oldRect = imageEntry->getResizeStartRect();
                 rec.newRect = imageEntry->rect();
                 resize.push_back(std::move(rec));
             }

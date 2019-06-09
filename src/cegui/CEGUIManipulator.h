@@ -74,12 +74,11 @@ public:
 
     bool isMoveStarted() const { return _moveStarted; }
     void resetMove() { _moveStarted = false; }
-    CEGUI::UVector2 getMoveStartPosition() const { return _preMovePos; }
 
     bool isResizeStarted() const { return _resizeStarted; }
     void resetResize() { _resizeStarted = false; }
-    CEGUI::UVector2 getResizeStartPosition() const { return _preResizePos; }
-    CEGUI::USize getResizeStartSize() const { return _preResizeSize; }
+    CEGUI::UVector2 getStartPosition() const { return _prevPos; }
+    CEGUI::USize getStartSize() const { return _prevSize; }
 
 protected:
 
@@ -94,14 +93,9 @@ protected:
     std::unordered_map<QString, std::pair<CEGUI::Property*, QtnProperty*>> _propertyMap;
 
     bool _resizeStarted = false;
-    CEGUI::UVector2 _preResizePos;
-    CEGUI::USize _preResizeSize;
-    QPointF _lastResizeNewPos;
-    QRectF _lastResizeNewRect;
-
     bool _moveStarted = false;
-    CEGUI::UVector2 _preMovePos;
-    QPointF _lastMoveNewPos;
+    CEGUI::UVector2 _prevPos;
+    CEGUI::USize _prevSize;
 };
 
 #endif // CEGUIMANIPULATOR_H

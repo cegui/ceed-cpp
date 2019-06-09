@@ -24,12 +24,12 @@ LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem
         // Immediately update if possible
         if (_resizeInProgress)
         {
-            notifyResizeProgress(_lastResizeNewPos, _lastResizeNewRect);
+            notifyResizeProgress(_lastNewPos, _lastNewRect);
             update();
         }
         if (_moveInProgress)
         {
-            notifyMoveProgress(_lastMoveNewPos);
+            notifyMoveProgress(_lastNewPos);
             update();
         }
     });
@@ -120,6 +120,8 @@ void LayoutManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
 {
     CEGUIManipulator::notifyResizeProgress(newPos, newRect);
     updatePropertiesFromWidget({"Size", "Position", "Area"});
+    _lastNewPos = newPos;
+    _lastNewRect = newRect;
 }
 
 void LayoutManipulator::notifyResizeFinished(QPointF newPos, QRectF newRect)
@@ -142,6 +144,7 @@ void LayoutManipulator::notifyMoveProgress(QPointF newPos)
 {
     CEGUIManipulator::notifyMoveProgress(newPos);
     updatePropertiesFromWidget({"Position", "Area"});
+    _lastNewPos = newPos;
 }
 
 void LayoutManipulator::notifyMoveFinished(QPointF newPos)

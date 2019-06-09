@@ -276,8 +276,8 @@ void CEGUIManipulator::notifyResizeStarted()
     ResizableRectItem::notifyResizeStarted();
 
     _resizeStarted = true;
-    _preResizePos = _widget->getPosition();
-    _preResizeSize = _widget->getSize();
+    _prevPos = _widget->getPosition();
+    _prevSize = _widget->getSize();
 
     for (QGraphicsItem* childItem : childItems())
     {
@@ -310,8 +310,8 @@ void CEGUIManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
     ResizableRectItem::notifyResizeProgress(newPos, newRect);
 
     // Absolute pixel deltas
-    auto pixelDeltaPos = newPos - resizeOldPos;
-    auto pixelDeltaSize = newRect.size() - resizeOldRect.size();
+    auto pixelDeltaPos = newPos - _resizeStartPos;
+    auto pixelDeltaSize = newRect.size() - _resizeStartRect.size();
 
     CEGUI::UVector2 deltaPos;
     CEGUI::USize deltaSize;
@@ -360,11 +360,8 @@ void CEGUIManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
         default: break;
     }
 
-    _widget->setPosition(_preResizePos + deltaPos);
-    _widget->setSize(_preResizeSize + deltaSize);
-
-    _lastResizeNewPos = newPos;
-    _lastResizeNewRect = newRect;
+    _widget->setPosition(_prevPos + deltaPos);
+    _widget->setSize(_prevSize + deltaSize);
 }
 
 void CEGUIManipulator::notifyResizeFinished(QPointF newPos, QRectF newRect)
@@ -399,7 +396,7 @@ void CEGUIManipulator::notifyMoveStarted()
     ResizableRectItem::notifyMoveStarted();
 
     _moveStarted = true;
-    _preMovePos = _widget->getPosition();
+    _prevPos = _widget->getPosition();
 
     for (QGraphicsItem* childItem : childItems())
     {
@@ -413,7 +410,7 @@ void CEGUIManipulator::notifyMoveProgress(QPointF newPos)
     ResizableRectItem::notifyMoveProgress(newPos);
 
     // Absolute pixel deltas
-    auto pixelDeltaPos = newPos - moveOldPos;
+    auto pixelDeltaPos = newPos - _moveStartPos;
 
     CEGUI::UVector2 deltaPos;
     if (useAbsoluteCoordsForMove())
@@ -432,9 +429,7 @@ void CEGUIManipulator::notifyMoveProgress(QPointF newPos)
                     CEGUI::UDim(static_cast<float>(pixelDeltaPos.y()) / baseSize.d_height, 0.f));
     }
 
-    _widget->setPosition(_preMovePos + deltaPos);
-
-    _lastMoveNewPos = newPos;
+    _widget->setPosition(_prevPos + deltaPos);
 }
 
 void CEGUIManipulator::notifyMoveFinished(QPointF newPos)

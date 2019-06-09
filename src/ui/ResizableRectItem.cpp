@@ -77,9 +77,10 @@ bool ResizableRectItem::isAnyHandleSelected() const
 
 void ResizableRectItem::beginResizing(const QGraphicsItem& handle)
 {
+    assert(!_moveInProgress);
     _resizeInProgress = true;
-    resizeOldPos = pos();
-    resizeOldRect = rect();
+    _resizeStartPos = pos();
+    _resizeStartRect = rect();
 
     setPen(getPenWhileResizing());
     hideAllHandles(&handle);
@@ -293,8 +294,9 @@ QVariant ResizableRectItem::itemChange(GraphicsItemChange change, const QVariant
         auto point = constrainMovePoint(value.toPointF());
         if (!_moveInProgress && !_ignoreGeometryChanges)
         {
+            assert(!_resizeInProgress);
             _moveInProgress = true;
-            moveOldPos = pos();
+            _moveStartPos = pos();
 
             setPen(getPenWhileMoving());
 

@@ -702,11 +702,10 @@ void LayoutScene::applyAnchorDeltas(float deltaMinX, float deltaMaxX, float delt
 }
 
 //!!!FIXME: working with deltas may lead to error accumulation!
-//!!!FIXME: manipulator dragging is broken, strange limiting, no anchor items updating!
-// TODO: on external changes update anchor items
 // TODO: Lock axis
 // TODO: presets in virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *event) override?
-// TODO: create undo command when edited through numeric value items!
+// TODO: create undo command when edited through numeric value items or presets!
+//???TODO: unify area change code with resizing through rect?
 void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool moveOpposite)
 {
     if (!_anchorTarget || !item) return;
@@ -1106,7 +1105,7 @@ void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
         {
             LayoutMoveCommand::Record rec;
             rec.path = item->getWidgetPath();
-            rec.oldPos = item->getMoveStartPosition();
+            rec.oldPos = item->getStartPosition();
             rec.newPos = item->getWidget()->getPosition();
             move.push_back(std::move(rec));
 
@@ -1117,9 +1116,9 @@ void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
         {
             LayoutResizeCommand::Record rec;
             rec.path = item->getWidgetPath();
-            rec.oldPos = item->getResizeStartPosition();
+            rec.oldPos = item->getStartPosition();
             rec.newPos = item->getWidget()->getPosition();
-            rec.oldSize = item->getResizeStartSize();
+            rec.oldSize = item->getStartSize();
             rec.newSize = item->getWidget()->getSize();
             resize.push_back(std::move(rec));
 

@@ -63,6 +63,10 @@ protected:
 
     LayoutVisualMode& _visualMode;
     WidgetHierarchyItem* _treeItem = nullptr;
+
+    QPointF _lastNewPos;
+    QRectF _lastNewRect;
+
     bool _showOutline = true;
     bool _drawSnapGrid = false;
     bool _snapGridNonClientArea = false;
