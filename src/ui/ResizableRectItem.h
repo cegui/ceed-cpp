@@ -18,7 +18,7 @@ public:
     ResizableRectItem(QGraphicsItem *parent = nullptr);
 
     void unselectAllHandles();
-    void hideAllHandles(const ResizingHandle* excluding = nullptr);
+    void hideAllHandles(const QGraphicsItem* excluding = nullptr);
     void setResizingEnabled(bool enabled = true);
     void setRect(QRectF newRect);
     void setRect(qreal ax, qreal ay, qreal w, qreal h) { setRect(QRectF(ax, ay, w, h)); }
@@ -27,7 +27,7 @@ public:
     QPointF getResizeOldPos() const { return resizeOldPos; }
     QRectF getResizeOldRect() const { return resizeOldRect; }
 
-    void beginResizing(const ResizingHandle& handle);
+    void beginResizing(const QGraphicsItem& handle);
     void performResizing(const ResizingHandle& handle, qreal& deltaLeft, qreal& deltaTop, qreal& deltaRight, qreal& deltaBottom);
     void endResizing();
 

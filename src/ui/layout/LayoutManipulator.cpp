@@ -1,4 +1,5 @@
 #include "src/ui/layout/LayoutManipulator.h"
+#include "src/ui/layout/LayoutScene.h"
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutUndoCommands.h"
 #include "src/cegui/CEGUIUtils.h"
@@ -199,6 +200,8 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
     auto parent = _widget->getParent();
     if (dynamic_cast<CEGUI::LayoutContainer*>(parent))
         setFlags(flags() & ~ItemIsMovable);
+
+    _visualMode.getScene()->onManipulatorUpdatedFromWidget(this);
 }
 
 void LayoutManipulator::detach(bool detachWidget, bool destroyWidget, bool recursive)

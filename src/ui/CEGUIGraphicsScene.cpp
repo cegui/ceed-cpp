@@ -26,8 +26,9 @@ static void validateResolution(float& width, float& height)
     }
 }
 
-CEGUIGraphicsScene::CEGUIGraphicsScene(float width, float height)
-    : timeOfLastRender(QDateTime::currentMSecsSinceEpoch())
+CEGUIGraphicsScene::CEGUIGraphicsScene(QObject* parent, float width, float height)
+    : QGraphicsScene(parent)
+    , timeOfLastRender(QDateTime::currentMSecsSinceEpoch())
 {
     validateResolution(width, height);
     contextWidth = width;

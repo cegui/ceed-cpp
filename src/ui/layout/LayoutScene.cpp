@@ -24,9 +24,15 @@
 #include "PropertyWidget/PropertyWidget.h"
 
 LayoutScene::LayoutScene(LayoutVisualMode& visualMode)
-    : _visualMode(visualMode)
+    : CEGUIGraphicsScene(&visualMode)
+    , _visualMode(visualMode)
 {
     connect(this, &LayoutScene::selectionChanged, this, &LayoutScene::slot_selectionChanged);
+}
+
+LayoutScene::~LayoutScene()
+{
+    disconnect(this, &LayoutScene::selectionChanged, this, &LayoutScene::slot_selectionChanged);
 }
 
 void LayoutScene::updateFromWidgets()
@@ -318,6 +324,26 @@ bool LayoutScene::deleteSelectedWidgets()
     return true;
 }
 
+void LayoutScene::onManipulatorUpdatedFromWidget(LayoutManipulator* manipulator)
+{
+    if (!manipulator) return;
+
+    // Update anchor handles for the manipulator if they are shown,
+    // unless updateFromWidget() was called due to dragging them
+    if (_anchorTarget == manipulator)
+    {
+        const bool isAnchorHandleSelected = isAnyAnchorHandleSelected();
+        if (!_anchorTarget->resizeInProgress() || !isAnchorHandleSelected)
+            updateAnchorItems();
+
+        if (!isAnchorHandleSelected)
+        {
+            _anchorTextX->setVisible(false);
+            _anchorTextY->setVisible(false);
+        }
+    }
+}
+
 static void ensureParentIsExpanded(QTreeView* view, QStandardItem* treeItem)
 {
     view->expand(treeItem->index());
@@ -501,8 +527,23 @@ void LayoutScene::createAnchorItems()
     addItem(_anchorTextY);
 }
 
+bool LayoutScene::isAnyAnchorHandleSelected() const
+{
+    return _anchorMinX->isSelected() ||
+            _anchorMaxX->isSelected() ||
+            _anchorMinY->isSelected() ||
+            _anchorMaxY->isSelected() ||
+            _anchorMinXMinY->isSelected() ||
+            _anchorMaxXMinY->isSelected() ||
+            _anchorMinXMaxY->isSelected() ||
+            _anchorMaxXMaxY->isSelected();
+}
+
 void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
 {
+    // Too early call, items aren't created yet
+    if (!_anchorTextX) return;
+
     const bool showAnchors = (_anchorTarget != nullptr);
 
     if (_anchorParentRect)
@@ -662,8 +703,6 @@ void LayoutScene::applyAnchorDeltas(float deltaMinX, float deltaMaxX, float delt
 
 //!!!FIXME: working with deltas may lead to error accumulation!
 //!!!FIXME: manipulator dragging is broken, strange limiting, no anchor items updating!
-//!!!FIXME: snapping adds 1 px of absolute each time, reducing relative!
-// TODO: on mouse up create undo command, look at ResizingHandle. ONLY if actually changed!
 // TODO: on external changes update anchor items
 // TODO: Lock axis
 // TODO: presets in virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *event) override?
@@ -675,13 +714,8 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
     CEGUI::Window* widget = _anchorTarget->getWidget();
     if (!widget) return;
 
-    /*
-    if (!_anchorMoveStarted)
-    {
-        _anchorMoveStarted = true;
-        //_anchorStartRect = ;
-    }
-    */
+    if (!_anchorTarget->resizeInProgress())
+        _anchorTarget->beginResizing(*item);
 
     // Snap to siblings (before limiting to ensure that limits are respected)
 
@@ -1036,12 +1070,12 @@ void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
     }
 
     // We have to "expand" the items, adding parents of resizing handles instead of the handles themselves
-    std::vector<LayoutManipulator*> selection;
+    std::set<LayoutManipulator*> selection;
     for (QGraphicsItem* selectedItem : selectedItems())
     {
         if (auto manipulator = dynamic_cast<LayoutManipulator*>(selectedItem))
         {
-            selection.push_back(manipulator);
+            selection.insert(manipulator);
             continue;
         }
 
@@ -1049,26 +1083,19 @@ void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
         {
             if (auto manipulator = dynamic_cast<LayoutManipulator*>(handle->parentItem()))
             {
-                selection.push_back(manipulator);
+                selection.insert(manipulator);
                 continue;
             }
         }
     }
 
-    /*
-    for (auto& item : selectedItems())
+    // Detect resizing by anchors not through selected items but through
+    // the state of the anchored item itself
+    if (_anchorTarget && _anchorTarget->resizeInProgress())
     {
-        if (item == _anchorMinX || item == _anchorMinY || item == _anchorMaxX || item == _anchorMaxY ||
-            item == _anchorMinXMinY || item == _anchorMaxXMinY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
-        {
-            // stop dragging current anchor item
-            // if pos changed, create undo command for resizing
-            break;
-        }
+        _anchorTarget->endResizing();
+        selection.insert(_anchorTarget);
     }
-
-    _anchorMoveStarted = false;
-    */
 
     std::vector<LayoutMoveCommand::Record> move;
     std::vector<LayoutResizeCommand::Record> resize;

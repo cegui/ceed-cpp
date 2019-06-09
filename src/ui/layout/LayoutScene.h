@@ -20,6 +20,7 @@ class LayoutScene : public CEGUIGraphicsScene
 public:
 
     LayoutScene(LayoutVisualMode& visualMode);
+    virtual ~LayoutScene() override;
 
     void updateFromWidgets();
     virtual void setCEGUIDisplaySize(float width, float height) override;
@@ -39,6 +40,7 @@ public:
 
     void ignoreSelectionChanges(bool ignore) { _ignoreSelectionChanges = ignore; }
 
+    void onManipulatorUpdatedFromWidget(LayoutManipulator* manipulator);
     void anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool moveOpposite);
     void anchorHandleSelected(QGraphicsItem* item);
 
@@ -49,6 +51,7 @@ public slots:
 protected:
 
     void createAnchorItems();
+    bool isAnyAnchorHandleSelected() const;
     void updateAnchorItems(QGraphicsItem* movedItem = nullptr);
     void updateAnchorValueItems(bool minX, bool maxX, bool minY, bool maxY);
     void applyAnchorDeltas(float deltaMinX, float deltaMaxX, float deltaMinY, float deltaMaxY, bool preserveEffectiveSize);
@@ -80,8 +83,6 @@ protected:
     AnchorCornerHandle* _anchorMaxXMaxY = nullptr;
     NumericValueItem* _anchorTextX = nullptr;
     NumericValueItem* _anchorTextY = nullptr;
-    QRectF _anchorStartRect;
-    bool _anchorMoveStarted = false;
 
     bool _ignoreSelectionChanges = false;
 };

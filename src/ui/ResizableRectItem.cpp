@@ -35,7 +35,7 @@ void ResizableRectItem::unselectAllHandles()
 }
 
 // Hides all handles. If a handle is given as the 'excluding' parameter, this handle is skipped over when hiding.
-void ResizableRectItem::hideAllHandles(const ResizingHandle* excluding)
+void ResizableRectItem::hideAllHandles(const QGraphicsItem* excluding)
 {
     for (QGraphicsItem* item : childItems())
     {
@@ -75,7 +75,7 @@ bool ResizableRectItem::isAnyHandleSelected() const
     return false;
 }
 
-void ResizableRectItem::beginResizing(const ResizingHandle& handle)
+void ResizableRectItem::beginResizing(const QGraphicsItem& handle)
 {
     _resizeInProgress = true;
     resizeOldPos = pos();
