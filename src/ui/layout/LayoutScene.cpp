@@ -600,113 +600,38 @@ void LayoutScene::updateAnchorValueItems(bool minX, bool maxX, bool minY, bool m
     if (!_anchorTarget) return;
 
     const auto widgetCenter = _anchorTarget->sceneBoundingRect().center();
-    const auto& ceguiPos = _anchorTarget->getWidget()->getPosition();
-    const auto& ceguiSize = _anchorTarget->getWidget()->getSize();
 
     if (minX)
     {
-        _anchorTextX->setValue(static_cast<qreal>(ceguiPos.d_x.d_scale) * 100.0);
-        _anchorTextX->setX(_anchorMinX->sceneBoundingRect().left() - _anchorTextX->sceneBoundingRect().width());// - 10);
+        _anchorTextX->setValue(static_cast<qreal>(_anchorTarget->getAnchorMinX()) * 100.0);
+        _anchorTextX->setX(_anchorMinX->sceneBoundingRect().left() - _anchorTextX->sceneBoundingRect().width());
         _anchorTextX->setY(widgetCenter.y() - _anchorTextX->sceneBoundingRect().height() / 2.0);
     }
     else if (maxX)
     {
-        _anchorTextX->setValue(static_cast<qreal>(ceguiPos.d_x.d_scale + ceguiSize.d_width.d_scale) * 100.0);
-        _anchorTextX->setX(_anchorMaxX->sceneBoundingRect().right());// + 10);
+        _anchorTextX->setValue(static_cast<qreal>(_anchorTarget->getAnchorMaxX()) * 100.0);
+        _anchorTextX->setX(_anchorMaxX->sceneBoundingRect().right());
         _anchorTextX->setY(widgetCenter.y() - _anchorTextX->sceneBoundingRect().height() / 2.0);
     }
 
     if (minY)
     {
-        _anchorTextY->setValue(static_cast<qreal>(ceguiPos.d_y.d_scale) * 100.0);
+        _anchorTextY->setValue(static_cast<qreal>(_anchorTarget->getAnchorMinY()) * 100.0);
         _anchorTextY->setX(widgetCenter.x() - _anchorTextY->sceneBoundingRect().width() / 2.0);
-        _anchorTextY->setY(_anchorMinY->sceneBoundingRect().top() - _anchorTextY->sceneBoundingRect().height()); // - 10
+        _anchorTextY->setY(_anchorMinY->sceneBoundingRect().top() - _anchorTextY->sceneBoundingRect().height());
     }
     else if (maxY)
     {
-        _anchorTextY->setValue(static_cast<qreal>(ceguiPos.d_y.d_scale + ceguiSize.d_height.d_scale) * 100.0);
+        _anchorTextY->setValue(static_cast<qreal>(_anchorTarget->getAnchorMaxY()) * 100.0);
         _anchorTextY->setX(widgetCenter.x() - _anchorTextY->sceneBoundingRect().width() / 2.0);
-        _anchorTextY->setY(_anchorMaxY->sceneBoundingRect().bottom()); // + 10
+        _anchorTextY->setY(_anchorMaxY->sceneBoundingRect().bottom());
     }
 }
 
-void LayoutScene::applyAnchorDeltas(float deltaMinX, float deltaMaxX, float deltaMinY, float deltaMaxY, bool preserveEffectiveSize)
-{
-    assert(_anchorTarget);
-
-    CEGUI::Window* widget = _anchorTarget->getWidget();
-    if (!widget) return;
-
-    auto baseSize = _anchorTarget->getBaseSize();
-    if (baseSize.d_width <= 0.f || baseSize.d_height <= 0.f) return;
-
-    CEGUI::UVector2 deltaPos;
-    CEGUI::USize deltaSize;
-
-    const float reDeltaMinX = deltaMinX / baseSize.d_width;
-    deltaPos.d_x.d_scale += reDeltaMinX;
-    deltaSize.d_width.d_scale += -reDeltaMinX;
-    if (preserveEffectiveSize)
-    {
-        deltaPos.d_x.d_offset += -deltaMinX;
-        deltaSize.d_width.d_offset += deltaMinX;
-    }
-
-    const float reDeltaMinY = deltaMinY / baseSize.d_height;
-    deltaPos.d_y.d_scale += reDeltaMinY;
-    deltaSize.d_height.d_scale += -reDeltaMinY;
-    if (preserveEffectiveSize)
-    {
-        deltaPos.d_y.d_offset += -deltaMinY;
-        deltaSize.d_height.d_offset += deltaMinY;
-    }
-
-    const float reDeltaMaxX = deltaMaxX / baseSize.d_width;
-    deltaSize.d_width.d_scale += reDeltaMaxX;
-    if (preserveEffectiveSize)
-    {
-        deltaSize.d_width.d_offset += -deltaMaxX;
-    }
-
-    const float reDeltaMaxY = deltaMaxY / baseSize.d_height;
-    deltaSize.d_height.d_scale += reDeltaMaxY;
-    if (preserveEffectiveSize)
-    {
-        deltaSize.d_height.d_offset += -deltaMaxY;
-    }
-
-    // Because the Qt manipulator is always top left aligned in the CEGUI sense,
-    // we have to process the size to factor in alignments if they differ
-    switch (widget->getHorizontalAlignment())
-    {
-        case CEGUI::HorizontalAlignment::Centre:
-            deltaPos.d_x += CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_width; break;
-        case CEGUI::HorizontalAlignment::Right:
-            deltaPos.d_x += deltaSize.d_width; break;
-        default: break;
-    }
-    switch (widget->getVerticalAlignment())
-    {
-        case CEGUI::VerticalAlignment::Centre:
-            deltaPos.d_y += CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_height; break;
-        case CEGUI::VerticalAlignment::Bottom:
-            deltaPos.d_y += deltaSize.d_height; break;
-        default: break;
-    }
-
-    widget->setPosition(widget->getPosition() + deltaPos);
-    widget->setSize(widget->getSize() + deltaSize);
-
-    _anchorTarget->updateFromWidget();
-    _anchorTarget->updatePropertiesFromWidget({"Size", "Position", "Area"});
-}
-
-//!!!FIXME: working with deltas may lead to error accumulation!
 // TODO: Lock axis
 // TODO: presets in virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *event) override?
 // TODO: create undo command when edited through numeric value items or presets!
-//???TODO: unify area change code with resizing through rect?
-void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool moveOpposite)
+void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool moveOpposite)
 {
     if (!_anchorTarget || !item) return;
 
@@ -734,7 +659,7 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
 
             const auto siblingRect = siblingManipulator->sceneBoundingRect();
             const auto siblingAnchorsRect = siblingManipulator->getAnchorsRect();
-            auto anchorPos = item->pos() + delta;
+            auto anchorPos = newPos;
 
             if (item == _anchorMinX || item == _anchorMaxX)
             {
@@ -751,7 +676,7 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
                     anchorPos.rx() = siblingAnchorsRect.right();
                 else continue;
 
-                delta = anchorPos - item->pos();
+                newPos = anchorPos;
             }
             else if (item == _anchorMinY || item == _anchorMaxY)
             {
@@ -768,7 +693,7 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
                     anchorPos.ry() = siblingAnchorsRect.bottom();
                 else continue;
 
-                delta = anchorPos - item->pos();
+                newPos = anchorPos;
             }
             else continue;
 
@@ -793,85 +718,81 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool mo
         }
     }
 
-    // Calculate actual deltas for anchors. Do limiting on a pixel level, it is more convenient.
+    // Do constraining and dependent moving
 
-    float deltaMinX = 0.f;
-    float deltaMinY = 0.f;
-    float deltaMaxX = 0.f;
-    float deltaMaxY = 0.f;
+    const QPointF newAnchor = _anchorTarget->scenePixelToAnchor(newPos);
 
-    const QPointF newItemPos = item->pos() + delta;
+    float minX = _anchorTarget->getAnchorMinX();
+    float maxX = _anchorTarget->getAnchorMaxX();
+    float minY = _anchorTarget->getAnchorMinY();
+    float maxY = _anchorTarget->getAnchorMaxY();
 
-    bool minX = false, maxX = false, minY = false, maxY = false;
+    bool hasMinX = false, hasMaxX = false, hasMinY = false, hasMaxY = false;
     if (item == _anchorMinX || item == _anchorMinXMinY || item == _anchorMinXMaxY)
     {
-        minX = true;
-        const qreal overlap = newItemPos.x() - _anchorMaxX->pos().x();
-        if (overlap > 0.0)
+        hasMinX = true;
+        minX = static_cast<float>(newAnchor.x());
+        if (maxX < minX)
         {
-            if (moveOpposite) deltaMaxX += static_cast<float>(overlap);
-            else delta.rx() -= overlap;
+            if (moveOpposite) maxX = minX;
+            else
+            {
+                minX = maxX;
+                newPos.setX(_anchorMaxX->pos().x());
+            }
         }
-
-        if (_visualMode.isAbsoluteIntegerMode())
-            delta.rx() = std::floor(delta.x());
-
-        deltaMinX += static_cast<float>(delta.x());
     }
     else if (item == _anchorMaxX || item == _anchorMaxXMinY || item == _anchorMaxXMaxY)
     {
-        maxX = true;
-        const qreal overlap = newItemPos.x() - _anchorMinX->pos().x();
-        if (overlap < 0.0)
+        hasMaxX = true;
+        maxX = static_cast<float>(newAnchor.x());
+        if (maxX < minX)
         {
-            if (moveOpposite) deltaMinX += static_cast<float>(overlap);
-            else delta.rx() -= overlap;
+            if (moveOpposite) minX = maxX;
+            else
+            {
+                maxX = minX;
+                newPos.setX(_anchorMinX->pos().x());
+            }
         }
-
-        if (_visualMode.isAbsoluteIntegerMode())
-            delta.rx() = std::floor(delta.x());
-
-        deltaMaxX += static_cast<float>(delta.x());
     }
 
     if (item == _anchorMinY || item == _anchorMinXMinY || item == _anchorMaxXMinY)
     {
-        minY = true;
-        const qreal overlap = newItemPos.y() - _anchorMaxY->pos().y();
-        if (overlap > 0.0)
+        hasMinY = true;
+        minY = static_cast<float>(newAnchor.y());
+        if (maxY < minY)
         {
-            if (moveOpposite) deltaMaxY += static_cast<float>(overlap);
-            else delta.ry() -= overlap;
+            if (moveOpposite) maxY = minY;
+            else
+            {
+                minY = maxY;
+                newPos.setY(_anchorMaxY->pos().y());
+            }
         }
-
-        if (_visualMode.isAbsoluteIntegerMode())
-            delta.ry() = std::floor(delta.y());
-
-        deltaMinY += static_cast<float>(delta.y());
     }
     else if (item == _anchorMaxY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
     {
-        maxY = true;
-        const qreal overlap = newItemPos.y() - _anchorMinY->pos().y();
-        if (overlap < 0.0)
+        hasMaxY = true;
+        maxY = static_cast<float>(newAnchor.y());
+        if (maxY < minY)
         {
-            if (moveOpposite) deltaMinY += static_cast<float>(overlap);
-            else delta.ry() -= overlap;
+            if (moveOpposite) minY = maxY;
+            else
+            {
+                maxY = minY;
+                newPos.setY(_anchorMinY->pos().y());
+            }
         }
-
-        if (_visualMode.isAbsoluteIntegerMode())
-            delta.ry() = std::floor(delta.y());
-
-        deltaMaxY += static_cast<float>(delta.y());
     }
 
     // Perform actual changes
 
     const bool preserveEffectiveSize = !(QApplication::keyboardModifiers() & Qt::ShiftModifier);
-    applyAnchorDeltas(deltaMinX, deltaMaxX, deltaMinY, deltaMaxY, preserveEffectiveSize);
+    _anchorTarget->setAnchors(minX, maxX, minY, maxY, preserveEffectiveSize);
 
     updateAnchorItems(item);
-    updateAnchorValueItems(minX, maxX, minY, maxY);
+    updateAnchorValueItems(hasMinX, hasMaxX, hasMinY, hasMaxY);
 }
 
 void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
@@ -898,39 +819,39 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
         return;
     }
 
-    bool minX = false, maxX = false, minY = false, maxY = false;
+    // TODO: preserveEffectiveSize - need hotkey or option!
+
+    bool hasMinX = false, hasMaxX = false, hasMinY = false, hasMaxY = false;
     if (item == _anchorMinX || item == _anchorMinXMinY || item == _anchorMinXMaxY)
     {
-        minX = true;
+        hasMinX = true;
         _anchorTextX->setVisible(true);
         _anchorTextX->setHorizontalAlignment(Qt::AlignRight);
         _anchorTextX->setTextTemplate("%1%");
         connect(_anchorTextX, &NumericValueItem::valueChanged, [this](qreal newValue)
         {
-            const float minX = _anchorTarget->getWidget()->getPosition().d_x.d_scale;
-            const float maxX = minX + _anchorTarget->getWidget()->getSize().d_width.d_scale;
-            const float deltaMinX = static_cast<float>(newValue) / 100.f - minX;
-            const float deltaMaxX = std::max(0.f, (minX + deltaMinX) - maxX);
-            const float baseWidth = _anchorTarget->getBaseSize().d_width;
-            applyAnchorDeltas(deltaMinX * baseWidth, deltaMaxX * baseWidth, 0.f, 0.f, false);
+            const float minX = static_cast<float>(newValue) / 100.f;
+            const float maxX = std::max(_anchorTarget->getAnchorMaxX(), minX);
+            const float minY = _anchorTarget->getAnchorMinY();
+            const float maxY = _anchorTarget->getAnchorMaxY();
+            _anchorTarget->setAnchors(minX, maxX, minY, maxY, false);
             updateAnchorItems();
             updateAnchorValueItems(true, false, false, false);
         });
      }
     else if (item == _anchorMaxX || item == _anchorMaxXMinY || item == _anchorMaxXMaxY)
     {
-        maxX = true;
+        hasMaxX = true;
         _anchorTextX->setVisible(true);
         _anchorTextX->setHorizontalAlignment(Qt::AlignLeft);
         _anchorTextX->setTextTemplate("%1%");
         connect(_anchorTextX, &NumericValueItem::valueChanged, [this](qreal newValue)
         {
-            const float minX = _anchorTarget->getWidget()->getPosition().d_x.d_scale;
-            const float maxX = minX + _anchorTarget->getWidget()->getSize().d_width.d_scale;
-            const float deltaMaxX = static_cast<float>(newValue) / 100.f - maxX;
-            const float deltaMinX = std::min(0.f, (maxX + deltaMaxX) - minX);
-            const float baseWidth = _anchorTarget->getBaseSize().d_width;
-            applyAnchorDeltas(deltaMinX * baseWidth, deltaMaxX * baseWidth, 0.f, 0.f, false);
+            const float maxX = static_cast<float>(newValue) / 100.f;
+            const float minX = std::min(_anchorTarget->getAnchorMinX(), maxX);
+            const float minY = _anchorTarget->getAnchorMinY();
+            const float maxY = _anchorTarget->getAnchorMaxY();
+            _anchorTarget->setAnchors(minX, maxX, minY, maxY, false);
             updateAnchorItems();
             updateAnchorValueItems(false, true, false, false);
         });
@@ -939,41 +860,39 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
 
     if (item == _anchorMinY || item == _anchorMinXMinY || item == _anchorMaxXMinY)
     {
-        minY = true;
+        hasMinY = true;
         _anchorTextY->setVisible(true);
         _anchorTextY->setTextTemplate("%1%");
         connect(_anchorTextY, &NumericValueItem::valueChanged, [this](qreal newValue)
         {
-            const float minY = _anchorTarget->getWidget()->getPosition().d_y.d_scale;
-            const float maxY = minY + _anchorTarget->getWidget()->getSize().d_height.d_scale;
-            const float deltaMinY = static_cast<float>(newValue) / 100.f - minY;
-            const float deltaMaxY = std::max(0.f, (minY + deltaMinY) - maxY);
-            const float baseHeight = _anchorTarget->getBaseSize().d_height;
-            applyAnchorDeltas(0.f, 0.f, deltaMinY * baseHeight, deltaMaxY * baseHeight, false);
+            const float minY = static_cast<float>(newValue) / 100.f;
+            const float maxY = std::max(_anchorTarget->getAnchorMaxY(), minY);
+            const float minX = _anchorTarget->getAnchorMinX();
+            const float maxX = _anchorTarget->getAnchorMaxX();
+            _anchorTarget->setAnchors(minX, maxX, minY, maxY, false);
             updateAnchorItems();
             updateAnchorValueItems(false, false, true, false);
         });
     }
     else if (item == _anchorMaxY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
     {
-        maxY = true;
+        hasMaxY = true;
         _anchorTextY->setVisible(true);
         _anchorTextY->setTextTemplate("%1%");
         connect(_anchorTextY, &NumericValueItem::valueChanged, [this](qreal newValue)
         {
-            const float minY = _anchorTarget->getWidget()->getPosition().d_y.d_scale;
-            const float maxY = minY + _anchorTarget->getWidget()->getSize().d_height.d_scale;
-            const float deltaMaxY = static_cast<float>(newValue) / 100.f - maxY;
-            const float deltaMinY = std::min(0.f, (maxY + deltaMaxY) - minY);
-            const float baseHeight = _anchorTarget->getBaseSize().d_height;
-            applyAnchorDeltas(0.f, 0.f, deltaMinY * baseHeight, deltaMaxY * baseHeight, false);
+            const float maxY = static_cast<float>(newValue) / 100.f;
+            const float minY = std::min(_anchorTarget->getAnchorMinY(), maxY);
+            const float minX = _anchorTarget->getAnchorMinX();
+            const float maxX = _anchorTarget->getAnchorMaxX();
+            _anchorTarget->setAnchors(minX, maxX, minY, maxY, false);
             updateAnchorItems();
             updateAnchorValueItems(false, false, false, true);
         });
     }
     else _anchorTextY->setVisible(false);
 
-    updateAnchorValueItems(minX, maxX, minY, maxY);
+    updateAnchorValueItems(hasMinX, hasMaxX, hasMinY, hasMaxY);
 }
 
 void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)

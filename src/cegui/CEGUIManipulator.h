@@ -34,6 +34,12 @@ public:
     CEGUI::Sizef getBaseSize() const;
     QRectF getParentRect() const;
     QRectF getAnchorsRect() const;
+    float getAnchorMinX() const;
+    float getAnchorMaxX() const;
+    float getAnchorMinY() const;
+    float getAnchorMaxY() const;
+    QPointF scenePixelToAnchor(QPointF scenePixel) const;
+    void setAnchors(float minX, float maxX, float minY, float maxY, bool preserveEffectiveSize);
 
     virtual void notifyHandleSelected(ResizingHandle* handle) override;
     virtual void notifyResizeStarted() override;
@@ -83,6 +89,7 @@ public:
 protected:
 
     void createPropertySet();
+    void adjustPositionDeltaOnResize(CEGUI::UVector2& deltaPos, const CEGUI::USize& deltaSize);
 
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
     virtual void onPropertyChanged(const QtnPropertyBase* property, CEGUI::Property* ceguiProperty);

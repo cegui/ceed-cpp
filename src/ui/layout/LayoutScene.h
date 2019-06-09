@@ -41,7 +41,7 @@ public:
     void ignoreSelectionChanges(bool ignore) { _ignoreSelectionChanges = ignore; }
 
     void onManipulatorUpdatedFromWidget(LayoutManipulator* manipulator);
-    void anchorHandleMoved(QGraphicsItem* item, QPointF& delta, bool moveOpposite);
+    void anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool moveOpposite);
     void anchorHandleSelected(QGraphicsItem* item);
 
 public slots:
@@ -54,7 +54,6 @@ protected:
     bool isAnyAnchorHandleSelected() const;
     void updateAnchorItems(QGraphicsItem* movedItem = nullptr);
     void updateAnchorValueItems(bool minX, bool maxX, bool minY, bool maxY);
-    void applyAnchorDeltas(float deltaMinX, float deltaMaxX, float deltaMinY, float deltaMaxY, bool preserveEffectiveSize);
 
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;

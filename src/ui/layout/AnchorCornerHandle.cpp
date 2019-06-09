@@ -57,9 +57,9 @@ QVariant AnchorCornerHandle::itemChange(GraphicsItemChange change, const QVarian
 {
     if (change == ItemPositionChange)
     {
-        QPointF delta = value.toPointF() - pos();
-        static_cast<LayoutScene*>(scene())->anchorHandleMoved(this, delta, _moveOpposite);
-        return pos() + delta;
+        QPointF newPos = value.toPointF();
+        static_cast<LayoutScene*>(scene())->anchorHandleMoved(this, newPos, _moveOpposite);
+        return newPos;
     }
     else if (change == ItemSelectedHasChanged)
     {

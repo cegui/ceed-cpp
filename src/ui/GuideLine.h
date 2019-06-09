@@ -28,7 +28,7 @@ protected:
     virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
 
-    virtual void onMoving(QPointF& delta) { }
+    virtual void onMoving(QPointF& /*newPos*/) {}
 
     QPen _normalPen;
     QColor _hoverColor;

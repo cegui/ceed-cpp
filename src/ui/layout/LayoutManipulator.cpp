@@ -119,7 +119,6 @@ void LayoutManipulator::notifyResizeStarted()
 void LayoutManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
 {
     CEGUIManipulator::notifyResizeProgress(newPos, newRect);
-    updatePropertiesFromWidget({"Size", "Position", "Area"});
     _lastNewPos = newPos;
     _lastNewRect = newRect;
 }
@@ -143,7 +142,6 @@ void LayoutManipulator::notifyMoveStarted()
 void LayoutManipulator::notifyMoveProgress(QPointF newPos)
 {
     CEGUIManipulator::notifyMoveProgress(newPos);
-    updatePropertiesFromWidget({"Position", "Area"});
     _lastNewPos = newPos;
 }
 

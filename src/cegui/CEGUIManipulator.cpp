@@ -265,6 +265,93 @@ QRectF CEGUIManipulator::getAnchorsRect() const
                   parentRect.height() * static_cast<qreal>(widgetSize.d_height.d_scale));
 }
 
+float CEGUIManipulator::getAnchorMinX() const
+{
+    return _widget->getPosition().d_x.d_scale;
+}
+
+float CEGUIManipulator::getAnchorMaxX() const
+{
+    return getAnchorMinX() + _widget->getSize().d_width.d_scale;
+}
+
+float CEGUIManipulator::getAnchorMinY() const
+{
+    return _widget->getPosition().d_y.d_scale;
+}
+
+float CEGUIManipulator::getAnchorMaxY() const
+{
+    return getAnchorMinY() + _widget->getSize().d_height.d_scale;
+}
+
+QPointF CEGUIManipulator::scenePixelToAnchor(QPointF scenePixel) const
+{
+    const QRectF parentRect = getParentRect();
+    return QPointF(qFuzzyIsNull(parentRect.width()) ? 0.0 : (scenePixel.x() - parentRect.x()) / parentRect.width(),
+                   qFuzzyIsNull(parentRect.height()) ? 0.0 : (scenePixel.y() - parentRect.y()) / parentRect.height());
+}
+
+void CEGUIManipulator::setAnchors(float minX, float maxX, float minY, float maxY, bool preserveEffectiveSize)
+{
+    const CEGUI::Sizef baseSize = getBaseSize();
+
+    CEGUI::UVector2 deltaPos;
+    CEGUI::USize deltaSize;
+
+    float deltaMinX = minX - getAnchorMinX();
+    deltaPos.d_x.d_scale += deltaMinX;
+    deltaSize.d_width.d_scale -= deltaMinX;
+    if (preserveEffectiveSize)
+    {
+        float pixelDelta = deltaMinX * baseSize.d_width;
+        if (useIntegersForAbsoluteResize())
+            pixelDelta = std::round(pixelDelta);
+        deltaPos.d_x.d_offset -= pixelDelta;
+        deltaSize.d_width.d_offset += pixelDelta;
+    }
+
+    float deltaMinY = minY - getAnchorMinY();
+    deltaPos.d_y.d_scale += deltaMinY;
+    deltaSize.d_height.d_scale -= deltaMinY;
+    if (preserveEffectiveSize)
+    {
+        float pixelDelta = deltaMinY * baseSize.d_height;
+        if (useIntegersForAbsoluteResize())
+            pixelDelta = std::round(pixelDelta);
+        deltaPos.d_y.d_offset -= pixelDelta;
+        deltaSize.d_height.d_offset += pixelDelta;
+    }
+
+    float deltaMaxX = maxX - getAnchorMaxX();
+    deltaSize.d_width.d_scale += deltaMaxX;
+    if (preserveEffectiveSize)
+    {
+        float pixelDelta = deltaMaxX * baseSize.d_width;
+        if (useIntegersForAbsoluteResize())
+            pixelDelta = std::round(pixelDelta);
+        deltaSize.d_width.d_offset -= pixelDelta;
+    }
+
+    float deltaMaxY = maxY - getAnchorMaxY();
+    deltaSize.d_height.d_scale += deltaMaxY;
+    if (preserveEffectiveSize)
+    {
+        float pixelDelta = deltaMaxY * baseSize.d_height;
+        if (useIntegersForAbsoluteResize())
+            pixelDelta = std::round(pixelDelta);
+        deltaSize.d_height.d_offset -= pixelDelta;
+    }
+
+    adjustPositionDeltaOnResize(deltaPos, deltaSize);
+
+    _widget->setPosition(_widget->getPosition() + deltaPos);
+    _widget->setSize(_widget->getSize() + deltaSize);
+
+    updateFromWidget();
+    updatePropertiesFromWidget({"Size", "Position", "Area"});
+}
+
 void CEGUIManipulator::notifyHandleSelected(ResizingHandle* handle)
 {
     ResizableRectItem::notifyHandleSelected(handle);
@@ -307,6 +394,8 @@ static inline void roundSizeFloor(QSizeF& size)
 
 void CEGUIManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
 {
+    assert(_resizeStarted);
+
     ResizableRectItem::notifyResizeProgress(newPos, newRect);
 
     // Absolute pixel deltas
@@ -341,27 +430,12 @@ void CEGUIManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
                     CEGUI::UDim(static_cast<float>(pixelDeltaSize.height()) / baseSize.d_height, 0.f));
     }
 
-    // Because the Qt manipulator is always top left aligned in the CEGUI sense,
-    // we have to process the size to factor in alignments if they differ
-    switch (_widget->getHorizontalAlignment())
-    {
-        case CEGUI::HorizontalAlignment::Centre:
-            deltaPos.d_x += CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_width; break;
-        case CEGUI::HorizontalAlignment::Right:
-            deltaPos.d_x += deltaSize.d_width; break;
-        default: break;
-    }
-    switch (_widget->getVerticalAlignment())
-    {
-        case CEGUI::VerticalAlignment::Centre:
-            deltaPos.d_y += CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_height; break;
-        case CEGUI::VerticalAlignment::Bottom:
-            deltaPos.d_y += deltaSize.d_height; break;
-        default: break;
-    }
+    adjustPositionDeltaOnResize(deltaPos, deltaSize);
 
     _widget->setPosition(_prevPos + deltaPos);
     _widget->setSize(_prevSize + deltaSize);
+
+    updatePropertiesFromWidget({"Size", "Position", "Area"});
 }
 
 void CEGUIManipulator::notifyResizeFinished(QPointF newPos, QRectF newRect)
@@ -407,6 +481,8 @@ void CEGUIManipulator::notifyMoveStarted()
 
 void CEGUIManipulator::notifyMoveProgress(QPointF newPos)
 {
+    assert(_moveStarted);
+
     ResizableRectItem::notifyMoveProgress(newPos);
 
     // Absolute pixel deltas
@@ -430,6 +506,8 @@ void CEGUIManipulator::notifyMoveProgress(QPointF newPos)
     }
 
     _widget->setPosition(_prevPos + deltaPos);
+
+    updatePropertiesFromWidget({"Position", "Area"});
 }
 
 void CEGUIManipulator::notifyMoveFinished(QPointF newPos)
@@ -901,6 +979,28 @@ void CEGUIManipulator::createPropertySet()
         _propertySet->addChildProperty(pair.second, true);
 
     if (unknownSet) _propertySet->addChildProperty(unknownSet, true);
+}
+
+void CEGUIManipulator::adjustPositionDeltaOnResize(CEGUI::UVector2& deltaPos, const CEGUI::USize& deltaSize)
+{
+    // Because the Qt manipulator is always top left aligned in the CEGUI sense,
+    // we have to process the size to factor in alignments if they differ
+    switch (_widget->getHorizontalAlignment())
+    {
+        case CEGUI::HorizontalAlignment::Centre:
+            deltaPos.d_x += CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_width; break;
+        case CEGUI::HorizontalAlignment::Right:
+            deltaPos.d_x += deltaSize.d_width; break;
+        default: break;
+    }
+    switch (_widget->getVerticalAlignment())
+    {
+        case CEGUI::VerticalAlignment::Centre:
+            deltaPos.d_y += CEGUI::UDim(0.5f, 0.5f) * deltaSize.d_height; break;
+        case CEGUI::VerticalAlignment::Bottom:
+            deltaPos.d_y += deltaSize.d_height; break;
+        default: break;
+    }
 }
 
 void CEGUIManipulator::onPropertyChanged(const QtnPropertyBase* property, CEGUI::Property* ceguiProperty)

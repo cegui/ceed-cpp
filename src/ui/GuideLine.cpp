@@ -103,15 +103,15 @@ QVariant GuideLine::itemChange(GraphicsItemChange change, const QVariant& value)
     }
     else if (change == ItemPositionChange)
     {
-        QPointF delta = value.toPointF() - pos();
+        QPointF newPos = value.toPointF();
         if (_horizontal)
-            delta.setX(0.0);
+            newPos.setX(pos().x());
         else
-            delta.setY(0.0);
+            newPos.setY(pos().y());
 
-        onMoving(delta);
+        onMoving(newPos);
 
-        return pos() + delta;
+        return newPos;
     }
 
     return QGraphicsLineItem::itemChange(change, value);

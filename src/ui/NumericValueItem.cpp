@@ -108,7 +108,11 @@ qreal NumericValueItem::textToValue(bool* ok) const
     return locale.toDouble(text, ok);
 }
 
+// It seems that QGraphicsTextItem contains at least 50% of all Qt bugs :( It is broken in all possible ways.
 // FIXME: Qt 5.12.3 crashes in unmodified QGraphicsTextItem::paint when rendering to OpenGL in edit mode.
+// FIXME: after closing and reopening layout editor text render as rectangles without alpha.
+// FIXME: if render all texts to images, the first renders good and others as black rectangles.
+// TODO: try OpenGL 3.2 Core renderer.
 void NumericValueItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
     if (!painter) return;
@@ -123,7 +127,19 @@ void NumericValueItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* 
 
         painter->drawImage(boundingRect(), image, image.rect());
     }
-    else QGraphicsTextItem::paint(painter, option, widget);
+    else
+    {
+        /*
+        painter->save();
+        painter->setBrush(defaultTextColor());
+        painter->setFont(font());
+        painter->setBackgroundMode(Qt::TransparentMode);
+        painter->setBackground(Qt::transparent);
+        painter->drawText(boundingRect(), toPlainText());
+        painter->restore();
+        */
+        QGraphicsTextItem::paint(painter, option, widget);
+    }
 }
 
 void NumericValueItem::focusInEvent(QFocusEvent* event)

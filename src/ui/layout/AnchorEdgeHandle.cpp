@@ -21,7 +21,7 @@ QVariant AnchorEdgeHandle::itemChange(QGraphicsItem::GraphicsItemChange change, 
     return GuideLine::itemChange(change, value);
 }
 
-void AnchorEdgeHandle::onMoving(QPointF& delta)
+void AnchorEdgeHandle::onMoving(QPointF& newPos)
 {
-    static_cast<LayoutScene*>(scene())->anchorHandleMoved(this, delta, false);
+    static_cast<LayoutScene*>(scene())->anchorHandleMoved(this, newPos, false);
 }

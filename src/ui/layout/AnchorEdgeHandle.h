@@ -14,7 +14,7 @@ protected:
 
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
 
-    virtual void onMoving(QPointF& delta) override;
+    virtual void onMoving(QPointF& newPos) override;
 };
 
 #endif // ANCHOREDGEHANDLE_H
