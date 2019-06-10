@@ -21,6 +21,7 @@
 #include <qfileinfo.h>
 #include <qdir.h>
 #include <qdesktopservices.h>
+#include <qclipboard.h>
 #include <set>
 
 // For properties (may be incapsulated somewhere):
@@ -972,22 +973,31 @@ void LayoutScene::keyReleaseEvent(QKeyEvent* event)
     }
     else if (event->key() == Qt::Key_Pause)
     {
-        // FIXME: debug, rewrite through action?
-        // TODO: add project subfolder (need name), optional through settings
-        const QDir dir(QDir(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)).filePath("CEED"));
-        const QString fileName = QString("%1-%2x%3-%4.png")
-                .arg(QFileInfo(_visualMode.getEditor().getFilePath()).baseName())
-                .arg(static_cast<int>(contextWidth))
-                .arg(static_cast<int>(contextHeight))
-                .arg(QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss"));
-        const QString filePath = dir.filePath(fileName);
-
-        dir.mkpath(".");
-        if (getCEGUIScreenshot().save(filePath))
+        QImage screenshot = getCEGUIScreenshot();
+        if (!screenshot.isNull())
         {
-            // TODO: https://stackoverflow.com/questions/3490336/how-to-reveal-in-finder-or-show-in-explorer-with-qt
-            // TODO: option in settings (open dir / file / nothing)
-            QDesktopServices::openUrl(QUrl::fromLocalFile(dir.path()));
+            handled = true;
+
+            // FIXME: debug, rewrite through action?
+            // TODO: add project subfolder (need name), optional through settings
+            const QDir dir(QDir(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)).filePath("CEED"));
+            const QString fileName = QString("%1-%2x%3-%4.png")
+                    .arg(QFileInfo(_visualMode.getEditor().getFilePath()).baseName())
+                    .arg(static_cast<int>(contextWidth))
+                    .arg(static_cast<int>(contextHeight))
+                    .arg(QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss"));
+            const QString filePath = dir.filePath(fileName);
+
+			// TODO: option in settings - save to file or not. Always copy to clipboard?
+            QApplication::clipboard()->setImage(screenshot);
+
+            dir.mkpath(".");
+            if (screenshot.save(filePath))
+            {
+                // TODO: https://stackoverflow.com/questions/3490336/how-to-reveal-in-finder-or-show-in-explorer-with-qt
+                // TODO: option in settings (open dir / file / nothing)
+                QDesktopServices::openUrl(QUrl::fromLocalFile(dir.path()));
+            }
         }
     }
 
