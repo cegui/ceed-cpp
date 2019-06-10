@@ -11,6 +11,8 @@ namespace CEGUI
     class GUIContext;
 }
 
+class QOpenGLFramebufferObject;
+
 class CEGUIGraphicsScene : public QGraphicsScene
 {
 public:
@@ -19,8 +21,8 @@ public:
     virtual ~CEGUIGraphicsScene() override;
 
     virtual void setCEGUIDisplaySize(float width, float height);
-    void drawCEGUIContext();
-    QImage getCEGUIScreenshot() const;
+    void drawCEGUIContextOffscreen();
+    QImage getCEGUIScreenshot();
 
     qint64 getLastDeltaMSec() const { return lastDelta; }
     CEGUI::GUIContext* getCEGUIContext() const { return ceguiContext; }
@@ -28,9 +30,14 @@ public:
     float getContextHeight() const { return contextHeight; }
     QList<QGraphicsItem*> topLevelItems() const;
 
+    QOpenGLFramebufferObject* getOffscreenBuffer() const { return _fbo; }
+
 protected:
 
+    void drawCEGUIContextInternal();
+
     CEGUI::GUIContext* ceguiContext = nullptr;
+    QOpenGLFramebufferObject* _fbo = nullptr;
 
     qint64 lastDelta = 0;
     qint64 timeOfLastRender;

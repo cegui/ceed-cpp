@@ -90,41 +90,37 @@ void CEGUIGraphicsView::drawBackground(QPainter* painter, const QRectF& rect)
     painter->setBrush(checkerboardBrush);
     painter->drawRect(viewportRect);
 
+    // Store view's OpenGL context
+    QOpenGLContext* currContext = QOpenGLContext::currentContext();
+    QSurface* currSurface = currContext->surface();
+    currContext->doneCurrent();
+
+    // The main part of CEGUI rendering. Note that it is rendered in an OpenGL context
+    // where its resources are created, since some of them aren't shareable (like VAOs).
+    // Resulting texture is shared instead and is blitted to screen in view's context.
+    ceguiScene->drawCEGUIContextOffscreen();
+
+    // Restore view's OpenGL context
+    currContext->makeCurrent(currSurface);
+
     painter->beginNativePainting();
 
-    // We have to render to FBO and then scale/translate that since CEGUI doesn't allow
-    // scaling the whole rendering root directly
-
-    if (!fbo || fbo->size().width() != contextWidth || fbo->size().height() != contextHeight)
-    {
-        if (fbo) delete fbo;
-        fbo = new QOpenGLFramebufferObject(viewportRect.size());
-    }
-
-    fbo->bind();
-
-    auto gl = QOpenGLContext::currentContext()->functions();
-    gl->glClearColor(0.f, 1.f, 0.f, 0.5f);
-    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    auto renderer = CEGUI::System::getSingleton().getRenderer();
-    renderer->beginRendering();
-    ceguiScene->drawCEGUIContext();
-    renderer->endRendering();
-
-    fbo->release();
-
-    // Restore parameters possibly affected by CEGUI renderer
+    // Restore parameters possibly affected by CEGUI renderer and prepare to blitting
+    auto gl = currContext->functions();
     gl->glEnable(GL_BLEND);
     gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     gl->glViewport(0, 0, viewport()->width(), viewport()->height());
 
     if (!blitter->isCreated()) blitter->create();
 
-    blitter->bind();
-    const QMatrix4x4 target = QOpenGLTextureBlitter::targetTransform(viewportRect, rect.toRect());
-    blitter->blit(fbo->texture(), target, QOpenGLTextureBlitter::OriginBottomLeft);
-    blitter->release();
+    QOpenGLFramebufferObject* fbo = ceguiScene->getOffscreenBuffer();
+    if (fbo)
+    {
+        blitter->bind();
+        const QMatrix4x4 target = QOpenGLTextureBlitter::targetTransform(viewportRect, rect.toRect());
+        blitter->blit(fbo->texture(), target, QOpenGLTextureBlitter::OriginBottomLeft);
+        blitter->release();
+    }
 
     painter->endNativePainting();
 

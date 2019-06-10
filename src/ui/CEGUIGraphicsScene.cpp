@@ -48,6 +48,13 @@ CEGUIGraphicsScene::CEGUIGraphicsScene(QObject* parent, float width, float heigh
 
 CEGUIGraphicsScene::~CEGUIGraphicsScene()
 {
+    if (_fbo)
+    {
+        CEGUIManager::Instance().makeOpenGLContextCurrent();
+        delete _fbo;
+        CEGUIManager::Instance().doneOpenGLContextCurrent();
+    }
+
     if (ceguiContext)
     {
         auto renderTarget = &ceguiContext->getRenderTarget();
@@ -80,7 +87,8 @@ void CEGUIGraphicsScene::setCEGUIDisplaySize(float width, float height)
     update();
 }
 
-void CEGUIGraphicsScene::drawCEGUIContext()
+// Renders CEGUI context to texture using FBO. All shared contexts can then access FBO texture.
+void CEGUIGraphicsScene::drawCEGUIContextOffscreen()
 {
     if (!ceguiContext) return;
 
@@ -92,34 +100,17 @@ void CEGUIGraphicsScene::drawCEGUIContext()
     CEGUI::System::getSingleton().injectTimePulse(lastDelta);
     ceguiContext->injectTimePulse(lastDelta);
 
-    ceguiContext->draw();
+    drawCEGUIContextInternal();
+    CEGUIManager::Instance().doneOpenGLContextCurrent();
 }
 
-QImage CEGUIGraphicsScene::getCEGUIScreenshot() const
+QImage CEGUIGraphicsScene::getCEGUIScreenshot()
 {
     if (!ceguiContext) return QImage();
 
-    CEGUIManager::Instance().ensureCEGUIInitialized();
+    drawCEGUIContextInternal();
 
-    CEGUIManager::Instance().makeOpenGLContextCurrent();
-
-    auto fbo = new QOpenGLFramebufferObject(static_cast<int>(contextWidth), static_cast<int>(contextHeight));
-    fbo->bind();
-
-    auto gl = QOpenGLContext::currentContext()->functions();
-    gl->glClearColor(0.f, 0.f, 0.f, 0.f);
-    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    auto renderer = CEGUI::System::getSingleton().getRenderer();
-    renderer->beginRendering();
-    ceguiContext->draw();
-    renderer->endRendering();
-
-    fbo->release();
-
-    QImage result = fbo->toImage();
-
-    delete fbo;
+    QImage result = _fbo->toImage();
 
     CEGUIManager::Instance().doneOpenGLContextCurrent();
 
@@ -136,4 +127,36 @@ QList<QGraphicsItem*> CEGUIGraphicsScene::topLevelItems() const
     }
 
     return ret;
+}
+
+// NB: it doesn't disable context, callers may need it for further operations
+void CEGUIGraphicsScene::drawCEGUIContextInternal()
+{
+    if (!ceguiContext) return;
+
+    const int w = static_cast<int>(contextWidth);
+    const int h = static_cast<int>(contextHeight);
+
+    CEGUIManager::Instance().ensureCEGUIInitialized();
+    CEGUIManager::Instance().makeOpenGLContextCurrent();
+
+    // FBO is not per-view at least for now because we render only one CEGUI view at a time anyway
+    if (!_fbo || _fbo->size().width() != w || _fbo->size().height() != h)
+    {
+        if (_fbo) delete _fbo;
+        _fbo = new QOpenGLFramebufferObject(w, h);
+    }
+
+    _fbo->bind();
+
+    auto gl = QOpenGLContext::currentContext()->functions();
+    gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    auto renderer = CEGUI::System::getSingleton().getRenderer();
+    renderer->beginRendering();
+    ceguiContext->draw();
+    renderer->endRendering();
+
+    _fbo->release();
 }

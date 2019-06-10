@@ -11,7 +11,6 @@ namespace CEGUI
     class InputAggregator;
 }
 
-class QOpenGLFramebufferObject;
 class QOpenGLTextureBlitter;
 
 class CEGUIGraphicsView final : public ResizableGraphicsView
@@ -41,7 +40,6 @@ private:
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void keyReleaseEvent(QKeyEvent* event) override;
 
-    QOpenGLFramebufferObject* fbo = nullptr;
     QOpenGLTextureBlitter* blitter = nullptr;
     QBrush checkerboardBrush;
 
