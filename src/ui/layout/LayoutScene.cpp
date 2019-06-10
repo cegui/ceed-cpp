@@ -972,11 +972,15 @@ void LayoutScene::keyReleaseEvent(QKeyEvent* event)
     else if (event->key() == Qt::Key_Pause)
     {
         // FIXME: debug, rewrite through action?
-        const QString dir = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation) + "/CEED/";
-        const QString screen = QFileInfo(_visualMode.getEditor().getFilePath()).baseName();
-        const QString now = QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss");
-        QDir(dir).mkpath(".");
-        assert(getCEGUIScreenshot().save(dir + screen + "-" + now + ".png"));
+        const QDir dir(QDir(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)).filePath("CEED"));
+        const QString fileName = QString("%1-%2x%3-%4.png")
+                .arg(QFileInfo(_visualMode.getEditor().getFilePath()).baseName())
+                .arg(static_cast<int>(contextWidth))
+                .arg(static_cast<int>(contextHeight))
+                .arg(QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss"));
+
+        dir.mkpath(".");
+        assert(getCEGUIScreenshot().save(dir.filePath(fileName)));
     }
 
     if (handled)
