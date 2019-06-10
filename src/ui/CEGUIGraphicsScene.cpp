@@ -7,6 +7,9 @@
 #include <CEGUI/GUIContext.h>
 #include <qdatetime.h>
 #include <qgraphicsitem.h>
+#include <qopenglcontext.h>
+#include <qopenglfunctions.h>
+#include <qopenglframebufferobject.h>
 
 static void validateResolution(float& width, float& height)
 {
@@ -90,6 +93,37 @@ void CEGUIGraphicsScene::drawCEGUIContext()
     ceguiContext->injectTimePulse(lastDelta);
 
     ceguiContext->draw();
+}
+
+QImage CEGUIGraphicsScene::getCEGUIScreenshot() const
+{
+    if (!ceguiContext) return QImage();
+
+    CEGUIManager::Instance().ensureCEGUIInitialized();
+
+    CEGUIManager::Instance().makeOpenGLContextCurrent();
+
+    auto fbo = new QOpenGLFramebufferObject(static_cast<int>(contextWidth), static_cast<int>(contextHeight));
+    fbo->bind();
+
+    auto gl = QOpenGLContext::currentContext()->functions();
+    gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    auto renderer = CEGUI::System::getSingleton().getRenderer();
+    renderer->beginRendering();
+    ceguiContext->draw();
+    renderer->endRendering();
+
+    fbo->release();
+
+    QImage result = fbo->toImage();
+
+    delete fbo;
+
+    CEGUIManager::Instance().doneOpenGLContextCurrent();
+
+    return result;
 }
 
 QList<QGraphicsItem*> CEGUIGraphicsScene::topLevelItems() const

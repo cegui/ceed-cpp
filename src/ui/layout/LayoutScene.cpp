@@ -16,6 +16,10 @@
 #include "qmimedata.h"
 #include "qtreeview.h"
 #include "qstandarditemmodel.h"
+#include <qdatetime.h>
+#include <qstandardpaths.h>
+#include <qfileinfo.h>
+#include <qdir.h>
 #include <set>
 
 // For properties (may be incapsulated somewhere):
@@ -964,6 +968,15 @@ void LayoutScene::keyReleaseEvent(QKeyEvent* event)
     if (event->key() == Qt::Key_Delete)
     {
         handled = deleteSelectedWidgets();
+    }
+    else if (event->key() == Qt::Key_Pause)
+    {
+        // FIXME: debug, rewrite through action?
+        const QString dir = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation) + "/CEED/";
+        const QString screen = QFileInfo(_visualMode.getEditor().getFilePath()).baseName();
+        const QString now = QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss");
+        QDir(dir).mkpath(".");
+        assert(getCEGUIScreenshot().save(dir + screen + "-" + now + ".png"));
     }
 
     if (handled)

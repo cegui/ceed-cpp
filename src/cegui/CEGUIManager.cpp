@@ -73,6 +73,7 @@ CEGUIManager::~CEGUIManager()
             CEGUI::OpenGLRenderer::destroySystem();
         delete debugInfo;
         delete logger;
+        delete glContext;
     }
 
     delete _enumHorizontalAlignment;

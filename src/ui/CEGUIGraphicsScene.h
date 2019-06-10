@@ -20,6 +20,7 @@ public:
 
     virtual void setCEGUIDisplaySize(float width, float height);
     void drawCEGUIContext();
+    QImage getCEGUIScreenshot() const;
 
     qint64 getLastDeltaMSec() const { return lastDelta; }
     CEGUI::GUIContext* getCEGUIContext() const { return ceguiContext; }
