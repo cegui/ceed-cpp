@@ -104,7 +104,7 @@ void CEGUIGraphicsView::drawBackground(QPainter* painter, const QRectF& rect)
     fbo->bind();
 
     auto gl = QOpenGLContext::currentContext()->functions();
-    gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+    gl->glClearColor(0.f, 1.f, 0.f, 0.5f);
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     auto renderer = CEGUI::System::getSingleton().getRenderer();
@@ -114,14 +114,15 @@ void CEGUIGraphicsView::drawBackground(QPainter* painter, const QRectF& rect)
 
     fbo->release();
 
+    // Restore parameters possibly affected by CEGUI renderer
     gl->glEnable(GL_BLEND);
     gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    gl->glViewport(0, 0, viewport()->width(), viewport()->height());
 
     if (!blitter->isCreated()) blitter->create();
 
     blitter->bind();
-    const QRect fboRect(QPoint(0, 0), fbo->size());
-    const QMatrix4x4 target = QOpenGLTextureBlitter::targetTransform(fboRect, rect.toRect());
+    const QMatrix4x4 target = QOpenGLTextureBlitter::targetTransform(viewportRect, rect.toRect());
     blitter->blit(fbo->texture(), target, QOpenGLTextureBlitter::OriginBottomLeft);
     blitter->release();
 

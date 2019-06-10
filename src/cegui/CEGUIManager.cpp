@@ -182,7 +182,7 @@ void CEGUIManager::ensureCEGUIInitialized()
         return;
     }
 
-    _isOpenGL3 = false; //(glContext->versionFunctions<QOpenGLFunctions_3_2_Core>() != nullptr);
+    _isOpenGL3 = (glContext->versionFunctions<QOpenGLFunctions_3_2_Core>() != nullptr);
 
     surface = new QOffscreenSurface(glContext->screen());
     surface->setFormat(glContext->format());
