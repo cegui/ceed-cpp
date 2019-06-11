@@ -6,6 +6,7 @@
 #include "src/ui/layout/AnchorEdgeHandle.h"
 #include "src/ui/NumericValueItem.h"
 #include "src/ui/ResizingHandle.h"
+#include "src/util/Utils.h"
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutUndoCommands.h"
 #include <CEGUI/CoordConverter.h>
@@ -22,6 +23,7 @@
 #include <qdir.h>
 #include <qdesktopservices.h>
 #include <qclipboard.h>
+#include <qbuffer.h>
 #include <set>
 
 // For properties (may be incapsulated somewhere):
@@ -988,15 +990,38 @@ void LayoutScene::keyReleaseEvent(QKeyEvent* event)
                     .arg(QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss"));
             const QString filePath = dir.filePath(fileName);
 
-			// TODO: option in settings - save to file or not. Always copy to clipboard?
-            QApplication::clipboard()->setImage(screenshot);
-
             dir.mkpath(".");
-            if (screenshot.save(filePath))
+            if (screenshot.save(filePath, "PNG", 50))
             {
                 // TODO: https://stackoverflow.com/questions/3490336/how-to-reveal-in-finder-or-show-in-explorer-with-qt
                 // TODO: option in settings (open dir / file / nothing)
                 QDesktopServices::openUrl(QUrl::fromLocalFile(dir.path()));
+            }
+
+            // TODO: option in settings - save to file or not. Always copy to clipboard?
+            constexpr bool keepTransparencyInClipboard = false;
+            if (keepTransparencyInClipboard)
+            {
+                QByteArray pngData;
+                QBuffer buffer(&pngData);
+                if (buffer.open(QIODevice::WriteOnly))
+                {
+                    screenshot.save(&buffer, "PNG", 100);
+                    buffer.close();
+                }
+
+                QMimeData* data = new QMimeData();
+                data->setData("PNG", pngData);
+                QApplication::clipboard()->setMimeData(data);
+            }
+            else
+            {
+                QPainter painter(&screenshot);
+                painter.setCompositionMode(QPainter::CompositionMode_DestinationOver);
+                painter.setBrush(Utils::getCheckerboardBrush(5, 5, Qt::darkGray, Qt::lightGray));
+                painter.drawRect(screenshot.rect());
+                painter.end();
+                QApplication::clipboard()->setImage(screenshot);
             }
         }
     }
