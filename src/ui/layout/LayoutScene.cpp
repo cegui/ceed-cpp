@@ -980,7 +980,7 @@ void LayoutScene::keyReleaseEvent(QKeyEvent* event)
         {
             handled = true;
 
-            // FIXME: debug, rewrite through action?
+            // TODO: rewrite through action?
             // TODO: add project subfolder (need name), optional through settings
             const QDir dir(QDir(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)).filePath("CEED"));
             const QString fileName = QString("%1-%2x%3-%4.png")
@@ -999,6 +999,7 @@ void LayoutScene::keyReleaseEvent(QKeyEvent* event)
             }
 
             // TODO: option in settings - save to file or not. Always copy to clipboard?
+            // TODO: keepTransparencyInClipboard to settings
             constexpr bool keepTransparencyInClipboard = false;
             if (keepTransparencyInClipboard)
             {
@@ -1016,6 +1017,7 @@ void LayoutScene::keyReleaseEvent(QKeyEvent* event)
             }
             else
             {
+                // NB: here we alter screenshot data, so saving to file must happen before this
                 QPainter painter(&screenshot);
                 painter.setCompositionMode(QPainter::CompositionMode_DestinationOver);
                 painter.setBrush(Utils::getCheckerboardBrush(5, 5, Qt::darkGray, Qt::lightGray));
