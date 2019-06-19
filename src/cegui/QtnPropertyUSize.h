@@ -2,8 +2,8 @@
 #define PROPERTYUSize_H
 
 #include "src/cegui/CEGUIUtils.h"
-#include "3rdParty/QtnProperty/Core/Auxiliary/PropertyTemplates.h"
-#include "3rdParty/QtnProperty/PropertyWidget/Delegates/Utils/PropertyDelegateMisc.h"
+#include "QtnProperty/Auxiliary/PropertyTemplates.h"
+#include "QtnProperty/Delegates/Utils/PropertyDelegateMisc.h"
 #include <CEGUI/USize.h>
 
 class QtnPropertyUSizeBase: public QtnSinglePropertyBase<CEGUI::USize>
@@ -15,7 +15,7 @@ public:
     explicit QtnPropertyUSizeBase(QObject* parent);
 
 protected:
-    bool fromStrImpl(const QString& str) override;
+    bool fromStrImpl(const QString& str, QtnPropertyChangeReason reason) override;
     bool toStrImpl(QString& str) const override;
 
     P_PROPERTY_DECL_MEMBER_OPERATORS(QtnPropertyUSizeBase)

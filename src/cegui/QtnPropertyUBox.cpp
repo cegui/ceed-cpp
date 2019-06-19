@@ -1,6 +1,6 @@
 #include "QtnPropertyUBox.h"
 #include "QtnPropertyUDim.h"
-#include "3rdParty/QtnProperty/PropertyWidget/Delegates/PropertyDelegateFactory.h"
+#include "QtnProperty/Delegates/PropertyDelegateFactory.h"
 #include <CEGUI/PropertyHelper.h>
 
 QtnPropertyUBoxBase::QtnPropertyUBoxBase(QObject* parent)
@@ -8,7 +8,7 @@ QtnPropertyUBoxBase::QtnPropertyUBoxBase(QObject* parent)
 {
 }
 
-bool QtnPropertyUBoxBase::fromStrImpl(const QString& str)
+bool QtnPropertyUBoxBase::fromStrImpl(const QString& str, QtnPropertyChangeReason reason)
 {
     try
     {

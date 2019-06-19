@@ -2,8 +2,8 @@
 #define PROPERTYUVector3_H
 
 #include "src/cegui/CEGUIUtils.h"
-#include "3rdParty/QtnProperty/Core/Auxiliary/PropertyTemplates.h"
-#include "3rdParty/QtnProperty/PropertyWidget/Delegates/Utils/PropertyDelegateMisc.h"
+#include "QtnProperty/Auxiliary/PropertyTemplates.h"
+#include "QtnProperty/Delegates/Utils/PropertyDelegateMisc.h"
 #include <CEGUI/UVector.h>
 
 class QtnPropertyUVector3Base: public QtnSinglePropertyBase<CEGUI::UVector3>
@@ -15,7 +15,7 @@ public:
     explicit QtnPropertyUVector3Base(QObject* parent);
 
 protected:
-    bool fromStrImpl(const QString& str) override;
+    bool fromStrImpl(const QString& str, QtnPropertyChangeReason reason) override;
     bool toStrImpl(QString& str) const override;
 
     P_PROPERTY_DECL_MEMBER_OPERATORS(QtnPropertyUVector3Base)

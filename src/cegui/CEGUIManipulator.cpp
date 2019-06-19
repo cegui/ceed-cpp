@@ -17,13 +17,13 @@
 #include <CEGUI/widgets/LayoutContainer.h>
 #include <CEGUI/WindowManager.h>
 #include <CEGUI/CoordConverter.h>
-#include "3rdParty/QtnProperty/Core/PropertySet.h"
-#include "3rdParty/QtnProperty/Core/Core/PropertyQString.h"
-#include "3rdParty/QtnProperty/Core/Core/PropertyBool.h"
-#include "3rdParty/QtnProperty/Core/Core/PropertyUInt.h"
-#include "3rdParty/QtnProperty/Core/Core/PropertyFloat.h"
-#include "3rdParty/QtnProperty/Core/Core/PropertyEnum.h"
-#include "3rdParty/QtnProperty/PropertyWidget/Delegates/Core/PropertyDelegateQString.h"
+#include "QtnProperty/PropertySet.h"
+#include "QtnProperty/Core/PropertyQString.h"
+#include "QtnProperty/Core/PropertyBool.h"
+#include "QtnProperty/Core/PropertyUInt.h"
+#include "QtnProperty/Core/PropertyFloat.h"
+#include "QtnProperty/Core/PropertyEnum.h"
+#include "QtnProperty/Delegates/Core/PropertyDelegateQString.h"
 
 // recursive - if true, even children of given widget are wrapped
 // skipAutoWidgets - if true, auto widgets are skipped (only applicable if recursive is True)

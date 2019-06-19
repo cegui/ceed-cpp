@@ -1,6 +1,6 @@
 #include "QtnPropertyUDim.h"
-#include "3rdParty/QtnProperty/Core/Core/PropertyFloat.h"
-#include "3rdParty/QtnProperty/PropertyWidget/Delegates/PropertyDelegateFactory.h"
+#include "QtnProperty/Core/PropertyFloat.h"
+#include "QtnProperty/Delegates/PropertyDelegateFactory.h"
 #include <CEGUI/PropertyHelper.h>
 
 QtnPropertyUDimBase::QtnPropertyUDimBase(QObject* parent)
@@ -8,7 +8,7 @@ QtnPropertyUDimBase::QtnPropertyUDimBase(QObject* parent)
 {
 }
 
-bool QtnPropertyUDimBase::fromStrImpl(const QString& str)
+bool QtnPropertyUDimBase::fromStrImpl(const QString& str, QtnPropertyChangeReason reason)
 {
     try
     {

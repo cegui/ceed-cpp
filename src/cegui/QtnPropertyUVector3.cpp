@@ -1,6 +1,6 @@
 #include "QtnPropertyUVector3.h"
 #include "QtnPropertyUDim.h"
-#include "3rdParty/QtnProperty/PropertyWidget/Delegates/PropertyDelegateFactory.h"
+#include "QtnProperty/Delegates/PropertyDelegateFactory.h"
 #include <CEGUI/PropertyHelper.h>
 
 QtnPropertyUVector3Base::QtnPropertyUVector3Base(QObject* parent)
@@ -8,7 +8,7 @@ QtnPropertyUVector3Base::QtnPropertyUVector3Base(QObject* parent)
 {
 }
 
-bool QtnPropertyUVector3Base::fromStrImpl(const QString& str)
+bool QtnPropertyUVector3Base::fromStrImpl(const QString& str, QtnPropertyChangeReason reason)
 {
     try
     {

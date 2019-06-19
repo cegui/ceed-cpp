@@ -1,6 +1,6 @@
 #include "QtnPropertyURect.h"
 #include "QtnPropertyUDim.h"
-#include "3rdParty/QtnProperty/PropertyWidget/Delegates/PropertyDelegateFactory.h"
+#include "QtnProperty/Delegates/PropertyDelegateFactory.h"
 #include <CEGUI/PropertyHelper.h>
 
 QtnPropertyURectBase::QtnPropertyURectBase(QObject* parent)
@@ -8,7 +8,7 @@ QtnPropertyURectBase::QtnPropertyURectBase(QObject* parent)
 {
 }
 
-bool QtnPropertyURectBase::fromStrImpl(const QString& str)
+bool QtnPropertyURectBase::fromStrImpl(const QString& str, QtnPropertyChangeReason reason)
 {
     try
     {

@@ -1,7 +1,7 @@
 #include "QtnPropertyUVector2.h"
 #include "QtnPropertyUDim.h" // UDim or Float!
-#include "3rdParty/QtnProperty/Core/Core/PropertyFloat.h"
-#include "3rdParty/QtnProperty/PropertyWidget/Delegates/PropertyDelegateFactory.h"
+#include "QtnProperty/Core/PropertyFloat.h"
+#include "QtnProperty/Delegates/PropertyDelegateFactory.h"
 #include <CEGUI/PropertyHelper.h>
 
 QtnPropertyUVector2Base::QtnPropertyUVector2Base(QObject* parent)
@@ -9,7 +9,7 @@ QtnPropertyUVector2Base::QtnPropertyUVector2Base(QObject* parent)
 {
 }
 
-bool QtnPropertyUVector2Base::fromStrImpl(const QString& str)
+bool QtnPropertyUVector2Base::fromStrImpl(const QString& str, QtnPropertyChangeReason reason)
 {
     try
     {
