@@ -12,8 +12,7 @@ bool QtnPropertyUBoxBase::fromStrImpl(const QString& str, QtnPropertyChangeReaso
 {
     try
     {
-        setValue(CEGUI::PropertyHelper<CEGUI::UBox>().fromString(CEGUIUtils::qStringToString(str)));
-        return true;
+        return setValue(CEGUI::PropertyHelper<CEGUI::UBox>().fromString(CEGUIUtils::qStringToString(str)), reason);
     }
     catch (...)
     {

@@ -12,8 +12,7 @@ bool QtnPropertyUDimBase::fromStrImpl(const QString& str, QtnPropertyChangeReaso
 {
     try
     {
-        setValue(CEGUI::PropertyHelper<CEGUI::UDim>().fromString(CEGUIUtils::qStringToString(str)));
-        return true;
+        return setValue(CEGUI::PropertyHelper<CEGUI::UDim>().fromString(CEGUIUtils::qStringToString(str)), reason);
     }
     catch (...)
     {

@@ -2,17 +2,20 @@
 #define PROPERTYUVector3_H
 
 #include "src/cegui/CEGUIUtils.h"
+#include "src/cegui/QtnPropertyUDim.h"
 #include "QtnProperty/Auxiliary/PropertyTemplates.h"
-#include "QtnProperty/Delegates/Utils/PropertyDelegateMisc.h"
+#include "QtnProperty/StructPropertyBase.h"
 #include <CEGUI/UVector.h>
 
-class QtnPropertyUVector3Base: public QtnSinglePropertyBase<CEGUI::UVector3>
+class QtnPropertyUVector3Base: public QtnStructPropertyBase<CEGUI::UVector3, QtnPropertyUDimCallback>
 {
     Q_OBJECT
     QtnPropertyUVector3Base(const QtnPropertyUVector3Base& other) Q_DECL_EQ_DELETE;
 
 public:
     explicit QtnPropertyUVector3Base(QObject* parent);
+
+    QtnProperty* createXProperty();
 
 protected:
     bool fromStrImpl(const QString& str, QtnPropertyChangeReason reason) override;

@@ -12,8 +12,7 @@ bool QtnPropertyUVector3Base::fromStrImpl(const QString& str, QtnPropertyChangeR
 {
     try
     {
-        setValue(CEGUI::PropertyHelper<CEGUI::UVector3>().fromString(CEGUIUtils::qStringToString(str)));
-        return true;
+        return setValue(CEGUI::PropertyHelper<CEGUI::UVector3>().fromString(CEGUIUtils::qStringToString(str)), reason);
     }
     catch (...)
     {
@@ -26,6 +25,15 @@ bool QtnPropertyUVector3Base::toStrImpl(QString& str) const
 {
     str = CEGUIUtils::stringToQString(CEGUI::PropertyHelper<CEGUI::UVector3>().toString(value()));
     return true;
+}
+
+QtnProperty* QtnPropertyUVector3Base::createXProperty()
+{
+    return createFieldProperty(QObject::tr("X"),
+        name(),
+        QObject::tr("X component of %1."),
+        &QRectF::height,
+        &QRectF::setHeight);
 }
 
 QtnProperty* qtnCreateXProperty(QObject* parent, QtnPropertyUVector3Base* mainProperty)

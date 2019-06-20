@@ -12,8 +12,7 @@ bool QtnPropertyURectBase::fromStrImpl(const QString& str, QtnPropertyChangeReas
 {
     try
     {
-        setValue(CEGUI::PropertyHelper<CEGUI::URect>().fromString(CEGUIUtils::qStringToString(str)));
-        return true;
+        return setValue(CEGUI::PropertyHelper<CEGUI::URect>().fromString(CEGUIUtils::qStringToString(str)), reason);
     }
     catch (...)
     {

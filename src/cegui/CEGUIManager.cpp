@@ -8,8 +8,8 @@
 #include <CEGUI/RendererModules/OpenGL/GLRenderer.h>
 #include <CEGUI/RendererModules/OpenGL/GL3Renderer.h>
 #include <CEGUI/RendererModules/OpenGL/ViewportTarget.h>
-#include "3rdParty/QtnProperty/Core/Enum.h"
-#include "3rdParty/QtnProperty/PropertyWidget/Delegates/PropertyDelegateFactory.h"
+#include "QtnProperty/Enum.h"
+#include "QtnProperty/Delegates/PropertyDelegateFactory.h"
 #include "qmessagebox.h"
 #include "qprogressdialog.h"
 #include "qdiriterator.h"
@@ -37,8 +37,9 @@ public:
         if (callback) callbacks.push_back(callback);
     }
 
-    void unsubscribe(std::function<void(const CEGUI::String&, CEGUI::LoggingLevel)> callback)
+    void unsubscribe(std::function<void(const CEGUI::String&, CEGUI::LoggingLevel)> /*callback*/)
     {
+        // TODO: implement
         assert(false);
     }
 

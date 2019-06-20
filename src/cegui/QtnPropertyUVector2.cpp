@@ -13,8 +13,7 @@ bool QtnPropertyUVector2Base::fromStrImpl(const QString& str, QtnPropertyChangeR
 {
     try
     {
-        setValue(CEGUI::PropertyHelper<CEGUI::UVector2>().fromString(CEGUIUtils::qStringToString(str)));
-        return true;
+        return setValue(CEGUI::PropertyHelper<CEGUI::UVector2>().fromString(CEGUIUtils::qStringToString(str)), reason);
     }
     catch (...)
     {

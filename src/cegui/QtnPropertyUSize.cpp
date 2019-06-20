@@ -12,8 +12,7 @@ bool QtnPropertyUSizeBase::fromStrImpl(const QString& str, QtnPropertyChangeReas
 {
     try
     {
-        setValue(CEGUI::PropertyHelper<CEGUI::USize>().fromString(CEGUIUtils::qStringToString(str)));
-        return true;
+        return setValue(CEGUI::PropertyHelper<CEGUI::USize>().fromString(CEGUIUtils::qStringToString(str)), reason);
     }
     catch (...)
     {
