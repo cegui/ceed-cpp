@@ -4,6 +4,7 @@
 #include "src/cegui/CEGUIUtils.h"
 #include "src/cegui/QtnPropertyUDim.h"
 #include "QtnProperty/Auxiliary/PropertyTemplates.h"
+#include "QtnProperty/Delegates/Utils/PropertyDelegateMisc.h"
 #include "QtnProperty/StructPropertyBase.h"
 #include <CEGUI/UVector.h>
 
@@ -16,6 +17,8 @@ public:
     explicit QtnPropertyUVector3Base(QObject* parent);
 
     QtnProperty* createXProperty();
+    QtnProperty* createYProperty();
+    QtnProperty* createZProperty();
 
 protected:
     bool fromStrImpl(const QString& str, QtnPropertyChangeReason reason) override;
@@ -60,6 +63,8 @@ class QtnPropertyDelegateUVector3: public QtnPropertyDelegateTypedEx<QtnProperty
 
 public:
     QtnPropertyDelegateUVector3(QtnPropertyUVector3Base& owner);
+
+    static void Register(QtnPropertyDelegateFactory& factory);
 
 protected:
     QWidget* createValueEditorImpl(QWidget* parent, const QRect& rect, QtnInplaceInfo* inplaceInfo = nullptr) override;

@@ -2,10 +2,23 @@
 #include "QtnPropertyUDim.h"
 #include "QtnProperty/Delegates/PropertyDelegateFactory.h"
 #include <CEGUI/PropertyHelper.h>
+#include "qlineedit.h"
 
 QtnPropertyUSizeBase::QtnPropertyUSizeBase(QObject* parent)
-    : QtnSinglePropertyBase<CEGUI::USize>(parent)
+    : ParentClass(parent)
 {
+}
+
+QtnProperty* QtnPropertyUSizeBase::createWidthProperty()
+{
+    return createFieldProperty(&CEGUI::USize::d_width, &CEGUI::USize::d_width,
+                               QStringLiteral("width"), tr("Width"), tr("Width of the %1"));
+}
+
+QtnProperty* QtnPropertyUSizeBase::createHeightProperty()
+{
+    return createFieldProperty(&CEGUI::USize::d_height, &CEGUI::USize::d_height,
+                               QStringLiteral("height"), tr("Height"), tr("Height of the %1"));
 }
 
 bool QtnPropertyUSizeBase::fromStrImpl(const QString& str, QtnPropertyChangeReason reason)
@@ -27,50 +40,18 @@ bool QtnPropertyUSizeBase::toStrImpl(QString& str) const
     return true;
 }
 
-QtnProperty* qtnCreateWidthProperty(QObject* parent, QtnPropertyUSizeBase* mainProperty)
+QtnPropertyDelegateUSize::QtnPropertyDelegateUSize(QtnPropertyUSizeBase& owner)
+    : QtnPropertyDelegateTypedEx<QtnPropertyUSizeBase>(owner)
 {
-    QtnPropertyUDimCallback* subproperty = new QtnPropertyUDimCallback(parent);
-    subproperty->setName(QObject::tr("Width"));
-    subproperty->setDescription(QObject::tr("Width component of %1.").arg(mainProperty->name()));
-    subproperty->setCallbackValueGet([mainProperty]()->CEGUI::UDim { return mainProperty->value().d_width; });
-    subproperty->setCallbackValueSet([mainProperty](CEGUI::UDim newValue) {
-        CEGUI::USize value = mainProperty->value();
-        value.d_width = newValue;
-        mainProperty->setValue(value);
-    });
-    QtnPropertyBase::connectMasterSignals(*mainProperty, *subproperty);
-
-    return subproperty;
+    addSubProperty(owner.createWidthProperty());
+    addSubProperty(owner.createHeightProperty());
 }
 
-QtnProperty* qtnCreateHeightProperty(QObject* parent, QtnPropertyUSizeBase* mainProperty)
-{
-    QtnPropertyUDimCallback* subproperty = new QtnPropertyUDimCallback(parent);
-    subproperty->setName(QObject::tr("Height"));
-    subproperty->setDescription(QObject::tr("Height component of %1.").arg(mainProperty->name()));
-    subproperty->setCallbackValueGet([mainProperty]()->CEGUI::UDim { return mainProperty->value().d_height; });
-    subproperty->setCallbackValueSet([mainProperty](CEGUI::UDim newValue) {
-        CEGUI::USize value = mainProperty->value();
-        value.d_height = newValue;
-        mainProperty->setValue(value);
-    });
-    QtnPropertyBase::connectMasterSignals(*mainProperty, *subproperty);
-
-    return subproperty;
-}
-
-void qtnRegisterUSizeDelegates(QtnPropertyDelegateFactory& factory)
+void QtnPropertyDelegateUSize::Register(QtnPropertyDelegateFactory& factory)
 {
     factory.registerDelegateDefault(&QtnPropertyUSizeBase::staticMetaObject
                  , &qtnCreateDelegate<QtnPropertyDelegateUSize, QtnPropertyUSizeBase>
                  , "USize");
-}
-
-QtnPropertyDelegateUSize::QtnPropertyDelegateUSize(QtnPropertyUSizeBase& owner)
-    : QtnPropertyDelegateTypedEx<QtnPropertyUSizeBase>(owner)
-{
-    addSubProperty(qtnCreateWidthProperty(nullptr, &owner));
-    addSubProperty(qtnCreateHeightProperty(nullptr, &owner));
 }
 
 QWidget* QtnPropertyDelegateUSize::createValueEditorImpl(QWidget* parent, const QRect& rect, QtnInplaceInfo* inplaceInfo)

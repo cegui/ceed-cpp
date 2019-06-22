@@ -1,6 +1,12 @@
 #include "src/cegui/CEGUIManager.h"
 #include "src/cegui/CEGUIProject.h"
 #include "src/cegui/CEGUIUtils.h"
+#include "src/cegui/QtnPropertyUDim.h"
+#include "src/cegui/QtnPropertyUVector2.h"
+#include "src/cegui/QtnPropertyUVector3.h"
+#include "src/cegui/QtnPropertyUSize.h"
+#include "src/cegui/QtnPropertyURect.h"
+#include "src/cegui/QtnPropertyUBox.h"
 #include "src/ui/CEGUIDebugInfo.h"
 #include "src/util/DismissableMessage.h"
 #include "src/Application.h"
@@ -18,13 +24,6 @@
 #include "qopenglframebufferobject.h"
 #include "qopenglfunctions.h"
 #include <qopenglfunctions_3_2_core.h>
-
-void qtnRegisterUDimDelegates(QtnPropertyDelegateFactory& factory);
-void qtnRegisterUVector2Delegates(QtnPropertyDelegateFactory& factory);
-void qtnRegisterUVector3Delegates(QtnPropertyDelegateFactory& factory);
-void qtnRegisterUSizeDelegates(QtnPropertyDelegateFactory& factory);
-void qtnRegisterURectDelegates(QtnPropertyDelegateFactory& factory);
-void qtnRegisterUBoxDelegates(QtnPropertyDelegateFactory& factory);
 
 // Allows us to register subscribers that want CEGUI log info
 // This prevents writing CEGUI.log into CWD and allow log display inside the app
@@ -262,12 +261,12 @@ void CEGUIManager::ensureCEGUIInitialized()
         parser->setProperty("SchemaDefaultResourceGroup", "xml_schemas");
 
     // Must be done once!
-    qtnRegisterUDimDelegates(QtnPropertyDelegateFactory::staticInstance());
-    qtnRegisterUVector2Delegates(QtnPropertyDelegateFactory::staticInstance());
-    qtnRegisterUVector3Delegates(QtnPropertyDelegateFactory::staticInstance());
-    qtnRegisterUSizeDelegates(QtnPropertyDelegateFactory::staticInstance());
-    qtnRegisterURectDelegates(QtnPropertyDelegateFactory::staticInstance());
-    qtnRegisterUBoxDelegates(QtnPropertyDelegateFactory::staticInstance());
+    QtnPropertyDelegateUDim::Register(QtnPropertyDelegateFactory::staticInstance());
+    QtnPropertyDelegateUVector2::Register(QtnPropertyDelegateFactory::staticInstance());
+    QtnPropertyDelegateUVector3::Register(QtnPropertyDelegateFactory::staticInstance());
+    QtnPropertyDelegateUSize::Register(QtnPropertyDelegateFactory::staticInstance());
+    QtnPropertyDelegateURect::Register(QtnPropertyDelegateFactory::staticInstance());
+    QtnPropertyDelegateUBox::Register(QtnPropertyDelegateFactory::staticInstance());
 
     initialized = true;
 }

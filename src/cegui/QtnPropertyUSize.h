@@ -2,17 +2,22 @@
 #define PROPERTYUSize_H
 
 #include "src/cegui/CEGUIUtils.h"
+#include "src/cegui/QtnPropertyUDim.h"
 #include "QtnProperty/Auxiliary/PropertyTemplates.h"
 #include "QtnProperty/Delegates/Utils/PropertyDelegateMisc.h"
+#include "QtnProperty/StructPropertyBase.h"
 #include <CEGUI/USize.h>
 
-class QtnPropertyUSizeBase: public QtnSinglePropertyBase<CEGUI::USize>
+class QtnPropertyUSizeBase: public QtnStructPropertyBase<CEGUI::USize, QtnPropertyUDimCallback>
 {
     Q_OBJECT
     QtnPropertyUSizeBase(const QtnPropertyUSizeBase& other) Q_DECL_EQ_DELETE;
 
 public:
     explicit QtnPropertyUSizeBase(QObject* parent);
+
+    QtnProperty* createWidthProperty();
+    QtnProperty* createHeightProperty();
 
 protected:
     bool fromStrImpl(const QString& str, QtnPropertyChangeReason reason) override;
@@ -57,6 +62,8 @@ class QtnPropertyDelegateUSize: public QtnPropertyDelegateTypedEx<QtnPropertyUSi
 
 public:
     QtnPropertyDelegateUSize(QtnPropertyUSizeBase& owner);
+
+    static void Register(QtnPropertyDelegateFactory& factory);
 
 protected:
     QWidget* createValueEditorImpl(QWidget* parent, const QRect& rect, QtnInplaceInfo* inplaceInfo = nullptr) override;

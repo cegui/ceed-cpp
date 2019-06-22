@@ -908,7 +908,7 @@ void CEGUIManipulator::createPropertySet()
         else if (propertyDataType == "Font")
         {
             prop = new QtnPropertyQString(parentSet);
-            prop->setDelegate({"Callback"});
+            prop->setDelegateInfo({"Callback"});
 
             //???FIXME: Qtn - can use central string list without per-property copying?
             QtnGetCandidatesFn getCb = []() { return CEGUIManager::Instance().getAvailableFonts(); };
@@ -920,7 +920,7 @@ void CEGUIManipulator::createPropertySet()
         else if (propertyDataType == "Image")
         {
             prop = new QtnPropertyQString(parentSet);
-            prop->setDelegate({"Callback"});
+            prop->setDelegateInfo({"Callback"});
 
             //???FIXME: Qtn - can use central string list without per-property copying?
             QtnGetCandidatesFn getCb = []() { return CEGUIManager::Instance().getAvailableImages(); };
@@ -966,11 +966,10 @@ void CEGUIManipulator::createPropertySet()
             prop->addState(QtnPropertyStateImmutable);
         parentSet->addChildProperty(prop, true);
 
-        QObject::connect(prop, &QtnProperty::propertyDidChange,
-        [this, ceguiProp](const QtnPropertyBase* changedProperty, const QtnPropertyBase* /*firedProperty*/, QtnPropertyChangeReason reason)
+        QObject::connect(prop, &QtnProperty::propertyDidChange, [this, prop, ceguiProp](QtnPropertyChangeReason reason)
         {
-            if (reason & QtnPropertyChangeReasonValue)
-                onPropertyChanged(changedProperty, ceguiProp);
+            if (reason & QtnPropertyChangeReasonEditValue)
+                onPropertyChanged(prop, ceguiProp);
         });
 
         _propertyMap.emplace(prop->name(), std::pair<CEGUI::Property*, QtnProperty*>{ ceguiProp, prop });

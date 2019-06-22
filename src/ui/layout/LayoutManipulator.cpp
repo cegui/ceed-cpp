@@ -6,7 +6,7 @@
 #include "src/util/Settings.h"
 #include "src/Application.h"
 #include <CEGUI/widgets/LayoutContainer.h>
-#include "3rdParty/QtnProperty/Core/PropertySet.h"
+#include "QtnProperty/PropertySet.h"
 #include "qpen.h"
 #include "qpainter.h"
 #include "qgraphicssceneevent.h"

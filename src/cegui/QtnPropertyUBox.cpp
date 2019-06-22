@@ -2,10 +2,35 @@
 #include "QtnPropertyUDim.h"
 #include "QtnProperty/Delegates/PropertyDelegateFactory.h"
 #include <CEGUI/PropertyHelper.h>
+#include "qlineedit.h"
 
 QtnPropertyUBoxBase::QtnPropertyUBoxBase(QObject* parent)
-    : QtnSinglePropertyBase<CEGUI::UBox>(parent)
+    : ParentClass(parent)
 {
+}
+
+QtnProperty* QtnPropertyUBoxBase::createTopProperty()
+{
+    return createFieldProperty(&CEGUI::UBox::d_top, &CEGUI::UBox::d_top,
+                               QStringLiteral("top"), tr("Top"), tr("Top of the %1"));
+}
+
+QtnProperty* QtnPropertyUBoxBase::createBottomProperty()
+{
+    return createFieldProperty(&CEGUI::UBox::d_bottom, &CEGUI::UBox::d_bottom,
+                               QStringLiteral("bottom"), tr("Bottom"), tr("Bottom of the %1"));
+}
+
+QtnProperty* QtnPropertyUBoxBase::createLeftProperty()
+{
+    return createFieldProperty(&CEGUI::UBox::d_left, &CEGUI::UBox::d_left,
+                               QStringLiteral("left"), tr("Left"), tr("Left of the %1"));
+}
+
+QtnProperty* QtnPropertyUBoxBase::createRightProperty()
+{
+    return createFieldProperty(&CEGUI::UBox::d_right, &CEGUI::UBox::d_right,
+                               QStringLiteral("right"), tr("Right"), tr("Right of the %1"));
 }
 
 bool QtnPropertyUBoxBase::fromStrImpl(const QString& str, QtnPropertyChangeReason reason)
@@ -27,84 +52,20 @@ bool QtnPropertyUBoxBase::toStrImpl(QString& str) const
     return true;
 }
 
-QtnProperty* qtnCreateTopProperty(QObject* parent, QtnPropertyUBoxBase* mainProperty)
+QtnPropertyDelegateUBox::QtnPropertyDelegateUBox(QtnPropertyUBoxBase& owner)
+    : QtnPropertyDelegateTypedEx<QtnPropertyUBoxBase>(owner)
 {
-    QtnPropertyUDimCallback* subproperty = new QtnPropertyUDimCallback(parent);
-    subproperty->setName(QObject::tr("Top"));
-    subproperty->setDescription(QObject::tr("Top of %1.").arg(mainProperty->name()));
-    subproperty->setCallbackValueGet([mainProperty]()->CEGUI::UDim { return mainProperty->value().d_top; });
-    subproperty->setCallbackValueSet([mainProperty](CEGUI::UDim newValue) {
-        CEGUI::UBox value = mainProperty->value();
-        value.d_top = newValue;
-        mainProperty->setValue(value);
-    });
-    QtnPropertyBase::connectMasterSignals(*mainProperty, *subproperty);
-
-    return subproperty;
+    addSubProperty(owner.createLeftProperty());
+    addSubProperty(owner.createTopProperty());
+    addSubProperty(owner.createRightProperty());
+    addSubProperty(owner.createBottomProperty());
 }
 
-QtnProperty* qtnCreateBottomProperty(QObject* parent, QtnPropertyUBoxBase* mainProperty)
-{
-    QtnPropertyUDimCallback* subproperty = new QtnPropertyUDimCallback(parent);
-    subproperty->setName(QObject::tr("Bottom"));
-    subproperty->setDescription(QObject::tr("Bottom of %1.").arg(mainProperty->name()));
-    subproperty->setCallbackValueGet([mainProperty]()->CEGUI::UDim { return mainProperty->value().d_bottom; });
-    subproperty->setCallbackValueSet([mainProperty](CEGUI::UDim newValue) {
-        CEGUI::UBox value = mainProperty->value();
-        value.d_bottom = newValue;
-        mainProperty->setValue(value);
-    });
-    QtnPropertyBase::connectMasterSignals(*mainProperty, *subproperty);
-
-    return subproperty;
-}
-
-QtnProperty* qtnCreateLeftProperty(QObject* parent, QtnPropertyUBoxBase* mainProperty)
-{
-    QtnPropertyUDimCallback* subproperty = new QtnPropertyUDimCallback(parent);
-    subproperty->setName(QObject::tr("Left"));
-    subproperty->setDescription(QObject::tr("Left of %1.").arg(mainProperty->name()));
-    subproperty->setCallbackValueGet([mainProperty]()->CEGUI::UDim { return mainProperty->value().d_left; });
-    subproperty->setCallbackValueSet([mainProperty](CEGUI::UDim newValue) {
-        CEGUI::UBox value = mainProperty->value();
-        value.d_left = newValue;
-        mainProperty->setValue(value);
-    });
-    QtnPropertyBase::connectMasterSignals(*mainProperty, *subproperty);
-
-    return subproperty;
-}
-
-QtnProperty* qtnCreateRightProperty(QObject* parent, QtnPropertyUBoxBase* mainProperty)
-{
-    QtnPropertyUDimCallback* subproperty = new QtnPropertyUDimCallback(parent);
-    subproperty->setName(QObject::tr("Right"));
-    subproperty->setDescription(QObject::tr("Right of %1.").arg(mainProperty->name()));
-    subproperty->setCallbackValueGet([mainProperty]()->CEGUI::UDim { return mainProperty->value().d_right; });
-    subproperty->setCallbackValueSet([mainProperty](CEGUI::UDim newValue) {
-        CEGUI::UBox value = mainProperty->value();
-        value.d_right = newValue;
-        mainProperty->setValue(value);
-    });
-    QtnPropertyBase::connectMasterSignals(*mainProperty, *subproperty);
-
-    return subproperty;
-}
-
-void qtnRegisterUBoxDelegates(QtnPropertyDelegateFactory& factory)
+void QtnPropertyDelegateUBox::Register(QtnPropertyDelegateFactory& factory)
 {
     factory.registerDelegateDefault(&QtnPropertyUBoxBase::staticMetaObject
                  , &qtnCreateDelegate<QtnPropertyDelegateUBox, QtnPropertyUBoxBase>
                  , "UBox");
-}
-
-QtnPropertyDelegateUBox::QtnPropertyDelegateUBox(QtnPropertyUBoxBase& owner)
-    : QtnPropertyDelegateTypedEx<QtnPropertyUBoxBase>(owner)
-{
-    addSubProperty(qtnCreateLeftProperty(nullptr, &owner));
-    addSubProperty(qtnCreateTopProperty(nullptr, &owner));
-    addSubProperty(qtnCreateRightProperty(nullptr, &owner));
-    addSubProperty(qtnCreateBottomProperty(nullptr, &owner));
 }
 
 QWidget* QtnPropertyDelegateUBox::createValueEditorImpl(QWidget* parent, const QRect& rect, QtnInplaceInfo* inplaceInfo)

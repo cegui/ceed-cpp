@@ -2,17 +2,24 @@
 #define PROPERTYUBox_H
 
 #include "src/cegui/CEGUIUtils.h"
+#include "src/cegui/QtnPropertyUDim.h"
 #include "QtnProperty/Auxiliary/PropertyTemplates.h"
 #include "QtnProperty/Delegates/Utils/PropertyDelegateMisc.h"
+#include "QtnProperty/StructPropertyBase.h"
 #include <CEGUI/UDim.h>
 
-class QtnPropertyUBoxBase: public QtnSinglePropertyBase<CEGUI::UBox>
+class QtnPropertyUBoxBase: public QtnStructPropertyBase<CEGUI::UBox, QtnPropertyUDimCallback>
 {
     Q_OBJECT
     QtnPropertyUBoxBase(const QtnPropertyUBoxBase& other) Q_DECL_EQ_DELETE;
 
 public:
     explicit QtnPropertyUBoxBase(QObject* parent);
+
+    QtnProperty* createTopProperty();
+    QtnProperty* createBottomProperty();
+    QtnProperty* createLeftProperty();
+    QtnProperty* createRightProperty();
 
 protected:
     bool fromStrImpl(const QString& str, QtnPropertyChangeReason reason) override;
@@ -57,6 +64,8 @@ class QtnPropertyDelegateUBox: public QtnPropertyDelegateTypedEx<QtnPropertyUBox
 
 public:
     QtnPropertyDelegateUBox(QtnPropertyUBoxBase& owner);
+
+    static void Register(QtnPropertyDelegateFactory& factory);
 
 protected:
     QWidget* createValueEditorImpl(QWidget* parent, const QRect& rect, QtnInplaceInfo* inplaceInfo = nullptr) override;

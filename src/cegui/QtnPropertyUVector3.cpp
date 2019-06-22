@@ -2,10 +2,29 @@
 #include "QtnPropertyUDim.h"
 #include "QtnProperty/Delegates/PropertyDelegateFactory.h"
 #include <CEGUI/PropertyHelper.h>
+#include <qlineedit.h>
 
 QtnPropertyUVector3Base::QtnPropertyUVector3Base(QObject* parent)
-    : QtnSinglePropertyBase<CEGUI::UVector3>(parent)
+    : ParentClass(parent)
 {
+}
+
+QtnProperty* QtnPropertyUVector3Base::createXProperty()
+{
+    return createFieldProperty(&CEGUI::UVector3::d_x, &CEGUI::UVector3::d_x,
+                               QStringLiteral("x"), tr("X"), tr("X of the %1"));
+}
+
+QtnProperty* QtnPropertyUVector3Base::createYProperty()
+{
+    return createFieldProperty(&CEGUI::UVector3::d_y, &CEGUI::UVector3::d_y,
+                               QStringLiteral("y"), tr("Y"), tr("Y of the %1"));
+}
+
+QtnProperty* QtnPropertyUVector3Base::createZProperty()
+{
+    return createFieldProperty(&CEGUI::UVector3::d_z, &CEGUI::UVector3::d_z,
+                               QStringLiteral("z"), tr("Z"), tr("Z of the %1"));
 }
 
 bool QtnPropertyUVector3Base::fromStrImpl(const QString& str, QtnPropertyChangeReason reason)
@@ -27,76 +46,19 @@ bool QtnPropertyUVector3Base::toStrImpl(QString& str) const
     return true;
 }
 
-QtnProperty* QtnPropertyUVector3Base::createXProperty()
-{
-    return createFieldProperty(QObject::tr("X"),
-        name(),
-        QObject::tr("X component of %1."),
-        &QRectF::height,
-        &QRectF::setHeight);
-}
-
-QtnProperty* qtnCreateXProperty(QObject* parent, QtnPropertyUVector3Base* mainProperty)
-{
-    QtnPropertyUDimCallback* subproperty = new QtnPropertyUDimCallback(parent);
-    subproperty->setName(QObject::tr("X"));
-    subproperty->setDescription(QObject::tr("X component of %1.").arg(mainProperty->name()));
-    subproperty->setCallbackValueGet([mainProperty]()->CEGUI::UDim { return mainProperty->value().d_x; });
-    subproperty->setCallbackValueSet([mainProperty](CEGUI::UDim newValue) {
-        CEGUI::UVector3 value = mainProperty->value();
-        value.d_x = newValue;
-        mainProperty->setValue(value);
-    });
-    QtnPropertyBase::connectMasterSignals(*mainProperty, *subproperty);
-
-    return subproperty;
-}
-
-QtnProperty* qtnCreateYProperty(QObject* parent, QtnPropertyUVector3Base* mainProperty)
-{
-    QtnPropertyUDimCallback* subproperty = new QtnPropertyUDimCallback(parent);
-    subproperty->setName(QObject::tr("Y"));
-    subproperty->setDescription(QObject::tr("Y component of %1.").arg(mainProperty->name()));
-    subproperty->setCallbackValueGet([mainProperty]()->CEGUI::UDim { return mainProperty->value().d_y; });
-    subproperty->setCallbackValueSet([mainProperty](CEGUI::UDim newValue) {
-        CEGUI::UVector3 value = mainProperty->value();
-        value.d_y = newValue;
-        mainProperty->setValue(value);
-    });
-    QtnPropertyBase::connectMasterSignals(*mainProperty, *subproperty);
-
-    return subproperty;
-}
-
-QtnProperty* qtnCreateZProperty(QObject* parent, QtnPropertyUVector3Base* mainProperty)
-{
-    QtnPropertyUDimCallback* subproperty = new QtnPropertyUDimCallback(parent);
-    subproperty->setName(QObject::tr("Z"));
-    subproperty->setDescription(QObject::tr("Z component of %1.").arg(mainProperty->name()));
-    subproperty->setCallbackValueGet([mainProperty]()->CEGUI::UDim { return mainProperty->value().d_z; });
-    subproperty->setCallbackValueSet([mainProperty](CEGUI::UDim newValue) {
-        CEGUI::UVector3 value = mainProperty->value();
-        value.d_z = newValue;
-        mainProperty->setValue(value);
-    });
-    QtnPropertyBase::connectMasterSignals(*mainProperty, *subproperty);
-
-    return subproperty;
-}
-
-void qtnRegisterUVector3Delegates(QtnPropertyDelegateFactory& factory)
-{
-    factory.registerDelegateDefault(&QtnPropertyUVector3Base::staticMetaObject
-                 , &qtnCreateDelegate<QtnPropertyDelegateUVector3, QtnPropertyUVector3Base>
-                 , "UVector3");
-}
-
 QtnPropertyDelegateUVector3::QtnPropertyDelegateUVector3(QtnPropertyUVector3Base& owner)
     : QtnPropertyDelegateTypedEx<QtnPropertyUVector3Base>(owner)
 {
-    addSubProperty(qtnCreateXProperty(nullptr, &owner));
-    addSubProperty(qtnCreateYProperty(nullptr, &owner));
-    addSubProperty(qtnCreateZProperty(nullptr, &owner));
+    addSubProperty(owner.createXProperty());
+    addSubProperty(owner.createYProperty());
+    addSubProperty(owner.createZProperty());
+}
+
+void QtnPropertyDelegateUVector3::Register(QtnPropertyDelegateFactory &factory)
+{
+    factory.registerDelegateDefault(&QtnPropertyUVector3Base::staticMetaObject,
+        &qtnCreateDelegate<QtnPropertyDelegateUVector3, QtnPropertyUVector3Base>,
+        "UVector3");
 }
 
 QWidget* QtnPropertyDelegateUVector3::createValueEditorImpl(QWidget* parent, const QRect& rect, QtnInplaceInfo* inplaceInfo)

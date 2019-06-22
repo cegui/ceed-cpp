@@ -2,17 +2,22 @@
 #define PROPERTYUDIM_H
 
 #include "src/cegui/CEGUIUtils.h"
+#include "QtnProperty/Core/PropertyFloat.h"
 #include "QtnProperty/Auxiliary/PropertyTemplates.h"
 #include "QtnProperty/Delegates/Utils/PropertyDelegateMisc.h"
+#include "QtnProperty/StructPropertyBase.h"
 #include <CEGUI/UVector.h>
 
-class QtnPropertyUDimBase: public QtnSinglePropertyBase<CEGUI::UDim>
+class QtnPropertyUDimBase: public QtnStructPropertyBase<CEGUI::UDim, QtnPropertyFloatCallback>
 {
     Q_OBJECT
     QtnPropertyUDimBase(const QtnPropertyUDimBase& other) Q_DECL_EQ_DELETE;
 
 public:
     explicit QtnPropertyUDimBase(QObject* parent);
+
+    QtnProperty* createScaleProperty();
+    QtnProperty* createOffsetProperty();
 
 protected:
     bool fromStrImpl(const QString& str, QtnPropertyChangeReason reason) override;
@@ -57,6 +62,8 @@ class QtnPropertyDelegateUDim: public QtnPropertyDelegateTypedEx<QtnPropertyUDim
 
 public:
     QtnPropertyDelegateUDim(QtnPropertyUDimBase& owner);
+
+    static void Register(QtnPropertyDelegateFactory& factory);
 
 protected:
     QWidget* createValueEditorImpl(QWidget* parent, const QRect& rect, QtnInplaceInfo* inplaceInfo = nullptr) override;

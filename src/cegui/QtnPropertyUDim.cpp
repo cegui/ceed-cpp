@@ -2,10 +2,27 @@
 #include "QtnProperty/Core/PropertyFloat.h"
 #include "QtnProperty/Delegates/PropertyDelegateFactory.h"
 #include <CEGUI/PropertyHelper.h>
+#include "qlineedit.h"
 
 QtnPropertyUDimBase::QtnPropertyUDimBase(QObject* parent)
-    : QtnSinglePropertyBase<CEGUI::UDim>(parent)
+    : ParentClass(parent)
 {
+}
+
+QtnProperty* QtnPropertyUDimBase::createScaleProperty()
+{
+    auto subproperty = createFieldProperty(&CEGUI::UDim::d_scale, &CEGUI::UDim::d_scale,
+                               QStringLiteral("scale"), tr("Scale"), tr("Relative part of %1"));
+    subproperty->setStepValue(0.05f);
+    return subproperty;
+}
+
+QtnProperty* QtnPropertyUDimBase::createOffsetProperty()
+{
+    auto subproperty = createFieldProperty(&CEGUI::UDim::d_offset, &CEGUI::UDim::d_offset,
+                               QStringLiteral("offset"), tr("Offset"), tr("Absolute part of %1"));
+    subproperty->setStepValue(1.f);
+    return subproperty;
 }
 
 bool QtnPropertyUDimBase::fromStrImpl(const QString& str, QtnPropertyChangeReason reason)
@@ -27,52 +44,18 @@ bool QtnPropertyUDimBase::toStrImpl(QString& str) const
     return true;
 }
 
-QtnProperty* qtnCreateScaleProperty(QObject* parent, QtnPropertyUDimBase* mainProperty)
+QtnPropertyDelegateUDim::QtnPropertyDelegateUDim(QtnPropertyUDimBase& owner)
+    : QtnPropertyDelegateTypedEx<QtnPropertyUDimBase>(owner)
 {
-    QtnPropertyFloatCallback* subproperty = new QtnPropertyFloatCallback(parent);
-    subproperty->setName(QObject::tr("Scale"));
-    subproperty->setDescription(QObject::tr("Relative part of %1.").arg(mainProperty->name()));
-    subproperty->setStepValue(0.05f);
-    subproperty->setCallbackValueGet([mainProperty]()->float { return mainProperty->value().d_scale; });
-    subproperty->setCallbackValueSet([mainProperty](float newValue) {
-        CEGUI::UDim value = mainProperty->value();
-        value.d_scale = newValue;
-        mainProperty->setValue(value);
-    });
-    QtnPropertyBase::connectMasterSignals(*mainProperty, *subproperty);
-
-    return subproperty;
+    addSubProperty(owner.createScaleProperty());
+    addSubProperty(owner.createOffsetProperty());
 }
 
-QtnProperty* qtnCreateOffsetProperty(QObject* parent, QtnPropertyUDimBase* mainProperty)
-{
-    QtnPropertyFloatCallback* subproperty = new QtnPropertyFloatCallback(parent);
-    subproperty->setName(QObject::tr("Offset"));
-    subproperty->setDescription(QObject::tr("Absolute part of %1.").arg(mainProperty->name()));
-    subproperty->setStepValue(1.0f);
-    subproperty->setCallbackValueGet([mainProperty]()->float { return mainProperty->value().d_offset; });
-    subproperty->setCallbackValueSet([mainProperty](float newValue) {
-        CEGUI::UDim value = mainProperty->value();
-        value.d_offset = newValue;
-        mainProperty->setValue(value);
-    });
-    QtnPropertyBase::connectMasterSignals(*mainProperty, *subproperty);
-
-    return subproperty;
-}
-
-void qtnRegisterUDimDelegates(QtnPropertyDelegateFactory& factory)
+void QtnPropertyDelegateUDim::Register(QtnPropertyDelegateFactory& factory)
 {
     factory.registerDelegateDefault(&QtnPropertyUDimBase::staticMetaObject
                  , &qtnCreateDelegate<QtnPropertyDelegateUDim, QtnPropertyUDimBase>
                  , "UDim");
-}
-
-QtnPropertyDelegateUDim::QtnPropertyDelegateUDim(QtnPropertyUDimBase& owner)
-    : QtnPropertyDelegateTypedEx<QtnPropertyUDimBase>(owner)
-{
-    addSubProperty(qtnCreateScaleProperty(nullptr, &owner));
-    addSubProperty(qtnCreateOffsetProperty(nullptr, &owner));
 }
 
 QWidget* QtnPropertyDelegateUDim::createValueEditorImpl(QWidget* parent, const QRect& rect, QtnInplaceInfo* inplaceInfo)

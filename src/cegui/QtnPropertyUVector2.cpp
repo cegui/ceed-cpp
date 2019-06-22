@@ -3,10 +3,23 @@
 #include "QtnProperty/Core/PropertyFloat.h"
 #include "QtnProperty/Delegates/PropertyDelegateFactory.h"
 #include <CEGUI/PropertyHelper.h>
+#include "qlineedit.h"
 
 QtnPropertyUVector2Base::QtnPropertyUVector2Base(QObject* parent)
-    : QtnSinglePropertyBase<CEGUI::UVector2>(parent)
+    : ParentClass(parent)
 {
+}
+
+QtnProperty* QtnPropertyUVector2Base::createXProperty()
+{
+    return createFieldProperty(&CEGUI::UVector2::d_x, &CEGUI::UVector2::d_x,
+                               QStringLiteral("x"), tr("X"), tr("X of the %1"));
+}
+
+QtnProperty* QtnPropertyUVector2Base::createYProperty()
+{
+    return createFieldProperty(&CEGUI::UVector2::d_y, &CEGUI::UVector2::d_y,
+                               QStringLiteral("y"), tr("Y"), tr("Y of the %1"));
 }
 
 bool QtnPropertyUVector2Base::fromStrImpl(const QString& str, QtnPropertyChangeReason reason)
@@ -28,126 +41,18 @@ bool QtnPropertyUVector2Base::toStrImpl(QString& str) const
     return true;
 }
 
-QtnProperty* qtnCreateXScaleProperty(QObject* parent, QtnPropertyUVector2Base* mainProperty)
+QtnPropertyDelegateUVector2::QtnPropertyDelegateUVector2(QtnPropertyUVector2Base& owner)
+    : QtnPropertyDelegateTypedEx<QtnPropertyUVector2Base>(owner)
 {
-    QtnPropertyFloatCallback* subproperty = new QtnPropertyFloatCallback(parent);
-    subproperty->setName(QObject::tr("XScale"));
-    subproperty->setDisplayName(QObject::tr("X rel."));
-    subproperty->setDescription(QObject::tr("Relative part of %1's X.").arg(mainProperty->name()));
-    subproperty->setStepValue(0.05f);
-    subproperty->setCallbackValueGet([mainProperty]()->float { return mainProperty->value().d_x.d_scale; });
-    subproperty->setCallbackValueSet([mainProperty](float newValue) {
-        CEGUI::UVector2 value = mainProperty->value();
-        value.d_x.d_scale = newValue;
-        mainProperty->setValue(value);
-    });
-    QtnPropertyBase::connectMasterSignals(*mainProperty, *subproperty);
-
-    return subproperty;
+    addSubProperty(owner.createXProperty());
+    addSubProperty(owner.createYProperty());
 }
 
-QtnProperty* qtnCreateXOffsetProperty(QObject* parent, QtnPropertyUVector2Base* mainProperty)
-{
-    QtnPropertyFloatCallback* subproperty = new QtnPropertyFloatCallback(parent);
-    subproperty->setName(QObject::tr("XOffset"));
-    subproperty->setDisplayName(QObject::tr("X abs."));
-    subproperty->setDescription(QObject::tr("Absolute part of %1's X.").arg(mainProperty->name()));
-    subproperty->setStepValue(1.0f);
-    subproperty->setCallbackValueGet([mainProperty]()->float { return mainProperty->value().d_x.d_offset; });
-    subproperty->setCallbackValueSet([mainProperty](float newValue) {
-        CEGUI::UVector2 value = mainProperty->value();
-        value.d_x.d_offset = newValue;
-        mainProperty->setValue(value);
-    });
-    QtnPropertyBase::connectMasterSignals(*mainProperty, *subproperty);
-
-    return subproperty;
-}
-
-QtnProperty* qtnCreateYScaleProperty(QObject* parent, QtnPropertyUVector2Base* mainProperty)
-{
-    QtnPropertyFloatCallback* subproperty = new QtnPropertyFloatCallback(parent);
-    subproperty->setName(QObject::tr("YScale"));
-    subproperty->setDisplayName(QObject::tr("Y rel."));
-    subproperty->setDescription(QObject::tr("Relative part of %1's Y.").arg(mainProperty->name()));
-    subproperty->setStepValue(0.05f);
-    subproperty->setCallbackValueGet([mainProperty]()->float { return mainProperty->value().d_y.d_scale; });
-    subproperty->setCallbackValueSet([mainProperty](float newValue) {
-        CEGUI::UVector2 value = mainProperty->value();
-        value.d_y.d_scale = newValue;
-        mainProperty->setValue(value);
-    });
-    QtnPropertyBase::connectMasterSignals(*mainProperty, *subproperty);
-
-    return subproperty;
-}
-
-QtnProperty* qtnCreateYOffsetProperty(QObject* parent, QtnPropertyUVector2Base* mainProperty)
-{
-    QtnPropertyFloatCallback* subproperty = new QtnPropertyFloatCallback(parent);
-    subproperty->setName(QObject::tr("YOffset"));
-    subproperty->setDisplayName(QObject::tr("Y abs."));
-    subproperty->setDescription(QObject::tr("Absolute part of %1's Y.").arg(mainProperty->name()));
-    subproperty->setStepValue(1.0f);
-    subproperty->setCallbackValueGet([mainProperty]()->float { return mainProperty->value().d_y.d_offset; });
-    subproperty->setCallbackValueSet([mainProperty](float newValue) {
-        CEGUI::UVector2 value = mainProperty->value();
-        value.d_y.d_offset = newValue;
-        mainProperty->setValue(value);
-    });
-    QtnPropertyBase::connectMasterSignals(*mainProperty, *subproperty);
-
-    return subproperty;
-}
-
-//!!!DBG TMP!
-QtnProperty* qtnCreateXProperty(QObject* parent, QtnPropertyUVector2Base* mainProperty)
-{
-    QtnPropertyUDimCallback* subproperty = new QtnPropertyUDimCallback(parent);
-    subproperty->setName(QObject::tr("X"));
-    subproperty->setDescription(QObject::tr("X component of %1.").arg(mainProperty->name()));
-    subproperty->setCallbackValueGet([mainProperty]()->CEGUI::UDim { return mainProperty->value().d_x; });
-    subproperty->setCallbackValueSet([mainProperty](CEGUI::UDim newValue) {
-        CEGUI::UVector2 value = mainProperty->value();
-        value.d_x = newValue;
-        mainProperty->setValue(value);
-    });
-    QtnPropertyBase::connectMasterSignals(*mainProperty, *subproperty);
-
-    return subproperty;
-}
-QtnProperty* qtnCreateYProperty(QObject* parent, QtnPropertyUVector2Base* mainProperty)
-{
-    QtnPropertyUDimCallback* subproperty = new QtnPropertyUDimCallback(parent);
-    subproperty->setName(QObject::tr("Y"));
-    subproperty->setDescription(QObject::tr("Y component of %1.").arg(mainProperty->name()));
-    subproperty->setCallbackValueGet([mainProperty]()->CEGUI::UDim { return mainProperty->value().d_y; });
-    subproperty->setCallbackValueSet([mainProperty](CEGUI::UDim newValue) {
-        CEGUI::UVector2 value = mainProperty->value();
-        value.d_y = newValue;
-        mainProperty->setValue(value);
-    });
-    QtnPropertyBase::connectMasterSignals(*mainProperty, *subproperty);
-
-    return subproperty;
-}
-
-void qtnRegisterUVector2Delegates(QtnPropertyDelegateFactory& factory)
+void QtnPropertyDelegateUVector2::Register(QtnPropertyDelegateFactory& factory)
 {
     factory.registerDelegateDefault(&QtnPropertyUVector2Base::staticMetaObject
                  , &qtnCreateDelegate<QtnPropertyDelegateUVector2, QtnPropertyUVector2Base>
                  , "UVector2");
-}
-
-QtnPropertyDelegateUVector2::QtnPropertyDelegateUVector2(QtnPropertyUVector2Base& owner)
-    : QtnPropertyDelegateTypedEx<QtnPropertyUVector2Base>(owner)
-{
-    addSubProperty(qtnCreateXProperty(nullptr, &owner));
-    addSubProperty(qtnCreateYProperty(nullptr, &owner));
-    //addSubProperty(qtnCreateXScaleProperty(nullptr, &owner));
-    //addSubProperty(qtnCreateXOffsetProperty(nullptr, &owner));
-    //addSubProperty(qtnCreateYScaleProperty(nullptr, &owner));
-    //addSubProperty(qtnCreateYOffsetProperty(nullptr, &owner));
 }
 
 QWidget* QtnPropertyDelegateUVector2::createValueEditorImpl(QWidget* parent, const QRect& rect, QtnInplaceInfo* inplaceInfo)

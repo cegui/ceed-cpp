@@ -2,17 +2,22 @@
 #define PROPERTYUVECTOR2_H
 
 #include "src/cegui/CEGUIUtils.h"
+#include "src/cegui/QtnPropertyUDim.h"
 #include "QtnProperty/Auxiliary/PropertyTemplates.h"
 #include "QtnProperty/Delegates/Utils/PropertyDelegateMisc.h"
+#include "QtnProperty/StructPropertyBase.h"
 #include <CEGUI/UVector.h>
 
-class QtnPropertyUVector2Base: public QtnSinglePropertyBase<CEGUI::UVector2>
+class QtnPropertyUVector2Base: public QtnStructPropertyBase<CEGUI::UVector2, QtnPropertyUDimCallback>
 {
     Q_OBJECT
     QtnPropertyUVector2Base(const QtnPropertyUVector2Base& other) Q_DECL_EQ_DELETE;
 
 public:
     explicit QtnPropertyUVector2Base(QObject* parent);
+
+    QtnProperty* createXProperty();
+    QtnProperty* createYProperty();
 
 protected:
     bool fromStrImpl(const QString& str, QtnPropertyChangeReason reason) override;
@@ -57,6 +62,8 @@ class QtnPropertyDelegateUVector2: public QtnPropertyDelegateTypedEx<QtnProperty
 
 public:
     QtnPropertyDelegateUVector2(QtnPropertyUVector2Base& owner);
+
+    static void Register(QtnPropertyDelegateFactory& factory);
 
 protected:
     QWidget* createValueEditorImpl(QWidget* parent, const QRect& rect, QtnInplaceInfo* inplaceInfo = nullptr) override;

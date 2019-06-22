@@ -24,12 +24,13 @@
 #include <qdesktopservices.h>
 #include <qclipboard.h>
 #include <qbuffer.h>
+#include <qpainter.h>
 #include <set>
 
 // For properties (may be incapsulated somewhere):
 #include "src/ui/MainWindow.h"
 #include "src/Application.h"
-#include "PropertyWidget/PropertyWidget.h"
+#include "QtnProperty/PropertyWidget.h"
 
 LayoutScene::LayoutScene(LayoutVisualMode& visualMode)
     : CEGUIGraphicsScene(&visualMode)

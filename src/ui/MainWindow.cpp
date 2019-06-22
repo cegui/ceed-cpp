@@ -32,7 +32,7 @@
 #include "src/ui/ProjectManager.h"
 #include "src/ui/FileSystemBrowser.h"
 #include "src/ui/UndoViewer.h"
-#include "PropertyWidget/PropertyWidget.h"
+#include "QtnProperty/PropertyWidget.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
