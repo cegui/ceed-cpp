@@ -962,6 +962,7 @@ void CEGUIManipulator::createPropertySet()
         prop->setName(CEGUIUtils::stringToQString(ceguiProp->getName()));
         prop->setDescription(CEGUIUtils::stringToQString(ceguiProp->getHelp()));
         prop->fromStr(CEGUIUtils::stringToQString(ceguiProp->get(_widget)));
+        prop->addState(QtnPropertyStateCollapsed);
         if (!ceguiProp->isWritable())
             prop->addState(QtnPropertyStateImmutable);
         parentSet->addChildProperty(prop, true);
