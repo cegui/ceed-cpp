@@ -963,10 +963,12 @@ void QtnPropertyQStringCandidatesComboBoxHandler::updateCandidates()
 	comboBox->clear();
 	comboBox->addItems(m_candidates);
 
+	/* FIXME: Qt 5.12.3 - combobox size is wrong on showPopup(), update[Geometry]() & adjustSize don't help
 	if (property().isEditableByUser())
 	{
 		comboBox->showPopup();
 	}
+	*/
 
 	updating--;
 }
