@@ -15,10 +15,11 @@ QtnProperty* QtnPropertyURectBase::createMinXProperty()
     subproperty->setName(QObject::tr("MinX"));
     subproperty->setDescription(QObject::tr("Minimum X of %1").arg(name()));
     subproperty->setCallbackValueGet([this]()->CEGUI::UDim { return value().d_min.d_x; });
-    subproperty->setCallbackValueSet([this](CEGUI::UDim newValue) {
+    subproperty->setCallbackValueSet([this](CEGUI::UDim newValue, QtnPropertyChangeReason reason)
+    {
         CEGUI::URect ownerValue = value();
         ownerValue.d_min.d_x = newValue;
-        setValue(ownerValue);
+        setValue(ownerValue, reason);
     });
     return subproperty;
 }
@@ -29,10 +30,11 @@ QtnProperty* QtnPropertyURectBase::createMinYProperty()
     subproperty->setName(QObject::tr("MinY"));
     subproperty->setDescription(QObject::tr("Minimum Y of %1").arg(name()));
     subproperty->setCallbackValueGet([this]()->CEGUI::UDim { return value().d_min.d_y; });
-    subproperty->setCallbackValueSet([this](CEGUI::UDim newValue) {
+    subproperty->setCallbackValueSet([this](CEGUI::UDim newValue, QtnPropertyChangeReason reason)
+    {
         CEGUI::URect ownerValue = value();
         ownerValue.d_min.d_y = newValue;
-        setValue(ownerValue);
+        setValue(ownerValue, reason);
     });
     return subproperty;
 }
@@ -43,10 +45,11 @@ QtnProperty* QtnPropertyURectBase::createMaxXProperty()
     subproperty->setName(QObject::tr("MaxX"));
     subproperty->setDescription(QObject::tr("Maximum X of %1").arg(name()));
     subproperty->setCallbackValueGet([this]()->CEGUI::UDim { return value().d_max.d_x; });
-    subproperty->setCallbackValueSet([this](CEGUI::UDim newValue) {
+    subproperty->setCallbackValueSet([this](CEGUI::UDim newValue, QtnPropertyChangeReason reason)
+    {
         CEGUI::URect ownerValue = value();
         ownerValue.d_max.d_x = newValue;
-        setValue(ownerValue);
+        setValue(ownerValue, reason);
     });
     return subproperty;
 }
@@ -57,10 +60,11 @@ QtnProperty* QtnPropertyURectBase::createMaxYProperty()
     subproperty->setName(QObject::tr("MaxY"));
     subproperty->setDescription(QObject::tr("Maximum Y of %1").arg(name()));
     subproperty->setCallbackValueGet([this]()->CEGUI::UDim { return value().d_max.d_y; });
-    subproperty->setCallbackValueSet([this](CEGUI::UDim newValue) {
+    subproperty->setCallbackValueSet([this](CEGUI::UDim newValue, QtnPropertyChangeReason reason)
+    {
         CEGUI::URect ownerValue = value();
         ownerValue.d_max.d_y = newValue;
-        setValue(ownerValue);
+        setValue(ownerValue, reason);
     });
     return subproperty;
 }
