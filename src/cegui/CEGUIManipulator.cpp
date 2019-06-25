@@ -32,6 +32,7 @@ CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent, CEGUI::Window* widget)
     , _widget(widget)
 {
     setFlags(ItemIsFocusable | ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
+    setToolTip(getWidgetName());
 
     createPropertySet();
 }
@@ -633,6 +634,7 @@ void CEGUIManipulator::detach(bool detachWidget, bool destroyWidget, bool recurs
     {
         CEGUI::WindowManager::getSingleton().destroyWindow(_widget);
         _widget = nullptr;
+        setToolTip("");
     }
 }
 

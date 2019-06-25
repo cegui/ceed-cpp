@@ -7,6 +7,7 @@
 #include "src/cegui/CEGUIUtils.h"
 #include <CEGUI/widgets/SequentialLayoutContainer.h>
 #include <CEGUI/WindowManager.h>
+#include <CEGUI/CoordConverter.h>
 #include "qtreeview.h"
 
 LayoutMoveCommand::LayoutMoveCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records)
@@ -254,11 +255,12 @@ void LayoutDeleteCommand::redo()
 
 //---------------------------------------------------------------------
 
-LayoutCreateCommand::LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath, const QString& type, const QString& name)
+LayoutCreateCommand::LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath, const QString& type, const QString& name, QPointF scenePos)
     : _visualMode(visualMode)
     , _parentPath(parentPath)
     , _type(type)
     , _name(name)
+    , _scenePos(scenePos)
 {
     setText(QString("Create '%1' of type '%2'").arg(name, type));
 }
@@ -282,7 +284,19 @@ void LayoutCreateCommand::redo()
     LayoutManipulator* parent = _parentPath.isEmpty() ? nullptr :
                 _visualMode.getScene()->getManipulatorByPath(_parentPath);
 
-    LayoutManipulator* manipulator = parent ? parent->createChildManipulator(widget) : _visualMode.setRootWidget(widget);
+    glm::vec2 pos(static_cast<float>(_scenePos.x()), static_cast<float>(_scenePos.y()));
+    LayoutManipulator* manipulator;
+    if (parent)
+    {
+        manipulator = parent->createChildManipulator(widget);
+        parent->getWidget()->addChild(widget);
+
+        pos = CEGUI::CoordConverter::screenToWindow(*parent->getWidget(), pos);
+    }
+    else manipulator = _visualMode.setRootWidget(widget);
+
+    // Place new window at the requested point in context coords
+    widget->setPosition(CEGUI::UVector2(CEGUI::UDim(0.f, pos.x), CEGUI::UDim(0.f, pos.y)));
 
     // If the size is 0x0, the widget will be hard to deal with, lets fix that in that case
     if (widget->getSize() == CEGUI::USize(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)))

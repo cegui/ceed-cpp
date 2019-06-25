@@ -261,7 +261,7 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
         if (parentManipulator)
             uniqueName = CEGUIUtils::getUniqueChildWidgetName(*parentManipulator->getWidget(), uniqueName);
 
-        _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, parentItemPath, widgetType, uniqueName));
+        _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, parentItemPath, widgetType, uniqueName, QPointF()));
 
         return true;
     }

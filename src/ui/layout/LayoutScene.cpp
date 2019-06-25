@@ -974,7 +974,7 @@ void LayoutScene::dropEvent(QGraphicsSceneDragDropEvent* event)
             QString widgetType = data.data();
             int sepPos = widgetType.lastIndexOf('/');
             QString widgetName = (sepPos < 0) ? widgetType : widgetType.mid(sepPos + 1);
-            _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, "", widgetType, widgetName));
+            _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, "", widgetType, widgetName, event->scenePos()));
 
             event->acceptProposedAction();
         }

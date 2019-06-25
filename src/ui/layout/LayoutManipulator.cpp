@@ -285,7 +285,7 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
         QString widgetType = data.data();
         int sepPos = widgetType.lastIndexOf('/');
         QString widgetName = CEGUIUtils::getUniqueChildWidgetName(*_widget, (sepPos < 0) ? widgetType : widgetType.mid(sepPos + 1));
-        _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, getWidgetPath(), widgetType, widgetName));
+        _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, getWidgetPath(), widgetType, widgetName, event->scenePos()));
         event->acceptProposedAction();
     }
     else

@@ -89,7 +89,7 @@ class LayoutCreateCommand : public QUndoCommand
 {
 public:
 
-    LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath, const QString& type, const QString& name);
+    LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath, const QString& type, const QString& name, QPointF scenePos);
 
     virtual void undo() override;
     virtual void redo() override;
@@ -101,6 +101,7 @@ protected:
     QString _parentPath;
     QString _type;
     QString _name;
+    QPointF _scenePos;
 };
 
 // This command resizes given widgets from old positions and old sizes to new
