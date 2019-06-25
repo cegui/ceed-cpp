@@ -90,10 +90,15 @@ void NumericValueItem::acceptNewValue()
 // The most user-friendly string to qreal conversion
 qreal NumericValueItem::textToValue(bool* ok) const
 {
-    QLocale locale;
-    const QChar decimalPt = locale.decimalPoint();
-
     QString text = toPlainText();
+
+    // Empty string is OK, we want to be able to erase all text during an editing.
+    // Value won't be changed, so accepting empty string cancels editing.
+    if (text.isEmpty())
+    {
+        if (ok) *ok = true;
+        return _value;
+    }
 
     // Enforce single line
     if (text.indexOf('\n') >= 0 || text.indexOf('\r') >= 0)
@@ -101,6 +106,9 @@ qreal NumericValueItem::textToValue(bool* ok) const
         if (ok) *ok = false;
         return 0.0;
     }
+
+    QLocale locale;
+    const QChar decimalPt = locale.decimalPoint();
 
     text.replace('.', decimalPt);
     text.replace(',', decimalPt);

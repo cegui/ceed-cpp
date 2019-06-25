@@ -343,7 +343,10 @@ void LayoutScene::onManipulatorUpdatedFromWidget(LayoutManipulator* manipulator)
     {
         const bool isAnchorHandleSelected = isAnyAnchorHandleSelected();
         if (!_anchorTarget->resizeInProgress() || !isAnchorHandleSelected)
+        {
             updateAnchorItems();
+            updateAnchorValueItems();
+        }
 
         if (!isAnchorHandleSelected)
         {
@@ -637,6 +640,34 @@ void LayoutScene::updateAnchorValueItems(bool minX, bool maxX, bool minY, bool m
     }
 }
 
+void LayoutScene::updateAnchorValueItems()
+{
+    const bool hasMinX = _anchorMinX->isSelected() || _anchorMinXMinY->isSelected() || _anchorMinXMaxY->isSelected();
+    const bool hasMaxX = _anchorMaxX->isSelected() || _anchorMaxXMinY->isSelected() || _anchorMaxXMaxY->isSelected();
+    const bool hasMinY = _anchorMinY->isSelected() || _anchorMinXMinY->isSelected() || _anchorMaxXMinY->isSelected();
+    const bool hasMaxY = _anchorMaxY->isSelected() || _anchorMinXMaxY->isSelected() || _anchorMaxXMaxY->isSelected();
+    updateAnchorValueItems(hasMinX, hasMaxX, hasMinY, hasMaxY);
+}
+
+void LayoutScene::setAnchorValues(float minX, float maxX, float minY, float maxY)
+{
+    LayoutResizeCommand::Record rec;
+    rec.path = _anchorTarget->getWidgetPath();
+    rec.oldPos = _anchorTarget->getWidget()->getPosition();
+    rec.oldSize = _anchorTarget->getWidget()->getSize();
+
+    _anchorTarget->setAnchors(minX, maxX, minY, maxY, false);
+
+    rec.newPos = _anchorTarget->getWidget()->getPosition();
+    rec.newSize = _anchorTarget->getWidget()->getSize();
+
+    std::vector<LayoutResizeCommand::Record> resize;
+    resize.push_back(std::move(rec));
+    _visualMode.getEditor().getUndoStack()->push(new LayoutResizeCommand(_visualMode, std::move(resize)));
+
+    updateAnchorItems();
+}
+
 // FIXME: when snapping to edge of self with Shift, handle dragging is not smooth
 // TODO: Lock axis
 // TODO: presets in virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *event) override?
@@ -842,10 +873,7 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
         {
             const float minX = static_cast<float>(newValue) / 100.f;
             const float maxX = std::max(_anchorTarget->getAnchorMaxX(), minX);
-            const float minY = _anchorTarget->getAnchorMinY();
-            const float maxY = _anchorTarget->getAnchorMaxY();
-            _anchorTarget->setAnchors(minX, maxX, minY, maxY, false);
-            updateAnchorItems();
+            setAnchorValues(minX, maxX, _anchorTarget->getAnchorMinY(), _anchorTarget->getAnchorMaxY());
             updateAnchorValueItems(true, false, false, false);
         });
      }
@@ -859,10 +887,7 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
         {
             const float maxX = static_cast<float>(newValue) / 100.f;
             const float minX = std::min(_anchorTarget->getAnchorMinX(), maxX);
-            const float minY = _anchorTarget->getAnchorMinY();
-            const float maxY = _anchorTarget->getAnchorMaxY();
-            _anchorTarget->setAnchors(minX, maxX, minY, maxY, false);
-            updateAnchorItems();
+            setAnchorValues(minX, maxX, _anchorTarget->getAnchorMinY(), _anchorTarget->getAnchorMaxY());
             updateAnchorValueItems(false, true, false, false);
         });
     }
@@ -877,10 +902,7 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
         {
             const float minY = static_cast<float>(newValue) / 100.f;
             const float maxY = std::max(_anchorTarget->getAnchorMaxY(), minY);
-            const float minX = _anchorTarget->getAnchorMinX();
-            const float maxX = _anchorTarget->getAnchorMaxX();
-            _anchorTarget->setAnchors(minX, maxX, minY, maxY, false);
-            updateAnchorItems();
+            setAnchorValues(_anchorTarget->getAnchorMinX(), _anchorTarget->getAnchorMaxX(), minY, maxY);
             updateAnchorValueItems(false, false, true, false);
         });
     }
@@ -893,10 +915,7 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
         {
             const float maxY = static_cast<float>(newValue) / 100.f;
             const float minY = std::min(_anchorTarget->getAnchorMinY(), maxY);
-            const float minX = _anchorTarget->getAnchorMinX();
-            const float maxX = _anchorTarget->getAnchorMaxX();
-            _anchorTarget->setAnchors(minX, maxX, minY, maxY, false);
-            updateAnchorItems();
+            setAnchorValues(_anchorTarget->getAnchorMinX(), _anchorTarget->getAnchorMaxX(), minY, maxY);
             updateAnchorValueItems(false, false, false, true);
         });
     }

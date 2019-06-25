@@ -54,6 +54,8 @@ protected:
     bool isAnyAnchorHandleSelected() const;
     void updateAnchorItems(QGraphicsItem* movedItem = nullptr);
     void updateAnchorValueItems(bool minX, bool maxX, bool minY, bool maxY);
+    void updateAnchorValueItems();
+    void setAnchorValues(float minX, float maxX, float minY, float maxY);
 
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;
