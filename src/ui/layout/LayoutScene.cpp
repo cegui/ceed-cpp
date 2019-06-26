@@ -972,8 +972,19 @@ void LayoutScene::dropEvent(QGraphicsSceneDragDropEvent* event)
         if (data.size() > 0)
         {
             QString widgetType = data.data();
-            int sepPos = widgetType.lastIndexOf('/');
-            QString widgetName = (sepPos < 0) ? widgetType : widgetType.mid(sepPos + 1);
+            QString widgetName;
+            if (widgetType == "DefaultWindow")
+            {
+                // Special case - root widget. Setup it with most useful parameters.
+                widgetName = "Root";
+                // or: widgetName = QFileInfo(_visualMode.getEditor().getFilePath()).baseName();
+            }
+            else
+            {
+                const int sepPos = widgetType.lastIndexOf('/');
+                widgetName = (sepPos < 0) ? widgetType : widgetType.mid(sepPos + 1);
+            }
+
             _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, "", widgetType, widgetName, event->scenePos()));
 
             event->acceptProposedAction();

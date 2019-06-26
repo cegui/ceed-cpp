@@ -6,7 +6,6 @@
 #include "src/editors/layout/LayoutUndoCommands.h"
 #include "src/cegui/CEGUIUtils.h"
 #include <CEGUI/Window.h>
-#include "qmessagebox.h"
 #include "qmimedata.h"
 #include "qinputdialog.h"
 #include <unordered_set>
@@ -23,37 +22,11 @@ bool WidgetHierarchyTreeModel::setData(const QModelIndex& index, const QVariant&
     // Handle widget renaming
     if (role == Qt::EditRole)
     {
-        auto item = static_cast<WidgetHierarchyItem*>(itemFromIndex(index));
         QString newName = value.toString();
+        static_cast<WidgetHierarchyItem*>(itemFromIndex(index))->getManipulator()->renameWidget(newName);
 
-        if (newName == item->getManipulator()->getWidgetName()) return false;
-
-        // Validate the new name, cancel if invalid
-        newName = CEGUIUtils::getValidWidgetName(newName);
-        if (newName.isEmpty())
-        {
-            QMessageBox msgBox;
-            msgBox.setText("The name was not changed because the new name is invalid.");
-            msgBox.setIcon(QMessageBox::Warning);
-            msgBox.exec();
-            return false;
-        }
-
-        // Check if the new name is unique in the parent, cancel if not
-        auto parentWidget = item->getManipulator()->getWidget()->getParent();
-        if (parentWidget && parentWidget->isChild(CEGUIUtils::qStringToString(newName)))
-        {
-            QMessageBox msgBox;
-            msgBox.setText("The name was not changed because the new name is in use by a sibling widget.");
-            msgBox.setIcon(QMessageBox::Warning);
-            msgBox.exec();
-            return false;
-        }
-
-        // The name is good, apply it
-        _visualMode.getEditor().getUndoStack()->push(new LayoutRenameCommand(_visualMode, item->getManipulator()->getWidgetPath(), newName));
-
-        // Return false because the undo command has changed the text of the item already
+        // Return false because the undo command inside renameWidget() has changed the text
+        // of the item already (if it was possible)
         return false;
     }
 

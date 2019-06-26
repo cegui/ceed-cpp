@@ -43,18 +43,34 @@ void LayoutEditor::initialize()
 {
     MultiModeEditor::initialize();
 
+    visualMode->setRootWidget(nullptr);
+
     try
     {
-        // FIXME: open manually and load from string?
-        auto layoutFileName = QDir(CEGUIManager::Instance().getCurrentProject()->getResourceFilePath("", "layouts")).relativeFilePath(_filePath);
-        CEGUI::Window* root = CEGUI::WindowManager::getSingleton().loadLayoutFromFile(CEGUIUtils::qStringToString(layoutFileName));
-        visualMode->setRootWidget(root);
-        visualMode->getCreateWidgetDockWidget()->populate();
+        QByteArray rawData;
+        {
+            QFile file(_filePath);
+            if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+            {
+                QMessageBox::warning(nullptr, "File read error", "Layout editor can't read file " + _filePath);
+                return;
+            }
+
+            rawData = file.readAll();
+        }
+
+        if (rawData.size() > 0)
+        {
+            CEGUI::Window* root = CEGUI::WindowManager::getSingleton().loadLayoutFromString(CEGUIUtils::qStringToString(rawData));
+            visualMode->setRootWidget(root);
+        }
     }
     catch (const std::exception& e)
     {
         QMessageBox::warning(nullptr, "Exception", e.what());
     }
+
+    visualMode->getCreateWidgetDockWidget()->populate();
 }
 
 void LayoutEditor::activate(MainWindow& mainWindow)

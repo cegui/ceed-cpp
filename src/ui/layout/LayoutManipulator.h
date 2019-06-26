@@ -37,6 +37,8 @@ public:
     virtual bool useIntegersForAbsoluteMove() const override;
     virtual bool useIntegersForAbsoluteResize() const override;
 
+    bool renameWidget(QString& newName);
+
     void setLocked(bool locked);
     void setTreeItem(WidgetHierarchyItem* treeItem) { _treeItem = treeItem; }
     WidgetHierarchyItem* getTreeItem() const { return _treeItem; }

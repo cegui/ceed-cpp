@@ -284,25 +284,40 @@ void LayoutCreateCommand::redo()
     LayoutManipulator* parent = _parentPath.isEmpty() ? nullptr :
                 _visualMode.getScene()->getManipulatorByPath(_parentPath);
 
-    glm::vec2 pos(static_cast<float>(_scenePos.x()), static_cast<float>(_scenePos.y()));
+    // Setup position and size of the new widget
+    if (_type == "DefaultWindow" && !parent)
+    {
+        // Special case - root widget. Setup it with most useful parameters.
+        widget->setPosition(CEGUI::UVector2(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)));
+        widget->setSize(CEGUI::USize(CEGUI::UDim(1.f, 0.f), CEGUI::UDim(1.f, 0.f)));
+    }
+    else
+    {
+        // Convert requested position into parent cordinate system
+        glm::vec2 pos(static_cast<float>(_scenePos.x()), static_cast<float>(_scenePos.y()));
+        if (parent)
+            pos = CEGUI::CoordConverter::screenToWindow(*parent->getWidget(), pos);
+
+        // Place new window at the requested point in context coords
+        widget->setPosition(CEGUI::UVector2(CEGUI::UDim(0.f, pos.x), CEGUI::UDim(0.f, pos.y)));
+
+        // If the size is 0x0, the widget will be hard to deal with, lets fix that in that case
+        if (widget->getSize() == CEGUI::USize(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)))
+            widget->setSize(CEGUI::USize(CEGUI::UDim(0.f, 50.f), CEGUI::UDim(0.f, 50.f)));
+    }
+
+    // Default maximum size to the whole screen
+    widget->setMaxSize(CEGUI::USize(CEGUI::UDim(1.f, 0.f), CEGUI::UDim(1.f, 0.f)));
+
     LayoutManipulator* manipulator;
     if (parent)
     {
         manipulator = parent->createChildManipulator(widget);
         parent->getWidget()->addChild(widget);
-
-        pos = CEGUI::CoordConverter::screenToWindow(*parent->getWidget(), pos);
     }
     else manipulator = _visualMode.setRootWidget(widget);
 
-    // Place new window at the requested point in context coords
-    widget->setPosition(CEGUI::UVector2(CEGUI::UDim(0.f, pos.x), CEGUI::UDim(0.f, pos.y)));
-
-    // If the size is 0x0, the widget will be hard to deal with, lets fix that in that case
-    if (widget->getSize() == CEGUI::USize(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)))
-        widget->setSize(CEGUI::USize(CEGUI::UDim(0.f, 50.f), CEGUI::UDim(0.f, 50.f)));
-
-    manipulator->updateFromWidget(true, true); //???need? called on creation
+    manipulator->updateFromWidget(true, true);
 
     // Ensure this isn't obscured by it's parent
     manipulator->moveToFront();

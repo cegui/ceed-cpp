@@ -13,6 +13,7 @@
 #include "qgraphicssceneevent.h"
 #include "qmimedata.h"
 #include "qaction.h"
+#include "qmessagebox.h"
 
 LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, CEGUI::Window* widget)
     : CEGUIManipulator(parent, widget)
@@ -242,6 +243,37 @@ bool LayoutManipulator::useIntegersForAbsoluteResize() const
     return _visualMode.isAbsoluteIntegerMode();
 }
 
+bool LayoutManipulator::renameWidget(QString& newName)
+{
+    if (newName == getWidgetName()) return true;
+
+    // Validate the new name, cancel if invalid
+    newName = CEGUIUtils::getValidWidgetName(newName);
+    if (newName.isEmpty())
+    {
+        QMessageBox msgBox;
+        msgBox.setText("The name was not changed because the new name is invalid.");
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.exec();
+        return false;
+    }
+
+    // Check if the new name is unique in the parent, cancel if not
+    auto parentWidget = getWidget()->getParent();
+    if (parentWidget && parentWidget->isChild(CEGUIUtils::qStringToString(newName)))
+    {
+        QMessageBox msgBox;
+        msgBox.setText("The name was not changed because the new name is in use by a sibling widget.");
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.exec();
+        return false;
+    }
+
+    // The name is good, apply it
+    _visualMode.getEditor().getUndoStack()->push(new LayoutRenameCommand(_visualMode, getWidgetPath(), newName));
+    return true;
+}
+
 void LayoutManipulator::setLocked(bool locked)
 {
     setFlag(ItemIsMovable, !locked);
@@ -298,21 +330,32 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
 // TODO: redesign undo for multiproperties, must be one command for all changed manipulators!
 void LayoutManipulator::onPropertyChanged(const QtnPropertyBase* property, CEGUI::Property* ceguiProperty)
 {
-    //!!!DBG TMP!
-    CEGUIManipulator::onPropertyChanged(property, ceguiProperty);
-    return;
-
     QString value;
     if (property->toStr(value))
     {
-        std::vector<LayoutPropertyEditCommand::Record> records;
+        if (ceguiProperty->getName() == "Name")
+        {
+            // Special case: when we edit the name, widget path changes and LayoutPropertyEditCommand
+            // will fail to find the widget. Use LayoutRenameCommand here. Also it is more consistent.
+            QString newName = value;
+            if (!renameWidget(newName))
+                newName = getWidgetName();
 
-        LayoutPropertyEditCommand::Record rec;
-        rec.path = getWidgetPath();
-        rec.oldValue = ceguiProperty->get(_widget);
-        records.push_back(std::move(rec));
+            // Set actual name back to the property
+            if (newName != value)
+                updatePropertiesFromWidget({"Name", "NamePath"});
+        }
+        else
+        {
+            std::vector<LayoutPropertyEditCommand::Record> records;
 
-        _visualMode.getEditor().getUndoStack()->push(new LayoutPropertyEditCommand(_visualMode, std::move(records), property->name(), value));
+            LayoutPropertyEditCommand::Record rec;
+            rec.path = getWidgetPath();
+            rec.oldValue = ceguiProperty->get(_widget);
+            records.push_back(std::move(rec));
+
+            _visualMode.getEditor().getUndoStack()->push(new LayoutPropertyEditCommand(_visualMode, std::move(records), property->name(), value));
+        }
     }
 
     // Multi:
