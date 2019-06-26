@@ -32,7 +32,6 @@ CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent, CEGUI::Window* widget)
     , _widget(widget)
 {
     setFlags(ItemIsFocusable | ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
-    setToolTip(getWidgetName());
 
     createPropertySet();
 }
@@ -563,6 +562,9 @@ void CEGUIManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs)
 
     if (callUpdate) _widget->update(0.f);
 
+    // Just in case widget or widget name changed
+    onWidgetNameChanged();
+
     if (updateAncestorLCs)
     {
         // We are trying to find a topmost LC (in case of nested LCs) and recursively update it
@@ -784,6 +786,9 @@ void CEGUIManipulator::updatePropertiesFromWidget(const QStringList& propertyNam
             const CEGUI::Property* ceguiProp = it->second.first;
             QtnProperty* prop = it->second.second;
             prop->fromStr(CEGUIUtils::stringToQString(ceguiProp->get(_widget)));
+
+            if (propertyName == "Name")
+                onWidgetNameChanged();
         }
     }
 }
@@ -796,6 +801,8 @@ void CEGUIManipulator::updateAllPropertiesFromWidget()
         QtnProperty* prop = pair.second.second;
         prop->fromStr(CEGUIUtils::stringToQString(ceguiProp->get(_widget)));
     }
+
+    onWidgetNameChanged();
 }
 
 void CEGUIManipulator::createPropertySet()
@@ -1027,6 +1034,11 @@ void CEGUIManipulator::adjustPositionDeltaOnResize(CEGUI::UVector2& deltaPos, co
             deltaPos.d_y += deltaSize.d_height; break;
         default: break;
     }
+}
+
+void CEGUIManipulator::onWidgetNameChanged()
+{
+    setToolTip(getWidgetName());
 }
 
 void CEGUIManipulator::onPropertyChanged(const QtnPropertyBase* property, CEGUI::Property* ceguiProperty)

@@ -1,5 +1,6 @@
 #include "src/ui/layout/LayoutManipulator.h"
 #include "src/ui/layout/LayoutScene.h"
+#include "src/ui/layout/WidgetHierarchyItem.h"
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutUndoCommands.h"
 #include "src/cegui/CEGUIUtils.h"
@@ -334,6 +335,12 @@ void LayoutManipulator::onPropertyChanged(const QtnPropertyBase* property, CEGUI
             cmd = undo.PropertyEditCommand(self.visual, self.ceguiProperty.getName(), widgetPaths, undoOldValues, ceguiValue)
             self.visual.tabbedEditor.undoStack.push(cmd)
     */
+}
+
+void LayoutManipulator::onWidgetNameChanged()
+{
+    CEGUIManipulator::onWidgetNameChanged();
+    if (_treeItem) _treeItem->refreshPathData();
 }
 
 QPen LayoutManipulator::getNormalPen() const

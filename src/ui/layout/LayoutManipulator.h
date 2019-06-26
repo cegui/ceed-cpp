@@ -50,6 +50,7 @@ protected:
     virtual void dropEvent(QGraphicsSceneDragDropEvent* event) override;
 
     virtual void onPropertyChanged(const QtnPropertyBase* changedProperty, CEGUI::Property* ceguiProperty) override;
+    virtual void onWidgetNameChanged() override;
 
     virtual QPen getNormalPen() const override;
     virtual QPen getHoverPen() const override;

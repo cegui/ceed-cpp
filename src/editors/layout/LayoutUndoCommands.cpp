@@ -407,6 +407,10 @@ void LayoutPropertyEditCommand::fillInfluencedPropertyList(QStringList& list)
         list.append("Area");
     else if (_propertyName == "Area")
         list.append({"Position", "Size"});
+    else if (_propertyName == "Name")
+        list.append("NamePath");
+    else if (_propertyName == "NamePath")
+        list.append("Name");
 }
 
 //---------------------------------------------------------------------
@@ -716,20 +720,14 @@ void LayoutRenameCommand::undo()
     QUndoCommand::undo();
 
     auto manipulator = _visualMode.getScene()->getManipulatorByPath(_parentPath + '/' + _newName);
-    assert(manipulator->getTreeItem());
     manipulator->getWidget()->setName(CEGUIUtils::qStringToString(_oldName));
-    manipulator->getTreeItem()->setText(_oldName);
-    manipulator->getTreeItem()->refreshPathData();
     manipulator->updatePropertiesFromWidget({"Name", "NamePath"});
 }
 
 void LayoutRenameCommand::redo()
 {
     auto manipulator = _visualMode.getScene()->getManipulatorByPath(_parentPath + '/' + _oldName);
-    assert(manipulator->getTreeItem());
     manipulator->getWidget()->setName(CEGUIUtils::qStringToString(_newName));
-    manipulator->getTreeItem()->setText(_newName);
-    manipulator->getTreeItem()->refreshPathData();
     manipulator->updatePropertiesFromWidget({"Name", "NamePath"});
 
     QUndoCommand::redo();

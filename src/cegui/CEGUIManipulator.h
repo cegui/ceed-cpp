@@ -91,6 +91,8 @@ protected:
     void createPropertySet();
     void adjustPositionDeltaOnResize(CEGUI::UVector2& deltaPos, const CEGUI::USize& deltaSize);
 
+    virtual void onWidgetNameChanged();
+
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
     virtual void onPropertyChanged(const QtnPropertyBase* property, CEGUI::Property* ceguiProperty);
     virtual void impl_paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr);
