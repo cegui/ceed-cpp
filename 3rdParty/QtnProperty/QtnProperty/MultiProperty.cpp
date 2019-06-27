@@ -299,29 +299,27 @@ bool QtnMultiProperty::toVariantImpl(QVariant &var) const
 
 void QtnMultiProperty::updateStateFrom(QtnProperty *source)
 {
-	auto state = stateLocal();
+	auto state = stateLocal() & QtnPropertyStateMultiValue;
+	state |= source->stateLocal();
 
-	if (state == QtnPropertyStateNone)
-	{
-		state = source->stateLocal() & ~QtnPropertyStateInvisible;
-	}
-
-	state &= ~(QtnPropertyStateImmutable | QtnPropertyStateResettable);
+	state &= ~(QtnPropertyStateImmutable | QtnPropertyStateResettable |
+		QtnPropertyStateInvisible);
 
 	for (auto property : properties)
 	{
+		if (!property->isVisible())
+		{
+			state |= QtnPropertyStateInvisible;
+		}
+
 		if (!property->isWritable())
 		{
 			state |= QtnPropertyStateImmutable;
-			if (state & QtnPropertyStateResettable)
-				break;
 		}
 
 		if (property->isResettable())
 		{
 			state |= QtnPropertyStateResettable;
-			if (state & QtnPropertyStateImmutable)
-				break;
 		}
 	}
 
