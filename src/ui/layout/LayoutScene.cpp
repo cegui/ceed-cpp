@@ -426,27 +426,30 @@ void LayoutScene::slot_selectionChanged()
 
     // Update property view for our selection
 
-    QtnPropertySet* propertySet = nullptr;
+    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
+    auto propertyWidget = static_cast<QtnPropertyWidget*>(mainWindow->getPropertyDockWidget()->widget());
+
     if (selectedWidgets.size() == 1)
     {
-        propertySet = (*selectedWidgets.begin())->getPropertySet();
+        propertyWidget->setPropertySet((*selectedWidgets.begin())->getPropertySet());
     }
     else if (selectedWidgets.size() > 1)
     {
         if (_multiSet)
+        {
+            // Unset our multiset from the widget to avoid freeze due to contents change
+            propertyWidget->setPropertySet(nullptr);
             _multiSet->clearChildProperties();
+        }
         else
             _multiSet = new QtnPropertySet(this);
 
         for (LayoutManipulator* manipulator : selectedWidgets)
             qtnPropertiesToMultiSet(_multiSet, manipulator->getPropertySet(), false);
 
-        propertySet = _multiSet;
+        propertyWidget->setPropertySet(_multiSet);
     }
-
-    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
-    auto propertyWidget = static_cast<QtnPropertyWidget*>(mainWindow->getPropertyDockWidget()->widget());
-    propertyWidget->setPropertySet(propertySet);
+    else propertyWidget->setPropertySet(nullptr);
 
     // Show selection in a hierarchy tree
 
