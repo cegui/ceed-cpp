@@ -30,7 +30,9 @@
 // For properties (may be incapsulated somewhere):
 #include "src/ui/MainWindow.h"
 #include "src/Application.h"
-#include "QtnProperty/PropertyWidget.h"
+#include <QtnProperty/PropertyWidget.h>
+#include <QtnProperty/PropertySet.h>
+#include <QtnProperty/MultiProperty.h>
 
 LayoutScene::LayoutScene(LayoutVisualMode& visualMode)
     : CEGUIGraphicsScene(&visualMode)
@@ -41,6 +43,7 @@ LayoutScene::LayoutScene(LayoutVisualMode& visualMode)
 
 LayoutScene::~LayoutScene()
 {
+    if (_multiSet) _multiSet->clearChildProperties();
     disconnect(this, &LayoutScene::selectionChanged, this, &LayoutScene::slot_selectionChanged);
 }
 
@@ -63,6 +66,8 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
 
     _anchorTarget = nullptr;
     _anchorSnapTarget = nullptr;
+
+    if (_multiSet) _multiSet->clearChildProperties();
 
     clear();
 
@@ -421,14 +426,24 @@ void LayoutScene::slot_selectionChanged()
 
     // Update property view for our selection
 
-    // TODO: to method (whose?)
     QtnPropertySet* propertySet = nullptr;
-    for (LayoutManipulator* manipulator : selectedWidgets)
+    if (selectedWidgets.size() == 1)
     {
-        // TODO: create multi property set
-        //!!!pass vector of sources & combine inside an entry point method!
-        propertySet = manipulator->getPropertySet();
+        propertySet = (*selectedWidgets.begin())->getPropertySet();
     }
+    else if (selectedWidgets.size() > 1)
+    {
+        if (_multiSet)
+            _multiSet->clearChildProperties();
+        else
+            _multiSet = new QtnPropertySet(this);
+
+        for (LayoutManipulator* manipulator : selectedWidgets)
+            qtnPropertiesToMultiSet(_multiSet, manipulator->getPropertySet(), false);
+
+        propertySet = _multiSet;
+    }
+
     auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
     auto propertyWidget = static_cast<QtnPropertyWidget*>(mainWindow->getPropertyDockWidget()->widget());
     propertyWidget->setPropertySet(propertySet);

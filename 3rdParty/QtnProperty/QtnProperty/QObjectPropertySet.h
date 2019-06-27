@@ -46,8 +46,6 @@ QTN_IMPORT_EXPORT QtnPropertySet *qtnCreateQObjectPropertySet(
 	QObject *object, bool backwards = false);
 QTN_IMPORT_EXPORT QtnPropertySet *qtnCreateQObjectMultiPropertySet(
 	const std::set<QObject *> &objects, bool backwards);
-QTN_IMPORT_EXPORT void qtnPropertiesToMultiSet(
-	QtnPropertySet *target, QtnPropertySet *source);
 
 QTN_IMPORT_EXPORT QtnPropertyState qtnPropertyStateToAdd(
 	const QMetaProperty &metaProperty);
@@ -73,7 +71,8 @@ QtnMetaPropertyFactory_t qtnCreateFactory()
 			});
 
 		property->setCallbackValueSet(
-			[object, metaProperty](CallbackValueType value, QtnPropertyChangeReason /*reason*/) {
+			[object, metaProperty](
+				CallbackValueType value, QtnPropertyChangeReason /*reason*/) {
 				auto variantValue =
 					QVariant::fromValue<ValueType>(ValueType(value));
 				metaProperty.write(object, variantValue);

@@ -14,6 +14,7 @@ class LayoutManipulator;
 class AnchorEdgeHandle;
 class AnchorCornerHandle;
 class NumericValueItem;
+class QtnPropertySet;
 
 class LayoutScene : public CEGUIGraphicsScene
 {
@@ -67,6 +68,8 @@ protected:
 
     LayoutVisualMode& _visualMode;
     LayoutManipulator* rootManipulator = nullptr;
+
+    QtnPropertySet* _multiSet = nullptr;
 
     QPointF _lastCursorPos;
 

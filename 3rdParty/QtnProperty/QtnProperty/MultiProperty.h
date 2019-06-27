@@ -42,7 +42,6 @@ public:
 
 	bool hasMultipleValues() const;
 
-	static bool Register();
 	static QString getMultiValuePlaceholder();
 
 	inline const std::vector<QtnProperty *> &getProperties() const;
@@ -101,7 +100,7 @@ public:
 	QtnMultiPropertyDelegate(QtnMultiProperty &owner);
 	virtual ~QtnMultiPropertyDelegate() override;
 
-	void Register(QtnPropertyDelegateFactory &factory);
+	static void Register(QtnPropertyDelegateFactory &factory);
 
 private:
 	virtual void init() override;
@@ -127,6 +126,9 @@ private:
 	typedef std::unique_ptr<QtnPropertyDelegate> DelegatePtr;
 	std::vector<DelegatePtr> superDelegates;
 };
+
+QTN_IMPORT_EXPORT void qtnPropertiesToMultiSet(
+	QtnPropertySet *target, QtnPropertySet *source, bool takeOwnership);
 
 struct QtnMultiVariant
 {
