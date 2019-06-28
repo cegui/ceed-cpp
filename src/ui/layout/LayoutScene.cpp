@@ -4,6 +4,7 @@
 #include "src/ui/layout/WidgetHierarchyItem.h"
 #include "src/ui/layout/AnchorCornerHandle.h"
 #include "src/ui/layout/AnchorEdgeHandle.h"
+#include "src/ui/layout/AnchorPopupMenu.h"
 #include "src/ui/NumericValueItem.h"
 #include "src/ui/ResizingHandle.h"
 #include "src/util/Utils.h"
@@ -45,6 +46,7 @@ LayoutScene::~LayoutScene()
 {
     if (_multiSet) _multiSet->clearChildProperties();
     disconnect(this, &LayoutScene::selectionChanged, this, &LayoutScene::slot_selectionChanged);
+    delete _anchorPopupMenu;
 }
 
 void LayoutScene::updateFromWidgets()
@@ -387,8 +389,7 @@ void LayoutScene::slot_selectionChanged()
             if (auto manipulator = dynamic_cast<LayoutManipulator*>(item->parentItem()))
                 selectedWidgets.insert(manipulator);
         }
-        else if (item == _anchorMinX || item == _anchorMinY || item == _anchorMaxX || item == _anchorMaxY ||
-                 item == _anchorMinXMinY || item == _anchorMaxXMinY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
+        else if (isAnchorItem(item))
         {
             // Only one selected anchor item at a time is allowed
             assert(!selectedAnchorItem);
@@ -555,6 +556,18 @@ void LayoutScene::createAnchorItems()
     _anchorTextY->setPrecision(2);
     _anchorTextY->setVisible(false);
     addItem(_anchorTextY);
+}
+
+bool LayoutScene::isAnchorItem(QGraphicsItem* item) const
+{
+    return item == _anchorMinX ||
+            item == _anchorMinY ||
+            item == _anchorMaxX ||
+            item == _anchorMaxY ||
+            item == _anchorMinXMinY ||
+            item == _anchorMaxXMinY ||
+            item == _anchorMinXMaxY ||
+            item == _anchorMaxXMaxY;
 }
 
 bool LayoutScene::isAnyAnchorHandleSelected() const
@@ -1162,4 +1175,18 @@ void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 
     if (!resize.empty())
         _visualMode.getEditor().getUndoStack()->push(new LayoutResizeCommand(_visualMode, std::move(resize)));
+}
+
+void LayoutScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
+{
+    if (isAnyAnchorHandleSelected() || isAnchorItem(itemAt(event->scenePos(), QTransform())))
+    {
+        if (!_anchorPopupMenu)
+            _anchorPopupMenu = new AnchorPopupMenu();
+        _anchorPopupMenu->move(event->screenPos());
+        _anchorPopupMenu->show();
+
+        event->accept();
+    }
+    else CEGUIGraphicsScene::contextMenuEvent(event);
 }

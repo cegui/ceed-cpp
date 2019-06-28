@@ -52,6 +52,7 @@ SOURCES += \
     src/ui/FileSystemBrowser.cpp \
     src/ui/layout/AnchorCornerHandle.cpp \
     src/ui/layout/AnchorEdgeHandle.cpp \
+    src/ui/layout/AnchorPopupMenu.cpp \
     src/ui/widgets/FileLineEdit.cpp \
     src/ui/dialogs/LicenseDialog.cpp \
     src/ui/dialogs/AboutDialog.cpp \
@@ -154,6 +155,7 @@ HEADERS += \
     src/ui/FileSystemBrowser.h \
     src/ui/layout/AnchorCornerHandle.h \
     src/ui/layout/AnchorEdgeHandle.h \
+    src/ui/layout/AnchorPopupMenu.h \
     src/ui/widgets/FileLineEdit.h \
     src/ui/dialogs/LicenseDialog.h \
     src/ui/dialogs/AboutDialog.h \
@@ -218,6 +220,7 @@ FORMS += \
     ui/dialogs/NewProjectDialog.ui \
     ui/dialogs/ProjectSettingsDialog.ui \
     ui/FileSystemBrowser.ui \
+    ui/layout/AnchorPopupMenu.ui \
     ui/widgets/FileLineEdit.ui \
     ui/dialogs/LicenseDialog.ui \
     ui/dialogs/AboutDialog.ui \

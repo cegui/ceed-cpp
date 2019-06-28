@@ -15,6 +15,7 @@ class AnchorEdgeHandle;
 class AnchorCornerHandle;
 class NumericValueItem;
 class QtnPropertySet;
+class AnchorPopupMenu;
 
 class LayoutScene : public CEGUIGraphicsScene
 {
@@ -52,6 +53,7 @@ public slots:
 protected:
 
     void createAnchorItems();
+    bool isAnchorItem(QGraphicsItem* item) const;
     bool isAnyAnchorHandleSelected() const;
     void updateAnchorItems(QGraphicsItem* movedItem = nullptr);
     void updateAnchorValueItems(bool minX, bool maxX, bool minY, bool maxY);
@@ -65,11 +67,14 @@ protected:
     virtual void keyReleaseEvent(QKeyEvent* event) override;
     virtual void mouseMoveEvent(QGraphicsSceneMouseEvent* event) override;
     virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override;
+    virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent* event) override;
 
     LayoutVisualMode& _visualMode;
     LayoutManipulator* rootManipulator = nullptr;
 
     QtnPropertySet* _multiSet = nullptr;
+
+    AnchorPopupMenu* _anchorPopupMenu = nullptr;
 
     QPointF _lastCursorPos;
 
