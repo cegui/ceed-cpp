@@ -406,7 +406,7 @@ void LayoutScene::slot_selectionChanged()
     else if (selectedWidgets.size() == 0)
     {
         // If we selected anchor item, we therefore deselected an _anchorTarget,
-        // but it must look as selected in a GUI so we don't change anything
+        // but it must look as selected in a GUI, so we don't change anything
         if (selectedAnchorItem) return;
 
         // Nothing interesting is selected, hide anchors
