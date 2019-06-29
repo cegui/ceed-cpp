@@ -289,3 +289,9 @@ win32 {
         QMAKE_POST_LINK += $$quote(mingw32-make install$$escape_expand(\n\t))
     }
 }
+
+DISTFILES += \
+    data/icons/anchors/ParentLeft.png \
+    data/icons/anchors/ParentTop.png \
+    data/icons/anchors/SelfLeft.png \
+    data/icons/anchors/SelfTop.png

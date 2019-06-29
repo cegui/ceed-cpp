@@ -91,5 +91,9 @@
         <file>icons/layout_editing/snap_grid.png</file>
         <file>icons/layout_editing/unlock_widget.png</file>
         <file>icons/layout_editing/unlock_widget_recursively.png</file>
+        <file>icons/anchors/ParentLeft.png</file>
+        <file>icons/anchors/ParentTop.png</file>
+        <file>icons/anchors/SelfLeft.png</file>
+        <file>icons/anchors/SelfTop.png</file>
     </qresource>
 </RCC>

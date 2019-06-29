@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>114</width>
-    <height>133</height>
+    <width>116</width>
+    <height>134</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -44,7 +44,7 @@
         </property>
         <property name="icon">
          <iconset resource="../../data/Resources.qrc">
-          <normaloff>:/icons/actions/cut.png</normaloff>:/icons/actions/cut.png</iconset>
+          <normaloff>:/icons/anchors/ParentLeft.png</normaloff>:/icons/anchors/ParentLeft.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -61,7 +61,7 @@
         </property>
         <property name="icon">
          <iconset resource="../../data/Resources.qrc">
-          <normaloff>:/icons/actions/cut.png</normaloff>:/icons/actions/cut.png</iconset>
+          <normaloff>:/icons/anchors/SelfLeft.png</normaloff>:/icons/anchors/SelfLeft.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -124,7 +124,7 @@
         </property>
         <property name="icon">
          <iconset resource="../../data/Resources.qrc">
-          <normaloff>:/icons/actions/copy.png</normaloff>:/icons/actions/copy.png</iconset>
+          <normaloff>:/icons/anchors/ParentTop.png</normaloff>:/icons/anchors/ParentTop.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -141,7 +141,7 @@
         </property>
         <property name="icon">
          <iconset resource="../../data/Resources.qrc">
-          <normaloff>:/icons/actions/copy.png</normaloff>:/icons/actions/copy.png</iconset>
+          <normaloff>:/icons/anchors/SelfTop.png</normaloff>:/icons/anchors/SelfTop.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -158,7 +158,7 @@
   <action name="actionParentLeft">
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
-     <normaloff>:/icons/actions/application_settings.png</normaloff>:/icons/actions/application_settings.png</iconset>
+     <normaloff>:/icons/anchors/ParentLeft.png</normaloff>:/icons/anchors/ParentLeft.png</iconset>
    </property>
    <property name="text">
     <string>Parent Left</string>
@@ -170,7 +170,7 @@
   <action name="actionSelfLeft">
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
-     <normaloff>:/icons/actions/application_settings.png</normaloff>:/icons/actions/application_settings.png</iconset>
+     <normaloff>:/icons/anchors/SelfLeft.png</normaloff>:/icons/anchors/SelfLeft.png</iconset>
    </property>
    <property name="text">
     <string>Self Left</string>
@@ -182,7 +182,7 @@
   <action name="actionParentTop">
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
-     <normaloff>:/icons/actions/application_settings.png</normaloff>:/icons/actions/application_settings.png</iconset>
+     <normaloff>:/icons/anchors/ParentTop.png</normaloff>:/icons/anchors/ParentTop.png</iconset>
    </property>
    <property name="text">
     <string>Parent Top</string>
@@ -194,7 +194,7 @@
   <action name="actionSelfTop">
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
-     <normaloff>:/icons/actions/application_settings.png</normaloff>:/icons/actions/application_settings.png</iconset>
+     <normaloff>:/icons/anchors/SelfTop.png</normaloff>:/icons/anchors/SelfTop.png</iconset>
    </property>
    <property name="text">
     <string>Self Top</string>
