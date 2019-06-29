@@ -95,5 +95,17 @@
         <file>icons/anchors/ParentTop.png</file>
         <file>icons/anchors/SelfLeft.png</file>
         <file>icons/anchors/SelfTop.png</file>
+        <file>icons/anchors/ParentBottom.png</file>
+        <file>icons/anchors/ParentHCenter.png</file>
+        <file>icons/anchors/ParentHStretch.png</file>
+        <file>icons/anchors/ParentRight.png</file>
+        <file>icons/anchors/ParentVCenter.png</file>
+        <file>icons/anchors/ParentVStretch.png</file>
+        <file>icons/anchors/SelfBottom.png</file>
+        <file>icons/anchors/SelfHCenter.png</file>
+        <file>icons/anchors/SelfHStretch.png</file>
+        <file>icons/anchors/SelfRight.png</file>
+        <file>icons/anchors/SelfVCenter.png</file>
+        <file>icons/anchors/SelfVStretch.png</file>
     </qresource>
 </RCC>

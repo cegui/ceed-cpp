@@ -291,7 +291,19 @@ win32 {
 }
 
 DISTFILES += \
+    data/icons/anchors/ParentBottom.png \
+    data/icons/anchors/ParentHCenter.png \
+    data/icons/anchors/ParentHStretch.png \
     data/icons/anchors/ParentLeft.png \
+    data/icons/anchors/ParentRight.png \
     data/icons/anchors/ParentTop.png \
+    data/icons/anchors/ParentVCenter.png \
+    data/icons/anchors/ParentVStretch.png \
+    data/icons/anchors/SelfBottom.png \
+    data/icons/anchors/SelfHCenter.png \
+    data/icons/anchors/SelfHStretch.png \
     data/icons/anchors/SelfLeft.png \
-    data/icons/anchors/SelfTop.png
+    data/icons/anchors/SelfRight.png \
+    data/icons/anchors/SelfTop.png \
+    data/icons/anchors/SelfVCenter.png \
+    data/icons/anchors/SelfVStretch.png
