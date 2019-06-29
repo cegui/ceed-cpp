@@ -329,16 +329,14 @@ void LayoutCreateCommand::redo()
 
 //---------------------------------------------------------------------
 
-LayoutPropertyEditCommand::LayoutPropertyEditCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, const QString& propertyName, const QString& newValue)
+LayoutPropertyEditCommand::LayoutPropertyEditCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records,
+                                                     const QString& propertyName, size_t multiChangeId)
     : _visualMode(visualMode)
     , _records(std::move(records))
     , _propertyName(CEGUIUtils::qStringToString(propertyName))
-    , _newValue(CEGUIUtils::qStringToString(newValue))
+    , _multiChangeId(multiChangeId)
 {
-    if (_records.size() == 1)
-        setText(QString("Change '%1' in '%2'").arg(propertyName, _records[0].path));
-    else
-        setText(QString("Change '%1' in %2 widgets").arg(propertyName).arg(_records.size()));
+    refreshText();
 }
 
 void LayoutPropertyEditCommand::undo()
@@ -373,16 +371,14 @@ void LayoutPropertyEditCommand::redo()
     {
         auto manipulator = _visualMode.getScene()->getManipulatorByPath(rec.path);
         assert(manipulator);
-        manipulator->getWidget()->setProperty(_propertyName, _newValue);
-        manipulator->updateFromWidget(false, true);
-        manipulator->update();
-        manipulator->updatePropertiesFromWidget(properties);
+        if (manipulator->getWidget()->getProperty(_propertyName) != rec.newValue)
+        {
+            manipulator->getWidget()->setProperty(_propertyName, rec.newValue);
+            manipulator->updateFromWidget(false, true);
+            manipulator->update();
+            manipulator->updatePropertiesFromWidget(properties);
+        }
     }
-
-    //_firstCall = false;
-
-    // Make sure to redraw the scene so the changes are visible
-    //_visualMode.getScene()->update();
 
     QUndoCommand::redo();
 }
@@ -392,21 +388,37 @@ bool LayoutPropertyEditCommand::mergeWith(const QUndoCommand* other)
     const LayoutPropertyEditCommand* otherCmd = dynamic_cast<const LayoutPropertyEditCommand*>(other);
     if (!otherCmd) return false;
 
+    // Can merge only the same property
     if (_propertyName != otherCmd->_propertyName) return false;
 
-    if (_records.size() != otherCmd->_records.size()) return false;
+    // Multiproperty merge
+    if (_multiChangeId > 0 && _multiChangeId == otherCmd->_multiChangeId)
+    {
+        for (const auto& otherRec : otherCmd->_records)
+        {
+            auto it = std::find_if(_records.cbegin(), _records.cend(), [&otherRec](const Record& rec)
+            {
+                return rec.path == otherRec.path;
+            });
 
-    QStringList paths;
-    for (const auto& rec : _records)
-        paths.push_back(rec.path);
+            if (it == _records.cend())
+                _records.push_back(otherRec);
+        }
+        refreshText();
+        return true;
+    }
 
-    for (const auto& rec : otherCmd->_records)
-        if (!paths.contains(rec.path)) return false;
+    // We don't merge subsequent property changes intentionally to have a full history
+    return false;
+}
 
-    // The same set of widgets, can merge
-
-    _newValue = otherCmd->_newValue;
-    return true;
+void LayoutPropertyEditCommand::refreshText()
+{
+    const QString propertyName = CEGUIUtils::stringToQString(_propertyName);
+    if (_records.size() == 1)
+        setText(QString("Change '%1' in '%2'").arg(propertyName, _records[0].path));
+    else
+        setText(QString("Change '%1' in %2 widgets").arg(propertyName).arg(_records.size()));
 }
 
 // Some properties are related to others so that when one changes, the others change too.

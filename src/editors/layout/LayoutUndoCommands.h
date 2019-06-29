@@ -104,7 +104,7 @@ protected:
     QPointF _scenePos;
 };
 
-// This command resizes given widgets from old positions and old sizes to new
+// This command changes a property of a widget
 class LayoutPropertyEditCommand : public QUndoCommand
 {
 public:
@@ -113,9 +113,10 @@ public:
     {
         QString path;
         CEGUI::String oldValue;
+        CEGUI::String newValue;
     };
 
-    LayoutPropertyEditCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, const QString& propertyName, const QString& newValue);
+    LayoutPropertyEditCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, const QString& propertyName, size_t multiChangeId);
 
     virtual void undo() override;
     virtual void redo() override;
@@ -124,15 +125,14 @@ public:
 
 protected:
 
+    void refreshText();
+
     void fillInfluencedPropertyList(QStringList& list);
 
     LayoutVisualMode& _visualMode;
     std::vector<Record> _records;
     CEGUI::String _propertyName;
-    CEGUI::String _newValue;
-
-    // FIXME: in a new implementation it may or may not work the same way!
-    //bool _firstCall = true; // The first time this command is created the property is already set to the new value
+    size_t _multiChangeId;
 };
 
 // This command aligns selected widgets accordingly

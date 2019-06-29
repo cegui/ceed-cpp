@@ -33,19 +33,20 @@
 #include "src/Application.h"
 #include <QtnProperty/PropertyWidget.h>
 #include <QtnProperty/PropertySet.h>
+#include <QtnProperty/PropertyView.h>
 #include <QtnProperty/MultiProperty.h>
 
 LayoutScene::LayoutScene(LayoutVisualMode& visualMode)
     : CEGUIGraphicsScene(&visualMode)
     , _visualMode(visualMode)
 {
-    connect(this, &LayoutScene::selectionChanged, this, &LayoutScene::slot_selectionChanged);
+    connect(this, &LayoutScene::selectionChanged, this, &LayoutScene::onSelectionChanged);
 }
 
 LayoutScene::~LayoutScene()
 {
     if (_multiSet) _multiSet->clearChildProperties();
-    disconnect(this, &LayoutScene::selectionChanged, this, &LayoutScene::slot_selectionChanged);
+    disconnect(this, &LayoutScene::selectionChanged, this, &LayoutScene::onSelectionChanged);
     delete _anchorPopupMenu;
 }
 
@@ -119,6 +120,13 @@ LayoutManipulator* LayoutScene::getManipulatorByPath(const QString& widgetPath) 
         assert(widgetPath.leftRef(sepPos) == rootManipulator->getWidgetName());
         return dynamic_cast<LayoutManipulator*>(rootManipulator->getManipulatorByPath(widgetPath.mid(sepPos + 1)));
     }
+}
+
+size_t LayoutScene::getMultiSelectionChangeId() const
+{
+    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
+    auto propertyWidget = static_cast<QtnPropertyWidget*>(mainWindow->getPropertyDockWidget()->widget());
+    return (_multiSet && propertyWidget->propertySet() == _multiSet) ? _multiChangeId : 0;
 }
 
 void LayoutScene::normalizePositionOfSelectedWidgets()
@@ -370,7 +378,7 @@ static void ensureParentIsExpanded(QTreeView* view, QStandardItem* treeItem)
         ensureParentIsExpanded(view, treeItem->parent());
 }
 
-void LayoutScene::slot_selectionChanged()
+void LayoutScene::onSelectionChanged()
 {
     // Collect selected widgets and anchor items
 
@@ -430,12 +438,19 @@ void LayoutScene::slot_selectionChanged()
     auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
     auto propertyWidget = static_cast<QtnPropertyWidget*>(mainWindow->getPropertyDockWidget()->widget());
 
+    disconnect(propertyWidget->propertyView(), &QtnPropertyView::beforePropertyEdited, this, &LayoutScene::onBeforePropertyEdited);
+
     if (selectedWidgets.size() == 1)
     {
-        propertyWidget->setPropertySet((*selectedWidgets.begin())->getPropertySet());
+        auto selectedWidget = *selectedWidgets.begin();
+        propertyWidget->setPropertySet(selectedWidget->getPropertySet());
+        mainWindow->getPropertyDockWidget()->setWindowTitle("Properties: " + selectedWidget->getWidgetName());
+        // TODO: full path to the header tooltip (not for the whole widget tooltip!)
     }
     else if (selectedWidgets.size() > 1)
     {
+        connect(propertyWidget->propertyView(), &QtnPropertyView::beforePropertyEdited, this, &LayoutScene::onBeforePropertyEdited);
+
         if (_multiSet)
         {
             // Unset our multiset from the widget to avoid freeze due to contents change
@@ -449,8 +464,13 @@ void LayoutScene::slot_selectionChanged()
             qtnPropertiesToMultiSet(_multiSet, manipulator->getPropertySet(), false);
 
         propertyWidget->setPropertySet(_multiSet);
+        mainWindow->getPropertyDockWidget()->setWindowTitle(QString("Properties: %1 widgets").arg(selectedWidgets.size()));
     }
-    else propertyWidget->setPropertySet(nullptr);
+    else
+    {
+        propertyWidget->setPropertySet(nullptr);
+        mainWindow->getPropertyDockWidget()->setWindowTitle("Properties");
+    }
 
     // Show selection in a hierarchy tree
 
@@ -478,6 +498,13 @@ void LayoutScene::slot_selectionChanged()
 
         _visualMode.getHierarchyDockWidget()->ignoreSelectionChanges(false);
     }
+}
+
+void LayoutScene::onBeforePropertyEdited()
+{
+    // We count user property editing events and group all property changes from
+    // a single event to one undo command for multiproperties
+    ++_multiChangeId;
 }
 
 void LayoutScene::createAnchorItems()

@@ -327,7 +327,6 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
     }
 }
 
-// TODO: redesign undo for multiproperties, must be one command for all changed manipulators!
 void LayoutManipulator::onPropertyChanged(const QtnPropertyBase* property, CEGUI::Property* ceguiProperty)
 {
     QString value;
@@ -352,32 +351,14 @@ void LayoutManipulator::onPropertyChanged(const QtnPropertyBase* property, CEGUI
             LayoutPropertyEditCommand::Record rec;
             rec.path = getWidgetPath();
             rec.oldValue = ceguiProperty->get(_widget);
+            rec.newValue = CEGUIUtils::qStringToString(value);
             records.push_back(std::move(rec));
 
-            _visualMode.getEditor().getUndoStack()->push(new LayoutPropertyEditCommand(_visualMode, std::move(records), property->name(), value));
+            // Handle multiproperty merge in a command itself
+            const size_t groupId = _visualMode.getScene()->getMultiSelectionChangeId();
+            _visualMode.getEditor().getUndoStack()->push(new LayoutPropertyEditCommand(_visualMode, std::move(records), property->name(), groupId));
         }
     }
-
-    // Multi:
-    /*
-            if not super(WidgetMultiPropertyWrapper, self).tryUpdateInner(newValue, reason):
-                return False
-
-            ceguiValue = unicode(newValue)
-
-            # create and execute command
-            widgetPaths = []
-            undoOldValues = {}
-
-            # set the properties where applicable
-            for ceguiSet in self.ceguiSets:
-                widgetPath = ceguiSet.getNamePath()
-                widgetPaths.append(widgetPath)
-                undoOldValues[widgetPath] = self.ceguiProperty.get(ceguiSet)
-
-            cmd = undo.PropertyEditCommand(self.visual, self.ceguiProperty.getName(), widgetPaths, undoOldValues, ceguiValue)
-            self.visual.tabbedEditor.undoStack.push(cmd)
-    */
 }
 
 void LayoutManipulator::onWidgetNameChanged()

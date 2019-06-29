@@ -30,6 +30,7 @@ public:
     void setRootWidgetManipulator(LayoutManipulator* manipulator);
     LayoutManipulator* getRootWidgetManipulator() const { return rootManipulator; }
     LayoutManipulator* getManipulatorByPath(const QString& widgetPath) const;
+    size_t getMultiSelectionChangeId() const;
 
     void normalizePositionOfSelectedWidgets();
     void normalizeSizeOfSelectedWidgets();
@@ -48,7 +49,8 @@ public:
 
 public slots:
 
-    void slot_selectionChanged();
+    void onSelectionChanged();
+    void onBeforePropertyEdited();
 
 protected:
 
@@ -73,6 +75,7 @@ protected:
     LayoutManipulator* rootManipulator = nullptr;
 
     QtnPropertySet* _multiSet = nullptr;
+    size_t _multiChangeId = 0;
 
     AnchorPopupMenu* _anchorPopupMenu = nullptr;
 

@@ -8,6 +8,9 @@ AnchorPopupMenu::AnchorPopupMenu(QWidget *parent) :
     setWindowFlags(windowFlags() | Qt::Popup);
 
     ui->setupUi(this);
+
+    // QToolButton::setDefaultAction
+    // https://wiki.qt.io/PushButton_Based_On_Action
 }
 
 AnchorPopupMenu::~AnchorPopupMenu()
