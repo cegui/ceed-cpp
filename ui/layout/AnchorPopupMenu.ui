@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>111</width>
+    <width>114</width>
     <height>133</height>
    </rect>
   </property>
@@ -18,7 +18,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>114</width>
+     <width>116</width>
      <height>134</height>
     </rect>
    </property>
@@ -79,7 +79,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QPushButton" name="btnSelfLeftTop">
+       <widget class="QPushButton" name="btnParentLeftTop">
         <property name="maximumSize">
          <size>
           <width>55</width>
@@ -95,7 +95,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnParentLeftTop">
+       <widget class="QPushButton" name="btnSelfLeftTop">
         <property name="maximumSize">
          <size>
           <width>55</width>
@@ -177,6 +177,30 @@
    </property>
    <property name="toolTip">
     <string>Aligns horizontal anchors to the left edge of the widget itself</string>
+   </property>
+  </action>
+  <action name="actionParentTop">
+   <property name="icon">
+    <iconset resource="../../data/Resources.qrc">
+     <normaloff>:/icons/actions/application_settings.png</normaloff>:/icons/actions/application_settings.png</iconset>
+   </property>
+   <property name="text">
+    <string>Parent Top</string>
+   </property>
+   <property name="toolTip">
+    <string>Aligns vertical anchors to the top edge of the parent</string>
+   </property>
+  </action>
+  <action name="actionSelfTop">
+   <property name="icon">
+    <iconset resource="../../data/Resources.qrc">
+     <normaloff>:/icons/actions/application_settings.png</normaloff>:/icons/actions/application_settings.png</iconset>
+   </property>
+   <property name="text">
+    <string>Self Top</string>
+   </property>
+   <property name="toolTip">
+    <string>Aligns vertical anchors to the top edge of the widget itself</string>
    </property>
   </action>
  </widget>

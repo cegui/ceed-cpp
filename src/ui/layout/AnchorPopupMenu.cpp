@@ -16,6 +16,8 @@ AnchorPopupMenu::AnchorPopupMenu(LayoutScene& scene, QWidget* parent)
 
     ui->btnParentLeft->setDefaultAction(ui->actionParentLeft);
     ui->btnSelfLeft->setDefaultAction(ui->actionSelfLeft);
+    ui->btnParentTop->setDefaultAction(ui->actionParentTop);
+    ui->btnSelfTop->setDefaultAction(ui->actionSelfTop);
 }
 
 AnchorPopupMenu::~AnchorPopupMenu()
@@ -37,10 +39,51 @@ void AnchorPopupMenu::on_actionSelfLeft_triggered()
     if (_scene.getAnchorValues(minX, maxX, minY, maxY))
     {
         LayoutManipulator* target = _scene.getAnchorTarget();
-        assert(target);
         const auto baseSize = target->getBaseSize();
         const float anchorValue = CEGUI::CoordConverter::asRelative(target->getWidget()->getPosition().d_x, baseSize.d_width);
         _scene.setAnchorValues(anchorValue, anchorValue, minY, maxY, true);
+    }
+    close();
+}
+
+void AnchorPopupMenu::on_actionParentTop_triggered()
+{
+    float minX, maxX, minY, maxY;
+    if (_scene.getAnchorValues(minX, maxX, minY, maxY))
+        _scene.setAnchorValues(minX, maxX, 0.f, 0.f, true);
+    close();
+}
+
+void AnchorPopupMenu::on_actionSelfTop_triggered()
+{
+    float minX, maxX, minY, maxY;
+    if (_scene.getAnchorValues(minX, maxX, minY, maxY))
+    {
+        LayoutManipulator* target = _scene.getAnchorTarget();
+        const auto baseSize = target->getBaseSize();
+        const float anchorValue = CEGUI::CoordConverter::asRelative(target->getWidget()->getPosition().d_y, baseSize.d_height);
+        _scene.setAnchorValues(minX, maxX, anchorValue, anchorValue, true);
+    }
+    close();
+}
+
+void AnchorPopupMenu::on_btnParentLeftTop_clicked()
+{
+    float minX, maxX, minY, maxY;
+    if (_scene.getAnchorValues(minX, maxX, minY, maxY))
+        _scene.setAnchorValues(0.f, 0.f, 0.f, 0.f, true);
+    close();
+}
+
+void AnchorPopupMenu::on_btnSelfLeftTop_clicked()
+{
+    float minX, maxX, minY, maxY;
+    if (_scene.getAnchorValues(minX, maxX, minY, maxY))
+    {
+        LayoutManipulator* target = _scene.getAnchorTarget();
+        const auto baseSize = target->getBaseSize();
+        const auto anchorValue = CEGUI::CoordConverter::asRelative(target->getWidget()->getPosition(), baseSize);
+        _scene.setAnchorValues(anchorValue.x, anchorValue.x, anchorValue.y, anchorValue.y, true);
     }
     close();
 }

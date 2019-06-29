@@ -3,6 +3,10 @@
 
 #include <QWidget>
 
+// Popup menu with preset buttons for anchor positioning. There are
+// most common patterns of anchor setup. You may add your own by code.
+// TODO: add tuning - what actions are visible. The full list may become too long.
+
 namespace Ui {
 class AnchorPopupMenu;
 }
@@ -23,6 +27,14 @@ private slots:
     void on_actionParentLeft_triggered();
 
     void on_actionSelfLeft_triggered();
+
+    void on_actionParentTop_triggered();
+
+    void on_actionSelfTop_triggered();
+
+    void on_btnParentLeftTop_clicked();
+
+    void on_btnSelfLeftTop_clicked();
 
 private:
 
