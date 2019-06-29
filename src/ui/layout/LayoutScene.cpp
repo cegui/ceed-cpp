@@ -665,32 +665,37 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
 }
 
 // Updates position and value of anchor texts corresponding to the anchor item passed
-void LayoutScene::updateAnchorValueItems(bool minX, bool maxX, bool minY, bool maxY)
+void LayoutScene::updateAnchorValueItems()
 {
     if (!_anchorTarget) return;
 
+    const bool hasMinX = _anchorMinX->isSelected() || _anchorMinXMinY->isSelected() || _anchorMinXMaxY->isSelected();
+    const bool hasMaxX = _anchorMaxX->isSelected() || _anchorMaxXMinY->isSelected() || _anchorMaxXMaxY->isSelected();
+    const bool hasMinY = _anchorMinY->isSelected() || _anchorMinXMinY->isSelected() || _anchorMaxXMinY->isSelected();
+    const bool hasMaxY = _anchorMaxY->isSelected() || _anchorMinXMaxY->isSelected() || _anchorMaxXMaxY->isSelected();
+
     const auto widgetCenter = _anchorTarget->sceneBoundingRect().center();
 
-    if (minX)
+    if (hasMinX)
     {
         _anchorTextX->setValue(static_cast<qreal>(_anchorTarget->getAnchorMinX()) * 100.0);
         _anchorTextX->setX(_anchorMinX->sceneBoundingRect().left() - _anchorTextX->sceneBoundingRect().width());
         _anchorTextX->setY(widgetCenter.y() - _anchorTextX->sceneBoundingRect().height() / 2.0);
     }
-    else if (maxX)
+    else if (hasMaxX)
     {
         _anchorTextX->setValue(static_cast<qreal>(_anchorTarget->getAnchorMaxX()) * 100.0);
         _anchorTextX->setX(_anchorMaxX->sceneBoundingRect().right());
         _anchorTextX->setY(widgetCenter.y() - _anchorTextX->sceneBoundingRect().height() / 2.0);
     }
 
-    if (minY)
+    if (hasMinY)
     {
         _anchorTextY->setValue(static_cast<qreal>(_anchorTarget->getAnchorMinY()) * 100.0);
         _anchorTextY->setX(widgetCenter.x() - _anchorTextY->sceneBoundingRect().width() / 2.0);
         _anchorTextY->setY(_anchorMinY->sceneBoundingRect().top() - _anchorTextY->sceneBoundingRect().height());
     }
-    else if (maxY)
+    else if (hasMaxY)
     {
         _anchorTextY->setValue(static_cast<qreal>(_anchorTarget->getAnchorMaxY()) * 100.0);
         _anchorTextY->setX(widgetCenter.x() - _anchorTextY->sceneBoundingRect().width() / 2.0);
@@ -698,23 +703,26 @@ void LayoutScene::updateAnchorValueItems(bool minX, bool maxX, bool minY, bool m
     }
 }
 
-void LayoutScene::updateAnchorValueItems()
+bool LayoutScene::getAnchorValues(float& minX, float& maxX, float& minY, float& maxY) const
 {
-    const bool hasMinX = _anchorMinX->isSelected() || _anchorMinXMinY->isSelected() || _anchorMinXMaxY->isSelected();
-    const bool hasMaxX = _anchorMaxX->isSelected() || _anchorMaxXMinY->isSelected() || _anchorMaxXMaxY->isSelected();
-    const bool hasMinY = _anchorMinY->isSelected() || _anchorMinXMinY->isSelected() || _anchorMaxXMinY->isSelected();
-    const bool hasMaxY = _anchorMaxY->isSelected() || _anchorMinXMaxY->isSelected() || _anchorMaxXMaxY->isSelected();
-    updateAnchorValueItems(hasMinX, hasMaxX, hasMinY, hasMaxY);
+    if (!_anchorTarget) return false;
+    minX = _anchorTarget->getAnchorMinX();
+    maxX = _anchorTarget->getAnchorMaxX();
+    minY = _anchorTarget->getAnchorMinY();
+    maxY = _anchorTarget->getAnchorMaxY();
+    return true;
 }
 
-void LayoutScene::setAnchorValues(float minX, float maxX, float minY, float maxY)
+void LayoutScene::setAnchorValues(float minX, float maxX, float minY, float maxY, bool preserveEffectiveSize)
 {
+    if (!_anchorTarget) return;
+
     LayoutResizeCommand::Record rec;
     rec.path = _anchorTarget->getWidgetPath();
     rec.oldPos = _anchorTarget->getWidget()->getPosition();
     rec.oldSize = _anchorTarget->getWidget()->getSize();
 
-    _anchorTarget->setAnchors(minX, maxX, minY, maxY, false);
+    _anchorTarget->setAnchors(minX, maxX, minY, maxY, preserveEffectiveSize);
 
     rec.newPos = _anchorTarget->getWidget()->getPosition();
     rec.newSize = _anchorTarget->getWidget()->getSize();
@@ -724,6 +732,7 @@ void LayoutScene::setAnchorValues(float minX, float maxX, float minY, float maxY
     _visualMode.getEditor().getUndoStack()->push(new LayoutResizeCommand(_visualMode, std::move(resize)));
 
     updateAnchorItems();
+    updateAnchorValueItems();
 }
 
 // FIXME: when snapping to edge of self with Shift, handle dragging is not smooth
@@ -826,10 +835,8 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool m
     float minY = _anchorTarget->getAnchorMinY();
     float maxY = _anchorTarget->getAnchorMaxY();
 
-    bool hasMinX = false, hasMaxX = false, hasMinY = false, hasMaxY = false;
     if (item == _anchorMinX || item == _anchorMinXMinY || item == _anchorMinXMaxY)
     {
-        hasMinX = true;
         minX = static_cast<float>(newAnchor.x());
         if (maxX < minX)
         {
@@ -843,7 +850,6 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool m
     }
     else if (item == _anchorMaxX || item == _anchorMaxXMinY || item == _anchorMaxXMaxY)
     {
-        hasMaxX = true;
         maxX = static_cast<float>(newAnchor.x());
         if (maxX < minX)
         {
@@ -858,7 +864,6 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool m
 
     if (item == _anchorMinY || item == _anchorMinXMinY || item == _anchorMaxXMinY)
     {
-        hasMinY = true;
         minY = static_cast<float>(newAnchor.y());
         if (maxY < minY)
         {
@@ -872,7 +877,6 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool m
     }
     else if (item == _anchorMaxY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
     {
-        hasMaxY = true;
         maxY = static_cast<float>(newAnchor.y());
         if (maxY < minY)
         {
@@ -885,13 +889,14 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool m
         }
     }
 
-    // Perform actual changes
+    // Perform actual changes. Don't use setAnchorValues() because we don't want
+    // to create undo commands for each change. They are created once at mouse up.
 
     const bool preserveEffectiveSize = !(QApplication::keyboardModifiers() & Qt::ShiftModifier);
     _anchorTarget->setAnchors(minX, maxX, minY, maxY, preserveEffectiveSize);
 
     updateAnchorItems(item);
-    updateAnchorValueItems(hasMinX, hasMaxX, hasMinY, hasMaxY);
+    updateAnchorValueItems();
 }
 
 void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
@@ -920,10 +925,8 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
 
     // TODO: preserveEffectiveSize - need hotkey or option!
 
-    bool hasMinX = false, hasMaxX = false, hasMinY = false, hasMaxY = false;
     if (item == _anchorMinX || item == _anchorMinXMinY || item == _anchorMinXMaxY)
     {
-        hasMinX = true;
         _anchorTextX->setVisible(true);
         _anchorTextX->setHorizontalAlignment(Qt::AlignRight);
         _anchorTextX->setTextTemplate("%1%");
@@ -931,13 +934,11 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
         {
             const float minX = static_cast<float>(newValue) / 100.f;
             const float maxX = std::max(_anchorTarget->getAnchorMaxX(), minX);
-            setAnchorValues(minX, maxX, _anchorTarget->getAnchorMinY(), _anchorTarget->getAnchorMaxY());
-            updateAnchorValueItems(true, false, false, false);
+            setAnchorValues(minX, maxX, _anchorTarget->getAnchorMinY(), _anchorTarget->getAnchorMaxY(), false);
         });
      }
     else if (item == _anchorMaxX || item == _anchorMaxXMinY || item == _anchorMaxXMaxY)
     {
-        hasMaxX = true;
         _anchorTextX->setVisible(true);
         _anchorTextX->setHorizontalAlignment(Qt::AlignLeft);
         _anchorTextX->setTextTemplate("%1%");
@@ -945,41 +946,36 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
         {
             const float maxX = static_cast<float>(newValue) / 100.f;
             const float minX = std::min(_anchorTarget->getAnchorMinX(), maxX);
-            setAnchorValues(minX, maxX, _anchorTarget->getAnchorMinY(), _anchorTarget->getAnchorMaxY());
-            updateAnchorValueItems(false, true, false, false);
+            setAnchorValues(minX, maxX, _anchorTarget->getAnchorMinY(), _anchorTarget->getAnchorMaxY(), false);
         });
     }
     else _anchorTextX->setVisible(false);
 
     if (item == _anchorMinY || item == _anchorMinXMinY || item == _anchorMaxXMinY)
     {
-        hasMinY = true;
         _anchorTextY->setVisible(true);
         _anchorTextY->setTextTemplate("%1%");
         connect(_anchorTextY, &NumericValueItem::valueChanged, [this](qreal newValue)
         {
             const float minY = static_cast<float>(newValue) / 100.f;
             const float maxY = std::max(_anchorTarget->getAnchorMaxY(), minY);
-            setAnchorValues(_anchorTarget->getAnchorMinX(), _anchorTarget->getAnchorMaxX(), minY, maxY);
-            updateAnchorValueItems(false, false, true, false);
+            setAnchorValues(_anchorTarget->getAnchorMinX(), _anchorTarget->getAnchorMaxX(), minY, maxY, false);
         });
     }
     else if (item == _anchorMaxY || item == _anchorMinXMaxY || item == _anchorMaxXMaxY)
     {
-        hasMaxY = true;
         _anchorTextY->setVisible(true);
         _anchorTextY->setTextTemplate("%1%");
         connect(_anchorTextY, &NumericValueItem::valueChanged, [this](qreal newValue)
         {
             const float maxY = static_cast<float>(newValue) / 100.f;
             const float minY = std::min(_anchorTarget->getAnchorMinY(), maxY);
-            setAnchorValues(_anchorTarget->getAnchorMinX(), _anchorTarget->getAnchorMaxX(), minY, maxY);
-            updateAnchorValueItems(false, false, false, true);
+            setAnchorValues(_anchorTarget->getAnchorMinX(), _anchorTarget->getAnchorMaxX(), minY, maxY, false);
         });
     }
     else _anchorTextY->setVisible(false);
 
-    updateAnchorValueItems(hasMinX, hasMaxX, hasMinY, hasMaxY);
+    updateAnchorValueItems();
 }
 
 void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
@@ -1206,14 +1202,20 @@ void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 
 void LayoutScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
 {
-    if (isAnyAnchorHandleSelected() || isAnchorItem(itemAt(event->scenePos(), QTransform())))
+    if (_anchorTarget)
     {
-        if (!_anchorPopupMenu)
-            _anchorPopupMenu = new AnchorPopupMenu();
-        _anchorPopupMenu->move(event->screenPos());
-        _anchorPopupMenu->show();
+        if (_anchorTarget->sceneBoundingRect().contains(event->scenePos()) ||
+            isAnchorItem(itemAt(event->scenePos(), QTransform())))
+        {
+            if (!_anchorPopupMenu)
+                _anchorPopupMenu = new AnchorPopupMenu(*this);
+            _anchorPopupMenu->move(event->screenPos());
+            _anchorPopupMenu->show();
 
-        event->accept();
+            event->accept();
+            return;
+        }
     }
-    else CEGUIGraphicsScene::contextMenuEvent(event);
+
+    CEGUIGraphicsScene::contextMenuEvent(event);
 }

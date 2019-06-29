@@ -47,6 +47,10 @@ public:
     void anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool moveOpposite);
     void anchorHandleSelected(QGraphicsItem* item);
 
+    LayoutManipulator* getAnchorTarget() const { return _anchorTarget; }
+    bool getAnchorValues(float& minX, float& maxX, float& minY, float& maxY) const;
+    void setAnchorValues(float minX, float maxX, float minY, float maxY, bool preserveEffectiveSize);
+
 public slots:
 
     void onSelectionChanged();
@@ -58,9 +62,7 @@ protected:
     bool isAnchorItem(QGraphicsItem* item) const;
     bool isAnyAnchorHandleSelected() const;
     void updateAnchorItems(QGraphicsItem* movedItem = nullptr);
-    void updateAnchorValueItems(bool minX, bool maxX, bool minY, bool maxY);
     void updateAnchorValueItems();
-    void setAnchorValues(float minX, float maxX, float minY, float maxY);
 
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;

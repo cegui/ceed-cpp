@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>206</width>
-    <height>153</height>
+    <width>111</width>
+    <height>133</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,18 +18,44 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>97</width>
-     <height>154</height>
+     <width>114</width>
+     <height>134</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="spacing">
+     <number>0</number>
+    </property>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QHBoxLayout" name="layoutHorz">
       <property name="spacing">
        <number>0</number>
       </property>
+      <property name="sizeConstraint">
+       <enum>QLayout::SetDefaultConstraint</enum>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
       <item>
-       <widget class="QToolButton" name="toolButton">
+       <widget class="QToolButton" name="btnParentLeft">
+        <property name="text">
+         <string>...</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../../data/Resources.qrc">
+          <normaloff>:/icons/actions/cut.png</normaloff>:/icons/actions/cut.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="btnSelfLeft">
         <property name="text">
          <string>...</string>
         </property>
@@ -48,16 +74,32 @@
      </layout>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <layout class="QHBoxLayout" name="layoutBoth">
       <property name="spacing">
        <number>0</number>
       </property>
       <item>
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="btnSelfLeftTop">
         <property name="maximumSize">
          <size>
-          <width>48</width>
-          <height>24</height>
+          <width>55</width>
+          <height>18</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Both</string>
+        </property>
+        <property name="flat">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnParentLeftTop">
+        <property name="maximumSize">
+         <size>
+          <width>55</width>
+          <height>18</height>
          </size>
         </property>
         <property name="text">
@@ -71,12 +113,29 @@
      </layout>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <layout class="QHBoxLayout" name="layoutVert">
       <property name="spacing">
        <number>0</number>
       </property>
       <item>
-       <widget class="QToolButton" name="toolButton_4">
+       <widget class="QToolButton" name="btnParentTop">
+        <property name="text">
+         <string>...</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../../data/Resources.qrc">
+          <normaloff>:/icons/actions/copy.png</normaloff>:/icons/actions/copy.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="btnSelfTop">
         <property name="text">
          <string>...</string>
         </property>
@@ -96,6 +155,30 @@
     </item>
    </layout>
   </widget>
+  <action name="actionParentLeft">
+   <property name="icon">
+    <iconset resource="../../data/Resources.qrc">
+     <normaloff>:/icons/actions/application_settings.png</normaloff>:/icons/actions/application_settings.png</iconset>
+   </property>
+   <property name="text">
+    <string>Parent Left</string>
+   </property>
+   <property name="toolTip">
+    <string>Aligns horizontal anchors to the left edge of the parent</string>
+   </property>
+  </action>
+  <action name="actionSelfLeft">
+   <property name="icon">
+    <iconset resource="../../data/Resources.qrc">
+     <normaloff>:/icons/actions/application_settings.png</normaloff>:/icons/actions/application_settings.png</iconset>
+   </property>
+   <property name="text">
+    <string>Self Left</string>
+   </property>
+   <property name="toolTip">
+    <string>Aligns horizontal anchors to the left edge of the widget itself</string>
+   </property>
+  </action>
  </widget>
  <resources>
   <include location="../../data/Resources.qrc"/>
