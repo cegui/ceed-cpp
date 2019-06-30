@@ -25,16 +25,23 @@ public:
 private slots:
 
     void on_actionParentLeft_triggered();
-
-    void on_actionSelfLeft_triggered();
-
     void on_actionParentTop_triggered();
-
-    void on_actionSelfTop_triggered();
-
     void on_btnParentLeftTop_clicked();
-
+    void on_actionSelfLeft_triggered();
+    void on_actionSelfTop_triggered();
     void on_btnSelfLeftTop_clicked();
+
+    void on_actionParentHCenter_triggered();
+
+    void on_actionParentVCenter_triggered();
+
+    void on_actionSelfHCenter_triggered();
+
+    void on_actionSelfVCenter_triggered();
+
+    void on_btnParentCenter_clicked();
+
+    void on_btnSelfCenter_clicked();
 
 private:
 

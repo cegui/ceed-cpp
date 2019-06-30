@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>441</width>
+    <width>447</width>
     <height>134</height>
    </rect>
   </property>
@@ -18,7 +18,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>444</width>
+     <width>447</width>
      <height>134</height>
     </rect>
    </property>
@@ -55,23 +55,6 @@
        </widget>
       </item>
       <item>
-       <widget class="QToolButton" name="btnSelfLeft">
-        <property name="text">
-         <string>...</string>
-        </property>
-        <property name="icon">
-         <iconset resource="../../data/Resources.qrc">
-          <normaloff>:/icons/anchors/SelfLeft.png</normaloff>:/icons/anchors/SelfLeft.png</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>48</width>
-          <height>48</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QToolButton" name="btnParentHCenter">
         <property name="text">
          <string>...</string>
@@ -79,23 +62,6 @@
         <property name="icon">
          <iconset resource="../../data/Resources.qrc">
           <normaloff>:/icons/anchors/ParentHCenter.png</normaloff>:/icons/anchors/ParentHCenter.png</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>48</width>
-          <height>48</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QToolButton" name="btnSelfHCenter">
-        <property name="text">
-         <string>...</string>
-        </property>
-        <property name="icon">
-         <iconset resource="../../data/Resources.qrc">
-          <normaloff>:/icons/anchors/SelfHCenter.png</normaloff>:/icons/anchors/SelfHCenter.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -123,13 +89,13 @@
        </widget>
       </item>
       <item>
-       <widget class="QToolButton" name="btnSelfRight">
+       <widget class="QToolButton" name="btnParentHStretch">
         <property name="text">
          <string>...</string>
         </property>
         <property name="icon">
          <iconset resource="../../data/Resources.qrc">
-          <normaloff>:/icons/anchors/SelfRight.png</normaloff>:/icons/anchors/SelfRight.png</iconset>
+          <normaloff>:/icons/anchors/ParentHStretch.png</normaloff>:/icons/anchors/ParentHStretch.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -140,13 +106,63 @@
        </widget>
       </item>
       <item>
-       <widget class="QToolButton" name="btnParentHStretch">
+       <widget class="QFrame" name="spacerH">
+        <property name="frameShape">
+         <enum>QFrame::VLine</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Sunken</enum>
+        </property>
+        <property name="lineWidth">
+         <number>2</number>
+        </property>
+        <property name="midLineWidth">
+         <number>1</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="btnSelfLeft">
         <property name="text">
          <string>...</string>
         </property>
         <property name="icon">
          <iconset resource="../../data/Resources.qrc">
-          <normaloff>:/icons/anchors/ParentHStretch.png</normaloff>:/icons/anchors/ParentHStretch.png</iconset>
+          <normaloff>:/icons/anchors/SelfLeft.png</normaloff>:/icons/anchors/SelfLeft.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="btnSelfHCenter">
+        <property name="text">
+         <string>...</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../../data/Resources.qrc">
+          <normaloff>:/icons/anchors/SelfHCenter.png</normaloff>:/icons/anchors/SelfHCenter.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="btnSelfRight">
+        <property name="text">
+         <string>...</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../../data/Resources.qrc">
+          <normaloff>:/icons/anchors/SelfRight.png</normaloff>:/icons/anchors/SelfRight.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -197,39 +213,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnSelfLeftTop">
-        <property name="maximumSize">
-         <size>
-          <width>55</width>
-          <height>18</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Both</string>
-        </property>
-        <property name="flat">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QPushButton" name="btnParentCenter">
-        <property name="maximumSize">
-         <size>
-          <width>55</width>
-          <height>18</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>Both</string>
-        </property>
-        <property name="flat">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btnSelfCenter">
         <property name="maximumSize">
          <size>
           <width>55</width>
@@ -261,7 +245,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnSelfRightBottom">
+       <widget class="QPushButton" name="btnParentStretch">
         <property name="maximumSize">
          <size>
           <width>55</width>
@@ -277,7 +261,55 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnParentStretch">
+       <widget class="QFrame" name="spacerBoth">
+        <property name="frameShape">
+         <enum>QFrame::VLine</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Sunken</enum>
+        </property>
+        <property name="lineWidth">
+         <number>2</number>
+        </property>
+        <property name="midLineWidth">
+         <number>1</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnSelfLeftTop">
+        <property name="maximumSize">
+         <size>
+          <width>55</width>
+          <height>18</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Both</string>
+        </property>
+        <property name="flat">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnSelfCenter">
+        <property name="maximumSize">
+         <size>
+          <width>55</width>
+          <height>18</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Both</string>
+        </property>
+        <property name="flat">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnSelfRightBottom">
         <property name="maximumSize">
          <size>
           <width>55</width>
@@ -333,23 +365,6 @@
        </widget>
       </item>
       <item>
-       <widget class="QToolButton" name="btnSelfTop">
-        <property name="text">
-         <string>...</string>
-        </property>
-        <property name="icon">
-         <iconset resource="../../data/Resources.qrc">
-          <normaloff>:/icons/anchors/SelfTop.png</normaloff>:/icons/anchors/SelfTop.png</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>48</width>
-          <height>48</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QToolButton" name="btnParentVCenter">
         <property name="text">
          <string>...</string>
@@ -357,23 +372,6 @@
         <property name="icon">
          <iconset resource="../../data/Resources.qrc">
           <normaloff>:/icons/anchors/ParentVCenter.png</normaloff>:/icons/anchors/ParentVCenter.png</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>48</width>
-          <height>48</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QToolButton" name="btnSelfVCenter">
-        <property name="text">
-         <string>...</string>
-        </property>
-        <property name="icon">
-         <iconset resource="../../data/Resources.qrc">
-          <normaloff>:/icons/anchors/SelfVCenter.png</normaloff>:/icons/anchors/SelfVCenter.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -401,13 +399,13 @@
        </widget>
       </item>
       <item>
-       <widget class="QToolButton" name="btnSelfBottom">
+       <widget class="QToolButton" name="btnParentVStretch">
         <property name="text">
          <string>...</string>
         </property>
         <property name="icon">
          <iconset resource="../../data/Resources.qrc">
-          <normaloff>:/icons/anchors/SelfBottom.png</normaloff>:/icons/anchors/SelfBottom.png</iconset>
+          <normaloff>:/icons/anchors/ParentVStretch.png</normaloff>:/icons/anchors/ParentVStretch.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -418,13 +416,63 @@
        </widget>
       </item>
       <item>
-       <widget class="QToolButton" name="btnParentVStretch">
+       <widget class="QFrame" name="spacerV">
+        <property name="frameShape">
+         <enum>QFrame::VLine</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Sunken</enum>
+        </property>
+        <property name="lineWidth">
+         <number>2</number>
+        </property>
+        <property name="midLineWidth">
+         <number>1</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="btnSelfTop">
         <property name="text">
          <string>...</string>
         </property>
         <property name="icon">
          <iconset resource="../../data/Resources.qrc">
-          <normaloff>:/icons/anchors/ParentVStretch.png</normaloff>:/icons/anchors/ParentVStretch.png</iconset>
+          <normaloff>:/icons/anchors/SelfTop.png</normaloff>:/icons/anchors/SelfTop.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="btnSelfVCenter">
+        <property name="text">
+         <string>...</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../../data/Resources.qrc">
+          <normaloff>:/icons/anchors/SelfVCenter.png</normaloff>:/icons/anchors/SelfVCenter.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>48</width>
+          <height>48</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="btnSelfBottom">
+        <property name="text">
+         <string>...</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../../data/Resources.qrc">
+          <normaloff>:/icons/anchors/SelfBottom.png</normaloff>:/icons/anchors/SelfBottom.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -464,7 +512,7 @@
     <string>Parent Left</string>
    </property>
    <property name="toolTip">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aligns horizontal anchors to the left edge of the parent&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed width. Always the same pixel offset from the left.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Parent Left&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns horizontal anchors to the left edge of the parent&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed width. Always the same pixel offset from the left.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </action>
   <action name="actionSelfLeft">
@@ -476,7 +524,7 @@
     <string>Self Left</string>
    </property>
    <property name="toolTip">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aligns horizontal anchors to the left edge of the widget itself&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed width. Proportional offset from the left.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Widget Left&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns horizontal anchors to the left edge of the widget itself&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed width. Proportional offset from the left.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </action>
   <action name="actionParentTop">
@@ -488,7 +536,7 @@
     <string>Parent Top</string>
    </property>
    <property name="toolTip">
-    <string>Aligns vertical anchors to the top edge of the parent</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Parent Top&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns vertical anchors to the top edge of the parent&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed height. Always the same pixel offset from the top.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </action>
   <action name="actionSelfTop">
@@ -500,7 +548,55 @@
     <string>Self Top</string>
    </property>
    <property name="toolTip">
-    <string>Aligns vertical anchors to the top edge of the widget itself</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Widget top&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns vertical anchors to the top edge of the widget itself&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed height. Proportional offset from the top.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </action>
+  <action name="actionParentHCenter">
+   <property name="icon">
+    <iconset resource="../../data/Resources.qrc">
+     <normaloff>:/icons/anchors/ParentHCenter.png</normaloff>:/icons/anchors/ParentHCenter.png</iconset>
+   </property>
+   <property name="text">
+    <string>Parent Horizontal Center</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Parent Horizontal Center&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns horizontal anchors to the middle line of the parent&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed width. Always the same horizontal (x) pixel offset from the parent middle line.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </action>
+  <action name="actionParentVCenter">
+   <property name="icon">
+    <iconset resource="../../data/Resources.qrc">
+     <normaloff>:/icons/anchors/ParentVCenter.png</normaloff>:/icons/anchors/ParentVCenter.png</iconset>
+   </property>
+   <property name="text">
+    <string>Parent Vertical Center</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Parent Vertical Center&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns vertical anchors to the middle line of the parent&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed height. Always the same vertical (y) pixel offset from the parent middle line.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </action>
+  <action name="actionSelfHCenter">
+   <property name="icon">
+    <iconset resource="../../data/Resources.qrc">
+     <normaloff>:/icons/anchors/SelfHCenter.png</normaloff>:/icons/anchors/SelfHCenter.png</iconset>
+   </property>
+   <property name="text">
+    <string>Widget Horizontal Center</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Widget Horizontal Center&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns horizontal anchors to the middle line of the widget itself&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed width. Horizontal size changes equally in both directions. Center always remains in the same percentage of the parent width.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </action>
+  <action name="actionSelfVCenter">
+   <property name="icon">
+    <iconset resource="../../data/Resources.qrc">
+     <normaloff>:/icons/anchors/SelfVCenter.png</normaloff>:/icons/anchors/SelfVCenter.png</iconset>
+   </property>
+   <property name="text">
+    <string>Widget Vertical Center</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Widget Vertical Center&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns vertical anchors to the middle line of the widget itself&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed height. Vertical size changes equally in both directions. Center always remains in the same percentage of the parent height.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </action>
  </widget>
