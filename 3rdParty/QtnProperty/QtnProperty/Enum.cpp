@@ -149,7 +149,7 @@ bool QtnEnumInfo::toStr(QString &str, const QtnEnumValueInfo *value) const
 	if (!value)
 		return false;
 
-	str = QString("%1::%2").arg(name(), value->name());
+	str = value->name();
 	return true;
 }
 

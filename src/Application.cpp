@@ -17,7 +17,7 @@ Application::Application(int& argc, char** argv)
     setOrganizationName("CEGUI");
     setOrganizationDomain("cegui.org.uk");
     setApplicationName("CEED - CEGUI editor");
-    setApplicationVersion("0.0.0-master");
+    setApplicationVersion("1.0.0-beta");
 
     // Create settings and load all values from the persistence store
     settings = new Settings(new QSettings("CEGUI", "CEED", this));
