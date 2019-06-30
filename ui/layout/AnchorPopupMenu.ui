@@ -204,6 +204,9 @@
           <height>18</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Parent Left-Top&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns anchors to the left-top corner of the parent&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed size. Always the same pixel offset from the parent left-top corner.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="text">
          <string>Both</string>
         </property>
@@ -219,6 +222,9 @@
           <width>55</width>
           <height>18</height>
          </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Parent Center&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns anchors to the center of the parent&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed size. Always the same pixel offset from the parent center.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Both</string>
@@ -236,6 +242,9 @@
           <height>18</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Parent Right-Bottom&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns anchors to the right-bottom corner of the parent&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed size. Always the same pixel offset from the parent right-bottom corner.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="text">
          <string>Both</string>
         </property>
@@ -251,6 +260,9 @@
           <width>55</width>
           <height>18</height>
          </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Parent Stretch&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns anchors to edges of the parent&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Proportional size. Always the same pixel offset from parent edges.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Both</string>
@@ -283,6 +295,9 @@
           <width>55</width>
           <height>18</height>
          </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Widget Left-Top&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns anchors to the left-top corner of the widget itself&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed size. Proportional offset from the widget left-top.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Both</string>
