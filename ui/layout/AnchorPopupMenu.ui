@@ -528,6 +528,9 @@
    </layout>
   </widget>
   <action name="actionParentLeft">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
      <normaloff>:/icons/anchors/ParentLeft.png</normaloff>:/icons/anchors/ParentLeft.png</iconset>
@@ -540,6 +543,9 @@
    </property>
   </action>
   <action name="actionSelfLeft">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
      <normaloff>:/icons/anchors/SelfLeft.png</normaloff>:/icons/anchors/SelfLeft.png</iconset>
@@ -552,6 +558,9 @@
    </property>
   </action>
   <action name="actionParentTop">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
      <normaloff>:/icons/anchors/ParentTop.png</normaloff>:/icons/anchors/ParentTop.png</iconset>
@@ -564,6 +573,9 @@
    </property>
   </action>
   <action name="actionSelfTop">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
      <normaloff>:/icons/anchors/SelfTop.png</normaloff>:/icons/anchors/SelfTop.png</iconset>
@@ -576,6 +588,9 @@
    </property>
   </action>
   <action name="actionParentHCenter">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
      <normaloff>:/icons/anchors/ParentHCenter.png</normaloff>:/icons/anchors/ParentHCenter.png</iconset>
@@ -588,6 +603,9 @@
    </property>
   </action>
   <action name="actionParentVCenter">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
      <normaloff>:/icons/anchors/ParentVCenter.png</normaloff>:/icons/anchors/ParentVCenter.png</iconset>
@@ -600,6 +618,9 @@
    </property>
   </action>
   <action name="actionSelfHCenter">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
      <normaloff>:/icons/anchors/SelfHCenter.png</normaloff>:/icons/anchors/SelfHCenter.png</iconset>
@@ -612,6 +633,9 @@
    </property>
   </action>
   <action name="actionSelfVCenter">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
      <normaloff>:/icons/anchors/SelfVCenter.png</normaloff>:/icons/anchors/SelfVCenter.png</iconset>
@@ -624,6 +648,9 @@
    </property>
   </action>
   <action name="actionParentRight">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
      <normaloff>:/icons/anchors/ParentRight.png</normaloff>:/icons/anchors/ParentRight.png</iconset>
@@ -636,6 +663,9 @@
    </property>
   </action>
   <action name="actionSelfRight">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
      <normaloff>:/icons/anchors/SelfRight.png</normaloff>:/icons/anchors/SelfRight.png</iconset>
@@ -648,6 +678,9 @@
    </property>
   </action>
   <action name="actionParentBottom">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
      <normaloff>:/icons/anchors/ParentBottom.png</normaloff>:/icons/anchors/ParentBottom.png</iconset>
@@ -660,6 +693,9 @@
    </property>
   </action>
   <action name="actionSelfBottom">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
      <normaloff>:/icons/anchors/SelfBottom.png</normaloff>:/icons/anchors/SelfBottom.png</iconset>
@@ -672,6 +708,9 @@
    </property>
   </action>
   <action name="actionParentHStretch">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
      <normaloff>:/icons/anchors/ParentHStretch.png</normaloff>:/icons/anchors/ParentHStretch.png</iconset>
@@ -684,6 +723,9 @@
    </property>
   </action>
   <action name="actionParentVStretch">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
      <normaloff>:/icons/anchors/ParentVStretch.png</normaloff>:/icons/anchors/ParentVStretch.png</iconset>
@@ -696,6 +738,9 @@
    </property>
   </action>
   <action name="actionSelfHStretch">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
      <normaloff>:/icons/anchors/SelfHStretch.png</normaloff>:/icons/anchors/SelfHStretch.png</iconset>
@@ -708,6 +753,9 @@
    </property>
   </action>
   <action name="actionSelfVStretch">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../data/Resources.qrc">
      <normaloff>:/icons/anchors/SelfVStretch.png</normaloff>:/icons/anchors/SelfVStretch.png</iconset>

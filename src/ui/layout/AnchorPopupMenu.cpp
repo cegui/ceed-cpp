@@ -14,6 +14,26 @@ AnchorPopupMenu::AnchorPopupMenu(LayoutScene& scene, QWidget* parent)
 
     ui->setupUi(this);
 
+    _horzGroup = new QActionGroup(this);
+    _horzGroup->addAction(ui->actionParentLeft);
+    _horzGroup->addAction(ui->actionSelfLeft);
+    _horzGroup->addAction(ui->actionParentHCenter);
+    _horzGroup->addAction(ui->actionSelfHCenter);
+    _horzGroup->addAction(ui->actionParentRight);
+    _horzGroup->addAction(ui->actionSelfRight);
+    _horzGroup->addAction(ui->actionParentHStretch);
+    _horzGroup->addAction(ui->actionSelfHStretch);
+
+    _vertGroup = new QActionGroup(this);
+    _vertGroup->addAction(ui->actionParentTop);
+    _vertGroup->addAction(ui->actionSelfTop);
+    _vertGroup->addAction(ui->actionParentVCenter);
+    _vertGroup->addAction(ui->actionSelfVCenter);
+    _vertGroup->addAction(ui->actionParentBottom);
+    _vertGroup->addAction(ui->actionSelfBottom);
+    _vertGroup->addAction(ui->actionParentVStretch);
+    _vertGroup->addAction(ui->actionSelfVStretch);
+
     ui->btnParentLeft->setDefaultAction(ui->actionParentLeft);
     ui->btnSelfLeft->setDefaultAction(ui->actionSelfLeft);
     ui->btnParentTop->setDefaultAction(ui->actionParentTop);
@@ -297,4 +317,91 @@ void AnchorPopupMenu::on_btnSelfStretch_clicked()
         _scene.setAnchorValues(minAnchorValue.x, maxAnchorValue.x, minAnchorValue.y, maxAnchorValue.y, true);
     }
     close();
+}
+
+static inline bool compareFloat(float a, float b, float tolerance)
+{
+    return std::abs(a - b) <= tolerance;
+}
+
+// Detect current presets. Tolerance is relatively big because of offset pixel rounding,
+// which may lead relative part to be not exactly the value requested.
+void AnchorPopupMenu::showEvent(QShowEvent* event)
+{
+    for (auto action : _horzGroup->actions())
+        action->setChecked(false);
+
+    for (auto action : _vertGroup->actions())
+        action->setChecked(false);
+
+    float minX, maxX, minY, maxY;
+    if (!_scene.getAnchorValues(minX, maxX, minY, maxY)) return;
+
+    constexpr float tolerance = 1.f / 1920.f;
+
+    if (compareFloat(minX, 0.f, tolerance) && compareFloat(maxX, 0.f, tolerance))
+        ui->actionParentLeft->setChecked(true);
+    else if (compareFloat(minX, 0.f, tolerance) && compareFloat(maxX, 1.f, tolerance))
+        ui->actionParentHStretch->setChecked(true);
+    else if (compareFloat(minX, 0.5f, tolerance) && compareFloat(maxX, 0.5f, tolerance))
+        ui->actionParentHCenter->setChecked(true);
+    else if (compareFloat(minX, 1.f, tolerance) && compareFloat(maxX, 1.f, tolerance))
+        ui->actionParentRight->setChecked(true);
+    else
+    {
+        LayoutManipulator* target = _scene.getAnchorTarget();
+        const auto baseSize = target->getBaseSize();
+        const auto minPt = target->getWidget()->getPosition().d_x;
+        const auto midPt = minPt + target->getWidget()->getSize().d_width * 0.5f;
+        const auto maxPt = minPt + target->getWidget()->getSize().d_width;
+        const auto minAnchorValue = CEGUI::CoordConverter::asRelative(minPt, baseSize.d_width);
+        const auto midAnchorValue = CEGUI::CoordConverter::asRelative(midPt, baseSize.d_width);
+        const auto maxAnchorValue = CEGUI::CoordConverter::asRelative(maxPt, baseSize.d_width);
+
+        if (compareFloat(minX, minAnchorValue, tolerance))
+        {
+            if (compareFloat(maxX, minAnchorValue, tolerance))
+                ui->actionSelfLeft->setChecked(true);
+            else if (compareFloat(maxX, maxAnchorValue, tolerance))
+                ui->actionSelfHStretch->setChecked(true);
+        }
+        else if (compareFloat(minX, midAnchorValue, tolerance) && compareFloat(maxX, midAnchorValue, tolerance))
+            ui->actionSelfHCenter->setChecked(true);
+        else if (compareFloat(minX, maxAnchorValue, tolerance) && compareFloat(maxX, maxAnchorValue, tolerance))
+            ui->actionSelfRight->setChecked(true);
+    }
+
+    if (compareFloat(minY, 0.f, tolerance) && compareFloat(maxY, 0.f, tolerance))
+        ui->actionParentTop->setChecked(true);
+    else if (compareFloat(minY, 0.f, tolerance) && compareFloat(maxY, 1.f, tolerance))
+        ui->actionParentVStretch->setChecked(true);
+    else if (compareFloat(minY, 0.5f, tolerance) && compareFloat(maxY, 0.5f, tolerance))
+        ui->actionParentVCenter->setChecked(true);
+    else if (compareFloat(minY, 1.f, tolerance) && compareFloat(maxY, 1.f, tolerance))
+        ui->actionParentBottom->setChecked(true);
+    else
+    {
+        LayoutManipulator* target = _scene.getAnchorTarget();
+        const auto baseSize = target->getBaseSize();
+        const auto minPt = target->getWidget()->getPosition().d_y;
+        const auto midPt = minPt + target->getWidget()->getSize().d_height * 0.5f;
+        const auto maxPt = minPt + target->getWidget()->getSize().d_height;
+        const auto minAnchorValue = CEGUI::CoordConverter::asRelative(minPt, baseSize.d_height);
+        const auto midAnchorValue = CEGUI::CoordConverter::asRelative(midPt, baseSize.d_height);
+        const auto maxAnchorValue = CEGUI::CoordConverter::asRelative(maxPt, baseSize.d_height);
+
+        if (compareFloat(minY, minAnchorValue, tolerance))
+        {
+            if (compareFloat(maxY, minAnchorValue, tolerance))
+                ui->actionSelfTop->setChecked(true);
+            else if (compareFloat(maxY, maxAnchorValue, tolerance))
+                ui->actionSelfVStretch->setChecked(true);
+        }
+        else if (compareFloat(minY, midAnchorValue, tolerance) && compareFloat(maxY, midAnchorValue, tolerance))
+            ui->actionSelfVCenter->setChecked(true);
+        else if (compareFloat(minY, maxAnchorValue, tolerance) && compareFloat(maxY, maxAnchorValue, tolerance))
+            ui->actionSelfBottom->setChecked(true);
+    }
+
+    QWidget::showEvent(event);
 }
