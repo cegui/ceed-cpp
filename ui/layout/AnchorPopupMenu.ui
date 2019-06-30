@@ -548,7 +548,7 @@
     <string>Self Top</string>
    </property>
    <property name="toolTip">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Widget top&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns vertical anchors to the top edge of the widget itself&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed height. Proportional offset from the top.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Widget Top&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns vertical anchors to the top edge of the widget itself&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed height. Proportional offset from the top.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </action>
   <action name="actionParentHCenter">
@@ -597,6 +597,102 @@
    </property>
    <property name="toolTip">
     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Widget Vertical Center&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns vertical anchors to the middle line of the widget itself&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed height. Vertical size changes equally in both directions. Center always remains in the same percentage of the parent height.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </action>
+  <action name="actionParentRight">
+   <property name="icon">
+    <iconset resource="../../data/Resources.qrc">
+     <normaloff>:/icons/anchors/ParentRight.png</normaloff>:/icons/anchors/ParentRight.png</iconset>
+   </property>
+   <property name="text">
+    <string>Parent Right</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Parent Right&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns horizontal anchors to the right edge of the parent&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed width. Always the same pixel offset from the right.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </action>
+  <action name="actionSelfRight">
+   <property name="icon">
+    <iconset resource="../../data/Resources.qrc">
+     <normaloff>:/icons/anchors/SelfRight.png</normaloff>:/icons/anchors/SelfRight.png</iconset>
+   </property>
+   <property name="text">
+    <string>Self Right</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Widget Right&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns horizontal anchors to the right edge of the widget itself&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed width. Proportional offset from the right.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </action>
+  <action name="actionParentBottom">
+   <property name="icon">
+    <iconset resource="../../data/Resources.qrc">
+     <normaloff>:/icons/anchors/ParentBottom.png</normaloff>:/icons/anchors/ParentBottom.png</iconset>
+   </property>
+   <property name="text">
+    <string>Parent Bottom</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Parent Bottom&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns vertical anchors to the bottom edge of the parent&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed height. Always the same pixel offset from the bottom.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </action>
+  <action name="actionSelfBottom">
+   <property name="icon">
+    <iconset resource="../../data/Resources.qrc">
+     <normaloff>:/icons/anchors/SelfBottom.png</normaloff>:/icons/anchors/SelfBottom.png</iconset>
+   </property>
+   <property name="text">
+    <string>Self Bottom</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Widget Bottom&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns vertical anchors to the bottom edge of the widget itself&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Fixed height. Proportional offset from the bottom.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </action>
+  <action name="actionParentHStretch">
+   <property name="icon">
+    <iconset resource="../../data/Resources.qrc">
+     <normaloff>:/icons/anchors/ParentHStretch.png</normaloff>:/icons/anchors/ParentHStretch.png</iconset>
+   </property>
+   <property name="text">
+    <string>Parent Horizontal Stretch</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Parent Horizontal Stretch&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns horizontal anchors to edges of the parent&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Proportional width. Always the same horizontal (x) pixel offset from parent edges.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </action>
+  <action name="actionParentVStretch">
+   <property name="icon">
+    <iconset resource="../../data/Resources.qrc">
+     <normaloff>:/icons/anchors/ParentVStretch.png</normaloff>:/icons/anchors/ParentVStretch.png</iconset>
+   </property>
+   <property name="text">
+    <string>Parent Vertical Stretch</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Parent Vertical Stretch&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns vertical anchors to edges of the parent&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Proportional height. Always the same vertical (y) pixel offset from parent edges.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </action>
+  <action name="actionSelfHStretch">
+   <property name="icon">
+    <iconset resource="../../data/Resources.qrc">
+     <normaloff>:/icons/anchors/SelfHStretch.png</normaloff>:/icons/anchors/SelfHStretch.png</iconset>
+   </property>
+   <property name="text">
+    <string>Self Horizontal Stretch</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Widget Horizontal Stretch&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns horizontal anchors to edges of the widget itself&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Proportional width. Proportional offset from parent edges.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </action>
+  <action name="actionSelfVStretch">
+   <property name="icon">
+    <iconset resource="../../data/Resources.qrc">
+     <normaloff>:/icons/anchors/SelfVStretch.png</normaloff>:/icons/anchors/SelfVStretch.png</iconset>
+   </property>
+   <property name="text">
+    <string>Self Vertical Stretch</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Widget Vertical Stretch&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Aligns vertical anchors to edges of the widget itself&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Proportional height. Proportional offset from parent edges.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </action>
  </widget>

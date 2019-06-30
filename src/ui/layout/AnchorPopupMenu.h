@@ -43,6 +43,30 @@ private slots:
 
     void on_btnSelfCenter_clicked();
 
+    void on_actionParentRight_triggered();
+
+    void on_actionParentBottom_triggered();
+
+    void on_btnParentRightBottom_clicked();
+
+    void on_actionSelfRight_triggered();
+
+    void on_actionSelfBottom_triggered();
+
+    void on_btnSelfRightBottom_clicked();
+
+    void on_actionParentHStretch_triggered();
+
+    void on_actionParentVStretch_triggered();
+
+    void on_btnParentStretch_clicked();
+
+    void on_actionSelfHStretch_triggered();
+
+    void on_actionSelfVStretch_triggered();
+
+    void on_btnSelfStretch_clicked();
+
 private:
 
     Ui::AnchorPopupMenu *ui;
