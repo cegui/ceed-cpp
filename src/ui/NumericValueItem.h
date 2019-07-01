@@ -43,6 +43,7 @@ protected:
     virtual void keyReleaseEvent(QKeyEvent* event) override;
     virtual void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override;
 
+    QString _toolTipMsg;
     QString _lastValidText;
     int _lastValidCursorPos = 0;
     qreal _value = 0.0;

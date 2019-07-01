@@ -146,6 +146,9 @@ void NumericValueItem::focusInEvent(QFocusEvent* event)
 
     updateText();
 
+    _toolTipMsg = toolTip();
+    setToolTip(QString("Last value: %1").arg(_value));
+
     _lastValidText = toPlainText();
     _lastValidCursorPos = textCursor().position();
 
@@ -169,6 +172,8 @@ void NumericValueItem::focusOutEvent(QFocusEvent* event)
     if (_acceptValueOnFocusOut) acceptNewValue();
 
     updateText();
+
+    setToolTip(_toolTipMsg);
 }
 
 void NumericValueItem::keyPressEvent(QKeyEvent* event)
