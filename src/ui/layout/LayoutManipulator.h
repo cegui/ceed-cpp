@@ -15,7 +15,7 @@ public:
     LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, CEGUI::Window* widget);
     virtual ~LayoutManipulator() override;
 
-    virtual LayoutManipulator* createChildManipulator(CEGUI::Window* childWidget, bool recursive = true, bool skipAutoWidgets = false) override;
+    virtual LayoutManipulator* createChildManipulator(CEGUI::Window* childWidget) override;
     void getChildLayoutManipulators(std::vector<LayoutManipulator*>& outList, bool recursive);
 
     virtual QPointF constrainMovePoint(QPointF value) override;

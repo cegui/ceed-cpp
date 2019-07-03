@@ -225,14 +225,23 @@ void LayoutDeleteCommand::undo()
     QDataStream stream(&_data, QIODevice::ReadOnly);
     while (!stream.atEnd())
     {
-        //!!!TODO: test for root widget!
-        const QString& path = _paths[i++];
-        int sepPos = path.lastIndexOf('/');
-        LayoutManipulator* parent = (sepPos < 0) ? nullptr :
-                    _visualMode.getScene()->getManipulatorByPath(path.left(sepPos));
+        LayoutManipulator* manipulator;
 
-        CEGUI::Window* widget = CEGUIUtils::deserializeWidget(stream, parent->getWidget());
-        LayoutManipulator* manipulator = parent ? parent->createChildManipulator(widget) : _visualMode.setRootWidget(widget);
+        const QString& path = _paths[i++];
+        const int sepPos = path.lastIndexOf('/');
+        if (sepPos < 0)
+        {
+            // No parent, root widget
+            manipulator = _visualMode.setRootWidget(CEGUIUtils::deserializeWidget(stream, nullptr));
+        }
+        else
+        {
+            LayoutManipulator* parent = _visualMode.getScene()->getManipulatorByPath(path.left(sepPos));
+            CEGUI::Window* widget = CEGUIUtils::deserializeWidget(stream, parent->getWidget());
+            manipulator = parent->createChildManipulator(widget);
+            manipulator->updateFromWidget();
+        }
+
         manipulator->setSelected(true);
     }
 
@@ -699,6 +708,7 @@ void LayoutPasteCommand::redo()
 
     scene->clearSelection();
 
+    //???what about pasting into an empty scene?
     QDataStream stream(&_data, QIODevice::ReadOnly);
     while (!stream.atEnd())
     {

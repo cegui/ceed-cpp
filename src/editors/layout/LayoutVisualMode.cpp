@@ -74,6 +74,7 @@ LayoutManipulator* LayoutVisualMode::setRootWidget(CEGUI::Window* widget)
     if (widget)
     {
         newManipulator = new LayoutManipulator(*this, nullptr, widget);
+        newManipulator->updateFromWidget();
         newManipulator->createChildManipulators(true, false, false);
     }
 

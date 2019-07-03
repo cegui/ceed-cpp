@@ -63,7 +63,7 @@ public:
     QString getWidgetName() const;
     QString getWidgetType() const;
     QString getWidgetPath() const;
-    virtual CEGUIManipulator* createChildManipulator(CEGUI::Window* childWidget, bool recursive = true, bool skipAutoWidgets = false);
+    virtual CEGUIManipulator* createChildManipulator(CEGUI::Window* childWidget);
     void getChildManipulators(std::vector<CEGUIManipulator*>& outList, bool recursive);
     CEGUIManipulator* getManipulatorByPath(const QString& widgetPath) const;
     CEGUIManipulator* getManipulatorFromChildContainerByPath(const QString& widgetPath) const;

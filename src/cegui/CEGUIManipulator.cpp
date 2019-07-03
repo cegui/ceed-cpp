@@ -657,12 +657,9 @@ QString CEGUIManipulator::getWidgetPath() const
 
 // Creates a child manipulator suitable for a child widget of manipulated widget
 // This is there to allow overriding (if user subclasses the Manipulator, child manipulators are likely to be also subclassed)
-CEGUIManipulator* CEGUIManipulator::createChildManipulator(CEGUI::Window* childWidget, bool recursive, bool skipAutoWidgets)
+CEGUIManipulator* CEGUIManipulator::createChildManipulator(CEGUI::Window* childWidget)
 {
-    auto ret = new CEGUIManipulator(this, childWidget);
-    ret->createChildManipulators(recursive, skipAutoWidgets, false);
-    ret->updateFromWidget();
-    return ret;
+    return new CEGUIManipulator(this, childWidget);
 }
 
 void CEGUIManipulator::getChildManipulators(std::vector<CEGUIManipulator*>& outList, bool recursive)
@@ -753,9 +750,8 @@ void CEGUIManipulator::createChildManipulators(bool recursive, bool skipAutoWidg
 
         if (!skipAutoWidgets || !childWidget->isAutoWindow())
         {
-            // NB: we don't have to assign or attach the child manipulator here
-            //     just passing parent to the constructor is enough
-            auto childManipulator = createChildManipulator(childWidget, recursive, skipAutoWidgets);
+            auto childManipulator = createChildManipulator(childWidget);
+            childManipulator->updateFromWidget();
             if (recursive)
                 childManipulator->createChildManipulators(true, skipAutoWidgets, checkExisting);
         }

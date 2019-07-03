@@ -41,12 +41,9 @@ LayoutManipulator::~LayoutManipulator()
 {
 }
 
-LayoutManipulator* LayoutManipulator::createChildManipulator(CEGUI::Window* childWidget, bool recursive, bool skipAutoWidgets)
+LayoutManipulator* LayoutManipulator::createChildManipulator(CEGUI::Window* childWidget)
 {
-    auto ret = new LayoutManipulator(_visualMode, this, childWidget);
-    ret->createChildManipulators(recursive, skipAutoWidgets, false);
-    ret->updateFromWidget();
-    return ret;
+    return new LayoutManipulator(_visualMode, this, childWidget);
 }
 
 void LayoutManipulator::getChildLayoutManipulators(std::vector<LayoutManipulator*>& outList, bool recursive)
