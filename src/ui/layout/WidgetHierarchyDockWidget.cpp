@@ -32,10 +32,11 @@ void WidgetHierarchyDockWidget::setRootWidgetManipulator(LayoutManipulator* root
     ui->treeView->expandToDepth(0);
 }
 
-// Refreshes the entire hierarchy completely from scratch
+// Refreshes the entire hierarchy completely from scratch. Also synchronize selection.
 void WidgetHierarchyDockWidget::refresh()
 {
     static_cast<WidgetHierarchyTreeModel*>(ui->treeView->model())->setRootManipulator(_rootWidgetManipulator);
+    _visualMode.getScene()->onSelectionChanged();
 }
 
 QTreeView*WidgetHierarchyDockWidget::getTreeView() const

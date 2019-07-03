@@ -248,7 +248,9 @@ QRectF CEGUIManipulator::getParentRect() const
     }
     else
     {
-        auto ceguiScene = static_cast<const CEGUIGraphicsScene*>(scene());
+        auto ceguiScene = dynamic_cast<const CEGUIGraphicsScene*>(scene());
+        if (!ceguiScene) return QRectF();
+
         return QRectF(0.0, 0.0, static_cast<qreal>(ceguiScene->getContextWidth()), static_cast<qreal>(ceguiScene->getContextHeight()));
     }
 }

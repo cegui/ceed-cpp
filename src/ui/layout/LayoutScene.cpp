@@ -407,6 +407,13 @@ void LayoutScene::onSelectionChanged()
 
     // Update anchors state
 
+    if (_anchorTarget && _anchorTarget->scene() != this)
+    {
+        // Possibly was detached
+        // FIXME: proper handling of anchor target deletion!
+        _anchorTarget = nullptr;
+    }
+
     if (selectedWidgets.size() > 1)
     {
         // Hide anchors if we selected multiple widgets
@@ -414,22 +421,26 @@ void LayoutScene::onSelectionChanged()
     }
     else if (selectedWidgets.size() == 0)
     {
-        // If we selected anchor item, we therefore deselected an _anchorTarget,
-        // but it must look as selected in a GUI, so we don't change anything
-        if (selectedAnchorItem) return;
-
-        // Nothing interesting is selected, hide anchors
-        _anchorTarget = nullptr;
+        if (selectedAnchorItem)
+        {
+            // If we selected anchor item, we therefore deselected an _anchorTarget,
+            // but it must look as selected in a GUI, so we don't change anything
+            selectedWidgets.insert(_anchorTarget);
+        }
+        else
+        {
+            // Nothing interesting is selected, hide anchors
+            _anchorTarget = nullptr;
+        }
     }
     else
     {
         // Show anchors for the only selected widget
-        if (_anchorTarget == *selectedWidgets.begin()) return;
         _anchorTarget = *selectedWidgets.begin();
     }
 
-    _anchorTextX->setVisible(false);
-    _anchorTextY->setVisible(false);
+    if (_anchorTextX) _anchorTextX->setVisible(false);
+    if (_anchorTextY) _anchorTextY->setVisible(false);
 
     updateAnchorItems();
 
@@ -478,15 +489,13 @@ void LayoutScene::onSelectionChanged()
     {
         _visualMode.getHierarchyDockWidget()->ignoreSelectionChanges(true);
 
-        _visualMode.getHierarchyDockWidget()->getTreeView()->clearSelection();
-
         auto treeView = _visualMode.getHierarchyDockWidget()->getTreeView();
+        treeView->clearSelection();
 
         QStandardItem* lastTreeItem = nullptr;
-        for (QGraphicsItem* item : selection)
+        for (LayoutManipulator* manip : selectedWidgets)
         {
-            auto manip = dynamic_cast<LayoutManipulator*>(item);
-            if (manip && manip->getTreeItem())
+            if (manip->getTreeItem())
             {
                 treeView->selectionModel()->select(manip->getTreeItem()->index(), QItemSelectionModel::Select);
                 ensureParentIsExpanded(treeView, manip->getTreeItem());
