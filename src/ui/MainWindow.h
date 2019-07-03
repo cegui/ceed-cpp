@@ -105,6 +105,8 @@ private:
     void setupToolbar(QToolBar* toolBar);
 
     void updateProjectDependentUI(CEGUIProject* newProject);
+    bool confirmProjectClosing(bool onlyModified);
+    void loadProject(const QString& path);
 
     EditorBase* createEditorForFile(const QString& absolutePath);
     bool activateEditorTabByFilePath(const QString& absolutePath);

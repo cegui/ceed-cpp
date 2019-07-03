@@ -89,8 +89,13 @@ CEGUIManager::~CEGUIManager()
 
 CEGUIProject* CEGUIManager::createProject(const QString& filePath, bool createResourceDirs)
 {
-    //???force unload prev project?
-    assert(!isProjectLoaded());
+    if (isProjectLoaded())
+    {
+        QMessageBox::critical(qobject_cast<Application*>(qApp)->getMainWindow(),
+                              "Error when creating project",
+                              "There is another project opened. Close it before creating a new one.");
+        return nullptr;
+    }
 
     currentProject.reset(new CEGUIProject());
     currentProject->filePath = filePath;
@@ -123,9 +128,11 @@ CEGUIProject* CEGUIManager::createProject(const QString& filePath, bool createRe
         }
     }
 
-    //???need?
+    // Save to disk immediately
     currentProject->save();
-    loadProject(currentProject->filePath);
+
+    // NB: syncProjectToCEGUIInstance() is not called because it will be called
+    // after the initial project setup in a project settings dialog.
 
     return currentProject.get();
 }
@@ -138,8 +145,9 @@ void CEGUIManager::loadProject(const QString& filePath)
 {
     if (isProjectLoaded())
     {
-        // TODO: error message
-        assert(false);
+        QMessageBox::critical(qobject_cast<Application*>(qApp)->getMainWindow(),
+                              "Error when opening project",
+                              "There is another project opened. Close it before opening another one.");
         return;
     }
 
@@ -153,8 +161,6 @@ void CEGUIManager::loadProject(const QString& filePath)
         return;
     }
 
-    // NB: must not be called in createProject() for new projects because it will be called
-    // after the initial project setup in a project settings dialog.
     syncProjectToCEGUIInstance();
 }
 

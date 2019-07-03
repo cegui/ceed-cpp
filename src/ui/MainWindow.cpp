@@ -329,23 +329,64 @@ void MainWindow::updateProjectDependentUI(CEGUIProject* newProject)
     ui->actionReloadResources->setEnabled(isProjectLoaded);
 }
 
-void MainWindow::on_actionNewProject_triggered()
+bool MainWindow::confirmProjectClosing(bool onlyModified)
 {
+    auto project = CEGUIManager::Instance().getCurrentProject();
+    if (project)
+    {
+        if (project->isModified())
+        {
+            auto result = QMessageBox::question(this,
+                                                "Project file has changes!",
+                                                "There are unsaved changes in the project file being closed. "
+                                                "Do you want to save them?\n"
+                                                "(Pressing Discard you will lose the changes!)",
+                                                QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
+                                                QMessageBox::Save);
+
+            if (result == QMessageBox::Save)
+                project->save();
+            else if (result != QMessageBox::Discard)
+                return false;
+        }
+        else
+        {
+            if (onlyModified) return true;
+
+            auto result = QMessageBox::question(this,
+                                  "Another project already opened!",
+                                  "Before opening a project, you must close the one currently opened. "
+                                  "Do you want to close currently opened project?",
+                                  QMessageBox::Yes | QMessageBox::Cancel,
+                                  QMessageBox::Cancel);
+
+            if (result != QMessageBox::Yes) return false;
+        }
+    }
+
+    return true;
+}
+
+void MainWindow::loadProject(const QString& path)
+{
+    if (path.isEmpty())
+    {
+        return;
+    }
+
     if (CEGUIManager::Instance().isProjectLoaded())
     {
-        // Another project is already opened!
-        auto result = QMessageBox::question(this,
-                              "Another project already opened!",
-                              "Before creating a new project, you must close the one currently opened. "
-                              "Do you want to close currently opened project? (all unsaved changes will be lost!)",
-                              QMessageBox::Yes | QMessageBox::Cancel,
-                              QMessageBox::Cancel);
-
-        if (result != QMessageBox::Yes) return;
-
-        // Don't close the project yet, close it after the user
-        // accepts the New Project dialog below because they may cancel
+        updateProjectDependentUI(nullptr);
+        CEGUIManager::Instance().unloadProject();
     }
+
+    CEGUIManager::Instance().loadProject(path);
+    updateProjectDependentUI(CEGUIManager::Instance().getCurrentProject());
+}
+
+void MainWindow::on_actionNewProject_triggered()
+{
+    if (!confirmProjectClosing(false)) return;
 
     NewProjectDialog newProjectDialog;
     if (newProjectDialog.exec() != QDialog::Accepted) return;
@@ -362,36 +403,19 @@ void MainWindow::on_actionNewProject_triggered()
 
     // Save the project with the settings that were potentially set in the project settings dialog
     newProject->save();
+
+    updateProjectDependentUI(CEGUIManager::Instance().getCurrentProject());
 }
 
 void MainWindow::on_actionOpenProject_triggered()
 {
-    if (CEGUIManager::Instance().isProjectLoaded())
-    {
-        // Another project is already opened!
-        auto result = QMessageBox::question(this,
-                              "Another project already opened!",
-                              "Before opening a project, you must close the one currently opened. "
-                              "Do you want to close currently opened project? (all unsaved changes will be lost!)",
-                              QMessageBox::Yes | QMessageBox::Cancel,
-                              QMessageBox::Cancel);
-
-        if (result != QMessageBox::Yes) return;
-
-        updateProjectDependentUI(nullptr);
-        CEGUIManager::Instance().unloadProject();
-    }
+    if (!confirmProjectClosing(false)) return;
 
     auto fileName = QFileDialog::getOpenFileName(this,
                                                 "Open existing project file",
                                                 "",
                                                 "Project files (*.project)");
-
-    if (!fileName.isEmpty())
-    {
-        CEGUIManager::Instance().loadProject(fileName);
-        updateProjectDependentUI(CEGUIManager::Instance().getCurrentProject());
-    }
+    loadProject(fileName);
 }
 
 void MainWindow::on_actionProjectSettings_triggered()
@@ -898,16 +922,8 @@ void MainWindow::openRecentProject(const QString& path)
 {
     if (QFileInfo(path).exists())
     {
-        auto project = CEGUIManager::Instance().getCurrentProject();
-        if (project)
-        {
-            // Give user a chance to save changes if needed
-            if (!on_actionCloseProject_triggered())
-                return;
-        }
-
-        CEGUIManager::Instance().loadProject(path);
-        updateProjectDependentUI(CEGUIManager::Instance().getCurrentProject());
+        if (confirmProjectClosing(false))
+            loadProject(path);
     }
     else
     {
@@ -1107,27 +1123,13 @@ void MainWindow::on_actionSaveProject_triggered()
 
 bool MainWindow::on_actionCloseProject_triggered()
 {
-    auto project = CEGUIManager::Instance().getCurrentProject();
-    if (!project) return true;
+    if (!confirmProjectClosing(true)) return false;
 
-    if (project->isModified())
+    if (CEGUIManager::Instance().isProjectLoaded())
     {
-        auto result = QMessageBox::question(this,
-                                            "Project file has changes!",
-                                            "There are unsaved changes in the project file "
-                                            "Do you want to save them? "
-                                            "(Pressing Discard will discard the changes!)",
-                                            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
-                                            QMessageBox::Save);
-
-        if (result == QMessageBox::Save)
-            project->save();
-        else if (result == QMessageBox::Cancel)
-            return false;
+        updateProjectDependentUI(nullptr);
+        CEGUIManager::Instance().unloadProject();
     }
-
-    updateProjectDependentUI(nullptr);
-    CEGUIManager::Instance().unloadProject();
 
     return true;
 }
