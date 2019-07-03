@@ -12,6 +12,7 @@
 #include "src/ui/MainWindow.h"
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
 #include "src/ui/layout/CreateWidgetDockWidget.h"
+#include "src/ui/layout/LayoutManipulator.h"
 #include "qmenu.h"
 #include "qtoolbar.h"
 #include "qmessagebox.h"
@@ -43,7 +44,7 @@ void LayoutEditor::initialize()
 {
     MultiModeEditor::initialize();
 
-    visualMode->setRootWidget(nullptr);
+    visualMode->setRootWidgetManipulator(nullptr);
 
     try
     {
@@ -61,8 +62,11 @@ void LayoutEditor::initialize()
 
         if (rawData.size() > 0)
         {
-            CEGUI::Window* root = CEGUI::WindowManager::getSingleton().loadLayoutFromString(CEGUIUtils::qStringToString(rawData));
-            visualMode->setRootWidget(root);
+            CEGUI::Window* widget = CEGUI::WindowManager::getSingleton().loadLayoutFromString(CEGUIUtils::qStringToString(rawData));
+            auto root = new LayoutManipulator(*visualMode, nullptr, widget);
+            root->updateFromWidget();
+            root->createChildManipulators(true, false, false);
+            visualMode->setRootWidgetManipulator(root);
         }
     }
     catch (const std::exception& e)

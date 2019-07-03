@@ -1,6 +1,7 @@
 #include "src/editors/layout/LayoutCodeMode.h"
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutEditor.h"
+#include "src/ui/layout/LayoutManipulator.h"
 #include "src/cegui/CEGUIUtils.h"
 #include <CEGUI/WindowManager.h>
 
@@ -18,17 +19,21 @@ QString LayoutCodeMode::getNativeCode()
 
 bool LayoutCodeMode::propagateNativeCode(const QString& code)
 {
-    // We have to make the context the current context to ensure textures are fine
+    LayoutVisualMode& visualMode = *static_cast<LayoutEditor&>(_editor).getVisualMode();
+
     if (code.isEmpty())
     {
-        static_cast<LayoutEditor&>(_editor).getVisualMode()->setRootWidget(nullptr);
+        visualMode.setRootWidgetManipulator(nullptr);
     }
     else
     {
         try
         {
-            CEGUI::Window* newRoot = CEGUI::WindowManager::getSingleton().loadLayoutFromString(CEGUIUtils::qStringToString(code));
-            static_cast<LayoutEditor&>(_editor).getVisualMode()->setRootWidget(newRoot);
+            CEGUI::Window* widget = CEGUI::WindowManager::getSingleton().loadLayoutFromString(CEGUIUtils::qStringToString(code));
+            auto root = new LayoutManipulator(visualMode, nullptr, widget);
+            root->updateFromWidget();
+            root->createChildManipulators(true, false, false);
+            visualMode.setRootWidgetManipulator(root);
         }
         catch (...)
         {

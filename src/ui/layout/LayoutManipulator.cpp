@@ -206,12 +206,12 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
 
 void LayoutManipulator::detach(bool detachWidget, bool destroyWidget, bool recursive)
 {
-    const bool isRoot = !_widget->getParent();
+    const bool isRoot = (_visualMode.getScene()->getRootWidgetManipulator() == this);
 
     CEGUIManipulator::detach(detachWidget, destroyWidget, recursive);
 
     // If this was root we have to inform the scene accordingly!
-    if (isRoot) _visualMode.setRootWidget(nullptr);
+    if (isRoot) _visualMode.setRootWidgetManipulator(nullptr);
 }
 
 bool LayoutManipulator::preventManipulatorOverlap() const

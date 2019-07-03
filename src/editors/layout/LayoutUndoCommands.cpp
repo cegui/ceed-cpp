@@ -10,6 +10,30 @@
 #include <CEGUI/CoordConverter.h>
 #include "qtreeview.h"
 
+static LayoutManipulator* CreateManipulatorFromDataStream(LayoutVisualMode& visualMode, LayoutManipulator* parent, QDataStream& stream)
+{
+    LayoutManipulator* manipulator;
+
+    if (parent)
+    {
+        CEGUI::Window* widget = CEGUIUtils::deserializeWidget(stream, parent->getWidget());
+        manipulator = parent->createChildManipulator(widget);
+    }
+    else
+    {
+        // No parent, root widget
+        CEGUI::Window* widget = CEGUIUtils::deserializeWidget(stream, nullptr);
+        manipulator = new LayoutManipulator(visualMode, nullptr, widget);
+        visualMode.setRootWidgetManipulator(manipulator);
+    }
+
+    manipulator->createChildManipulators(true, false);
+    manipulator->updateFromWidget();
+    manipulator->setSelected(true);
+
+    return manipulator;
+}
+
 LayoutMoveCommand::LayoutMoveCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records)
     : _visualMode(visualMode)
     , _records(std::move(records))
@@ -183,11 +207,8 @@ LayoutDeleteCommand::LayoutDeleteCommand(LayoutVisualMode& visualMode, QStringLi
     : _visualMode(visualMode)
 {
     // Exclude child widgets of widgets being deleted from the explicit list
-    while (!paths.empty())
+    for (const QString& currPath : paths)
     {
-        QString currPath = paths.back();
-        paths.pop_back();
-
         bool parentFound = false;
         for (const QString& potentialParentPath : paths)
         {
@@ -225,24 +246,11 @@ void LayoutDeleteCommand::undo()
     QDataStream stream(&_data, QIODevice::ReadOnly);
     while (!stream.atEnd())
     {
-        LayoutManipulator* manipulator;
-
         const QString& path = _paths[i++];
         const int sepPos = path.lastIndexOf('/');
-        if (sepPos < 0)
-        {
-            // No parent, root widget
-            manipulator = _visualMode.setRootWidget(CEGUIUtils::deserializeWidget(stream, nullptr));
-        }
-        else
-        {
-            LayoutManipulator* parent = _visualMode.getScene()->getManipulatorByPath(path.left(sepPos));
-            CEGUI::Window* widget = CEGUIUtils::deserializeWidget(stream, parent->getWidget());
-            manipulator = parent->createChildManipulator(widget);
-            manipulator->updateFromWidget();
-        }
+        LayoutManipulator* parent = (sepPos < 0) ? nullptr : _visualMode.getScene()->getManipulatorByPath(path.left(sepPos));
 
-        manipulator->setSelected(true);
+        CreateManipulatorFromDataStream(_visualMode, parent, stream);
     }
 
     _visualMode.getHierarchyDockWidget()->refresh();
@@ -252,8 +260,16 @@ void LayoutDeleteCommand::redo()
 {
     for (const QString& path : _paths)
     {
+        //!!!DBG TMP!
+        qDebug(QString("LayoutDeleteCommand::redo() %1 %2").arg(path).arg((int)this).toLocal8Bit().data());
+
         auto manipulator = _visualMode.getScene()->getManipulatorByPath(path);
-        assert(manipulator);
+        if (!manipulator)
+        {
+            assert(false && "LayoutDeleteCommand::redo() > manipulator not found!");
+            continue;
+        }
+
         manipulator->detach();
     }
 
@@ -324,9 +340,14 @@ void LayoutCreateCommand::redo()
         manipulator = parent->createChildManipulator(widget);
         parent->getWidget()->addChild(widget);
     }
-    else manipulator = _visualMode.setRootWidget(widget);
+    else
+    {
+        manipulator = new LayoutManipulator(_visualMode, nullptr, widget);
+        _visualMode.setRootWidgetManipulator(manipulator);
+    }
 
     manipulator->updateFromWidget(true, true);
+    manipulator->createChildManipulators(true, false);
 
     // Ensure this isn't obscured by it's parent
     manipulator->moveToFront();
@@ -704,23 +725,25 @@ void LayoutPasteCommand::redo()
 {
     LayoutScene* scene = _visualMode.getScene();
     auto target = scene->getManipulatorByPath(_targetPath);
-    if (!target) return;
 
     scene->clearSelection();
 
-    //???what about pasting into an empty scene?
     QDataStream stream(&_data, QIODevice::ReadOnly);
     while (!stream.atEnd())
     {
-        CEGUI::Window* widget = CEGUIUtils::deserializeWidget(stream, target->getWidget());
-        LayoutManipulator* manipulator = target->createChildManipulator(widget);
-        manipulator->setSelected(true);
+        if (!target && !_createdWidgets.empty())
+        {
+            assert(false && "Can't paste more than one hierarchy as the root");
+            break;
+        }
+
+        LayoutManipulator* manipulator = CreateManipulatorFromDataStream(_visualMode, target, stream);
         _createdWidgets.push_back(manipulator->getWidgetPath());
     }
 
     // Update the topmost parent widget recursively to get possible resize or
     // repositions of the pasted widgets into the manipulator data.
-    target->updateFromWidget(true, true);
+    if (target) target->updateFromWidget(true, true);
 
     _visualMode.getHierarchyDockWidget()->refresh();
 

@@ -66,25 +66,15 @@ LayoutVisualMode::~LayoutVisualMode()
         CEGUI::WindowManager::getSingleton().destroyWindow(oldRoot);
 }
 
-LayoutManipulator* LayoutVisualMode::setRootWidget(CEGUI::Window* widget)
+void LayoutVisualMode::setRootWidgetManipulator(LayoutManipulator* manipulator)
 {
     auto oldRoot = getRootWidget();
 
-    LayoutManipulator* newManipulator = nullptr;
-    if (widget)
-    {
-        newManipulator = new LayoutManipulator(*this, nullptr, widget);
-        newManipulator->updateFromWidget();
-        newManipulator->createChildManipulators(true, false, false);
-    }
-
-    scene->setRootWidgetManipulator(newManipulator);
-    hierarchyDockWidget->setRootWidgetManipulator(newManipulator);
+    scene->setRootWidgetManipulator(manipulator);
+    hierarchyDockWidget->setRootWidgetManipulator(manipulator);
 
     if (oldRoot)
         CEGUI::WindowManager::getSingleton().destroyWindow(oldRoot);
-
-    return newManipulator;
 }
 
 CEGUI::Window* LayoutVisualMode::getRootWidget() const
@@ -374,9 +364,7 @@ bool LayoutVisualMode::paste()
         target = manipulator;
     }
 
-    if (!target) return false;
-
-    _editor.getUndoStack()->push(new LayoutPasteCommand(*this, target->getWidgetPath(), std::move(bytes)));
+    _editor.getUndoStack()->push(new LayoutPasteCommand(*this, target ? target->getWidgetPath() : "", std::move(bytes)));
 
     return true;
 }

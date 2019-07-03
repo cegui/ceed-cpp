@@ -107,7 +107,7 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
 
 LayoutManipulator* LayoutScene::getManipulatorByPath(const QString& widgetPath) const
 {
-    if (!rootManipulator) return nullptr;
+    if (!rootManipulator || widgetPath.isEmpty()) return nullptr;
 
     auto sepPos = widgetPath.indexOf('/');
     if (sepPos < 0)
