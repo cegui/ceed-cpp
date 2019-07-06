@@ -1031,6 +1031,7 @@ void LayoutScene::dropEvent(QGraphicsSceneDragDropEvent* event)
         CEGUIGraphicsScene::dropEvent(event);
     else
     {
+        // Dropping to an empty scene. Dropped widget becomes a root.
         auto data = event->mimeData()->data("application/x-ceed-widget-type");
         if (data.size() > 0)
         {
@@ -1039,8 +1040,10 @@ void LayoutScene::dropEvent(QGraphicsSceneDragDropEvent* event)
             if (widgetType == "DefaultWindow")
             {
                 // Special case - root widget. Setup it with most useful parameters.
-                widgetName = "Root";
-                // or: widgetName = QFileInfo(_visualMode.getEditor().getFilePath()).baseName();
+                // Naming convention is from docs:
+                // http://static.cegui.org.uk/docs/0.8.7/window_tutorial.html
+                widgetName = "root";
+                // can instead use: widgetName = QFileInfo(_visualMode.getEditor().getFilePath()).baseName();
             }
             else
             {

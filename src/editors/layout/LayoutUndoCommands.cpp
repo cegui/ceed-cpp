@@ -315,6 +315,7 @@ void LayoutCreateCommand::redo()
         // Special case - root widget. Setup it with most useful parameters.
         widget->setPosition(CEGUI::UVector2(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)));
         widget->setSize(CEGUI::USize(CEGUI::UDim(1.f, 0.f), CEGUI::UDim(1.f, 0.f)));
+        widget->setCursorPassThroughEnabled(true);
     }
     else
     {

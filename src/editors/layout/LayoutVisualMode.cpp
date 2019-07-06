@@ -126,11 +126,6 @@ void LayoutVisualMode::setActionsEnabled(bool enabled)
     actionRoundSize->setEnabled(enabled);
     actionMoveBackward->setEnabled(enabled);
     actionMoveForward->setEnabled(enabled);
-
-    // Weren't in a connection group:
-    //actionAbsoluteMode->setEnabled(enabled);
-    //actionAbsoluteIntegerMode->setEnabled(enabled);
-    //actionSnapGrid->setEnabled(enabled);
 }
 
 void LayoutVisualMode::setupActions()
