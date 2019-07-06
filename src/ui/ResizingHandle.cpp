@@ -66,7 +66,7 @@ QPointF ResizingHandle::performResizing(QPointF value)
     }
 
     // Modifies left, right, top & bottom inside, results are actual changes
-    static_cast<ResizableRectItem*>(parentItem())->performResizing(*this, left, top, right, bottom);
+    static_cast<ResizableRectItem*>(parentItem())->performResizing(left, top, right, bottom);
 
     return QPointF(left + right + pos().x(), top + bottom + pos().y());
 }
