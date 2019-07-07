@@ -6,6 +6,7 @@
 // Binds all layout editing functionality together
 
 class Settings;
+class Application;
 class LayoutVisualMode;
 class LayoutCodeMode;
 
@@ -14,6 +15,8 @@ class LayoutEditor : public MultiModeEditor
 public:
 
     static void createSettings(Settings& mgr);
+    static void createActions(Application& app);
+    static void createToolbar(Application& app);
 
     LayoutEditor(const QString& filePath);
 

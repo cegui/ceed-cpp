@@ -9,27 +9,27 @@
 #include "qsplashscreen.h"
 #include "qsettings.h"
 #include "qdir.h"
+#include <qaction.h>
 
 Application::Application(int& argc, char** argv)
     : QApplication(argc, argv)
 {
-    // TODO: move some of this to config file?
     setOrganizationName("CEGUI");
     setOrganizationDomain("cegui.org.uk");
     setApplicationName("CEED - CEGUI editor");
     setApplicationVersion("1.0.0-beta");
 
     // Create settings and load all values from the persistence store
-    settings = new Settings(new QSettings("CEGUI", "CEED", this));
+    _settings = new Settings(new QSettings("CEGUI", "CEED", this));
     createSettingsEntries();
+    ImagesetEditor::createActions(*this);
+    LayoutEditor::createActions(*this);
 
     // Finally read stored values into our new setting entries
-    settings->load();
-
-    bool showSplash = settings->getEntryValue("global/app/show_splash").toBool();
+    _settings->load();
 
     QSplashScreen* splash = nullptr;
-    if (showSplash)
+    if (_settings->getEntryValue("global/app/show_splash").toBool())
     {
         splash = new QSplashScreen(QPixmap(":/images/splashscreen.png"));
         splash->setWindowModality(Qt::ApplicationModal);
@@ -42,20 +42,78 @@ Application::Application(int& argc, char** argv)
         processEvents();
     }
 
-    mainWindow = new MainWindow();
-    mainWindow->show();
-    mainWindow->raise();
+    _mainWindow = new MainWindow();
+
+    ImagesetEditor::createToolbar(*this);
+    LayoutEditor::createToolbar(*this);
+
+    _mainWindow->show();
+    _mainWindow->raise();
 
     if (splash)
     {
-        splash->finish(mainWindow);
+        splash->finish(_mainWindow);
         delete splash;
     }
+}
 
-    /*
-        self.errorHandler = ceed.error.ErrorHandler(self.mainWindow)
-        self.errorHandler.installExceptionHook()
-    */
+SettingsSection* Application::getOrCreateShortcutSettingsSection(const QString& groupId, const QString& label)
+{
+    auto category = _settings->getCategory("shortcuts");
+    if (!category) category = _settings->createCategory("shortcuts", "Shortcuts");
+    auto section = category->getSection(groupId);
+    return section ? section : category->createSection(groupId, label);
+}
+
+QAction* Application::registerAction(const QString& groupId, const QString& id, const QString& label,
+                                     const QString& help, QIcon icon, QKeySequence defaultShortcut, bool checkable)
+{
+    QString actualLabel = label.isEmpty() ? id : label;
+    QString settingsLabel = actualLabel.replace("&&", "%amp%").replace("&", "").replace("%amp%", "&&");
+
+    QAction* action = new QAction(this);
+    action->setObjectName(id);
+    action->setText(label);
+    action->setIcon(icon);
+    action->setToolTip(settingsLabel);
+    action->setStatusTip(help);
+    //action->setMenuRole(menuRole);
+    action->setShortcutContext(Qt::WindowShortcut);
+    action->setShortcut(defaultShortcut);
+    action->setCheckable(checkable);
+
+    _globalActions.emplace(groupId + "/" + id, action);
+
+    if (!_settings) return action;
+    auto category = _settings->getCategory("shortcuts");
+    if (!category) return action;
+    auto section = category->getSection(groupId);
+    if (!section) return action;
+
+    SettingsEntryPtr entryPtr(new SettingsEntry(*section, id, defaultShortcut, settingsLabel, help, "keySequence", false, 1));
+    auto entry = section->addEntry(std::move(entryPtr));
+
+    // When the entry changes, we want to change our shortcut too!
+    connect(entry, &SettingsEntry::valueChanged, [action](const QVariant& value)
+    {
+        action->setShortcut(value.value<QKeySequence>());
+    });
+
+    return action;
+}
+
+QAction* Application::getAction(const QString& fullId) const
+{
+    auto it = _globalActions.find(fullId);
+    return (it == _globalActions.end()) ? nullptr : it->second;
+}
+
+void Application::setActionsEnabled(const QString& groupId, bool enabled)
+{
+    const QString prefix = groupId + "/";
+    for (auto& pair : _globalActions)
+        if (pair.first.startsWith(prefix))
+            pair.second->setEnabled(enabled);
 }
 
 // The absolute path to the doc directory
@@ -89,7 +147,7 @@ void Application::createSettingsEntries()
 {
     // General settings
 
-    auto catGlobal = settings->createCategory("global", "Global");
+    auto catGlobal = _settings->createCategory("global", "Global");
     auto secUndoRedo = catGlobal->createSection("undo", "Undo and Redo");
 
     // By default we limit the undo stack to 500 undo commands, should be enough and should
@@ -126,7 +184,7 @@ void Application::createSettingsEntries()
 
     // CEGUI settings
 
-    auto catCEGUI = settings->createCategory("cegui", "Embedded CEGUI");
+    auto catCEGUI = _settings->createCategory("cegui", "Embedded CEGUI");
     auto secBG = catCEGUI->createSection("background", "Rendering background (checkerboard)");
 
     entry.reset(new SettingsEntry(*secBG, "checker_width", 10, "Width of the checkers",
@@ -149,7 +207,7 @@ void Application::createSettingsEntries()
                                   "colour", false, 4));
     secBG->addEntry(std::move(entry));
 
-    ImagesetEditor::createSettings(*settings);
-    LayoutEditor::createSettings(*settings);
-    LookNFeelEditor::createSettings(*settings);
+    ImagesetEditor::createSettings(*_settings);
+    LayoutEditor::createSettings(*_settings);
+    LookNFeelEditor::createSettings(*_settings);
 }

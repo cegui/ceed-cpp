@@ -11,7 +11,6 @@
 #include "src/util/Settings.h"
 #include "src/util/SettingsCategory.h"
 #include "src/util/SettingsEntry.h"
-#include "src/util/ConfigurableAction.h"
 #include "src/Application.h"
 #include <CEGUI/GUIContext.h>
 #include <CEGUI/WindowManager.h>
@@ -48,7 +47,6 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     ceguiWidget->setViewFeatures(true, true, continuousRendering);
 
     setupActions();
-    setupToolBar();
 
     hierarchyDockWidget->setupContextMenu();
 
@@ -132,142 +130,55 @@ void LayoutVisualMode::setupActions()
 {
     Application* app = qobject_cast<Application*>(qApp);
 
-    auto&& settings = app->getSettings();
-    auto category = settings->getCategory("shortcuts");
-    if (!category) category = settings->createCategory("shortcuts", "Shortcuts");
-    auto section = category->createSection("layout", "Layout Editor");
-
-    auto mainWindow = app->getMainWindow();
-
-    actionAbsoluteMode = new ConfigurableAction(mainWindow,
-                                               *section, "absolute_mode", "&Absolute Resizing && Moving Deltas",
-                                               "When resizing and moving widgets, if checked this makes the delta absolute, it is relative if unchecked.",
-                                               QIcon(":/icons/layout_editing/absolute_mode.png"), QKeySequence(Qt::Key_A));
-    actionAbsoluteMode->setCheckable(true);
+    actionAbsoluteMode = app->getAction("layout/absolute_mode");
     actionAbsoluteMode->setChecked(true);
 
-    actionAbsoluteIntegerMode = new ConfigurableAction(mainWindow,
-                                               *section, "abs_integers_mode", "Only Increase/Decrease by Integers When Moving or Resizing",
-                                               "If checked, while resizing or moving widgets in the editor only integer values (e.g. no"
-                                               "0.25 or 0.5 etc.) will be added to the current absolute values. This is only relevant if editing"
-                                               "in zoomed-in view while 'Absolute Resizing and Moving' is activated.",
-                                               QIcon(":/icons/layout_editing/abs_integers_mode.png"), QKeySequence(Qt::Key_Q));
-    actionAbsoluteIntegerMode->setCheckable(true);
+    actionAbsoluteIntegerMode = app->getAction("layout/abs_integers_mode");
     actionAbsoluteIntegerMode->setChecked(true);
 
-    actionSnapGrid = new ConfigurableAction(mainWindow,
-                                            *section, "snap_grid", "Snap to &Grid",
-                                            "When resizing and moving widgets, if checked this makes sure they snap to a snap grid (see "
-                                            "settings for snap grid related entries), also shows the snap grid if checked.",
-                                            QIcon(":/icons/layout_editing/snap_grid.png"), QKeySequence(Qt::Key_Space));
-    actionSnapGrid->setCheckable(true);
+    actionSnapGrid = app->getAction("layout/snap_grid");
+    actionAbsoluteIntegerMode->setChecked(false);
 
-    actionAlignHLeft = new ConfigurableAction(mainWindow,
-                                               *section, "align_hleft", "Align &Left (horizontally)",
-                                               "Sets horizontal alignment of all selected widgets to left.",
-                                               QIcon(":/icons/layout_editing/align_hleft.png"));
-    connect(actionAlignHLeft, &ConfigurableAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Left); });
+    actionAlignHLeft = app->getAction("layout/align_hleft");
+    connect(actionAlignHLeft, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Left); });
 
-    actionAlignHCenter = new ConfigurableAction(mainWindow,
-                                               *section, "align_hcentre", "Align Centre (&horizontally)",
-                                               "Sets horizontal alignment of all selected widgets to centre.",
-                                               QIcon(":/icons/layout_editing/align_hcentre.png"));
-    connect(actionAlignHCenter, &ConfigurableAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Centre); });
+    actionAlignHCenter = app->getAction("layout/align_hcentre");
+    connect(actionAlignHCenter, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Centre); });
 
-    actionAlignHRight = new ConfigurableAction(mainWindow,
-                                               *section, "align_hright", "Align &Right (horizontally)",
-                                               "Sets horizontal alignment of all selected widgets to right.",
-                                               QIcon(":/icons/layout_editing/align_hright.png"));
-    connect(actionAlignHRight, &ConfigurableAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Right); });
+    actionAlignHRight = app->getAction("layout/align_hright");
+    connect(actionAlignHRight, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Right); });
 
-    actionAlignVTop = new ConfigurableAction(mainWindow,
-                                               *section, "align_vtop", "Align &Top (vertically)",
-                                               "Sets vertical alignment of all selected widgets to top.",
-                                               QIcon(":/icons/layout_editing/align_vtop.png"));
-    connect(actionAlignVTop, &ConfigurableAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Top); });
+    actionAlignVTop = app->getAction("layout/align_vtop");
+    connect(actionAlignVTop, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Top); });
 
-    actionAlignVCenter = new ConfigurableAction(mainWindow,
-                                               *section, "align_vcentre", "Align Centre (&vertically)",
-                                               "Sets vertical alignment of all selected widgets to centre.",
-                                               QIcon(":/icons/layout_editing/align_vcentre.png"));
-    connect(actionAlignVCenter, &ConfigurableAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Centre); });
+    actionAlignVCenter = app->getAction("layout/align_vcentre");
+    connect(actionAlignVCenter, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Centre); });
 
-    actionAlignVBottom = new ConfigurableAction(mainWindow,
-                                               *section, "align_vbottom", "Align &Bottom (vertically)",
-                                               "Sets vertical alignment of all selected widgets to bottom.",
-                                               QIcon(":/icons/layout_editing/align_vbottom.png"));
-    connect(actionAlignVBottom, &ConfigurableAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Bottom); });
+    actionAlignVBottom = app->getAction("layout/align_vbottom");
+    connect(actionAlignVBottom, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Bottom); });
 
-    actionNormalizePosition = new ConfigurableAction(mainWindow,
-                                               *section, "normalise_position", "Normalize &Position (cycle)",
-                                               "If the position is mixed (absolute and relative) it becomes relative only, if it's relative it becomes absolute, if it's absolute it becomes relative.",
-                                               QIcon(":/icons/layout_editing/normalise_position.png"), QKeySequence(Qt::Key_D));
-    connect(actionNormalizePosition, &ConfigurableAction::triggered, [this]() { scene->normalizePositionOfSelectedWidgets(); });
+    actionNormalizePosition = app->getAction("layout/normalise_position");
+    connect(actionNormalizePosition, &QAction::triggered, [this]() { scene->normalizePositionOfSelectedWidgets(); });
 
-    actionNormalizeSize = new ConfigurableAction(mainWindow,
-                                               *section, "normalise_size", "Normalize &Size (cycle)",
-                                               "If the size is mixed (absolute and relative) it becomes relative only, if it's relative it becomes absolute, if it's absolute it becomes relative.",
-                                               QIcon(":/icons/layout_editing/normalise_size.png"), QKeySequence(Qt::Key_S));
-    connect(actionNormalizeSize, &ConfigurableAction::triggered, [this]() { scene->normalizeSizeOfSelectedWidgets(); });
+    actionNormalizeSize = app->getAction("layout/normalise_size");
+    connect(actionNormalizeSize, &QAction::triggered, [this]() { scene->normalizeSizeOfSelectedWidgets(); });
 
-    actionRoundPosition = new ConfigurableAction(mainWindow,
-                                               *section, "round_position", "Rounds the absolute position to nearest integer",
-                                               "The value of the absolute position will be rounded to the nearest integer value (e.g.: 1.7 will become 2.0 and -4.2 will become -4.0",
-                                               QIcon(":/icons/layout_editing/round_position.png"), QKeySequence(Qt::Key_M));
-    connect(actionRoundPosition, &ConfigurableAction::triggered, [this]() { scene->roundPositionOfSelectedWidgets(); });
+    actionRoundPosition = app->getAction("layout/round_position");
+    connect(actionRoundPosition, &QAction::triggered, [this]() { scene->roundPositionOfSelectedWidgets(); });
 
-    actionRoundSize = new ConfigurableAction(mainWindow,
-                                               *section, "round_size", "Rounds the absolute size to nearest integer",
-                                               "The value of the absolute size will be rounded to the nearest integer value (e.g.: 1.7 will become 2.0 and -4.2 will become -4.0",
-                                               QIcon(":/icons/layout_editing/round_size.png"), QKeySequence(Qt::Key_N));
-    connect(actionRoundSize, &ConfigurableAction::triggered, [this]() { scene->roundSizeOfSelectedWidgets(); });
+    actionRoundSize = app->getAction("layout/round_size");
+    connect(actionRoundSize, &QAction::triggered, [this]() { scene->roundSizeOfSelectedWidgets(); });
 
-    actionMoveBackward = new ConfigurableAction(mainWindow,
-                                               *section, "move_backward_in_parent_list", "Moves widget -1 step in the parent's widget list",
-                                               "Moves selected widget(s) one step backward in their parent's widget list (Only applicable to SequentialLayoutContainer widgets, VerticalLayoutContainer and HorizontalLayoutContainer in particular.)",
-                                               QIcon(":/icons/layout_editing/move_backward_in_parent_list.png"));
-    connect(actionMoveBackward, &ConfigurableAction::triggered, [this]() { scene->moveSelectedWidgetsInParentWidgetLists(-1); });
+    actionMoveBackward = app->getAction("layout/move_backward_in_parent_list");
+    connect(actionMoveBackward, &QAction::triggered, [this]() { scene->moveSelectedWidgetsInParentWidgetLists(-1); });
 
-    actionMoveForward = new ConfigurableAction(mainWindow,
-                                               *section, "move_forward_in_parent_list", "Moves widget +1 step in the parent's widget list",
-                                               "Moves selected widget(s) one step forward in their parent's widget list (Only applicable to SequentialLayoutContainer widgets, VerticalLayoutContainer and HorizontalLayoutContainer in particular.)",
-                                               QIcon(":/icons/layout_editing/move_forward_in_parent_list.png"));
-    connect(actionMoveForward, &ConfigurableAction::triggered, [this]() { scene->moveSelectedWidgetsInParentWidgetLists(+1); });
+    actionMoveForward = app->getAction("layout/move_forward_in_parent_list");
+    connect(actionMoveForward, &QAction::triggered, [this]() { scene->moveSelectedWidgetsInParentWidgetLists(+1); });
 
     /*
-        cat.createAction(name = "focus_property_inspector_filter_box", label = "&Focus Property Inspector Filter Box",
-                         help_ = "This allows you to easily press a shortcut and immediately search through properties without having to reach for a mouse.",
-                         icon = QtGui.QIcon("icons/layout_editing/focus_property_inspector_filter_box.png"),
-                         defaultShortcut = QtGui.QKeySequence(QtGui.QKeySequence.Find))
-
         self.focusPropertyInspectorFilterBoxAction = action.getAction("layout/focus_property_inspector_filter_box")
         self.connectionGroup.add(self.focusPropertyInspectorFilterBoxAction, receiver = lambda: self.focusPropertyInspectorFilterBox())
     */
-}
-
-void LayoutVisualMode::setupToolBar()
-{
-    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
-    toolBar = mainWindow->createToolbar("Layout");
-    toolBar->addAction(actionAlignHLeft);
-    toolBar->addAction(actionAlignHCenter);
-    toolBar->addAction(actionAlignHRight);
-    toolBar->addSeparator();
-    toolBar->addAction(actionAlignVTop);
-    toolBar->addAction(actionAlignVCenter);
-    toolBar->addAction(actionAlignVBottom);
-    toolBar->addSeparator();
-    toolBar->addAction(actionSnapGrid);
-    toolBar->addAction(actionAbsoluteMode);
-    toolBar->addAction(actionAbsoluteIntegerMode);
-    toolBar->addSeparator();
-    toolBar->addAction(actionNormalizePosition);
-    toolBar->addAction(actionNormalizeSize);
-    toolBar->addAction(actionRoundPosition);
-    toolBar->addAction(actionRoundSize);
-    toolBar->addSeparator();
-    toolBar->addAction(actionMoveBackward);
-    toolBar->addAction(actionMoveForward);
 }
 
 //!!!???to PropertyWidget / PropertyDockWidget?
@@ -439,7 +350,7 @@ void LayoutVisualMode::showEvent(QShowEvent* event)
     hierarchyDockWidget->setEnabled(true);
     mainWindow->getPropertyDockWidget()->setEnabled(true);
     createWidgetDockWidget->setEnabled(true);
-    toolBar->setEnabled(true);
+    mainWindow->getToolbar("Layout")->setEnabled(true);
 
     //???signal from editor to main window instead of storing ptr here?
     if (_editorMenu) _editorMenu->menuAction()->setEnabled(true);
@@ -463,7 +374,7 @@ void LayoutVisualMode::hideEvent(QHideEvent* event)
     hierarchyDockWidget->setEnabled(false);
     mainWindow->getPropertyDockWidget()->setEnabled(false);
     createWidgetDockWidget->setEnabled(false);
-    toolBar->setEnabled(false);
+    mainWindow->getToolbar("Layout")->setEnabled(false);
 
     //???signal from editor to main window instead of storing ptr here?
     if (_editorMenu) _editorMenu->menuAction()->setEnabled(false);

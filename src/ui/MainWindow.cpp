@@ -230,6 +230,26 @@ QToolBar* MainWindow::createToolbar(const QString& name)
     return toolBar;
 }
 
+QToolBar* MainWindow::getToolbar(const QString& name) const
+{
+    return findChild<QToolBar*>(name + " toolbar");
+}
+
+QAction* MainWindow::getActionCut() const
+{
+    return ui->actionCut;
+}
+
+QAction* MainWindow::getActionCopy() const
+{
+    return ui->actionCopy;
+}
+
+QAction* MainWindow::getActionPaste() const
+{
+    return ui->actionPaste;
+}
+
 QAction* MainWindow::getActionDeleteSelected() const
 {
     return ui->actionDelete;

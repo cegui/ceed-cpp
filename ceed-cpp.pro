@@ -106,7 +106,6 @@ SOURCES += \
     src/ui/ResizingHandle.cpp \
     src/editors/imageset/ImagesetUndoCommands.cpp \
     src/ui/widgets/LineEditWithClearButton.cpp \
-    src/util/ConfigurableAction.cpp \
     src/editors/layout/LayoutUndoCommands.cpp \
     src/editors/layout/LayoutVisualMode.cpp \
     src/ui/layout/WidgetHierarchyTreeView.cpp \
@@ -199,7 +198,6 @@ HEADERS += \
     src/ui/ResizingHandle.h \
     src/editors/imageset/ImagesetUndoCommands.h \
     src/ui/widgets/LineEditWithClearButton.h \
-    src/util/ConfigurableAction.h \
     src/editors/layout/LayoutUndoCommands.h \
     src/editors/layout/LayoutVisualMode.h \
     src/ui/layout/WidgetHierarchyTreeView.h \

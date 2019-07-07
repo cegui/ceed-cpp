@@ -4,7 +4,6 @@
 #include "src/ui/layout/LayoutScene.h"
 #include "src/ui/layout/LayoutManipulator.h"
 #include "src/editors/layout/LayoutVisualMode.h"
-#include "src/util/ConfigurableAction.h"
 #include "src/util/Settings.h"
 #include "src/util/SettingsCategory.h"
 #include "src/Application.h"
@@ -24,46 +23,23 @@ void WidgetHierarchyTreeView::setupContextMenu()
 
     Application* app = qobject_cast<Application*>(qApp);
 
-    auto&& settings = app->getSettings();
-    auto category = settings->getCategory("shortcuts");
-    if (!category) category = settings->createCategory("shortcuts", "Shortcuts");
-    auto section = category->createSection("layout", "Layout Editor");
+    actionCopyWidgetPath = app->getAction("layout/copy_widget_path");
+    connect(actionCopyWidgetPath, &QAction::triggered, this, &WidgetHierarchyTreeView::copySelectedWidgetPaths);
 
-    actionCopyWidgetPath = new ConfigurableAction(this,
-                                         *section, "copy_widget_path", "C&opy Widget Paths",
-                                         "Copies the 'NamePath' properties of the selected widgets to the clipboard.",
-                                         QIcon(":/icons/actions/copy.png"));
-    connect(actionCopyWidgetPath, &ConfigurableAction::triggered, this, &WidgetHierarchyTreeView::copySelectedWidgetPaths);
+    actionRename = app->getAction("layout/rename");
+    connect(actionRename, &QAction::triggered, this, &WidgetHierarchyTreeView::editSelectedWidgetName);
 
-    actionRename = new ConfigurableAction(this,
-                                         *section, "rename", "&Rename Widget",
-                                         "Edits the selected widget's name.",
-                                         QIcon(":/icons/layout_editing/rename.png"));
-    connect(actionRename, &ConfigurableAction::triggered, this, &WidgetHierarchyTreeView::editSelectedWidgetName);
+    actionLockWidget = app->getAction("layout/lock_widget");
+    connect(actionLockWidget, &QAction::triggered, [this]() { setSelectedWidgetsLocked(true, false); });
 
-    actionLockWidget = new ConfigurableAction(this,
-                                         *section, "lock_widget", "&Lock Widget",
-                                         "Locks the widget for moving and resizing in the visual editing mode.",
-                                         QIcon(":/icons/layout_editing/lock_widget.png"));
-    connect(actionLockWidget, &ConfigurableAction::triggered, [this]() { setSelectedWidgetsLocked(true, false); });
+    actionUnlockWidget = app->getAction("layout/unlock_widget");
+    connect(actionUnlockWidget, &QAction::triggered, this, [this]() { setSelectedWidgetsLocked(false, false); });
 
-    actionUnlockWidget = new ConfigurableAction(this,
-                                         *section, "unlock_widget", "&Unlock Widget",
-                                         "Unlocks the widget for moving and resizing in the visual editing mode.",
-                                         QIcon(":/icons/layout_editing/unlock_widget.png"));
-    connect(actionUnlockWidget, &ConfigurableAction::triggered, this, [this]() { setSelectedWidgetsLocked(false, false); });
+    actionLockWidgetRecursively = app->getAction("layout/recursively_lock_widget");
+    connect(actionLockWidgetRecursively, &QAction::triggered, this, [this]() { setSelectedWidgetsLocked(true, true); });
 
-    actionLockWidgetRecursively = new ConfigurableAction(this,
-                                         *section, "recursively_lock_widget", "&Lock Widget (recursively)",
-                                         "Locks the widget and all its child widgets for moving and resizing in the visual editing mode.",
-                                         QIcon(":/icons/layout_editing/lock_widget_recursively.png"));
-    connect(actionLockWidgetRecursively, &ConfigurableAction::triggered, this, [this]() { setSelectedWidgetsLocked(true, true); });
-
-    actionUnlockWidgetRecursively = new ConfigurableAction(this,
-                                         *section, "recursively_unlock_widget", "&Unlock Widget (recursively)",
-                                         "Unlocks the widget and all its child widgets for moving and resizing in the visual editing mode.",
-                                         QIcon(":/icons/layout_editing/unlock_widget_recursively.png"));
-    connect(actionUnlockWidgetRecursively, &ConfigurableAction::triggered, this, [this]() { setSelectedWidgetsLocked(false, true); });
+    actionUnlockWidgetRecursively = app->getAction("layout/recursively_unlock_widget");
+    connect(actionUnlockWidgetRecursively, &QAction::triggered, this, [this]() { setSelectedWidgetsLocked(false, true); });
 
     contextMenu = new QMenu(this);
     contextMenu->addAction(actionRename);
@@ -73,16 +49,10 @@ void WidgetHierarchyTreeView::setupContextMenu()
     contextMenu->addAction(actionLockWidgetRecursively);
     contextMenu->addAction(actionUnlockWidgetRecursively);
     contextMenu->addSeparator();
-/*
-        self.cutAction = action.getAction("all_editors/cut")
-        self.contextMenu.addAction(self.cutAction)
-        self.copyAction = action.getAction("all_editors/copy")
-        self.contextMenu.addAction(self.copyAction)
-        self.pasteAction = action.getAction("all_editors/paste")
-        self.contextMenu.addAction(self.pasteAction)
-        self.deleteAction = action.getAction("all_editors/delete")
-        self.contextMenu.addAction(self.deleteAction)
-*/
+    contextMenu->addAction(app->getMainWindow()->getActionCut());
+    contextMenu->addAction(app->getMainWindow()->getActionCopy());
+    contextMenu->addAction(app->getMainWindow()->getActionPaste());
+    contextMenu->addAction(app->getMainWindow()->getActionDeleteSelected());
     contextMenu->addSeparator();
     contextMenu->addAction(actionCopyWidgetPath);
 }
@@ -182,7 +152,7 @@ void WidgetHierarchyTreeView::contextMenuEvent(QContextMenuEvent* event)
     // move the enabling/disabling to a central "selection changed" handler.
     // The handler should be called on tab activations too because
     // activating a tab changes the selection, effectively.
-    // We don't touch the cut/copy/paste actions because they're shared
+    // We don't touch the cut/copy/paste/delete actions because they're shared
     // among all editors and disabling them here would disable them
     // for the other editors too.
     const bool hasSelection = !selectedIndexes().empty();
@@ -192,8 +162,5 @@ void WidgetHierarchyTreeView::contextMenuEvent(QContextMenuEvent* event)
     actionUnlockWidget->setEnabled(hasSelection);
     actionLockWidgetRecursively->setEnabled(hasSelection);
     actionUnlockWidgetRecursively->setEnabled(hasSelection);
-/*
-        self.deleteAction.setEnabled(haveSel)
-*/
     contextMenu->exec(event->globalPos());
 }

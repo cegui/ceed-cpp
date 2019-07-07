@@ -11,8 +11,6 @@ class ImagesetEntry;
 class ImagesetEditorDockWidget;
 class QDomElement;
 class QMenu;
-class QToolBar;
-class ConfigurableAction;
 
 class ImagesetVisualMode : public ResizableGraphicsView, public IEditMode
 {
@@ -22,7 +20,6 @@ public:
 
     void loadImagesetEntryFromElement(const QDomElement& xmlRoot);
     void rebuildEditorMenu(QMenu* editorMenu);
-    void setActionsEnabled(bool enabled);
 
     void refreshSceneRect();
 
@@ -41,7 +38,6 @@ public:
 
     ImagesetEntry* getImagesetEntry() const { return imagesetEntry; }
     ImagesetEditorDockWidget* getDockWidget() const { return dockWidget; }
-    QToolBar* getToolBar() const { return toolBar; }
 
 protected slots:
 
@@ -67,13 +63,12 @@ protected:
     ImagesetEditorDockWidget* dockWidget = nullptr;
     QMenu* _editorMenu = nullptr; // Not owned, just stored when we have control over its content
     QMenu* contextMenu = nullptr;
-    QToolBar* toolBar = nullptr;
 
-    ConfigurableAction* editOffsetsAction = nullptr;
-    ConfigurableAction* cycleOverlappingAction = nullptr;
-    ConfigurableAction* createImageAction = nullptr;
-    ConfigurableAction* duplicateSelectedImagesAction = nullptr;
-    ConfigurableAction* focusImageListFilterBoxAction = nullptr;
+    QAction* editOffsetsAction = nullptr;
+    QAction* cycleOverlappingAction = nullptr;
+    QAction* createImageAction = nullptr;
+    QAction* duplicateSelectedImagesAction = nullptr;
+    QAction* focusImageListFilterBoxAction = nullptr;
 };
 
 #endif // IMAGESETVISUALMODE_H

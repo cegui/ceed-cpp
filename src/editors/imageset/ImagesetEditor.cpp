@@ -8,6 +8,7 @@
 #include "src/ui/imageset/ImagesetEditorDockWidget.h"
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/MainWindow.h"
+#include "src/Application.h"
 #include "qmenu.h"
 #include "qdom.h"
 #include "qfile.h"
@@ -74,8 +75,9 @@ void ImagesetEditor::activate(MainWindow& mainWindow)
 {
     MultiModeEditor::activate(mainWindow);
 
-    mainWindow.addToolBar(Qt::ToolBarArea::TopToolBarArea, visualMode->getToolBar());
-    visualMode->getToolBar()->show();
+    auto toolBar = mainWindow.getToolbar("Imageset");
+    mainWindow.addToolBar(Qt::ToolBarArea::TopToolBarArea, toolBar);
+    toolBar->show();
 
     mainWindow.addDockWidget(Qt::RightDockWidgetArea, visualMode->getDockWidget());
     visualMode->getDockWidget()->setVisible(true);
@@ -90,7 +92,7 @@ void ImagesetEditor::activate(MainWindow& mainWindow)
 void ImagesetEditor::deactivate(MainWindow& mainWindow)
 {
     mainWindow.removeDockWidget(visualMode->getDockWidget());
-    mainWindow.removeToolBar(visualMode->getToolBar());
+    mainWindow.removeToolBar(mainWindow.getToolbar("Imageset"));
     MultiModeEditor::deactivate(mainWindow);
 }
 
@@ -172,6 +174,42 @@ void ImagesetEditor::createSettings(Settings& mgr)
                                   "it seems. If you have a very good GPU, don't tick this.",
                                   "checkbox", true, 2));
     secVisual->addEntry(std::move(entry));
+}
+
+void ImagesetEditor::createActions(Application& app)
+{
+    app.getOrCreateShortcutSettingsSection("imageset", "Imageset Editor");
+
+    app.registerAction("imageset", "edit_offsets", "Edit &Offsets",
+                       "When you select an image definition, a crosshair will appear in it representing it's offset centrepoint.",
+                       QIcon(":/icons/imageset_editing/edit_offsets.png"), QKeySequence(Qt::Key_Space), true);
+
+    app.registerAction("imageset", "cycle_overlapping", "Cycle O&verlapping Image Definitions",
+                       "When images definition overlap in such a way that makes it hard/impossible to select the definition you want, this allows you to select on of them and then just cycle until the right one is selected.",
+                       QIcon(":/icons/imageset_editing/cycle_overlapping.png"), QKeySequence(Qt::Key_Q));
+
+    app.registerAction("imageset", "create_image", "&Create Image Definition",
+                       "Creates a new image definition at the current cursor position, sized 50x50 pixels.",
+                       QIcon(":/icons/imageset_editing/create_image.png"));
+
+    app.registerAction("imageset", "duplicate_image", "&Duplicate Image Definition",
+                       "Duplicates selected image definitions.",
+                       QIcon(":/icons/imageset_editing/duplicate_image.png"));
+
+    app.registerAction("imageset", "focus_image_list_filter_box", "&Filter...",
+                       "This allows you to easily press a shortcut and immediately search through image definitions without having to reach for a mouse.",
+                       QIcon(":/icons/imageset_editing/focus_image_list_filter_box.png"), QKeySequence(QKeySequence::Find));
+}
+
+void ImagesetEditor::createToolbar(Application& app)
+{
+    auto toolBar = app.getMainWindow()->createToolbar("Imageset");
+    toolBar->addAction(app.getAction("imageset/create_image"));
+    toolBar->addAction(app.getAction("imageset/duplicate_image"));
+    toolBar->addSeparator();
+    toolBar->addAction(app.getAction("imageset/edit_offsets"));
+    toolBar->addAction(app.getAction("imageset/cycle_overlapping"));
+    toolBar->setVisible(false);
 }
 
 //---------------------------------------------------------------------

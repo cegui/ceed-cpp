@@ -2,7 +2,6 @@
 #include "src/editors/imageset/ImagesetUndoCommands.h"
 #include "src/util/Settings.h"
 #include "src/util/SettingsCategory.h"
-#include "src/util/ConfigurableAction.h"
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/imageset/ImageEntry.h"
 #include "src/ui/imageset/ImageOffsetMark.h"
@@ -67,57 +66,27 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
 void ImagesetVisualMode::setupActions()
 {
     Application* app = qobject_cast<Application*>(qApp);
-
-    auto&& settings = app->getSettings();
-    auto category = settings->getCategory("shortcuts");
-    if (!category) category = settings->createCategory("shortcuts", "Shortcuts");
-    auto section = category->createSection("imageset", "Imageset Editor");
-
     auto mainWindow = app->getMainWindow();
 
-    editOffsetsAction = new ConfigurableAction(mainWindow,
-                                               *section, "edit_offsets", "Edit &Offsets",
-                                               "When you select an image definition, a crosshair will appear in it representing it's offset centrepoint.",
-                                               QIcon(":/icons/imageset_editing/edit_offsets.png"), QKeySequence(Qt::Key_Space));
-    editOffsetsAction->setCheckable(true);
-    connect(editOffsetsAction, &ConfigurableAction::toggled, this, &ImagesetVisualMode::slot_toggleEditOffsets);
+    editOffsetsAction = app->getAction("imageset/edit_offsets");
+    connect(editOffsetsAction, &QAction::toggled, this, &ImagesetVisualMode::slot_toggleEditOffsets);
 
-    cycleOverlappingAction = new ConfigurableAction(mainWindow,
-                                               *section, "cycle_overlapping", "Cycle O&verlapping Image Definitions",
-                                               "When images definition overlap in such a way that makes it hard/impossible to select the definition you want, this allows you to select on of them and then just cycle until the right one is selected.",
-                                               QIcon(":/icons/imageset_editing/cycle_overlapping.png"), QKeySequence(Qt::Key_Q));
-    connect(cycleOverlappingAction, &ConfigurableAction::triggered, this, &ImagesetVisualMode::cycleOverlappingImages);
+    cycleOverlappingAction = app->getAction("imageset/cycle_overlapping");
+    connect(cycleOverlappingAction, &QAction::triggered, this, &ImagesetVisualMode::cycleOverlappingImages);
 
-    createImageAction = new ConfigurableAction(mainWindow,
-                                               *section, "create_image", "&Create Image Definition",
-                                               "Creates a new image definition at the current cursor position, sized 50x50 pixels.",
-                                               QIcon(":/icons/imageset_editing/create_image.png"));
-    connect(createImageAction, &ConfigurableAction::triggered, this, &ImagesetVisualMode::createImageEntryAtCursor);
+    createImageAction = app->getAction("imageset/create_image");
+    connect(createImageAction, &QAction::triggered, this, &ImagesetVisualMode::createImageEntryAtCursor);
 
-    duplicateSelectedImagesAction = new ConfigurableAction(mainWindow,
-                                               *section, "duplicate_image", "&Duplicate Image Definition",
-                                               "Duplicates selected image definitions.",
-                                               QIcon(":/icons/imageset_editing/duplicate_image.png"));
-    connect(duplicateSelectedImagesAction, &ConfigurableAction::triggered, this, &ImagesetVisualMode::duplicateSelectedImageEntries);
+    duplicateSelectedImagesAction = app->getAction("imageset/duplicate_image");
+    connect(duplicateSelectedImagesAction, &QAction::triggered, this, &ImagesetVisualMode::duplicateSelectedImageEntries);
 
-    focusImageListFilterBoxAction = new ConfigurableAction(mainWindow,
-                                               *section, "focus_image_list_filter_box", "&Filter...",
-                                               "This allows you to easily press a shortcut and immediately search through image definitions without having to reach for a mouse.",
-                                               QIcon(":/icons/imageset_editing/focus_image_list_filter_box.png"),
-                                               QKeySequence(QKeySequence::Find));
-    connect(focusImageListFilterBoxAction, &ConfigurableAction::triggered, [this]()
+    focusImageListFilterBoxAction = app->getAction("imageset/focus_image_list_filter_box");
+    connect(focusImageListFilterBoxAction, &QAction::triggered, [this]()
     {
         dockWidget->focusImageListFilterBox();
     });
 
-    setActionsEnabled(false);
-
-    toolBar = mainWindow->createToolbar("Imageset");
-    toolBar->addAction(createImageAction);
-    toolBar->addAction(duplicateSelectedImagesAction);
-    toolBar->addSeparator();
-    toolBar->addAction(editOffsetsAction);
-    toolBar->addAction(cycleOverlappingAction);
+    app->setActionsEnabled("imageset", false);
 
     contextMenu = new QMenu(this);
     contextMenu->addAction(createImageAction);
@@ -162,15 +131,6 @@ void ImagesetVisualMode::rebuildEditorMenu(QMenu* editorMenu)
     editorMenu->addSeparator();
     editorMenu->addAction(focusImageListFilterBoxAction);
     _editorMenu = editorMenu;
-}
-
-void ImagesetVisualMode::setActionsEnabled(bool enabled)
-{
-    editOffsetsAction->setEnabled(enabled);
-    createImageAction->setEnabled(enabled);
-    duplicateSelectedImagesAction->setEnabled(enabled);
-    cycleOverlappingAction->setEnabled(enabled);
-    focusImageListFilterBoxAction->setEnabled(enabled);
 }
 
 void ImagesetVisualMode::refreshSceneRect()
@@ -468,13 +428,16 @@ void ImagesetVisualMode::slot_customContextMenu(QPoint point)
 
 void ImagesetVisualMode::showEvent(QShowEvent* event)
 {
+    Application& app = *qobject_cast<Application*>(qApp);
+    auto mainWindow = app.getMainWindow();
+
     dockWidget->setEnabled(true);
-    toolBar->setEnabled(true);
+    mainWindow->getToolbar("Imageset")->setEnabled(true);
 
     //???signal from editor to main window instead of storing ptr here?
     if (_editorMenu) _editorMenu->menuAction()->setEnabled(true);
 
-    setActionsEnabled(true);
+    app.setActionsEnabled("imageset", true);
 
     // Call this every time the visual editing is shown to sync all entries up
     slot_toggleEditOffsets(editOffsetsAction->isChecked());
@@ -484,13 +447,16 @@ void ImagesetVisualMode::showEvent(QShowEvent* event)
 
 void ImagesetVisualMode::hideEvent(QHideEvent* event)
 {
-    setActionsEnabled(false);
+    Application& app = *qobject_cast<Application*>(qApp);
+    auto mainWindow = app.getMainWindow();
+
+    app.setActionsEnabled("imageset", false);
 
     //???signal from editor to main window instead of storing ptr here?
     if (_editorMenu) _editorMenu->menuAction()->setEnabled(false);
 
     dockWidget->setEnabled(false);
-    toolBar->setEnabled(false);
+    mainWindow->getToolbar("Imageset")->setEnabled(false);
 
     ResizableGraphicsView::hideEvent(event);
 }

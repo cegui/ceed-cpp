@@ -19,7 +19,6 @@ class CreateWidgetDockWidget;
 class WidgetHierarchyDockWidget;
 class QDockWidget;
 class QMenu;
-class QToolBar;
 class QAction;
 
 class LayoutVisualMode : public QWidget, public IEditMode
@@ -45,7 +44,6 @@ public:
     LayoutScene* getScene() const { return scene; }
     CreateWidgetDockWidget* getCreateWidgetDockWidget() const { return createWidgetDockWidget; }
     WidgetHierarchyDockWidget* getHierarchyDockWidget() const { return hierarchyDockWidget; }
-    QToolBar* getToolBar() const { return toolBar; }
     QAction* getAbsoluteModeAction() const { return actionAbsoluteMode; }
     const QBrush& getSnapGridBrush() const;
 
@@ -56,7 +54,6 @@ public:
 protected:
 
     void setupActions();
-    void setupToolBar();
     void focusPropertyInspectorFilterBox();
 
     virtual void showEvent(QShowEvent* event) override;
@@ -69,7 +66,6 @@ protected:
     CEGUIWidget* ceguiWidget = nullptr;
     CreateWidgetDockWidget* createWidgetDockWidget = nullptr;
     WidgetHierarchyDockWidget* hierarchyDockWidget = nullptr;
-    QToolBar* toolBar = nullptr;
     QMenu* _editorMenu = nullptr; // Not owned, just stored when we have control over its content
 
     QAction* actionAlignHLeft = nullptr;

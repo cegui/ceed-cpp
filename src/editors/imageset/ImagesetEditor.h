@@ -15,12 +15,15 @@
 class ImagesetVisualMode;
 class ImagesetCodeMode;
 class Settings;
+class Application;
 
 class ImagesetEditor : public MultiModeEditor
 {
 public:
 
     static void createSettings(Settings& mgr);
+    static void createActions(Application& app);
+    static void createToolbar(Application& app);
 
     ImagesetEditor(const QString& filePath);
 

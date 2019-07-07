@@ -30,7 +30,6 @@ SettingsSection* SettingsCategory::getSection(const QString& name) const
         return sec->getName() == name;
     });
 
-    assert(it != sections.end());
     return (it != sections.end()) ? it->get() : nullptr;
 }
 
