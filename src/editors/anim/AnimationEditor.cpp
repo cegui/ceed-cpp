@@ -18,6 +18,16 @@ AnimationEditor::AnimationEditor(const QString& filePath)
 */
 }
 
+QString AnimationEditor::getFileTypesDescription() const
+{
+    return AnimationEditorFactory::animationFileTypesDescription();
+}
+
+QStringList AnimationEditor::getFileExtensions() const
+{
+    return AnimationEditorFactory::animationFileExtensions();
+}
+
 /*
     def initialise(self, mainWindow):
         super(AnimationListTabbedEditor, self).initialise(mainWindow)
@@ -119,12 +129,12 @@ AnimationEditor::AnimationEditor(const QString& filePath)
 */
 //---------------------------------------------------------------------
 
-QString AnimationEditorFactory::getFileTypesDescription() const
+QString AnimationEditorFactory::animationFileTypesDescription()
 {
-    return "Animation files";
+    return "Animation set";
 }
 
-QStringList AnimationEditorFactory::getFileExtensions() const
+QStringList AnimationEditorFactory::animationFileExtensions()
 {
     /*
         extensions = animation_list_compatibility.manager.getAllPossibleExtensions()

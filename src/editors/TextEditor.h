@@ -33,6 +33,9 @@ public:
 
 protected:
 
+    virtual QString getFileTypesDescription() const override;
+    virtual QStringList getFileExtensions() const override;
+
     virtual void getRawData(QByteArray& outRawData) override;
     virtual void markAsUnchanged() override;
 
@@ -47,8 +50,11 @@ class TextEditorFactory : public EditorFactoryBase
 {
 public:
 
-    virtual QString getFileTypesDescription() const override;
-    virtual QStringList getFileExtensions() const override;
+    static QString textFileTypesDescription();
+    static QStringList textFileExtensions();
+
+    virtual QString getFileTypesDescription() const override { return textFileTypesDescription(); }
+    virtual QStringList getFileExtensions() const override { return textFileExtensions(); }
     virtual EditorBasePtr create(const QString& filePath) const override;
 };
 

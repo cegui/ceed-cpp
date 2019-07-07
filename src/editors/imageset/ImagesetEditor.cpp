@@ -31,6 +31,7 @@ void ImagesetEditor::initialize()
 
     QDomDocument doc;
 
+    if (!_filePath.isEmpty())
     {
         QFile file(_filePath);
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -148,6 +149,16 @@ QString ImagesetEditor::getSourceCode() const
     return doc.toString(4);
 }
 
+QString ImagesetEditor::getFileTypesDescription() const
+{
+    return ImagesetEditorFactory::imagesetFileTypesDescription();
+}
+
+QStringList ImagesetEditor::getFileExtensions() const
+{
+    return ImagesetEditorFactory::imagesetFileExtensions();
+}
+
 void ImagesetEditor::getRawData(QByteArray& outRawData)
 {
     // If user saved in code mode, we process the code by propagating it to visual
@@ -214,12 +225,12 @@ void ImagesetEditor::createToolbar(Application& app)
 
 //---------------------------------------------------------------------
 
-QString ImagesetEditorFactory::getFileTypesDescription() const
+QString ImagesetEditorFactory::imagesetFileTypesDescription()
 {
-    return "Imageset files";
+    return "Imageset";
 }
 
-QStringList ImagesetEditorFactory::getFileExtensions() const
+QStringList ImagesetEditorFactory::imagesetFileExtensions()
 {
     /*
         extensions = imageset_compatibility.manager.getAllPossibleExtensions()

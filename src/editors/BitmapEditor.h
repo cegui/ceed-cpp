@@ -18,6 +18,9 @@ public:
 
 protected:
 
+    virtual QString getFileTypesDescription() const override;
+    virtual QStringList getFileExtensions() const override;
+
     BitmapEditorWidget widget;
 };
 
@@ -25,8 +28,11 @@ class BitmapEditorFactory : public EditorFactoryBase
 {
 public:
 
-    virtual QString getFileTypesDescription() const override;
-    virtual QStringList getFileExtensions() const override;
+    static QString bitmapFileTypesDescription();
+    static QStringList bitmapFileExtensions();
+
+    virtual QString getFileTypesDescription() const override { return bitmapFileTypesDescription(); }
+    virtual QStringList getFileExtensions() const override { return bitmapFileExtensions(); }
     virtual EditorBasePtr create(const QString& filePath) const override;
 };
 

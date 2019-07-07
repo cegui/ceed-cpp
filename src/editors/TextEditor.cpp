@@ -12,6 +12,7 @@ void TextEditor::initialize()
 
     textDocument = new QTextDocument();
 
+    if (!_filePath.isEmpty())
     {
         QFile file(_filePath);
         if (file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -126,6 +127,16 @@ bool TextEditor::hasChanges() const
     return textDocument && textDocument->isModified();
 }
 
+QString TextEditor::getFileTypesDescription() const
+{
+    return TextEditorFactory::textFileTypesDescription();
+}
+
+QStringList TextEditor::getFileExtensions() const
+{
+    return TextEditorFactory::textFileExtensions();
+}
+
 void TextEditor::updateFont()
 {
     QFont font("Courier New", fontSize);
@@ -135,14 +146,14 @@ void TextEditor::updateFont()
 
 //---------------------------------------------------------------------
 
-QString TextEditorFactory::getFileTypesDescription() const
+QString TextEditorFactory::textFileTypesDescription()
 {
-    return "Text files";
+    return "Text";
 }
 
-QStringList TextEditorFactory::getFileExtensions() const
+QStringList TextEditorFactory::textFileExtensions()
 {
-    return { "py", "lua", "txt", "xml", "ini", "log", "hrd",
+    return { "txt", "xml", "py", "lua", "ini", "log", "hrd",
         // FIXME: these are temporary until the appropriate editor is implemented
         "scheme", "font" };
 }

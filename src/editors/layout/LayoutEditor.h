@@ -42,8 +42,10 @@ public:
 
 protected:
 
+    virtual QString getFileTypesDescription() const override;
+    virtual QStringList getFileExtensions() const override;
+
     virtual void getRawData(QByteArray& outRawData) override;
-    //virtual void markAsUnchanged();
 
     LayoutVisualMode* visualMode = nullptr;
     LayoutCodeMode* codeMode = nullptr;
@@ -53,8 +55,11 @@ class LayoutEditorFactory : public EditorFactoryBase
 {
 public:
 
-    virtual QString getFileTypesDescription() const override;
-    virtual QStringList getFileExtensions() const override;
+    static QString layoutFileTypesDescription();
+    static QStringList layoutFileExtensions();
+
+    virtual QString getFileTypesDescription() const override { return layoutFileTypesDescription(); }
+    virtual QStringList getFileExtensions() const override { return layoutFileExtensions(); }
     virtual EditorBasePtr create(const QString& filePath) const override;
 };
 

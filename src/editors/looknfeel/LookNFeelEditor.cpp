@@ -138,6 +138,16 @@ QString LookNFeelEditor::unmapWidgetLookReferences(const CEGUI::String& lookNFee
     return "";
 }
 
+QString LookNFeelEditor::getFileTypesDescription() const
+{
+    return LookNFeelEditorFactory::lnfFileTypesDescription();
+}
+
+QStringList LookNFeelEditor::getFileExtensions() const
+{
+    return LookNFeelEditorFactory::lnfFileExtensions();
+}
+
 void LookNFeelEditor::getRawData(QByteArray& outRawData)
 {
     // If user saved in code mode, we process the code by propagating it to visual
@@ -442,12 +452,12 @@ void LookNFeelEditor::createSettings(Settings& mgr)
 }
 //---------------------------------------------------------------------
 
-QString LookNFeelEditorFactory::getFileTypesDescription() const
+QString LookNFeelEditorFactory::lnfFileTypesDescription()
 {
-    return "Look and feel files";
+    return "Look and feel";
 }
 
-QStringList LookNFeelEditorFactory::getFileExtensions() const
+QStringList LookNFeelEditorFactory::lnfFileExtensions()
 {
     /*
         extensions = looknfeel_compatibility.manager.getAllPossibleExtensions()

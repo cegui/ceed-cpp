@@ -12,14 +12,24 @@ void BitmapEditor::initialize()
     widget.openFile(_filePath);
 }
 
-//---------------------------------------------------------------------
-
-QString BitmapEditorFactory::getFileTypesDescription() const
+QString BitmapEditor::getFileTypesDescription() const
 {
-    return "Text files";
+    return BitmapEditorFactory::bitmapFileTypesDescription();
 }
 
-QStringList BitmapEditorFactory::getFileExtensions() const
+QStringList BitmapEditor::getFileExtensions() const
+{
+    return BitmapEditorFactory::bitmapFileExtensions();
+}
+
+//---------------------------------------------------------------------
+
+QString BitmapEditorFactory::bitmapFileTypesDescription()
+{
+    return "Bitmap";
+}
+
+QStringList BitmapEditorFactory::bitmapFileExtensions()
 {
     return { "png", "jpg", "jpeg", "tga", "dds" };
 }

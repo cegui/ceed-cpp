@@ -13,14 +13,22 @@ public:
 
     virtual QWidget* getWidget() override { return &tabs; }
     virtual bool requiresProject() const override { return true; }
+
+protected:
+
+    virtual QString getFileTypesDescription() const override;
+    virtual QStringList getFileExtensions() const override;
 };
 
 class AnimationEditorFactory : public EditorFactoryBase
 {
 public:
 
-    virtual QString getFileTypesDescription() const override;
-    virtual QStringList getFileExtensions() const override;
+    static QString animationFileTypesDescription();
+    static QStringList animationFileExtensions();
+
+    virtual QString getFileTypesDescription() const override { return animationFileTypesDescription(); }
+    virtual QStringList getFileExtensions() const override { return animationFileExtensions(); }
     virtual EditorBasePtr create(const QString& filePath) const override;
 };
 

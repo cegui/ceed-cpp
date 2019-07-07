@@ -55,8 +55,7 @@ MainWindow::MainWindow(QWidget *parent) :
     for (const auto& factory : editorFactories)
     {
         QStringList ext = factory->getFileExtensions();
-        QString filter = factory->getFileTypesDescription() + " (%1)";
-        filter = filter.arg("*." + ext.join(" *."));
+        QString filter = QString("%1 files (%2)").arg(factory->getFileTypesDescription(), "*." + ext.join(" *."));
         editorFactoryFileFilters.append(filter);
 
         allExt.append(ext);
@@ -735,10 +734,7 @@ void MainWindow::openEditorTab(const QString& absolutePath)
 {
     if (activateEditorTabByFilePath(absolutePath)) return;
 
-    EditorBase* editor = createEditorForFile(absolutePath);
-    if (!editor) return;
-
-    ui->tabs->setCurrentWidget(editor->getWidget());
+    openNewEditor(createEditorForFile(absolutePath));
 }
 
 // Closes given editor tab.
@@ -822,7 +818,7 @@ bool MainWindow::activateEditorTabByFilePath(const QString& absolutePath)
 
 // Creates a new editor for file at given absolutePath. This always creates a new editor,
 // it is not advised to use this method directly, use openEditorTab instead.
-EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
+EditorBasePtr MainWindow::createEditorForFile(const QString& absolutePath)
 {
     EditorBasePtr ret = nullptr;
 
@@ -901,26 +897,7 @@ EditorBase* MainWindow::createEditorForFile(const QString& absolutePath)
         }
     }
 
-    assert(ret);
-    if (!ret) return nullptr;
-
-    if (!CEGUIManager::Instance().isProjectLoaded() && ret->requiresProject())
-    {
-        ret.reset(new NoEditor(absolutePath,
-            "Opening this file requires you to have a project opened!"));
-    }
-
-    // Will cleanup itself inside if something went wrong
-    ret->initialize();
-
-    // Intentionally before addTab for getEditorForTab()
-    auto retPtr = ret.get();
-    activeEditors.push_back(std::move(ret));
-
-    const int newTabIdx = ui->tabs->addTab(retPtr->getWidget(), retPtr->getLabelText());
-    ui->tabs->setTabToolTip(newTabIdx, retPtr->getFilePath());
-
-    return retPtr;
+    return ret;
 }
 
 void MainWindow::on_actionOpenFile_triggered()
@@ -1196,115 +1173,58 @@ void MainWindow::on_actionReloadResources_triggered()
 
 void MainWindow::on_actionNewLayout_triggered()
 {
-    createNewFile("New Layout", { "Layout files (*.layout)" }, 0, "layout");
+    for (auto& factory : editorFactories)
+    {
+        if (auto typedFactory = dynamic_cast<LayoutEditorFactory*>(factory.get()))
+        {
+            openNewEditor(typedFactory->create(QString()));
+            return;
+        }
+    }
 }
 
 void MainWindow::on_actionNewImageset_triggered()
 {
-    createNewFile("New Imageset", { "Imageset files (*.imageset)" }, 0, "imageset");
+    for (auto& factory : editorFactories)
+    {
+        if (auto typedFactory = dynamic_cast<ImagesetEditorFactory*>(factory.get()))
+        {
+            openNewEditor(typedFactory->create(QString()));
+            return;
+        }
+    }
 }
 
 void MainWindow::on_actionNewOtherFile_triggered()
 {
-    createNewFile("New File", QStringList(), 0, "");
-}
-
-void MainWindow::createNewFile(const QString& title, const QStringList& filters, int currFilter, const QString& autoSuffix)
-{
-    QString defaultDir;
-    if (CEGUIManager::Instance().isProjectLoaded())
-        defaultDir = CEGUIManager::Instance().getCurrentProject()->getAbsolutePathOf("");
-
-/*
-    # Qt (as of 4.8) does not support default suffix (extension) unless you use
-    # non-native file dialogs with non-static methods (see QFileDialog.setDefaultSuffix).
-    # HACK: We handle this differently depending on whether a default suffix is required
-
-    if filtersList is None or len(filtersList) == 0 or not autoSuffix:
-*/
-
-    QString selectedFilter = (currFilter >= 0 && currFilter < filters.size()) ? filters[currFilter] : "";
-    QString fileName;
-    /*
-    QString fileName = QFileDialog::getSaveFileName(this,
-                                                    title,
-                                                    defaultDir,
-                                                    filters.join(";;"),
-                                                    &selectedFilter);
-    */
-
-    QFileDialog dialog(this, title, defaultDir, filters.join(";;"));
-    dialog.selectNameFilter(selectedFilter);
-    dialog.setDefaultSuffix(autoSuffix);
-
-    if (dialog.exec())
-        fileName = dialog.selectedFiles()[0];
-
-    if (!fileName.isEmpty())
+    for (auto& factory : editorFactories)
     {
-        QFile file(fileName);
-        if (!file.open(QIODevice::WriteOnly))
+        if (auto typedFactory = dynamic_cast<TextEditorFactory*>(factory.get()))
         {
-            QMessageBox::critical(this, "Error creating file!",
-                                  "CEED encountered an error trying to create a new file " + fileName);
+            openNewEditor(typedFactory->create(QString()));
             return;
         }
-        file.close();
-        openEditorTab(fileName);
+    }
+}
+
+void MainWindow::openNewEditor(EditorBasePtr editor)
+{
+    if (!editor) return;
+
+    if (!CEGUIManager::Instance().isProjectLoaded() && editor->requiresProject())
+    {
+        editor.reset(new NoEditor(editor->getFilePath(),
+            "Opening this file requires you to have a project opened!"));
     }
 
-/*
-    else:
-        while True:
-            fileName, selectedFilter = QtGui.QFileDialog.getSaveFileName(self,
-                                                                         title,
-                                                                         defaultDir,
-                                                                         ";;".join(filtersList) if filtersList is not None and len(filtersList) > 0 else None,
-                                                                         filtersList[selectedFilterIndex] if filtersList is not None and len(filtersList) > selectedFilterIndex else None,
-                                                                         QtGui.QFileDialog.DontConfirmOverwrite)
-            if not fileName:
-                break
+    // Will cleanup itself inside if something went wrong
+    editor->initialize();
 
-            # if there is no dot, append the selected filter's extension
-            if fileName.find(".") == -1:
-                # really ugly, handle with care
-                # find last open paren
-                i = selectedFilter.rfind("(")
-                if i != -1:
-                    # find next dot
-                    i = selectedFilter.find(".", i)
-                    if i != -1:
-                        # find next space or close paren
-                        k = selectedFilter.find(")", i)
-                        l = selectedFilter.find(" ", i)
-                        if l != -1 and l < k:
-                            k = l
-                        if k != -1:
-                            selectedExt = selectedFilter[i:k]
-                            if selectedExt.find("*") == -1 and selectedExt.find("?") == -1:
-                                fileName += selectedExt
+    // Intentionally before ui->tabs->... to make getEditorForTab() in on_tabs_currentChanged() work
+    auto editorPtr = editor.get();
+    activeEditors.push_back(std::move(editor));
 
-            # and now test & confirm overwrite
-            try:
-                if os.path.exists(fileName):
-                    msgBox = QtGui.QMessageBox(self)
-                    msgBox.setText("A file named \"%s\" already exists in \"%s\"." % (os.path.basename(fileName), os.path.dirname(fileName)))
-                    msgBox.setInformativeText("Do you want to replace it, overwriting its contents?")
-                    msgBox.addButton(QtGui.QMessageBox.Cancel)
-                    replaceButton = msgBox.addButton("&Replace", QtGui.QMessageBox.YesRole)
-                    msgBox.setDefaultButton(replaceButton)
-                    msgBox.setIcon(QtGui.QMessageBox.Question)
-                    msgBox.exec_()
-                    if msgBox.clickedButton() != replaceButton:
-                        continue
-                f = open(fileName, "w")
-                f.close()
-            except IOError as e:
-                QtGui.QMessageBox.critical(self, "Error creating file!",
-                                                 "CEED encountered an error trying to create a new file.\n\n(exception details: %s)" % (e))
-                return
-
-            self.openEditorTab(fileName)
-            break
-*/
+    const int newTabIdx = ui->tabs->addTab(editorPtr->getWidget(), editorPtr->getLabelText());
+    ui->tabs->setTabToolTip(newTabIdx, editorPtr->getFilePath());
+    ui->tabs->setCurrentWidget(editorPtr->getWidget());
 }

@@ -49,25 +49,28 @@ void LayoutEditor::initialize()
 
     try
     {
-        QByteArray rawData;
+        if (!_filePath.isEmpty())
         {
-            QFile file(_filePath);
-            if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+            QByteArray rawData;
             {
-                QMessageBox::warning(nullptr, "File read error", "Layout editor can't read file " + _filePath);
-                return;
+                QFile file(_filePath);
+                if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+                {
+                    QMessageBox::warning(nullptr, "File read error", "Layout editor can't read file " + _filePath);
+                    return;
+                }
+
+                rawData = file.readAll();
             }
 
-            rawData = file.readAll();
-        }
-
-        if (rawData.size() > 0)
-        {
-            CEGUI::Window* widget = CEGUI::WindowManager::getSingleton().loadLayoutFromString(CEGUIUtils::qStringToString(rawData));
-            auto root = new LayoutManipulator(*visualMode, nullptr, widget);
-            root->updateFromWidget();
-            root->createChildManipulators(true, false, false);
-            visualMode->setRootWidgetManipulator(root);
+            if (rawData.size() > 0)
+            {
+                CEGUI::Window* widget = CEGUI::WindowManager::getSingleton().loadLayoutFromString(CEGUIUtils::qStringToString(rawData));
+                auto root = new LayoutManipulator(*visualMode, nullptr, widget);
+                root->updateFromWidget();
+                root->createChildManipulators(true, false, false);
+                visualMode->setRootWidgetManipulator(root);
+            }
         }
     }
     catch (const std::exception& e)
@@ -152,6 +155,16 @@ void LayoutEditor::zoomReset()
         visualMode->zoomReset();
 }
 
+QString LayoutEditor::getFileTypesDescription() const
+{
+    return LayoutEditorFactory::layoutFileTypesDescription();
+}
+
+QStringList LayoutEditor::getFileExtensions() const
+{
+    return LayoutEditorFactory::layoutFileExtensions();
+}
+
 void LayoutEditor::getRawData(QByteArray& outRawData)
 {
     // If user saved in code mode, we process the code by propagating it to visual
@@ -163,8 +176,7 @@ void LayoutEditor::getRawData(QByteArray& outRawData)
     if (!currentRootWidget)
     {
         QMessageBox::warning(nullptr, "No root widget in the layout!",
-                             "I am refusing to save your layout, CEGUI layouts are invalid unless they have a root widget!\n\n"
-                             "Please create a root widget before saving.");
+                             "Please create a root widget in order to use this layout in CEGUI.");
         return;
     }
 
@@ -376,12 +388,12 @@ void LayoutEditor::createToolbar(Application& app)
 
 //---------------------------------------------------------------------
 
-QString LayoutEditorFactory::getFileTypesDescription() const
+QString LayoutEditorFactory::layoutFileTypesDescription()
 {
-    return "Layout files";
+    return "Layout";
 }
 
-QStringList LayoutEditorFactory::getFileExtensions() const
+QStringList LayoutEditorFactory::layoutFileExtensions()
 {
     /*
         extensions = layout_compatibility.manager.getAllPossibleExtensions()

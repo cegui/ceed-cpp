@@ -78,6 +78,9 @@ protected:
 
     void enableFileMonitoring(bool enable);
 
+    virtual QString getFileTypesDescription() const = 0;
+    virtual QStringList getFileExtensions() const = 0;
+
     virtual void getRawData(QByteArray& /*outRawData*/) {}
     virtual void markAsUnchanged();
 

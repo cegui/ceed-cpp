@@ -111,14 +111,13 @@ private:
     bool confirmProjectClosing(bool onlyModified);
     void loadProject(const QString& path);
 
-    EditorBase* createEditorForFile(const QString& absolutePath);
+    void openNewEditor(EditorBasePtr editor);
+    EditorBasePtr createEditorForFile(const QString& absolutePath);
     bool activateEditorTabByFilePath(const QString& absolutePath);
     void closeEditorTab(EditorBase* editor);
     bool closeAllTabsRequiringProject();
     EditorBase* getEditorForTab(int index) const;
     EditorBase* getEditorForTab(QWidget* tabWidget) const;
-
-    void createNewFile(const QString& title, const QStringList& filters, int currFilter, const QString& autoSuffix);
 
     Ui::MainWindow* ui;
     ProjectManager* projectManager = nullptr;

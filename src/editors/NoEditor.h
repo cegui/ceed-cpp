@@ -19,6 +19,9 @@ public:
 
 private:
 
+    virtual QString getFileTypesDescription() const override { return QString(); }
+    virtual QStringList getFileExtensions() const override { return QStringList(); }
+
     QScrollArea* widget = nullptr;
 };
 

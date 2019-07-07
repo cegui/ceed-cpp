@@ -48,6 +48,9 @@ public:
 
 protected:
 
+    virtual QString getFileTypesDescription() const override;
+    virtual QStringList getFileExtensions() const override;
+
     virtual void getRawData(QByteArray& outRawData) override;
 
     ImagesetVisualMode* visualMode = nullptr;
@@ -58,8 +61,11 @@ class ImagesetEditorFactory : public EditorFactoryBase
 {
 public:
 
-    virtual QString getFileTypesDescription() const override;
-    virtual QStringList getFileExtensions() const override;
+    static QString imagesetFileTypesDescription();
+    static QStringList imagesetFileExtensions();
+
+    virtual QString getFileTypesDescription() const override { return imagesetFileTypesDescription(); }
+    virtual QStringList getFileExtensions() const override { return imagesetFileExtensions(); }
     virtual EditorBasePtr create(const QString& filePath) const override;
 };
 

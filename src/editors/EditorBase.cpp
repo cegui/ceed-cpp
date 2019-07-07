@@ -1,11 +1,14 @@
 #include "src/editors/EditorBase.h"
 #include "src/Application.h"
 #include "src/util/Settings.h"
+#include "src/cegui/CEGUIManager.h"
+#include "src/cegui/CEGUIProject.h"
 #include "qdir.h"
 #include "qmenu.h"
 #include "qmessagebox.h"
 #include "qfilesystemwatcher.h"
 #include "qundostack.h"
+#include <qfiledialog.h>
 
 // Constructs the editor.
 // compatibilityManager - manager that should be used to transform data between
@@ -14,7 +17,6 @@
 EditorBase::EditorBase(/*compatibilityManager, */ const QString& filePath, bool createUndoStack)
 {
     _filePath = QDir::cleanPath(filePath);
-    _labelText = QFileInfo(filePath).fileName(); //.baseName();
 /*
         self.compatibilityManager = compatibilityManager
         self.desiredSavingDataType = "" if self.compatibilityManager is None else self.compatibilityManager.EditorNativeType
@@ -103,6 +105,10 @@ void EditorBase::onFileChangedByExternalProgram()
 void EditorBase::initialize()
 {
     assert(!_initialized);
+    if (_initialized) return;
+
+    _labelText = _filePath.isEmpty() ? ("New " + getFileTypesDescription().toLower()) : QFileInfo(_filePath).fileName();
+
 /*
     if self.compatibilityManager is not None:
         rawData = codecs.open(self.filePath, mode = "r", encoding = "utf-8").read()
@@ -236,17 +242,42 @@ bool EditorBase::hasChanges() const
 // targetPath should be absolute file path.
 bool EditorBase::saveAs(const QString& targetPath)
 {
+    QString actualPath;
+    if (targetPath.isEmpty())
+    {
+        // Editor target is new, ask for a file location and name
+
+        QString defaultDir;
+        if (CEGUIManager::Instance().isProjectLoaded())
+            defaultDir = CEGUIManager::Instance().getCurrentProject()->getAbsolutePathOf("");
+
+        QStringList ext = getFileExtensions();
+
+        QStringList filters;
+        filters.append(QString("%1 files (%2)").arg(getFileTypesDescription(), "*." + ext.join(" *.")));
+        filters.append("All files (*)");
+
+        QFileDialog dialog(getWidget(), ("New " + getFileTypesDescription().toLower()), defaultDir, filters.join(";;"));
+        dialog.setDefaultSuffix(ext[0]);
+
+        if (dialog.exec())
+            actualPath = dialog.selectedFiles()[0];
+        else
+            return false;
+    }
+    else actualPath = targetPath;
+
     // Stop monitoring the file, the changes that are about to occur are not
     // picked up as being from an external program! Also file renaming breaks
     // watching it, so re-enabling monitor is necessary.
     enableFileMonitoring(false);
 
-    QFile file(targetPath);
+    QFile file(actualPath);
     if (!file.open(QIODevice::WriteOnly))
     {
         QMessageBox::critical(qobject_cast<Application*>(qApp)->getMainWindow(),
                               "Error saving file!",
-                              "CEED encountered an error trying to save the file " + targetPath);
+                              "CEED encountered an error trying to save the file " + actualPath);
         enableFileMonitoring(true);
         return false;
     }
@@ -263,8 +294,8 @@ bool EditorBase::saveAs(const QString& targetPath)
     constexpr bool updateCurrentPath = true;
     if (updateCurrentPath)
     {
-        _filePath = targetPath;
-        _labelText = QFileInfo(_filePath).fileName(); //.baseName();
+        _filePath = actualPath;
+        _labelText = QFileInfo(_filePath).fileName();
         emit labelChanged();
     }
 
