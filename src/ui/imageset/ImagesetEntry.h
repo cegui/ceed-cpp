@@ -12,8 +12,10 @@ class ImageEntry;
 class QFileSystemWatcher;
 class ImagesetVisualMode;
 
-class ImagesetEntry : public QGraphicsPixmapItem
+class ImagesetEntry : public QObject, public QGraphicsPixmapItem
 {
+    Q_OBJECT
+
 public:
 
     ImagesetEntry(ImagesetVisualMode& visualMode);
@@ -21,7 +23,7 @@ public:
 
     void loadFromElement(const QDomElement& xml);
     void saveToElement(QDomElement& xml);
-    void loadImage(const QString& relPath);
+    void loadImage(const QString& absPath);
 
     QString name() const { return _name; }
     void setName(const QString& newName) { _name = newName; }
@@ -39,11 +41,9 @@ public:
     bool showOffsets() const { return _showOffsets; }
     void setShowOffsets(bool value) { _showOffsets = value; }
 
-    const QString& getImageFile() const { return imageFile; }
-    QString getAbsoluteImageFile() const;
-    QString convertToRelativeImageFile(const QString& absPath) const;
+    const QString& getImageFile() const { return imageAbsPath; }
 
-protected:// slots:
+protected slots:
 
     void onImageChangedByExternalProgram();
 
@@ -52,7 +52,7 @@ protected:
     ImagesetVisualMode& _visualMode;
 
     QString _name = "Unknown";
-    QString imageFile;
+    QString imageAbsPath;
     QString autoScaled = "false";
     int nativeHorzRes = 800;
     int nativeVertRes = 600;

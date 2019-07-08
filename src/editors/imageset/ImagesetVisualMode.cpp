@@ -615,10 +615,10 @@ void ImagesetVisualMode::keyReleaseEvent(QKeyEvent* event)
             handled = deleteSelectedImageEntries();
             break;
         }
-        case Qt::Key_A:
-        case Qt::Key_D:
-        case Qt::Key_W:
-        case Qt::Key_S:
+        case Qt::Key_Left:
+        case Qt::Key_Right:
+        case Qt::Key_Up:
+        case Qt::Key_Down:
         {
             std::vector<ImageEntry*> selection;
             for (QGraphicsItem* item : scene()->selectedItems())
@@ -645,10 +645,10 @@ void ImagesetVisualMode::keyReleaseEvent(QKeyEvent* event)
                 QPointF delta(0.0, 0.0);
                 switch (event->key())
                 {
-                    case Qt::Key_A: delta.setX(-1.0); break;
-                    case Qt::Key_D: delta.setX(1.0); break;
-                    case Qt::Key_W: delta.setY(-1.0); break;
-                    case Qt::Key_S: delta.setY(1.0); break;
+                    case Qt::Key_Left: delta.setX(-1.0); break;
+                    case Qt::Key_Right: delta.setX(1.0); break;
+                    case Qt::Key_Up: delta.setY(-1.0); break;
+                    case Qt::Key_Down: delta.setY(1.0); break;
                 }
 
                 if (event->modifiers() & Qt::ControlModifier) delta *= 10.0;

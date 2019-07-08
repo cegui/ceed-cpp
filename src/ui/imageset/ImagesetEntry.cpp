@@ -12,7 +12,8 @@
 #include "qpen.h"
 
 ImagesetEntry::ImagesetEntry(ImagesetVisualMode& visualMode)
-    : QGraphicsPixmapItem() // Top-level item
+    : QObject(&visualMode)
+    , QGraphicsPixmapItem() // Top-level item
     , _visualMode(visualMode)
 {
     setShapeMode(BoundingRectShape);
@@ -33,7 +34,8 @@ void ImagesetEntry::loadFromElement(const QDomElement& xml)
 {
     _name = xml.attribute("name", "Unknown");
 
-    loadImage(xml.attribute("imagefile", ""));
+    const QString imageRelPath = xml.attribute("imagefile", "");
+    loadImage(QFileInfo(_visualMode.getEditor().getFilePath()).dir().absoluteFilePath(imageRelPath));
 
     nativeHorzRes = xml.attribute("nativeHorzRes", "800").toInt();
     nativeVertRes = xml.attribute("nativeVertRes", "600").toInt();
@@ -57,7 +59,7 @@ void ImagesetEntry::saveToElement(QDomElement& xml)
     xml.setAttribute("version", "2");
 
     xml.setAttribute("name", _name);
-    xml.setAttribute("imagefile", imageFile);
+    xml.setAttribute("imagefile", QDir::cleanPath(QFileInfo(_visualMode.getEditor().getFilePath()).dir().relativeFilePath(imageAbsPath)));
 
     xml.setAttribute("nativeHorzRes", QString::number(nativeHorzRes));
     xml.setAttribute("nativeVertRes", QString::number(nativeVertRes));
@@ -108,20 +110,6 @@ void ImagesetEntry::removeImageEntry(const QString& name)
     delete image;
 }
 
-//Returns an absolute (OS specific!) path of the underlying image
-QString ImagesetEntry::getAbsoluteImageFile() const
-{
-    auto imagesetPath = _visualMode.getEditor().getFilePath();
-    return QFileInfo(imagesetPath).dir().absoluteFilePath(imageFile);
-}
-
-// Converts given absolute underlying image path relative to the directory where the .imageset file resides
-QString ImagesetEntry::convertToRelativeImageFile(const QString& absPath) const
-{
-    QDir imagesetDir = QFileInfo(_visualMode.getEditor().getFilePath()).dir();
-    return QDir::cleanPath(imagesetDir.relativeFilePath(absPath));
-}
-
 // Monitor the image with a QFilesystemWatcher, ask user to reload if changes to the file were made
 void ImagesetEntry::onImageChangedByExternalProgram()
 {
@@ -134,14 +122,14 @@ void ImagesetEntry::onImageChangedByExternalProgram()
     displayingReloadAlert = true;
 
     auto ret = QMessageBox::question(qobject_cast<Application*>(qApp)->getMainWindow(),
-                                     QString("Underlying image '%1' has been modified externally!").arg(imageFile),
+                                     QString("Underlying image '%1' has been modified externally!").arg(imageAbsPath),
                                      "The file has been modified outside the CEGUI Unified Editor.\n\nReload the file?\n\n"
                                      "If you select Yes, UNDO HISTORY MIGHT BE PARTIALLY BROKEN UNLESS THE NEW SIZE IS THE "
                                      "SAME OR LARGER THAN THE OLD!",
                                      QMessageBox::No | QMessageBox::Yes,
                                      QMessageBox::No); // defaulting to No is safer IMO
 
-    if (ret == QMessageBox::Yes) loadImage(imageFile);
+    if (ret == QMessageBox::Yes) loadImage(imageAbsPath);
 
     displayingReloadAlert = false;
 }
@@ -149,16 +137,15 @@ void ImagesetEntry::onImageChangedByExternalProgram()
 // Replaces the underlying image (if any is loaded) to the image on given relative path
 // Relative path is relative to the directory where the .imageset file resides
 // (which is usually your project's imageset resource group path)
-void ImagesetEntry::loadImage(const QString& relPath)
+void ImagesetEntry::loadImage(const QString& absPath)
 {
     // If imageMonitor is null, then no images are being watched or the
     // editor is first being opened up
     // Otherwise, the image is being changed or switched, and the monitor
     // should update itself accordingly
-    if (imageMonitor) imageMonitor->removePath(getAbsoluteImageFile());
+    if (imageMonitor) imageMonitor->removePath(imageAbsPath);
 
-    imageFile = relPath;
-    QString absPath = getAbsoluteImageFile();
+    imageAbsPath = absPath;
     setPixmap(QPixmap(absPath));
     transparencyBackground->setRect(boundingRect());
 
@@ -175,7 +162,7 @@ void ImagesetEntry::loadImage(const QString& relPath)
     if (!imageMonitor)
     {
         imageMonitor = new QFileSystemWatcher();
-        //connect(imageMonitor, &QFileSystemWatcher::fileChanged, this, &ImagesetEntry::onImageChangedByExternalProgram);
+        connect(imageMonitor, &QFileSystemWatcher::fileChanged, this, &ImagesetEntry::onImageChangedByExternalProgram);
     }
     imageMonitor->addPath(absPath);
 }

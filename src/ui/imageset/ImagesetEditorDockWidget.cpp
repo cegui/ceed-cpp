@@ -117,7 +117,7 @@ void ImagesetEditorDockWidget::refreshImagesetInfo()
     if (!imagesetEntry) return;
 
     ui->name->setText(imagesetEntry->name());
-    ui->image->setText(imagesetEntry->getAbsoluteImageFile());
+    ui->image->setText(imagesetEntry->getImageFile());
     ui->autoScaled->setCurrentIndex(ui->autoScaled->findText(imagesetEntry->getAutoScaled()));
     ui->nativeHorzRes->setText(QString::number(imagesetEntry->getNativeHorzRes()));
     ui->nativeVertRes->setText(QString::number(imagesetEntry->getNativeVertRes()));
@@ -223,7 +223,7 @@ void ImagesetEditorDockWidget::on_name_textEdited(const QString& arg1)
 void ImagesetEditorDockWidget::on_imageLoad_clicked()
 {
     auto oldName = imagesetEntry->getImageFile();
-    auto newName = imagesetEntry->convertToRelativeImageFile(ui->image->text());
+    auto newName = ui->image->text();
     if (oldName == newName) return;
     _visualMode.getEditor().getUndoStack()->push(new ImagesetChangeImageCommand(_visualMode, oldName, newName));
 }

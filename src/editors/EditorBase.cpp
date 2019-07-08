@@ -282,6 +282,10 @@ bool EditorBase::saveAs(const QString& targetPath)
         return false;
     }
 
+    // Do it before obtaining raw data since it may contain relative pathes.
+    // For example imageset XML contains a relative path to underlying image.
+    _filePath = actualPath;
+
     QByteArray rawData;
     getRawData(rawData);
 /*
@@ -291,16 +295,11 @@ bool EditorBase::saveAs(const QString& targetPath)
     file.write(rawData);
     file.close();
 
-    constexpr bool updateCurrentPath = true;
-    if (updateCurrentPath)
-    {
-        _filePath = actualPath;
-        _labelText = QFileInfo(_filePath).fileName();
-        emit labelChanged();
-    }
-
     enableFileMonitoring(true);
     markAsUnchanged();
+
+    _labelText = QFileInfo(_filePath).fileName();
+    emit labelChanged();
 
     return true;
 }
