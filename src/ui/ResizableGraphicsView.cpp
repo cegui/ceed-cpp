@@ -36,18 +36,21 @@ void ResizableGraphicsView::zoomIn()
 {
     zoomFactor = std::min(zoomFactor * 2.0, 256.0);
     setTransform(QTransform::fromScale(zoomFactor, zoomFactor));
+    emit zoomChanged(zoomFactor);
 }
 
 void ResizableGraphicsView::zoomOut()
 {
     zoomFactor = std::max(zoomFactor * 0.5, 0.125);
     setTransform(QTransform::fromScale(zoomFactor, zoomFactor));
+    emit zoomChanged(zoomFactor);
 }
 
 void ResizableGraphicsView::zoomReset()
 {
     zoomFactor = 1.0;
     setTransform(QTransform::fromScale(zoomFactor, zoomFactor));
+    emit zoomChanged(zoomFactor);
 }
 
 void ResizableGraphicsView::wheelEvent(QWheelEvent *event)

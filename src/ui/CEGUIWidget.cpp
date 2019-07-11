@@ -11,12 +11,19 @@ CEGUIWidget::CEGUIWidget(QWidget *parent) :
     ui->setupUi(this);
 
     ui->view->setBackgroundRole(QPalette::Dark);
-    ui->lblCursorPosition->setText("");
 
+    ui->lblCursorPosition->setText("");
     connect(ui->view, &CEGUIGraphicsView::cursorPositionChanged, [this](int x, int y)
     {
         QString text("Cursor: x %1, y %2");
         ui->lblCursorPosition->setText(text.arg(x).arg(y));
+    });
+
+    ui->lblZoom->setText("Zoom: 100%");
+    connect(ui->view, &ResizableGraphicsView::zoomChanged, [this](qreal factor)
+    {
+        QString text("Zoom: %1%");
+        ui->lblZoom->setText(text.arg(static_cast<int>(factor * 100.0)));
     });
 }
 

@@ -13,6 +13,8 @@
 
 class ResizableGraphicsView : public QGraphicsView
 {
+    Q_OBJECT
+
 public:
 
     ResizableGraphicsView(QWidget *parent = nullptr);
@@ -29,6 +31,10 @@ public:
     virtual void mousePressEvent(QMouseEvent *event) override;
     virtual void mouseReleaseEvent(QMouseEvent *event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
+
+signals:
+
+    void zoomChanged(qreal factor);
 
 protected:
 
