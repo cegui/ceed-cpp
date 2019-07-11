@@ -46,11 +46,12 @@ public:
 
     void resetPen();
 
-protected:
-
+    // For redirection from children
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dropEvent(QGraphicsSceneDragDropEvent* event) override;
+
+protected:
 
     virtual void onPropertyChanged(const QtnPropertyBase* changedProperty, CEGUI::Property* ceguiProperty) override;
     virtual void onWidgetNameChanged() override;
