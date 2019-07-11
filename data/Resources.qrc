@@ -107,5 +107,8 @@
         <file>icons/anchors/SelfRight.png</file>
         <file>icons/anchors/SelfVCenter.png</file>
         <file>icons/anchors/SelfVStretch.png</file>
+        <file>icons/widgets/GLC.png</file>
+        <file>icons/widgets/HLC.png</file>
+        <file>icons/widgets/VLC.png</file>
     </qresource>
 </RCC>

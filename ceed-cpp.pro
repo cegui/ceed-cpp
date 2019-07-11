@@ -306,4 +306,7 @@ DISTFILES += \
     data/icons/anchors/SelfRight.png \
     data/icons/anchors/SelfTop.png \
     data/icons/anchors/SelfVCenter.png \
-    data/icons/anchors/SelfVStretch.png
+    data/icons/anchors/SelfVStretch.png \
+    data/icons/widgets/GLC.png \
+    data/icons/widgets/HLC.png \
+    data/icons/widgets/VLC.png
