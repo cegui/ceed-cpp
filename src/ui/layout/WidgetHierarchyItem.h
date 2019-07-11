@@ -14,7 +14,6 @@ public:
     virtual QStandardItem* clone() const override;
     virtual void setData(const QVariant& value, int role = Qt::UserRole + 1) override;
 
-    int getWidgetIdxInParent() const;
     void refreshPathData(bool recursive = true);
     void refreshOrderingData(bool resort = true, bool recursive = true);
     void setLocked(bool locked, bool recursive = false);

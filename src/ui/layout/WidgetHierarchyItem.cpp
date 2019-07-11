@@ -41,22 +41,6 @@ void WidgetHierarchyItem::setData(const QVariant& value, int role)
     return QStandardItem::setData(value, role);
 }
 
-//  TODO: Move this to CEGUI::Window
-int WidgetHierarchyItem::getWidgetIdxInParent() const
-{
-    auto widget = _manipulator->getWidget();
-    if (!widget) return -1;
-
-    auto parent = widget->getParent();
-    if (!parent) return 0;
-
-    for (size_t i = 0; i < parent->getChildCount(); ++i)
-        if (parent->getChildAtIdx(i) == widget)
-            return static_cast<int>(i);
-
-    return -1;
-}
-
 // Updates the stored path data for the item and its children
 // NOTE: We use widget path here because that's what QVariant can serialise and pass forth
 //       I have had weird segfaults when storing manipulator directly here, perhaps they
@@ -84,9 +68,11 @@ void WidgetHierarchyItem::refreshOrderingData(bool resort, bool recursive)
     // resort=True with recursive=False makes no sense and is a bug
     assert(!resort || recursive);
 
-    if (!_manipulator) return;
+    if (!_manipulator || !_manipulator->getWidget()) return;
 
-    setData(getWidgetIdxInParent(), Qt::UserRole + 1);
+    auto widget = _manipulator->getWidget();
+    const int idxInParent = widget->getParent() ? static_cast<int>(widget->getParent()->getChildIdx(widget)) : 0;
+    setData(idxInParent, Qt::UserRole + 1);
 
     if (recursive)
     {

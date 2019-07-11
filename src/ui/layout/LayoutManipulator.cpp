@@ -187,7 +187,7 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
         }
     }
 
-    if (dynamic_cast<CEGUI::LayoutContainer*>(_widget))
+    if (isLayoutContainer())
     {
         // LayoutContainers change their size to fit the widgets, it makes no sense to show this size
         _showOutline = false;
@@ -197,8 +197,7 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
     }
 
     // If the widget is parented inside a layout container we don't want any drag moving to be possible
-    auto parent = _widget->getParent();
-    if (dynamic_cast<CEGUI::LayoutContainer*>(parent))
+    if (dynamic_cast<CEGUI::LayoutContainer*>(_widget->getParent()))
         setFlags(flags() & ~ItemIsMovable);
 
     _visualMode.getScene()->onManipulatorUpdatedFromWidget(this);

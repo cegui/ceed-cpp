@@ -435,8 +435,10 @@ void LayoutScene::onSelectionChanged()
     }
     else
     {
-        // Show anchors for the only selected widget
+        // Show anchors for the only selected widget, except layout containers
         _anchorTarget = *selectedWidgets.begin();
+        if (_anchorTarget->isLayoutContainer())
+            _anchorTarget = nullptr;
     }
 
     if (_anchorTextX) _anchorTextX->setVisible(false);

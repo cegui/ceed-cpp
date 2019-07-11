@@ -29,6 +29,8 @@ public:
 
     virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
 
+    bool isLayoutContainer() const;
+
     virtual QSizeF getMinSize() const override;
     virtual QSizeF getMaxSize() const override;
     CEGUI::Sizef getBaseSize() const;

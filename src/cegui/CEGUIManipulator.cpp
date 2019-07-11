@@ -208,6 +208,11 @@ void CEGUIManipulator::impl_paint(QPainter* painter, const QStyleOptionGraphicsI
     painter->drawLine(midYPoint + yOffset, endYPoint + yOffset);
 }
 
+bool CEGUIManipulator::isLayoutContainer() const
+{
+    return !!dynamic_cast<CEGUI::LayoutContainer*>(_widget);
+}
+
 QSizeF CEGUIManipulator::getMinSize() const
 {
     if (_widget)
@@ -572,7 +577,7 @@ void CEGUIManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs)
         // We are trying to find a topmost LC (in case of nested LCs) and recursively update it
         QGraphicsItem* topmostLC = nullptr;
         auto item = parentItem();
-        while (item && dynamic_cast<CEGUI::LayoutContainer*>(static_cast<CEGUIManipulator*>(item)->_widget))
+        while (item && static_cast<CEGUIManipulator*>(item)->isLayoutContainer())
         {
             topmostLC = item;
             item = item->parentItem();
