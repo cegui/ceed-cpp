@@ -1,5 +1,6 @@
 #include "src/ui/layout/LayoutManipulator.h"
 #include "src/ui/layout/LayoutScene.h"
+#include "src/ui/layout/LayoutContainerHandle.h"
 #include "src/ui/layout/WidgetHierarchyItem.h"
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutUndoCommands.h"
@@ -21,6 +22,10 @@ LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem
 {
     resetPen(); // We override the pen so we must set it in the constructor
     setAcceptDrops(true);
+
+    if (isLayoutContainer())
+        _lcHandle = new LayoutContainerHandle(*this);
+
     QObject::connect(_visualMode.getAbsoluteModeAction(), &QAction::toggled, [this]
     {
         // Immediately update if possible
@@ -159,15 +164,12 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
     CEGUIManipulator::updateFromWidget(callUpdate, updateAncestorLCs);
     _ignoreSnapGrid = false;
 
-    _showOutline = true;
-
     auto currFlags = flags();
     currFlags |= (ItemIsFocusable | ItemIsSelectable | ItemIsMovable);
     currFlags &= ~ItemHasNoContents;
-    setFlags(currFlags);
 
-    setResizingEnabled(true);
-
+    _showOutline = true;
+    _resizeable = true;
     if (_widget->isAutoWindow())
     {
         auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
@@ -178,27 +180,27 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
 
         if (!settings->getEntryValue("layout/visual/auto_widgets_selectable").toBool())
         {
-            // Make this widget not focusable, selectable, movable and resizable
-            auto newFlags = flags();
-            newFlags |= ItemHasNoContents;
-            newFlags &= ~(ItemIsFocusable | ItemIsSelectable | ItemIsMovable);
-            setFlags(newFlags);
-            setResizingEnabled(false);
+            // Make this widget non-interactive
+            currFlags |= ItemHasNoContents;
+            currFlags &= ~(ItemIsFocusable | ItemIsSelectable | ItemIsMovable);
+            _resizeable = false;
         }
     }
 
     if (isLayoutContainer())
     {
-        // LayoutContainers change their size to fit the widgets, it makes no sense to show this size
-        _showOutline = false;
-
-        // And it makes no sense to resize them, they will just snap back when they relayout
-        setResizingEnabled(false);
+        // It makes no sense to resize LCs, they will just snap back when they relayout
+        _resizeable = false;
     }
 
+    // FIXME LC: drag inside sequential layouts at least
+    // Only size handles (right, bottom) and anchors
     // If the widget is parented inside a layout container we don't want any drag moving to be possible
     if (dynamic_cast<CEGUI::LayoutContainer*>(_widget->getParent()))
-        setFlags(flags() & ~ItemIsMovable);
+        currFlags &= ~ItemIsMovable;
+
+    setFlags(currFlags);
+    setResizingEnabled(_resizeable);
 
     _visualMode.getScene()->onManipulatorUpdatedFromWidget(this);
 }
@@ -276,7 +278,7 @@ void LayoutManipulator::setLocked(bool locked)
     setFlag(ItemIsSelectable, !locked);
     setFlag(ItemIsFocusable, !locked);
 
-    setResizingEnabled(!locked);
+    setResizingEnabled(_resizeable && !locked);
 
     update();
 }

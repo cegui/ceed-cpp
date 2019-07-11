@@ -353,6 +353,11 @@ void LayoutCreateCommand::redo()
     // Ensure this isn't obscured by it's parent
     manipulator->moveToFront();
 
+    // Make only the new widget selected
+    _visualMode.getScene()->clearSelection();
+    _visualMode.getHierarchyDockWidget()->getTreeView()->clearSelection();
+    manipulator->setSelected(true);
+
     _visualMode.getHierarchyDockWidget()->refresh();
 
     QUndoCommand::redo();

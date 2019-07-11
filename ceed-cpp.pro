@@ -53,6 +53,7 @@ SOURCES += \
     src/ui/layout/AnchorCornerHandle.cpp \
     src/ui/layout/AnchorEdgeHandle.cpp \
     src/ui/layout/AnchorPopupMenu.cpp \
+    src/ui/layout/LayoutContainerHandle.cpp \
     src/ui/widgets/FileLineEdit.cpp \
     src/ui/dialogs/LicenseDialog.cpp \
     src/ui/dialogs/AboutDialog.cpp \
@@ -155,6 +156,7 @@ HEADERS += \
     src/ui/layout/AnchorCornerHandle.h \
     src/ui/layout/AnchorEdgeHandle.h \
     src/ui/layout/AnchorPopupMenu.h \
+    src/ui/layout/LayoutContainerHandle.h \
     src/ui/widgets/FileLineEdit.h \
     src/ui/dialogs/LicenseDialog.h \
     src/ui/dialogs/AboutDialog.h \

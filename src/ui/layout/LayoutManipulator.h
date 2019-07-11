@@ -7,6 +7,7 @@
 
 class WidgetHierarchyItem;
 class LayoutVisualMode;
+class LayoutContainerHandle;
 
 class LayoutManipulator : public CEGUIManipulator
 {
@@ -66,11 +67,13 @@ protected:
 
     LayoutVisualMode& _visualMode;
     WidgetHierarchyItem* _treeItem = nullptr;
+    LayoutContainerHandle* _lcHandle = nullptr;
 
     QPointF _lastNewPos;
     QRectF _lastNewRect;
 
     bool _showOutline = true;
+    bool _resizeable = true;
     bool _drawSnapGrid = false;
     bool _snapGridNonClientArea = false;
     bool _ignoreSnapGrid = false;
