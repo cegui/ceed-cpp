@@ -11,9 +11,9 @@ public:
 
     LayoutContainerHandle(LayoutManipulator& host);
 
-protected:
-
     void updateLook();
+
+protected:
 
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;
@@ -23,7 +23,8 @@ protected:
     void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
     void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
 
-    bool _hovered = false;
+    bool _mouseOver = false;
+    bool _ignoreGeometryChanges = false;
 };
 
 #endif // LAYOUTCONTAINERHANDLE_H

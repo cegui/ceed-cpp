@@ -54,9 +54,9 @@ void ImageEntry::notifyResizeStarted()
     label->setVisible(false);
 }
 
-void ImageEntry::notifyResizeFinished(QPointF newPos, QRectF newRect)
+void ImageEntry::notifyResizeFinished(QPointF newPos, QSizeF newSize)
 {
-    ResizableRectItem::notifyResizeFinished(newPos, newRect);
+    ResizableRectItem::notifyResizeFinished(newPos, newSize);
 
     auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
     if (_mouseOver && settings->getEntryValue("imageset/visual/overlay_image_labels").toBool())

@@ -19,7 +19,7 @@ public:
 
     virtual QRectF constrainResizeRect(QRectF rect, QRectF oldRect) override;
     virtual void notifyResizeStarted() override;
-    virtual void notifyResizeFinished(QPointF newPos, QRectF newRect) override;
+    virtual void notifyResizeFinished(QPointF newPos, QSizeF newSize) override;
 
     void loadFromElement(const QDomElement& xml);
     void saveToElement(QDomElement& xml);

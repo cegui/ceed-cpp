@@ -5,6 +5,7 @@
 #include "src/ui/layout/AnchorCornerHandle.h"
 #include "src/ui/layout/AnchorEdgeHandle.h"
 #include "src/ui/layout/AnchorPopupMenu.h"
+#include "src/ui/layout/LayoutContainerHandle.h"
 #include "src/ui/NumericValueItem.h"
 #include "src/ui/ResizingHandle.h"
 #include "src/util/Utils.h"
@@ -392,7 +393,7 @@ void LayoutScene::onSelectionChanged()
         {
             selectedWidgets.insert(manipulator);
         }
-        else if (dynamic_cast<ResizingHandle*>(item))
+        else if (dynamic_cast<ResizingHandle*>(item) || dynamic_cast<LayoutContainerHandle*>(item))
         {
             if (auto manipulator = dynamic_cast<LayoutManipulator*>(item->parentItem()))
                 selectedWidgets.insert(manipulator);

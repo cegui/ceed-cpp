@@ -39,18 +39,21 @@ LayoutContainerHandle::LayoutContainerHandle(LayoutManipulator& host)
 
     QPixmap pixmap(iconName);
     setPixmap(pixmap);
+    _ignoreGeometryChanges = true;
     setPos(-pixmap.size().width(), -pixmap.size().height());
+    _ignoreGeometryChanges = false;
     updateLook();
 }
 
 void LayoutContainerHandle::updateLook()
 {
-    setOpacity(_hovered || isSelected() ? 1.0 : 0.5);
+    const bool active = _mouseOver || isSelected() || parentItem()->isSelected();
+    setOpacity(active ? 1.0 : 0.5);
 }
 
 void LayoutContainerHandle::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
 {
-    _hovered = true;
+    _mouseOver = true;
     if (event->mimeData()->hasFormat("application/x-ceed-widget-type"))
     {
         updateLook();
@@ -60,7 +63,7 @@ void LayoutContainerHandle::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
 
 void LayoutContainerHandle::dragLeaveEvent(QGraphicsSceneDragDropEvent* event)
 {
-    _hovered = false;
+    _mouseOver = false;
     updateLook();
     return static_cast<LayoutManipulator*>(parentItem())->dragLeaveEvent(event);
 }
@@ -73,9 +76,28 @@ void LayoutContainerHandle::dropEvent(QGraphicsSceneDragDropEvent* event)
 
 QVariant LayoutContainerHandle::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value)
 {
-    if (change == ItemSelectedHasChanged)
+    if (change == ItemSelectedChange)
+    {
+        // We disallow multi-selecting a handle and its parent
+        if (parentItem()->isSelected()) return false;
+    }
+    else if (change == ItemSelectedHasChanged)
     {
         updateLook();
+    }
+    else if (change == ItemPositionChange)
+    {
+        // Change of the handle position moves the host
+        auto hostManipulator = static_cast<LayoutManipulator*>(parentItem());
+        if (!_ignoreGeometryChanges && !hostManipulator->moveInProgress())
+            hostManipulator->beginMoving();
+
+        if (hostManipulator->moveInProgress())
+        {
+            auto delta = value.toPointF() - pos();
+            hostManipulator->performMoving(delta, true);
+            return pos() + delta;
+        }
     }
 
     return QGraphicsPixmapItem::itemChange(change, value);
@@ -84,13 +106,13 @@ QVariant LayoutContainerHandle::itemChange(QGraphicsItem::GraphicsItemChange cha
 void LayoutContainerHandle::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
 {
     QGraphicsPixmapItem::hoverEnterEvent(event);
-    _hovered = true;
+    _mouseOver = true;
     updateLook();
 }
 
 void LayoutContainerHandle::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
 {
-    _hovered = false;
+    _mouseOver = false;
     updateLook();
     QGraphicsPixmapItem::hoverLeaveEvent(event);
 }

@@ -55,6 +55,8 @@ void ResizableRectItem::setResizingEnabled(bool enabled)
     }
 }
 
+// FIXME: dangerous!
+//???handle in rect changes in itemChange() instead?
 void ResizableRectItem::setRect(QRectF newRect)
 {
     if (newRect != rect()) _handlesDirty = true;
@@ -104,9 +106,9 @@ void ResizableRectItem::performResizing(qreal& deltaLeft, qreal& deltaTop, qreal
 
     setRect(newRect);
 
-    QPointF parentNewPos = pos() + rect().topLeft();
-    QRectF parentNewRect(0.0, 0.0, rect().width(), rect().height());
-    notifyResizeProgress(parentNewPos, parentNewRect);
+    QPointF newPos = pos() + rect().topLeft();
+    QSizeF newSize(rect().width(), rect().height());
+    notifyResizeProgress(newPos, newSize);
 }
 
 void ResizableRectItem::endResizing()
@@ -116,10 +118,63 @@ void ResizableRectItem::endResizing()
     _resizeInProgress = false;
     setPen(_mouseOver ? getHoverPen() : getNormalPen());
 
-    // Resize was in progress and just ended
-    QPointF parentNewPos = pos() + rect().topLeft();
-    QRectF parentNewRect(0.0, 0.0, rect().width(), rect().height());
-    notifyResizeFinished(parentNewPos, parentNewRect);
+    QPointF newPos = pos() + rect().topLeft();
+    QSizeF newSize(rect().width(), rect().height());
+
+    _ignoreGeometryChanges = true;
+    setPos(newPos);
+    setRect(QRectF(0.0, 0.0, rect().width(), rect().height()));
+    _ignoreGeometryChanges = false;
+
+    notifyResizeFinished(newPos, newSize);
+}
+
+void ResizableRectItem::beginMoving()
+{
+    assert(!_resizeInProgress);
+    _moveInProgress = true;
+    _moveStartPos = pos();
+
+    setPen(getPenWhileMoving());
+    hideAllHandles();
+
+    notifyMoveStarted();
+}
+
+// Moving may be performed internally by dragging an item itself
+// or externally by dragging a handle (layout containers use it)
+void ResizableRectItem::performMoving(QPointF& delta, bool external)
+{
+    auto currPos = pos() + rect().topLeft();
+    auto newPos = constrainMovePoint(currPos + delta);
+
+    delta = newPos - currPos;
+
+    if (external)
+    {
+        // Emulate moving without touching our coord system,
+        // so that handle moving happens in stable conditions
+        setRect(rect().translated(delta));
+    }
+
+    notifyMoveProgress(newPos);
+}
+
+void ResizableRectItem::endMoving()
+{
+    if (!_moveInProgress) return;
+
+    _moveInProgress = false;
+    setPen(_mouseOver ? getHoverPen() : getNormalPen());
+
+    QPointF newPos = pos() + rect().topLeft();
+
+    _ignoreGeometryChanges = true;
+    setPos(newPos);
+    setRect(QRectF(0.0, 0.0, rect().width(), rect().height()));
+    _ignoreGeometryChanges = false;
+
+    notifyMoveFinished(newPos);
 }
 
 QRectF ResizableRectItem::constrainResizeRect(QRectF rect, QRectF /*oldRect*/)
@@ -186,19 +241,7 @@ void ResizableRectItem::onScaleChanged(qreal scaleX, qreal scaleY)
 
 void ResizableRectItem::mouseReleaseEventSelected(QMouseEvent* /*event*/)
 {
-    if (_moveInProgress)
-    {
-        _moveInProgress = false;
-        notifyMoveFinished(pos());
-    }
-}
-
-void ResizableRectItem::notifyResizeFinished(QPointF newPos, QRectF newRect)
-{
-    _ignoreGeometryChanges = true;
-    setRect(newRect);
-    setPos(newPos);
-    _ignoreGeometryChanges = false;
+    endMoving();
 }
 
 // Updates all the handles according to geometry
@@ -290,25 +333,14 @@ QVariant ResizableRectItem::itemChange(GraphicsItemChange change, const QVariant
     }
     else if (change == ItemPositionChange)
     {
-        auto point = constrainMovePoint(value.toPointF());
-        if (!_moveInProgress && !_ignoreGeometryChanges)
-        {
-            assert(!_resizeInProgress);
-            _moveInProgress = true;
-            _moveStartPos = pos();
-
-            setPen(getPenWhileMoving());
-
-            hideAllHandles();
-
-            notifyMoveStarted();
-        }
+        if (!_ignoreGeometryChanges && !_moveInProgress)
+            beginMoving();
 
         if (_moveInProgress)
         {
-            // 'point' is the new position, self.pos() is the old position,
-            // we use 'point' to avoid the 1 pixel lag
-            notifyMoveProgress(point);
+            auto delta = value.toPointF() - pos();
+            performMoving(delta, false);
+            return pos() + delta;
         }
     }
 

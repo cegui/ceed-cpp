@@ -23,6 +23,7 @@ public:
     void setRect(QRectF newRect);
     void setRect(qreal ax, qreal ay, qreal w, qreal h) { setRect(QRectF(ax, ay, w, h)); }
     bool isAnyHandleSelected() const;
+    bool moveInProgress() const { return _moveInProgress; }
     bool resizeInProgress() const { return _resizeInProgress; }
     QPointF getResizeStartPos() const { return _resizeStartPos; }
     QRectF getResizeStartRect() const { return _resizeStartRect; }
@@ -30,6 +31,9 @@ public:
     void beginResizing(const QGraphicsItem& handle);
     void performResizing(qreal& deltaLeft, qreal& deltaTop, qreal& deltaRight, qreal& deltaBottom);
     void endResizing();
+    void beginMoving();
+    void performMoving(QPointF& delta, bool external);
+    void endMoving();
 
     virtual QPointF constrainMovePoint(QPointF value) { return value; }
     virtual QRectF constrainResizeRect(QRectF rect, QRectF oldRect);
@@ -41,8 +45,8 @@ public:
 
     virtual void notifyHandleSelected(ResizingHandle* /*handle*/) {}
     virtual void notifyResizeStarted() {}
-    virtual void notifyResizeProgress(QPointF /*newPos*/, QRectF /*newRect*/) {}
-    virtual void notifyResizeFinished(QPointF newPos, QRectF newRect);
+    virtual void notifyResizeProgress(QPointF /*newPos*/, QSizeF /*newSize*/) {}
+    virtual void notifyResizeFinished(QPointF /*newPos*/, QSizeF /*newSize*/) {}
     virtual void notifyMoveStarted() {}
     virtual void notifyMoveProgress(QPointF /*newPos*/) {}
     virtual void notifyMoveFinished(QPointF /*newPos*/) {}

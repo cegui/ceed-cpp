@@ -30,15 +30,11 @@ LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem
     {
         // Immediately update if possible
         if (_resizeInProgress)
-        {
-            notifyResizeProgress(_lastNewPos, _lastNewRect);
-            update();
-        }
+            notifyResizeProgress(_lastNewPos, _lastNewSize);
         if (_moveInProgress)
-        {
             notifyMoveProgress(_lastNewPos);
+        if (_resizeInProgress || _moveInProgress)
             update();
-        }
     });
 }
 
@@ -120,16 +116,16 @@ void LayoutManipulator::notifyResizeStarted()
     if (parentManipulator) parentManipulator->_drawSnapGrid = true;
 }
 
-void LayoutManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
+void LayoutManipulator::notifyResizeProgress(QPointF newPos, QSizeF newSize)
 {
-    CEGUIManipulator::notifyResizeProgress(newPos, newRect);
+    CEGUIManipulator::notifyResizeProgress(newPos, newSize);
     _lastNewPos = newPos;
-    _lastNewRect = newRect;
+    _lastNewSize = newSize;
 }
 
-void LayoutManipulator::notifyResizeFinished(QPointF newPos, QRectF newRect)
+void LayoutManipulator::notifyResizeFinished(QPointF newPos, QSizeF newSize)
 {
-    CEGUIManipulator::notifyResizeFinished(newPos, newRect);
+    CEGUIManipulator::notifyResizeFinished(newPos, newSize);
 
     LayoutManipulator* parentManipulator = dynamic_cast<LayoutManipulator*>(parentItem());
     if (parentManipulator) parentManipulator->_drawSnapGrid = false;
@@ -323,6 +319,22 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
     {
         event->ignore();
     }
+}
+
+QVariant LayoutManipulator::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value)
+{
+    if (change == ItemSelectedHasChanged)
+    {
+        if (_lcHandle)
+        {
+            if (value.toBool())
+                _lcHandle->setSelected(false);
+            else
+                _lcHandle->updateLook();
+        }
+    }
+
+    return CEGUIManipulator::itemChange(change, value);
 }
 
 void LayoutManipulator::onPropertyChanged(const QtnPropertyBase* property, CEGUI::Property* ceguiProperty)

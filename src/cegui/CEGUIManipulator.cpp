@@ -423,15 +423,15 @@ static inline void roundSizeFloor(QSizeF& size)
     size.setHeight(std::floor(size.height()));
 }
 
-void CEGUIManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
+void CEGUIManipulator::notifyResizeProgress(QPointF newPos, QSizeF newSize)
 {
     assert(_resizeStarted);
 
-    ResizableRectItem::notifyResizeProgress(newPos, newRect);
+    ResizableRectItem::notifyResizeProgress(newPos, newSize);
 
     // Absolute pixel deltas
     auto pixelDeltaPos = newPos - _resizeStartPos;
-    auto pixelDeltaSize = newRect.size() - _resizeStartRect.size();
+    auto pixelDeltaSize = newSize - _resizeStartRect.size();
 
     CEGUI::UVector2 deltaPos;
     CEGUI::USize deltaSize;
@@ -469,9 +469,9 @@ void CEGUIManipulator::notifyResizeProgress(QPointF newPos, QRectF newRect)
     updatePropertiesFromWidget({"Size", "Position", "Area"});
 }
 
-void CEGUIManipulator::notifyResizeFinished(QPointF newPos, QRectF newRect)
+void CEGUIManipulator::notifyResizeFinished(QPointF newPos, QSizeF newSize)
 {
-    ResizableRectItem::notifyResizeFinished(newPos, newRect);
+    ResizableRectItem::notifyResizeFinished(newPos, newSize);
 
     updateFromWidget();
 
@@ -517,6 +517,7 @@ void CEGUIManipulator::notifyMoveProgress(QPointF newPos)
     ResizableRectItem::notifyMoveProgress(newPos);
 
     // Absolute pixel deltas
+    // NB: sometimes we move pos (self), sometimes rect (child handles), so we must take both into account
     auto pixelDeltaPos = newPos - _moveStartPos;
 
     CEGUI::UVector2 deltaPos;

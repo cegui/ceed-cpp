@@ -23,8 +23,8 @@ public:
     virtual QRectF constrainResizeRect(QRectF rect, QRectF oldRect) override;
 
     virtual void notifyResizeStarted() override;
-    virtual void notifyResizeProgress(QPointF newPos, QRectF newRect) override;
-    virtual void notifyResizeFinished(QPointF newPos, QRectF newRect) override;
+    virtual void notifyResizeProgress(QPointF newPos, QSizeF newSize) override;
+    virtual void notifyResizeFinished(QPointF newPos, QSizeF newSize) override;
     virtual void notifyMoveStarted() override;
     virtual void notifyMoveProgress(QPointF newPos) override;
     virtual void notifyMoveFinished(QPointF newPos) override;
@@ -53,6 +53,7 @@ public:
 
 protected:
 
+    virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
     virtual void onPropertyChanged(const QtnPropertyBase* changedProperty, CEGUI::Property* ceguiProperty) override;
     virtual void onWidgetNameChanged() override;
 
@@ -71,7 +72,7 @@ protected:
     LayoutContainerHandle* _lcHandle = nullptr;
 
     QPointF _lastNewPos;
-    QRectF _lastNewRect;
+    QSizeF _lastNewSize;
 
     bool _showOutline = true;
     bool _resizeable = true;

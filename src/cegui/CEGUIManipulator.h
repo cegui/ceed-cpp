@@ -45,8 +45,8 @@ public:
 
     virtual void notifyHandleSelected(ResizingHandle* handle) override;
     virtual void notifyResizeStarted() override;
-    virtual void notifyResizeProgress(QPointF newPos, QRectF newRect) override;
-    virtual void notifyResizeFinished(QPointF newPos, QRectF newRect) override;
+    virtual void notifyResizeProgress(QPointF newPos, QSizeF newSize) override;
+    virtual void notifyResizeFinished(QPointF newPos, QSizeF newSize) override;
     virtual void notifyMoveStarted() override;
     virtual void notifyMoveProgress(QPointF newPos) override;
     virtual void notifyMoveFinished(QPointF newPos) override;
