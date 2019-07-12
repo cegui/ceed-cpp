@@ -17,20 +17,11 @@ LayoutContainerHandle::LayoutContainerHandle(LayoutManipulator& host)
 
     QString iconName;
     if (dynamic_cast<CEGUI::GridLayoutContainer*>(host.getWidget()))
-    {
         iconName = ":/icons/widgets/GLC.png";
-        setToolTip(host.getWidgetName() + ", grid layout");
-    }
     else if (dynamic_cast<CEGUI::VerticalLayoutContainer*>(host.getWidget()))
-    {
         iconName = ":/icons/widgets/VLC.png";
-        setToolTip(host.getWidgetName() + ", vertical layout");
-    }
     else if (dynamic_cast<CEGUI::HorizontalLayoutContainer*>(host.getWidget()))
-    {
         iconName = ":/icons/widgets/HLC.png";
-        setToolTip(host.getWidgetName() + ", horizontal layout");
-    }
     else
     {
         assert(false && "Unknown CEGUI layout container subtype");
@@ -39,6 +30,7 @@ LayoutContainerHandle::LayoutContainerHandle(LayoutManipulator& host)
 
     setPixmap(QPixmap(iconName));
     updateLook();
+    updateTooltip();
 }
 
 void LayoutContainerHandle::updateLook()
@@ -67,6 +59,19 @@ void LayoutContainerHandle::updatePositionAndScale(qreal scaleX, qreal scaleY)
     setPos(-size.width() * counterScaleX, -size.height() * counterScaleY);
 
     _ignoreGeometryChanges = false;
+}
+
+void LayoutContainerHandle::updateTooltip()
+{
+    const LayoutManipulator& host = *static_cast<LayoutManipulator*>(parentItem());
+    if (dynamic_cast<CEGUI::GridLayoutContainer*>(host.getWidget()))
+        setToolTip(host.getWidgetName() + ", grid layout");
+    else if (dynamic_cast<CEGUI::VerticalLayoutContainer*>(host.getWidget()))
+        setToolTip(host.getWidgetName() + ", vertical layout");
+    else if (dynamic_cast<CEGUI::HorizontalLayoutContainer*>(host.getWidget()))
+        setToolTip(host.getWidgetName() + ", horizontal layout");
+    else
+        setToolTip("");
 }
 
 void LayoutContainerHandle::dragEnterEvent(QGraphicsSceneDragDropEvent* event)

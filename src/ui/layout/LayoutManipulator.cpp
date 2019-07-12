@@ -381,6 +381,7 @@ void LayoutManipulator::onWidgetNameChanged()
 {
     CEGUIManipulator::onWidgetNameChanged();
     if (_treeItem) _treeItem->refreshPathData();
+    if (_lcHandle) _lcHandle->updateTooltip();
 }
 
 QPen LayoutManipulator::getNormalPen() const

@@ -13,6 +13,7 @@ public:
 
     void updateLook();
     void updatePositionAndScale(qreal scaleX, qreal scaleY);
+    void updateTooltip();
 
 protected:
 
