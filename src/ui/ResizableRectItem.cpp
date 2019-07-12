@@ -24,8 +24,8 @@ ResizableRectItem::ResizableRectItem(QGraphicsItem* parent)
     setCursor(Qt::OpenHandCursor);
 }
 
-// Unselects all handles of this resizable
-void ResizableRectItem::unselectAllHandles()
+// Deselects all handles of this resizable
+void ResizableRectItem::deselectAllHandles()
 {
     for (QGraphicsItem* item : childItems())
     {
@@ -327,7 +327,7 @@ QVariant ResizableRectItem::itemChange(GraphicsItemChange change, const QVariant
     if (change == ItemSelectedHasChanged)
     {
         if (value.toBool())
-            unselectAllHandles();
+            deselectAllHandles();
         else
             hideAllHandles();
     }

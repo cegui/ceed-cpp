@@ -17,7 +17,7 @@ public:
 
     ResizableRectItem(QGraphicsItem *parent = nullptr);
 
-    void unselectAllHandles();
+    virtual void deselectAllHandles();
     void hideAllHandles(const QGraphicsItem* excluding = nullptr);
     void setResizingEnabled(bool enabled = true);
     void setRect(QRectF newRect);

@@ -284,6 +284,20 @@ void LayoutManipulator::resetPen()
     setPen(getNormalPen());
 }
 
+void LayoutManipulator::updateHandles()
+{
+    if (_lcHandle && _handlesDirty && !_moveInProgress)
+        _lcHandle->updatePositionAndScale(_currentScaleX, _currentScaleY);
+
+    CEGUIManipulator::updateHandles();
+}
+
+void LayoutManipulator::deselectAllHandles()
+{
+    if (_lcHandle) _lcHandle->setSelected(false);
+    CEGUIManipulator::deselectAllHandles();
+}
+
 void LayoutManipulator::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
 {
     if (event->mimeData()->hasFormat("application/x-ceed-widget-type"))
@@ -321,23 +335,11 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
     }
 }
 
-void LayoutManipulator::updateHandles()
-{
-    if (_lcHandle && _handlesDirty && !_moveInProgress)
-        _lcHandle->updatePositionAndScale(_currentScaleX, _currentScaleY);
-
-    CEGUIManipulator::updateHandles();
-}
-
 QVariant LayoutManipulator::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value)
 {
     if (change == ItemSelectedHasChanged)
     {
-        if (_lcHandle)
-        {
-            if (value.toBool()) _lcHandle->setSelected(false);
-            _lcHandle->updateLook();
-        }
+        if (_lcHandle) _lcHandle->updateLook();
     }
 
     return CEGUIManipulator::itemChange(change, value);

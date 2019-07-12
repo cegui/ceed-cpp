@@ -46,14 +46,15 @@ public:
 
     void resetPen();
 
+    virtual void updateHandles() override;
+    virtual void deselectAllHandles() override;
+
     // For redirection from children
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dropEvent(QGraphicsSceneDragDropEvent* event) override;
 
 protected:
-
-    virtual void updateHandles() override;
 
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
     virtual void onPropertyChanged(const QtnPropertyBase* changedProperty, CEGUI::Property* ceguiProperty) override;

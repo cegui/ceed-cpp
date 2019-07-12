@@ -107,6 +107,7 @@ QVariant LayoutContainerHandle::itemChange(QGraphicsItem::GraphicsItemChange cha
     else if (change == ItemSelectedHasChanged)
     {
         updateLook();
+        static_cast<LayoutManipulator*>(parentItem())->moveToFront();
     }
     else if (change == ItemPositionChange)
     {
