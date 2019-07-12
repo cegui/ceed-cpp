@@ -53,6 +53,8 @@ public:
 
 protected:
 
+    virtual void updateHandles() override;
+
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
     virtual void onPropertyChanged(const QtnPropertyBase* changedProperty, CEGUI::Property* ceguiProperty) override;
     virtual void onWidgetNameChanged() override;

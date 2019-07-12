@@ -12,6 +12,7 @@ public:
     LayoutContainerHandle(LayoutManipulator& host);
 
     void updateLook();
+    void updatePositionAndScale(qreal scaleX, qreal scaleY);
 
 protected:
 

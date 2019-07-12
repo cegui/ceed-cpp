@@ -53,7 +53,7 @@ public:
 
 protected:
 
-    void updateHandles();
+    virtual void updateHandles();
 
     virtual QPen getNormalPen() const;
     virtual QPen getHoverPen() const;

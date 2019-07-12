@@ -321,16 +321,22 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
     }
 }
 
+void LayoutManipulator::updateHandles()
+{
+    if (_lcHandle && _handlesDirty && !_moveInProgress)
+        _lcHandle->updatePositionAndScale(_currentScaleX, _currentScaleY);
+
+    CEGUIManipulator::updateHandles();
+}
+
 QVariant LayoutManipulator::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value)
 {
     if (change == ItemSelectedHasChanged)
     {
         if (_lcHandle)
         {
-            if (value.toBool())
-                _lcHandle->setSelected(false);
-            else
-                _lcHandle->updateLook();
+            if (value.toBool()) _lcHandle->setSelected(false);
+            _lcHandle->updateLook();
         }
     }
 

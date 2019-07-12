@@ -55,8 +55,7 @@ void ResizableRectItem::setResizingEnabled(bool enabled)
     }
 }
 
-// FIXME: dangerous!
-//???handle in rect changes in itemChange() instead?
+// FIXME: dangerous overloading!
 void ResizableRectItem::setRect(QRectF newRect)
 {
     if (newRect != rect()) _handlesDirty = true;
@@ -242,6 +241,7 @@ void ResizableRectItem::onScaleChanged(qreal scaleX, qreal scaleY)
 void ResizableRectItem::mouseReleaseEventSelected(QMouseEvent* /*event*/)
 {
     endMoving();
+    endResizing();
 }
 
 // Updates all the handles according to geometry

@@ -30,7 +30,6 @@ public:
     ResizingHandle(Type type, ResizableRectItem* parent = nullptr);
 
     void onScaleChanged(qreal scaleX, qreal scaleY);
-    void mouseReleaseEventSelected(QMouseEvent* event);
 
     void showHandle(bool show);
     void ignoreGeometryChanges(bool ignore) { _ignoreGeometryChanges = ignore; }

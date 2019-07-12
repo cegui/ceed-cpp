@@ -37,11 +37,7 @@ LayoutContainerHandle::LayoutContainerHandle(LayoutManipulator& host)
         iconName = ":/icons/widgets/HLC.png";
     }
 
-    QPixmap pixmap(iconName);
-    setPixmap(pixmap);
-    _ignoreGeometryChanges = true;
-    setPos(-pixmap.size().width(), -pixmap.size().height());
-    _ignoreGeometryChanges = false;
+    setPixmap(QPixmap(iconName));
     updateLook();
 }
 
@@ -49,6 +45,28 @@ void LayoutContainerHandle::updateLook()
 {
     const bool active = _mouseOver || isSelected() || parentItem()->isSelected();
     setOpacity(active ? 1.0 : 0.5);
+}
+
+// FIXME: partially duplicated code, see ResizingHandle
+void LayoutContainerHandle::updatePositionAndScale(qreal scaleX, qreal scaleY)
+{
+    const qreal counterScaleX = 1.0 / scaleX;
+    const qreal counterScaleY = 1.0 / scaleY;
+
+    _ignoreGeometryChanges = true;
+
+    auto tfm = transform();
+
+    tfm = QTransform(counterScaleX, tfm.m12(), tfm.m13(),
+                     tfm.m21(), counterScaleY, tfm.m23(),
+                     tfm.m31(), tfm.m32(), tfm.m33());
+
+    setTransform(tfm);
+
+    auto size = pixmap().size();
+    setPos(-size.width() * counterScaleX, -size.height() * counterScaleY);
+
+    _ignoreGeometryChanges = false;
 }
 
 void LayoutContainerHandle::dragEnterEvent(QGraphicsSceneDragDropEvent* event)

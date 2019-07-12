@@ -86,18 +86,13 @@ void ResizableGraphicsView::mouseReleaseEvent(QMouseEvent *event)
     for (auto& selectedItem : scene()->selectedItems())
     {
         auto rectItem = dynamic_cast<ResizableRectItem*>(selectedItem);
-        if (rectItem)
+        if (!rectItem)
         {
-            rectItem->mouseReleaseEventSelected(event);
-            continue;
+            // Process move/resize handles attached as children to our ResizableRectItem
+            rectItem = dynamic_cast<ResizableRectItem*>(selectedItem->parentItem());
         }
 
-        auto handle = dynamic_cast<ResizingHandle*>(selectedItem);
-        if (handle)
-        {
-            handle->mouseReleaseEventSelected(event);
-            continue;
-        }
+        if (rectItem) rectItem->mouseReleaseEventSelected(event);
     }
 
     QGraphicsView::mouseReleaseEvent(event);
