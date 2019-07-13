@@ -834,11 +834,6 @@ void CEGUIManipulator::createPropertySet()
             continue;
         }
 
-        /*
-        guid = ceguiProperty.getOrigin() + '/' + ceguiProperty.getName() + '/' + ceguiProperty.getDataType()
-        prop->defaultValueFromString(ceguiProp->getDefault(ceguiSet))
-        */
-
         // Categorize properties by CEGUI property origin
         QtnPropertySet* parentSet = _propertySet;
         QString category = CEGUIUtils::stringToQString(ceguiProp->getOrigin());
@@ -861,9 +856,17 @@ void CEGUIManipulator::createPropertySet()
         if (propertyDataType == "bool")
             prop = new QtnPropertyBool(parentSet);
         else if (propertyDataType == "std::uint32_t")
-            prop = new QtnPropertyUInt(parentSet);
+        {
+            auto uintProp = new QtnPropertyUInt(parentSet);
+            uintProp->setDefaultValue(CEGUI::PropertyHelper<std::uint32_t>().fromString(ceguiProp->getDefault(_widget)));
+            prop = uintProp;
+        }
         else if (propertyDataType == "float")
-            prop = new QtnPropertyFloat(parentSet);
+        {
+            auto floatProp = new QtnPropertyFloat(parentSet);
+            floatProp->setDefaultValue(CEGUI::PropertyHelper<float>().fromString(ceguiProp->getDefault(_widget)));
+            prop = floatProp;
+        }
         else if (propertyDataType == "HorizontalAlignment")
         {
             auto enumProp = new QtnPropertyEnum(parentSet);
@@ -978,6 +981,7 @@ void CEGUIManipulator::createPropertySet()
         prop->addState(QtnPropertyStateCollapsed);
         if (!ceguiProp->isWritable())
             prop->addState(QtnPropertyStateImmutable);
+
         parentSet->addChildProperty(prop, true);
 
         QObject::connect(prop, &QtnProperty::propertyDidChange, [this, prop, ceguiProp](QtnPropertyChangeReason reason)
