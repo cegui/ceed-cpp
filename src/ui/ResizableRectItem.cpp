@@ -176,16 +176,58 @@ void ResizableRectItem::endMoving()
     notifyMoveFinished(newPos);
 }
 
+// Qt5 returns an empty rect as intersection with a degenerated rect.
+// We want to handle degenerated rects too.
+QRectF intersectRects(const QRectF& a, const QRectF& b)
+{
+    qreal l1 = a.x();
+    qreal r1 = a.x();
+    if (a.width() < 0.0)
+        l1 += a.width();
+    else
+        r1 += a.width();
+
+    qreal l2 = b.x();
+    qreal r2 = b.x();
+    if (b.width() < 0.0)
+        l2 += b.width();
+    else
+        r2 += b.width();
+
+    if (l1 >= r2 || l2 >= r1)
+        return QRectF();
+
+    qreal t1 = a.y();
+    qreal b1 = a.y();
+    if (a.height() < 0.0)
+        t1 += a.height();
+    else
+        b1 += a.height();
+
+    qreal t2 = b.y();
+    qreal b2 = b.y();
+    if (b.height() < 0.0)
+        t2 += b.height();
+    else
+        b2 += b.height();
+
+    if (t1 >= b2 || t2 >= b1)
+        return QRectF();
+
+    const auto left = qMax(l1, l2);
+    const auto top = qMax(t1, t2);
+    return QRectF(left, top, qMin(r1, r2) - left, qMin(b1, b2) - top);
+}
+
 QRectF ResizableRectItem::constrainResizeRect(QRectF rect, QRectF /*oldRect*/)
 {
-    auto minSize = getMinSize();
-    auto maxSize = getMaxSize();
-
+    const auto minSize = getMinSize();
     QRectF minRect(rect.center() - QPointF(0.5 * minSize.width(), 0.5 * minSize.height()), minSize);
     rect = rect.united(minRect);
 
+    const auto maxSize = getMaxSize();
     QRectF maxRect(rect.center() - QPointF(0.5 * maxSize.width(), 0.5 * maxSize.height()), maxSize);
-    rect = rect.intersected(maxRect);
+    rect = intersectRects(rect, maxRect);
 
     return rect;
 }
