@@ -132,14 +132,16 @@ size_t LayoutScene::getMultiSelectionChangeId() const
 
 void LayoutScene::normalizePositionOfSelectedWidgets()
 {
+    std::set<LayoutManipulator*> selectedWidgets;
+    collectSelectedWidgets(selectedWidgets);
+
+    if (selectedWidgets.empty()) return;
+
     std::vector<LayoutMoveCommand::Record> records;
     bool toRelative = false;
 
-    for (QGraphicsItem* item : selectedItems())
+    for (LayoutManipulator* manipulator : selectedWidgets)
     {
-        auto manipulator = dynamic_cast<LayoutManipulator*>(item);
-        if (!manipulator) continue;
-
         const auto pos = manipulator->getWidget()->getPosition();
 
         LayoutMoveCommand::Record rec;
@@ -152,21 +154,19 @@ void LayoutScene::normalizePositionOfSelectedWidgets()
             toRelative = true;
     }
 
-    if (records.empty()) return;
-
     for (auto& rec : records)
     {
         const LayoutManipulator* manipulator = getManipulatorByPath(rec.path);
         const auto baseSize = manipulator->getBaseSize();
 
-        if (toRelative) // command id was base + 12
+        if (toRelative)
         {
             rec.newPos.d_x.d_scale = (rec.oldPos.d_x.d_offset + rec.oldPos.d_x.d_scale * baseSize.d_width) / baseSize.d_width;
             rec.newPos.d_x.d_offset = 0.f;
             rec.newPos.d_y.d_scale = (rec.oldPos.d_y.d_offset + rec.oldPos.d_y.d_scale * baseSize.d_height) / baseSize.d_height;
             rec.newPos.d_y.d_offset = 0.f;
         }
-        else // command id was base + 13
+        else
         {
             rec.newPos.d_x.d_scale = 0.f;
             rec.newPos.d_x.d_offset = rec.oldPos.d_x.d_offset + rec.oldPos.d_x.d_scale * baseSize.d_width;
@@ -180,14 +180,16 @@ void LayoutScene::normalizePositionOfSelectedWidgets()
 
 void LayoutScene::normalizeSizeOfSelectedWidgets()
 {
+    std::set<LayoutManipulator*> selectedWidgets;
+    collectSelectedWidgets(selectedWidgets);
+
+    if (selectedWidgets.empty()) return;
+
     std::vector<LayoutResizeCommand::Record> records;
     bool toRelative = false;
 
-    for (QGraphicsItem* item : selectedItems())
+    for (LayoutManipulator* manipulator : selectedWidgets)
     {
-        auto manipulator = dynamic_cast<LayoutManipulator*>(item);
-        if (!manipulator) continue;
-
         const auto size = manipulator->getWidget()->getSize();
 
         LayoutResizeCommand::Record rec;
@@ -201,8 +203,6 @@ void LayoutScene::normalizeSizeOfSelectedWidgets()
         if (!toRelative && (size.d_width.d_offset != 0.f || size.d_height.d_offset != 0.f))
             toRelative = true;
     }
-
-    if (records.empty()) return;
 
     for (auto& rec : records)
     {
@@ -232,19 +232,21 @@ void LayoutScene::normalizeSizeOfSelectedWidgets()
 // command id was base + 15
 void LayoutScene::roundPositionOfSelectedWidgets()
 {
+    std::set<LayoutManipulator*> selectedWidgets;
+    collectSelectedWidgets(selectedWidgets);
+
+    if (selectedWidgets.empty()) return;
+
     std::vector<LayoutMoveCommand::Record> records;
-    for (QGraphicsItem* item : selectedItems())
+    for (LayoutManipulator* manipulator : selectedWidgets)
     {
-        if (auto manipulator = dynamic_cast<LayoutManipulator*>(item))
-        {
-            LayoutMoveCommand::Record rec;
-            rec.path = manipulator->getWidgetPath();
-            rec.oldPos = manipulator->getWidget()->getPosition();
-            rec.newPos = rec.oldPos;
-            rec.newPos.d_x.d_offset = CEGUI::CoordConverter::alignToPixels(rec.oldPos.d_x.d_offset);
-            rec.newPos.d_y.d_offset = CEGUI::CoordConverter::alignToPixels(rec.oldPos.d_y.d_offset);
-            records.push_back(std::move(rec));
-        }
+        LayoutMoveCommand::Record rec;
+        rec.path = manipulator->getWidgetPath();
+        rec.oldPos = manipulator->getWidget()->getPosition();
+        rec.newPos = rec.oldPos;
+        rec.newPos.d_x.d_offset = CEGUI::CoordConverter::alignToPixels(rec.oldPos.d_x.d_offset);
+        rec.newPos.d_y.d_offset = CEGUI::CoordConverter::alignToPixels(rec.oldPos.d_y.d_offset);
+        records.push_back(std::move(rec));
     }
 
     _visualMode.getEditor().getUndoStack()->push(new LayoutMoveCommand(_visualMode, std::move(records)));
@@ -252,21 +254,23 @@ void LayoutScene::roundPositionOfSelectedWidgets()
 
 void LayoutScene::roundSizeOfSelectedWidgets()
 {
+    std::set<LayoutManipulator*> selectedWidgets;
+    collectSelectedWidgets(selectedWidgets);
+
+    if (selectedWidgets.empty()) return;
+
     std::vector<LayoutResizeCommand::Record> records;
-    for (QGraphicsItem* item : selectedItems())
+    for (LayoutManipulator* manipulator : selectedWidgets)
     {
-        if (auto manipulator = dynamic_cast<LayoutManipulator*>(item))
-        {
-            LayoutResizeCommand::Record rec;
-            rec.path = manipulator->getWidgetPath();
-            rec.oldPos = manipulator->getWidget()->getPosition();
-            rec.newPos = rec.oldPos;
-            rec.oldSize = manipulator->getWidget()->getSize();
-            rec.newSize = rec.oldSize;
-            rec.newSize.d_width.d_offset = CEGUI::CoordConverter::alignToPixels(rec.oldSize.d_width.d_offset);
-            rec.newSize.d_height.d_offset = CEGUI::CoordConverter::alignToPixels(rec.oldSize.d_height.d_offset);
-            records.push_back(std::move(rec));
-        }
+        LayoutResizeCommand::Record rec;
+        rec.path = manipulator->getWidgetPath();
+        rec.oldPos = manipulator->getWidget()->getPosition();
+        rec.newPos = rec.oldPos;
+        rec.oldSize = manipulator->getWidget()->getSize();
+        rec.newSize = rec.oldSize;
+        rec.newSize.d_width.d_offset = CEGUI::CoordConverter::alignToPixels(rec.oldSize.d_width.d_offset);
+        rec.newSize.d_height.d_offset = CEGUI::CoordConverter::alignToPixels(rec.oldSize.d_height.d_offset);
+        records.push_back(std::move(rec));
     }
 
     _visualMode.getEditor().getUndoStack()->push(new LayoutResizeCommand(_visualMode, std::move(records)));
@@ -274,16 +278,18 @@ void LayoutScene::roundSizeOfSelectedWidgets()
 
 void LayoutScene::alignSelectionHorizontally(CEGUI::HorizontalAlignment alignment)
 {
+    std::set<LayoutManipulator*> selectedWidgets;
+    collectSelectedWidgets(selectedWidgets);
+
+    if (selectedWidgets.empty()) return;
+
     std::vector<LayoutHorizontalAlignCommand::Record> records;
-    for (QGraphicsItem* item : selectedItems())
+    for (LayoutManipulator* manipulator : selectedWidgets)
     {
-        if (auto manipulator = dynamic_cast<LayoutManipulator*>(item))
-        {
-            LayoutHorizontalAlignCommand::Record rec;
-            rec.path = manipulator->getWidgetPath();
-            rec.oldAlignment = manipulator->getWidget()->getHorizontalAlignment();
-            records.push_back(std::move(rec));
-        }
+        LayoutHorizontalAlignCommand::Record rec;
+        rec.path = manipulator->getWidgetPath();
+        rec.oldAlignment = manipulator->getWidget()->getHorizontalAlignment();
+        records.push_back(std::move(rec));
     }
 
     _visualMode.getEditor().getUndoStack()->push(new LayoutHorizontalAlignCommand(_visualMode, std::move(records), alignment));
@@ -291,16 +297,18 @@ void LayoutScene::alignSelectionHorizontally(CEGUI::HorizontalAlignment alignmen
 
 void LayoutScene::alignSelectionVertically(CEGUI::VerticalAlignment alignment)
 {
+    std::set<LayoutManipulator*> selectedWidgets;
+    collectSelectedWidgets(selectedWidgets);
+
+    if (selectedWidgets.empty()) return;
+
     std::vector<LayoutVerticalAlignCommand::Record> records;
-    for (QGraphicsItem* item : selectedItems())
+    for (LayoutManipulator* manipulator : selectedWidgets)
     {
-        if (auto manipulator = dynamic_cast<LayoutManipulator*>(item))
-        {
-            LayoutVerticalAlignCommand::Record rec;
-            rec.path = manipulator->getWidgetPath();
-            rec.oldAlignment = manipulator->getWidget()->getVerticalAlignment();
-            records.push_back(std::move(rec));
-        }
+        LayoutVerticalAlignCommand::Record rec;
+        rec.path = manipulator->getWidgetPath();
+        rec.oldAlignment = manipulator->getWidget()->getVerticalAlignment();
+        records.push_back(std::move(rec));
     }
 
     _visualMode.getEditor().getUndoStack()->push(new LayoutVerticalAlignCommand(_visualMode, std::move(records), alignment));
@@ -308,43 +316,43 @@ void LayoutScene::alignSelectionVertically(CEGUI::VerticalAlignment alignment)
 
 void LayoutScene::moveSelectedWidgetsInParentWidgetLists(int delta)
 {
-    QStringList paths;
-    for (QGraphicsItem* item : selectedItems())
-    {
-        auto manipulator = dynamic_cast<LayoutManipulator*>(item);
-        if (!manipulator) continue;
+    std::set<LayoutManipulator*> selectedWidgets;
+    collectSelectedWidgets(selectedWidgets);
 
-        auto parentManipulator = dynamic_cast<LayoutManipulator*>(item->parentItem());
+    if (selectedWidgets.empty()) return;
+
+    QStringList paths;
+    for (LayoutManipulator* manipulator : selectedWidgets)
+    {
+        auto parentManipulator = dynamic_cast<LayoutManipulator*>(manipulator->parentItem());
         if (!parentManipulator) continue;
 
         auto container = dynamic_cast<CEGUI::SequentialLayoutContainer*>(parentManipulator->getWidget());
         if (!container) continue;
 
-        int potentialPos = static_cast<int>(container->getPositionOfChild(manipulator->getWidget())) + delta;
+        const int potentialPos = static_cast<int>(container->getPositionOfChild(manipulator->getWidget())) + delta;
         if (potentialPos < 0 || potentialPos >= static_cast<int>(container->getChildCount())) continue;
 
         paths.append(manipulator->getWidgetPath());
     }
 
-    // TODO: We currently only support moving one widget at a time.
-    //       Fixing this involves sorting the widgets by their position in
-    //       the parent widget and then either working from the "right" side
-    //       if delta > 0 or from the left side if delta < 0.
-    if (paths.size() == 1)
-        _visualMode.getEditor().getUndoStack()->push(new MoveInParentWidgetListCommand(_visualMode, std::move(paths), delta));
+    if (paths.empty()) return;
+
+    _visualMode.getEditor().getUndoStack()->push(new MoveInParentWidgetListCommand(_visualMode, std::move(paths), delta));
 }
 
 bool LayoutScene::deleteSelectedWidgets()
 {
-    QStringList widgetPaths;
-    for (auto& item : selectedItems())
-    {
-        auto manip = dynamic_cast<LayoutManipulator*>(item);
-        if (manip) widgetPaths.push_back(manip->getWidgetPath());
-    }
+    std::set<LayoutManipulator*> selectedWidgets;
+    collectSelectedWidgets(selectedWidgets);
 
-    if (!widgetPaths.isEmpty())
-        _visualMode.getEditor().getUndoStack()->push(new LayoutDeleteCommand(_visualMode, std::move(widgetPaths)));
+    if (selectedWidgets.empty()) return true;
+
+    QStringList widgetPaths;
+    for (LayoutManipulator* manipulator : selectedWidgets)
+        widgetPaths.push_back(manipulator->getWidgetPath());
+
+    _visualMode.getEditor().getUndoStack()->push(new LayoutDeleteCommand(_visualMode, std::move(widgetPaths)));
 
     return true;
 }
@@ -357,7 +365,7 @@ void LayoutScene::onManipulatorUpdatedFromWidget(LayoutManipulator* manipulator)
     // unless updateFromWidget() was called due to dragging them
     if (_anchorTarget == manipulator)
     {
-        const bool isAnchorHandleSelected = isAnyAnchorHandleSelected();
+        const bool isAnchorHandleSelected = (getCurrentAnchorItem() != nullptr);
         if (!_anchorTarget->resizeInProgress() || !isAnchorHandleSelected)
         {
             updateAnchorItems();
@@ -372,20 +380,8 @@ void LayoutScene::onManipulatorUpdatedFromWidget(LayoutManipulator* manipulator)
     }
 }
 
-static void ensureParentIsExpanded(QTreeView* view, QStandardItem* treeItem)
+void LayoutScene::collectSelectedWidgets(std::set<LayoutManipulator*>& selectedWidgets)
 {
-    view->expand(treeItem->index());
-    if (treeItem->parent())
-        ensureParentIsExpanded(view, treeItem->parent());
-}
-
-void LayoutScene::onSelectionChanged()
-{
-    // Collect selected widgets and anchor items
-
-    std::set<LayoutManipulator*> selectedWidgets;
-    QGraphicsItem* selectedAnchorItem = nullptr;
-
     auto selection = selectedItems();
     for (QGraphicsItem* item : selection)
     {
@@ -398,13 +394,23 @@ void LayoutScene::onSelectionChanged()
             if (auto manipulator = dynamic_cast<LayoutManipulator*>(item->parentItem()))
                 selectedWidgets.insert(manipulator);
         }
-        else if (isAnchorItem(item))
-        {
-            // Only one selected anchor item at a time is allowed
-            assert(!selectedAnchorItem);
-            selectedAnchorItem = item;
-        }
     }
+}
+
+static void ensureParentIsExpanded(QTreeView* view, QStandardItem* treeItem)
+{
+    view->expand(treeItem->index());
+    if (treeItem->parent())
+        ensureParentIsExpanded(view, treeItem->parent());
+}
+
+void LayoutScene::onSelectionChanged()
+{
+    std::set<LayoutManipulator*> selectedWidgets;
+    collectSelectedWidgets(selectedWidgets);
+
+    // Only one selected anchor item at a time is allowed
+    QGraphicsItem* selectedAnchorItem = getCurrentAnchorItem();
 
     // Update anchors state
 
@@ -599,6 +605,8 @@ void LayoutScene::createAnchorItems()
 
 bool LayoutScene::isAnchorItem(QGraphicsItem* item) const
 {
+    if (!item) return false;
+
     return item == _anchorMinX ||
             item == _anchorMinY ||
             item == _anchorMaxX ||
@@ -609,16 +617,20 @@ bool LayoutScene::isAnchorItem(QGraphicsItem* item) const
             item == _anchorMaxXMaxY;
 }
 
-bool LayoutScene::isAnyAnchorHandleSelected() const
+QGraphicsItem* LayoutScene::getCurrentAnchorItem() const
 {
-    return _anchorMinX->isSelected() ||
-            _anchorMaxX->isSelected() ||
-            _anchorMinY->isSelected() ||
-            _anchorMaxY->isSelected() ||
-            _anchorMinXMinY->isSelected() ||
-            _anchorMaxXMinY->isSelected() ||
-            _anchorMinXMaxY->isSelected() ||
-            _anchorMaxXMaxY->isSelected();
+    // Too early call, items aren't created yet
+    if (!_anchorMinX) return nullptr;
+
+    if (_anchorMinX->isSelected()) return _anchorMinX;
+    if (_anchorMaxX->isSelected()) return _anchorMaxX;
+    if (_anchorMinY->isSelected()) return _anchorMinY;
+    if (_anchorMaxY->isSelected()) return _anchorMaxY;
+    if (_anchorMinXMinY->isSelected()) return _anchorMinXMinY;
+    if (_anchorMaxXMinY->isSelected()) return _anchorMaxXMinY;
+    if (_anchorMinXMaxY->isSelected()) return _anchorMinXMaxY;
+    if (_anchorMaxXMaxY->isSelected()) return _anchorMaxXMaxY;
+    return nullptr;
 }
 
 void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
@@ -1150,38 +1162,21 @@ void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
         _anchorSnapTarget = nullptr;
     }
 
-    // We have to "expand" the items, adding parents of resizing handles instead of the handles themselves
-    std::set<LayoutManipulator*> selection;
-    for (QGraphicsItem* selectedItem : selectedItems())
-    {
-        if (auto manipulator = dynamic_cast<LayoutManipulator*>(selectedItem))
-        {
-            selection.insert(manipulator);
-            continue;
-        }
-
-        if (auto handle = dynamic_cast<ResizingHandle*>(selectedItem))
-        {
-            if (auto manipulator = dynamic_cast<LayoutManipulator*>(handle->parentItem()))
-            {
-                selection.insert(manipulator);
-                continue;
-            }
-        }
-    }
+    std::set<LayoutManipulator*> selectedWidgets;
+    collectSelectedWidgets(selectedWidgets);
 
     // Detect resizing by anchors not through selected items but through
     // the state of the anchored item itself
     if (_anchorTarget && _anchorTarget->resizeInProgress())
     {
         _anchorTarget->endResizing();
-        selection.insert(_anchorTarget);
+        selectedWidgets.insert(_anchorTarget);
     }
 
     std::vector<LayoutMoveCommand::Record> move;
     std::vector<LayoutResizeCommand::Record> resize;
 
-    for (LayoutManipulator* item : selection)
+    for (LayoutManipulator* item : selectedWidgets)
     {
         if (item->isMoveStarted())
         {

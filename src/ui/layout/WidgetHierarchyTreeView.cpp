@@ -13,7 +13,7 @@
 #include "qevent.h"
 #include "qstandarditemmodel.h"
 #include "qclipboard.h"
-#include <unordered_set>
+#include <set>
 
 WidgetHierarchyTreeView::WidgetHierarchyTreeView(QWidget* parent)
     : QTreeView(parent)
@@ -133,17 +133,13 @@ void WidgetHierarchyTreeView::selectionChanged(const QItemSelection& selected, c
     widget->ignoreSelectionChangesInScene(true);
 
     // We can't use incremental selected & deselected data because some manipulators may be
-    // selected via their handles. We must explicitly deselect them, since reeView knows nothing
-    // about handles and will not add their manipulators to 'deselected'.
-    std::unordered_set<LayoutManipulator*> selectedManipulators;
+    // selected via their handles. We must explicitly deselect them, since TreeView knows nothing
+    // about handles and will not add these manipulators to 'deselected'.
+    std::set<LayoutManipulator*> selectedManipulators;
     for (auto& index : selectionModel()->selectedIndexes())
     {
         auto manipulator = getManipulatorFromIndex(index);
-        if (manipulator)
-        {
-            manipulator->setSelected(true);
-            selectedManipulators.insert(manipulator);
-        }
+        if (manipulator) selectedManipulators.insert(manipulator);
     }
 
     auto selection = widget->getVisualMode().getScene()->selectedItems();
@@ -155,10 +151,15 @@ void WidgetHierarchyTreeView::selectionChanged(const QItemSelection& selected, c
 
         if (selectedManipulators.find(manipulator) == selectedManipulators.cend())
         {
-            manipulator->setSelected(false);
-            manipulator->deselectAllHandles();
+            if (manipulator->isSelected())
+                manipulator->setSelected(false);
+            else
+                manipulator->deselectAllHandles();
         }
     }
+
+    for (auto manipulator : selectedManipulators)
+        manipulator->setSelected(true);
 
     widget->ignoreSelectionChangesInScene(false);
 }

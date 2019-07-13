@@ -806,6 +806,12 @@ MoveInParentWidgetListCommand::MoveInParentWidgetListCommand(LayoutVisualMode& v
     , _paths(std::move(paths))
     , _delta(delta)
 {
+    // TODO: We currently only support moving one widget at a time.
+    //       Fixing this involves sorting the widgets by their position in
+    //       the parent widget and then either working from the "right" side
+    //       if delta > 0 or from the left side if delta < 0.
+    assert(_paths.size() == 1);
+
     refreshText();
 }
 

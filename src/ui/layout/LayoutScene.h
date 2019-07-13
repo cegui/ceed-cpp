@@ -4,6 +4,7 @@
 #include "src/ui/CEGUIGraphicsScene.h"
 #include <CEGUI/HorizontalAlignment.h>
 #include <CEGUI/VerticalAlignment.h>
+#include <set>
 
 // This scene contains all the manipulators users want to interact it. You can visualise it as the
 // visual editing centre screen where CEGUI is rendered.
@@ -60,9 +61,11 @@ protected:
 
     void createAnchorItems();
     bool isAnchorItem(QGraphicsItem* item) const;
-    bool isAnyAnchorHandleSelected() const;
+    QGraphicsItem* getCurrentAnchorItem() const;
     void updateAnchorItems(QGraphicsItem* movedItem = nullptr);
     void updateAnchorValueItems();
+
+    void collectSelectedWidgets(std::set<LayoutManipulator*>& selectedWidgets);
 
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;
