@@ -198,8 +198,14 @@ public:
     struct Record
     {
         QString oldParentPath;
+
+        // For the case when the new parent contains a child with the same name
         QString oldName;
         QString newName;
+
+        // Layout container may change these values of widgets parented into it
+        CEGUI::UVector2 oldPos;
+        CEGUI::USize oldSize;
     };
 
     LayoutReparentCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, const QString& newParentPath);

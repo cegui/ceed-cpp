@@ -633,6 +633,14 @@ LayoutReparentCommand::LayoutReparentCommand(LayoutVisualMode& visualMode, std::
     , _records(std::move(records))
     , _newParentPath(newParentPath)
 {
+    // Remember initial position and size
+    for (auto& rec : _records)
+    {
+        auto widget = _visualMode.getScene()->getManipulatorByPath(rec.oldParentPath + '/' + rec.oldName)->getWidget();
+        rec.oldPos = widget->getPosition();
+        rec.oldSize = widget->getSize();
+    }
+
     if (_records.size() == 1)
         setText(QString("Reparent '%1' to '%2'").arg(_records[0].oldName, _newParentPath));
     else
@@ -650,6 +658,7 @@ void LayoutReparentCommand::undo()
     {
         auto widgetManipulator = _visualMode.getScene()->getManipulatorByPath(_newParentPath + '/' + rec.newName);
         auto oldParentManipulator = _visualMode.getScene()->getManipulatorByPath(rec.oldParentPath);
+        auto newParentManipulator = dynamic_cast<LayoutManipulator*>(widgetManipulator->parentItem());
 
         // Remove it from the current CEGUI parent widget
         auto parentWidget = widgetManipulator->getWidget()->getParent();
@@ -657,7 +666,19 @@ void LayoutReparentCommand::undo()
 
         // Rename it if necessary
         if (rec.oldName != rec.newName)
-            widgetManipulator->getWidget()->setProperty("Name", CEGUIUtils::qStringToString(rec.oldName));
+        {
+            widgetManipulator->getWidget()->setName(CEGUIUtils::qStringToString(rec.oldName));
+            widgetManipulator->updatePropertiesFromWidget({"Name", "NamePath"});
+        }
+
+        // Restore initial position and size if necessary
+        // TODO: is LC the only possible reason of pos & size change when reparenting?
+        //if (newParentManipulator->isLayoutContainer())
+        {
+            widgetManipulator->getWidget()->setPosition(rec.oldPos);
+            widgetManipulator->getWidget()->setSize(rec.oldSize);
+            widgetManipulator->updatePropertiesFromWidget({"Size", "Position", "Area"});
+        }
 
         // Add it to the old CEGUI parent widget
         oldParentManipulator->getWidget()->addChild(widgetManipulator->getWidget());
@@ -665,7 +686,9 @@ void LayoutReparentCommand::undo()
         // And sort out the manipulators
         widgetManipulator->setParentItem(oldParentManipulator);
 
+        // Update widget and its previous parent (mostly for the layout container case)
         widgetManipulator->updateFromWidget(true, true);
+        if (newParentManipulator) newParentManipulator->updateFromWidget(true, true);
     }
 
     _visualMode.getHierarchyDockWidget()->refresh();
@@ -678,8 +701,9 @@ void LayoutReparentCommand::redo()
 
     for (const auto& rec : _records)
     {
-        auto widgetManipulator = _visualMode.getScene()->getManipulatorByPath(rec.oldParentPath + '/' + rec.newName);
+        auto widgetManipulator = _visualMode.getScene()->getManipulatorByPath(rec.oldParentPath + '/' + rec.oldName);
         auto newParentManipulator = _visualMode.getScene()->getManipulatorByPath(_newParentPath);
+        auto oldParentManipulator = dynamic_cast<LayoutManipulator*>(widgetManipulator->parentItem());
 
         // Remove it from the current CEGUI parent widget
         auto parentWidget = widgetManipulator->getWidget()->getParent();
@@ -687,7 +711,10 @@ void LayoutReparentCommand::redo()
 
         // Rename it if necessary
         if (rec.oldName != rec.newName)
-            widgetManipulator->getWidget()->setProperty("Name", CEGUIUtils::qStringToString(rec.newName));
+        {
+            widgetManipulator->getWidget()->setName(CEGUIUtils::qStringToString(rec.newName));
+            widgetManipulator->updatePropertiesFromWidget({"Name", "NamePath"});
+        }
 
         // Add it to the new CEGUI parent widget
         newParentManipulator->getWidget()->addChild(widgetManipulator->getWidget());
@@ -695,7 +722,9 @@ void LayoutReparentCommand::redo()
         // And sort out the manipulators
         widgetManipulator->setParentItem(newParentManipulator);
 
+        // Update widget and its previous parent (mostly for the layout container case)
         widgetManipulator->updateFromWidget(true, true);
+        if (oldParentManipulator) oldParentManipulator->updateFromWidget(true, true);
     }
 
     _visualMode.getHierarchyDockWidget()->refresh();
