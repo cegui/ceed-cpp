@@ -260,9 +260,6 @@ void LayoutDeleteCommand::redo()
 {
     for (const QString& path : _paths)
     {
-        //!!!DBG TMP!
-        qDebug(QString("LayoutDeleteCommand::redo() %1 %2").arg(path).arg((int)this).toLocal8Bit().data());
-
         auto manipulator = _visualMode.getScene()->getManipulatorByPath(path);
         if (!manipulator)
         {
@@ -296,7 +293,11 @@ void LayoutCreateCommand::undo()
 
     const QString fullPath = _parentPath.isEmpty() ? _name : _parentPath + '/' + _name;
     auto manipulator = _visualMode.getScene()->getManipulatorByPath(fullPath);
+    auto parentManipulator = dynamic_cast<LayoutManipulator*>(manipulator->parentItem());
     manipulator->detach();
+
+    // Mostly for the LC case, its area depends on the children
+    if (parentManipulator) parentManipulator->updateFromWidget(true, true);
 
     _visualMode.getHierarchyDockWidget()->refresh();
 }
