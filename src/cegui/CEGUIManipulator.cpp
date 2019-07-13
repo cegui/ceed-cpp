@@ -11,10 +11,11 @@
 #include "src/Application.h"
 #include "qgraphicsscene.h"
 #include "qpainter.h"
+#include <qmessagebox.h>
 #include <CEGUI/widgets/TabControl.h>
 #include <CEGUI/widgets/ScrollablePane.h>
 #include <CEGUI/widgets/ScrolledContainer.h>
-#include <CEGUI/widgets/LayoutContainer.h>
+#include <CEGUI/widgets/GridLayoutContainer.h>
 #include <CEGUI/WindowManager.h>
 #include <CEGUI/CoordConverter.h>
 #include "QtnProperty/PropertySet.h"
@@ -756,13 +757,17 @@ void CEGUIManipulator::createChildManipulators(bool recursive, bool skipAutoWidg
         if (checkExisting && getManipulatorByPath(CEGUIUtils::stringToQString(childWidget->getName())))
             return;
 
-        if (!skipAutoWidgets || !childWidget->isAutoWindow())
+        if (childWidget->isAutoWindow())
         {
-            auto childManipulator = createChildManipulator(childWidget);
-            childManipulator->updateFromWidget();
-            if (recursive)
-                childManipulator->createChildManipulators(true, skipAutoWidgets, checkExisting);
+            // Grid LC creates dummy placeholder auto-widgets. We don't want manipulators for them.
+            if (skipAutoWidgets || dynamic_cast<CEGUI::GridLayoutContainer*>(_widget))
+                return;
         }
+
+        auto childManipulator = createChildManipulator(childWidget);
+        childManipulator->updateFromWidget();
+        if (recursive)
+            childManipulator->createChildManipulators(true, skipAutoWidgets, checkExisting);
     });
 }
 
@@ -1095,6 +1100,31 @@ static bool impl_hasNonAutoWidgetDescendants(CEGUI::Window* widget)
 bool CEGUIManipulator::hasNonAutoWidgetDescendants() const
 {
     return impl_hasNonAutoWidgetDescendants(_widget);
+}
+
+bool CEGUIManipulator::canAcceptChildren(bool showErrorMessages) const
+{
+    // Grid layout accepts fixed number of children.
+    // TODO: it is possible to add auto-extension in the CEGUI::GridLayoutContainer class.
+    auto glc = dynamic_cast<CEGUI::GridLayoutContainer*>(_widget);
+    if (glc)
+    {
+        const size_t capacity = glc->getGridWidth() * glc->getGridHeight();
+        if (!capacity)
+        {
+            if (showErrorMessages)
+                QMessageBox::warning(nullptr, "Can't accept a child", "Grid layout container must have non-zero dimensions to accept children");
+            return false;
+        }
+        else if (capacity <= glc->getActualChildCount())
+        {
+            if (showErrorMessages)
+                QMessageBox::warning(nullptr, "Can't accept a child", "Grid layout container is full");
+            return false;
+        }
+    }
+
+    return true;
 }
 
 QVariant CEGUIManipulator::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value)

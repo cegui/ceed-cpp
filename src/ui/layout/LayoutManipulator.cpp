@@ -7,7 +7,7 @@
 #include "src/cegui/CEGUIUtils.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
-#include <CEGUI/widgets/GridLayoutContainer.h>
+#include <CEGUI/widgets/LayoutContainer.h>
 #include "QtnProperty/PropertySet.h"
 #include "qpen.h"
 #include "qpainter.h"
@@ -323,18 +323,14 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
     auto data = event->mimeData()->data("application/x-ceed-widget-type");
     if (data.size() > 0)
     {
-        auto glc = dynamic_cast<CEGUI::GridLayoutContainer*>(_widget);
-        if (glc && (!glc->getGridWidth() || !glc->getGridHeight()))
+        if (canAcceptChildren(true))
         {
-            QMessageBox::warning(nullptr, "Can't create child", "Grid layout container must have non-zero dimensions to accept children");
-            event->acceptProposedAction();
-            return;
+            QString widgetType = data.data();
+            int sepPos = widgetType.lastIndexOf('/');
+            QString widgetName = CEGUIUtils::getUniqueChildWidgetName(*_widget, (sepPos < 0) ? widgetType : widgetType.mid(sepPos + 1));
+            _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, getWidgetPath(), widgetType, widgetName, event->scenePos()));
         }
 
-        QString widgetType = data.data();
-        int sepPos = widgetType.lastIndexOf('/');
-        QString widgetName = CEGUIUtils::getUniqueChildWidgetName(*_widget, (sepPos < 0) ? widgetType : widgetType.mid(sepPos + 1));
-        _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, getWidgetPath(), widgetType, widgetName, event->scenePos()));
         event->acceptProposedAction();
     }
     else
