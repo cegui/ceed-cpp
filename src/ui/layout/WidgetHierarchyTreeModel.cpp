@@ -5,9 +5,10 @@
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutUndoCommands.h"
 #include "src/cegui/CEGUIUtils.h"
-#include <CEGUI/Window.h>
+#include <CEGUI/widgets/GridLayoutContainer.h>
 #include "qmimedata.h"
 #include "qinputdialog.h"
+#include <qmessagebox.h>
 #include <unordered_set>
 
 WidgetHierarchyTreeModel::WidgetHierarchyTreeModel(LayoutVisualMode& visualMode)
@@ -121,6 +122,13 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
             return false;
         }
 
+        auto glc = dynamic_cast<CEGUI::GridLayoutContainer*>(newParentManipulator->getWidget());
+        if (glc && (!glc->getGridWidth() || !glc->getGridHeight()))
+        {
+            QMessageBox::warning(nullptr, "Can't reparent", "Grid layout container must have non-zero dimensions to accept children");
+            return false;
+        }
+
         std::vector<LayoutReparentCommand::Record> records;
 
         for (const QString& widgetPath : widgetPaths)
@@ -229,6 +237,13 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
         auto rootManip = _visualMode.getScene()->getRootWidgetManipulator();
         const QString parentItemPath = parentItem ? parentItem->data(Qt::UserRole).toString() : (rootManip ? rootManip->getWidgetName() : "");
         LayoutManipulator* parentManipulator = parentItemPath.isEmpty() ? nullptr : _visualMode.getScene()->getManipulatorByPath(parentItemPath);
+
+        auto glc = dynamic_cast<CEGUI::GridLayoutContainer*>(parentManipulator->getWidget());
+        if (glc && (!glc->getGridWidth() || !glc->getGridHeight()))
+        {
+            QMessageBox::warning(nullptr, "Can't create child", "Grid layout container must have non-zero dimensions to accept children");
+            return false;
+        }
 
         QString uniqueName = widgetType.mid(widgetType.lastIndexOf('/') + 1);
         if (parentManipulator)

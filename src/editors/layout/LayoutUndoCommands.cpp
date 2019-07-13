@@ -857,10 +857,10 @@ void MoveInParentWidgetListCommand::undo()
         auto parentManipulator = static_cast<LayoutManipulator*>(manipulator->parentItem());
         auto container = static_cast<CEGUI::SequentialLayoutContainer*>(parentManipulator->getWidget());
 
-        size_t oldPos = container->getPositionOfChild(manipulator->getWidget());
+        size_t oldPos = container->getChildIdx(manipulator->getWidget());
         size_t newPos = static_cast<size_t>(static_cast<int>(oldPos) - _delta);
         container->swapChildPositions(oldPos, newPos);
-        assert(newPos == container->getPositionOfChild(manipulator->getWidget()));
+        assert(newPos == container->getChildIdx(manipulator->getWidget()));
 
         parentManipulator->updateFromWidget(true, true);
         parentManipulator->getTreeItem()->refreshOrderingData();
@@ -877,10 +877,10 @@ void MoveInParentWidgetListCommand::redo()
         auto parentManipulator = static_cast<LayoutManipulator*>(manipulator->parentItem());
         auto container = static_cast<CEGUI::SequentialLayoutContainer*>(parentManipulator->getWidget());
 
-        size_t oldPos = container->getPositionOfChild(manipulator->getWidget());
+        size_t oldPos = container->getChildIdx(manipulator->getWidget());
         size_t newPos = static_cast<size_t>(static_cast<int>(oldPos) + _delta);
         container->swapChildPositions(oldPos, newPos);
-        assert(newPos == container->getPositionOfChild(manipulator->getWidget()));
+        assert(newPos == container->getChildIdx(manipulator->getWidget()));
 
         parentManipulator->updateFromWidget(true, true);
         parentManipulator->getTreeItem()->refreshOrderingData();

@@ -921,6 +921,12 @@ void CEGUIManipulator::createPropertySet()
             enumProp->setEnumInfo(&CEGUIManager::Instance().enumHorizontalTextFormatting());
             prop = enumProp;
         }
+        else if (propertyDataType == "AutoPositioning")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumAutoPositioning());
+            prop = enumProp;
+        }
         else if (propertyDataType == "Font")
         {
             prop = new QtnPropertyQString(parentSet);
@@ -968,7 +974,10 @@ void CEGUIManipulator::createPropertySet()
             prop = new QtnPropertyQString(parentSet);
         }
         else // "String" and any other
+        {
+            assert(propertyDataType == "String");
             prop = new QtnPropertyQString(parentSet);
+        }
 
         /*
         "SortMode": ceguitypes.SortMode,

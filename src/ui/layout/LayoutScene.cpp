@@ -330,7 +330,7 @@ void LayoutScene::moveSelectedWidgetsInParentWidgetLists(int delta)
         auto container = dynamic_cast<CEGUI::SequentialLayoutContainer*>(parentManipulator->getWidget());
         if (!container) continue;
 
-        const int potentialPos = static_cast<int>(container->getPositionOfChild(manipulator->getWidget())) + delta;
+        const int potentialPos = static_cast<int>(container->getChildIdx(manipulator->getWidget())) + delta;
         if (potentialPos < 0 || potentialPos >= static_cast<int>(container->getChildCount())) continue;
 
         paths.append(manipulator->getWidgetPath());

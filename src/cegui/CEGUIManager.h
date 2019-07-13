@@ -63,6 +63,7 @@ public:
     const QtnEnumInfo& enumVerticalFormatting();
     const QtnEnumInfo& enumHorizontalTextFormatting();
     const QtnEnumInfo& enumVerticalTextFormatting();
+    const QtnEnumInfo& enumAutoPositioning();
 
 protected:
 
@@ -82,6 +83,7 @@ protected:
     QtnEnumInfo* _enumVerticalFormatting = nullptr;
     QtnEnumInfo* _enumHorizontalTextFormatting = nullptr;
     QtnEnumInfo* _enumVerticalTextFormatting = nullptr;
+    QtnEnumInfo* _enumAutoPositioning = nullptr;
 
     std::unique_ptr<CEGUIProject> currentProject;
     bool initialized = false;
