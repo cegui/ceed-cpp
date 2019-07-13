@@ -52,6 +52,8 @@ public:
     bool getAnchorValues(float& minX, float& maxX, float& minY, float& maxY) const;
     void setAnchorValues(float minX, float maxX, float minY, float maxY, bool preserveEffectiveSize);
 
+    void collectSelectedWidgets(std::set<LayoutManipulator*>& selectedWidgets);
+
 public slots:
 
     void onSelectionChanged();
@@ -64,8 +66,6 @@ protected:
     QGraphicsItem* getCurrentAnchorItem() const;
     void updateAnchorItems(QGraphicsItem* movedItem = nullptr);
     void updateAnchorValueItems();
-
-    void collectSelectedWidgets(std::set<LayoutManipulator*>& selectedWidgets);
 
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;

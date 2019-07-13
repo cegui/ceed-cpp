@@ -3,7 +3,6 @@
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
 #include "src/ui/layout/LayoutScene.h"
 #include "src/ui/layout/LayoutManipulator.h"
-#include "src/ui/layout/LayoutContainerHandle.h"
 #include "src/ui/ResizingHandle.h"
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/util/Settings.h"
@@ -135,21 +134,18 @@ void WidgetHierarchyTreeView::selectionChanged(const QItemSelection& selected, c
     // We can't use incremental selected & deselected data because some manipulators may be
     // selected via their handles. We must explicitly deselect them, since TreeView knows nothing
     // about handles and will not add these manipulators to 'deselected'.
-    std::set<LayoutManipulator*> selectedManipulators;
+    std::set<LayoutManipulator*> newSelectedManipulators;
     for (auto& index : selectionModel()->selectedIndexes())
     {
         auto manipulator = getManipulatorFromIndex(index);
-        if (manipulator) selectedManipulators.insert(manipulator);
+        if (manipulator) newSelectedManipulators.insert(manipulator);
     }
 
-    auto selection = widget->getVisualMode().getScene()->selectedItems();
-    for (QGraphicsItem* item : selection)
+    std::set<LayoutManipulator*> oldSelectedManipulators;
+    widget->getVisualMode().getScene()->collectSelectedWidgets(oldSelectedManipulators);
+    for (LayoutManipulator* manipulator : oldSelectedManipulators)
     {
-        auto manipulator = dynamic_cast<LayoutManipulator*>(item);
-        if (!manipulator && (dynamic_cast<ResizingHandle*>(item) || dynamic_cast<LayoutContainerHandle*>(item)))
-            manipulator = dynamic_cast<LayoutManipulator*>(item->parentItem());
-
-        if (selectedManipulators.find(manipulator) == selectedManipulators.cend())
+        if (newSelectedManipulators.find(manipulator) == newSelectedManipulators.cend())
         {
             if (manipulator->isSelected())
                 manipulator->setSelected(false);
@@ -158,7 +154,7 @@ void WidgetHierarchyTreeView::selectionChanged(const QItemSelection& selected, c
         }
     }
 
-    for (auto manipulator : selectedManipulators)
+    for (auto manipulator : newSelectedManipulators)
         manipulator->setSelected(true);
 
     widget->ignoreSelectionChangesInScene(false);

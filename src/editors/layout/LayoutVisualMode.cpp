@@ -210,25 +210,27 @@ bool LayoutVisualMode::cut()
 bool LayoutVisualMode::copy()
 {
     std::vector<LayoutManipulator*> topMostSelected;
-    for (QGraphicsItem* item : scene->selectedItems())
+
     {
-        auto manip = dynamic_cast<LayoutManipulator*>(item);
-        if (!manip) continue;
+        std::set<LayoutManipulator*> selectedWidgets;
+        scene->collectSelectedWidgets(selectedWidgets);
 
-        bool hasAncestorSelected = false;
-        for (QGraphicsItem* item2 : scene->selectedItems())
+        for (LayoutManipulator* manipulator : selectedWidgets)
         {
-            auto manip2 = dynamic_cast<LayoutManipulator*>(item2);
-            if (!manip2 || manip == manip2) continue;
-
-            if (manip2->isAncestorOf(manip))
+            bool hasAncestorSelected = false;
+            for (LayoutManipulator* manipulator2 : selectedWidgets)
             {
-                hasAncestorSelected = true;
-                break;
-            }
-        }
+                if (manipulator == manipulator2) continue;
 
-        if (!hasAncestorSelected) topMostSelected.push_back(manip);
+                if (manipulator2->isAncestorOf(manipulator))
+                {
+                    hasAncestorSelected = true;
+                    break;
+                }
+            }
+
+            if (!hasAncestorSelected) topMostSelected.push_back(manipulator);
+        }
     }
 
     if (topMostSelected.empty()) return false;
@@ -258,19 +260,16 @@ bool LayoutVisualMode::paste()
     QByteArray bytes = mimeData->data("application/x-ceed-widget-hierarchy-list");
     if (bytes.size() <= 0) return false;
 
-    LayoutManipulator* target = nullptr;
-    for (QGraphicsItem* item : scene->selectedItems())
-    {
-        auto manipulator = dynamic_cast<LayoutManipulator*>(item);
-        if (!manipulator) continue;
+    std::set<LayoutManipulator*> selectedWidgets;
+    scene->collectSelectedWidgets(selectedWidgets);
 
-        // Multiple targets, we can't decide!
-        if (target) return false;
+    // Multiple targets, we can't decide!
+    if (selectedWidgets.size() > 1) return false;
 
-        target = manipulator;
-    }
+    LayoutManipulator* target = selectedWidgets.empty() ? nullptr : *selectedWidgets.begin();
+    if (target && !target->canAcceptChildren(true)) return false;
 
-    _editor.getUndoStack()->push(new LayoutPasteCommand(*this, target ? target->getWidgetPath() : "", std::move(bytes)));
+    _editor.getUndoStack()->push(new LayoutPasteCommand(*this, target ? target->getWidgetPath() : QString(), std::move(bytes)));
 
     return true;
 }
