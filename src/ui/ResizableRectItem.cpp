@@ -24,6 +24,19 @@ ResizableRectItem::ResizableRectItem(QGraphicsItem* parent)
     setCursor(Qt::OpenHandCursor);
 }
 
+// Checks whether any of the 8 handles is selected.
+// NB: At most 1 handle can be selected at a time!
+bool ResizableRectItem::isAnyHandleSelected() const
+{
+    for (QGraphicsItem* item : childItems())
+    {
+        ResizingHandle* handle = dynamic_cast<ResizingHandle*>(item);
+        if (handle && handle->isSelected()) return true;
+    }
+
+    return false;
+}
+
 // Deselects all handles of this resizable
 void ResizableRectItem::deselectAllHandles()
 {
@@ -61,19 +74,6 @@ void ResizableRectItem::setRect(QRectF newRect)
     if (newRect != rect()) _handlesDirty = true;
     QGraphicsRectItem::setRect(newRect);
     updateHandles();
-}
-
-// Checks whether any of the 8 handles is selected.
-// NB: At most 1 handle can be selected at a time!
-bool ResizableRectItem::isAnyHandleSelected() const
-{
-    for (QGraphicsItem* item : childItems())
-    {
-        ResizingHandle* handle = dynamic_cast<ResizingHandle*>(item);
-        if (handle && handle->isSelected()) return true;
-    }
-
-    return false;
 }
 
 void ResizableRectItem::beginResizing(const QGraphicsItem& handle)

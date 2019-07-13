@@ -27,6 +27,7 @@
 #include <qclipboard.h>
 #include <qbuffer.h>
 #include <qpainter.h>
+#include <qmenu.h>
 #include <set>
 
 // For properties (may be incapsulated somewhere):
@@ -49,6 +50,7 @@ LayoutScene::~LayoutScene()
     if (_multiSet) _multiSet->clearChildProperties();
     disconnect(this, &LayoutScene::selectionChanged, this, &LayoutScene::onSelectionChanged);
     delete _anchorPopupMenu;
+    delete _contextMenu;
 }
 
 void LayoutScene::updateFromWidgets()
@@ -380,20 +382,28 @@ void LayoutScene::onManipulatorUpdatedFromWidget(LayoutManipulator* manipulator)
     }
 }
 
+LayoutManipulator* LayoutScene::getManipulatorFromItem(QGraphicsItem* item) const
+{
+    if (auto manipulator = dynamic_cast<LayoutManipulator*>(item))
+    {
+        return manipulator;
+    }
+    else if (dynamic_cast<ResizingHandle*>(item) || dynamic_cast<LayoutContainerHandle*>(item))
+    {
+        if (auto manipulator = dynamic_cast<LayoutManipulator*>(item->parentItem()))
+            return manipulator;
+    }
+
+    return nullptr;
+}
+
 void LayoutScene::collectSelectedWidgets(std::set<LayoutManipulator*>& selectedWidgets)
 {
     auto selection = selectedItems();
     for (QGraphicsItem* item : selection)
     {
-        if (auto manipulator = dynamic_cast<LayoutManipulator*>(item))
-        {
+        if (auto manipulator = getManipulatorFromItem(item))
             selectedWidgets.insert(manipulator);
-        }
-        else if (dynamic_cast<ResizingHandle*>(item) || dynamic_cast<LayoutContainerHandle*>(item))
-        {
-            if (auto manipulator = dynamic_cast<LayoutManipulator*>(item->parentItem()))
-                selectedWidgets.insert(manipulator);
-        }
     }
 }
 
@@ -529,7 +539,7 @@ void LayoutScene::createAnchorItems()
 {
     QPen anchorRectPen(Qt::PenStyle::SolidLine);
     anchorRectPen.setColor(Qt::magenta);
-    anchorRectPen.setWidth(2);
+    anchorRectPen.setWidth(3);
     anchorRectPen.setCosmetic(true);
 
     _anchorParentRect = new QGraphicsRectItem();
@@ -675,7 +685,7 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
     const QRectF parentRect = _anchorTarget->getParentRect();
     const QRectF anchorsRect = _anchorTarget->getAnchorsRect();
 
-    _anchorParentRect->setRect(parentRect);
+    _anchorParentRect->setRect(parentRect.adjusted(-1.0, -1.0, 1.0, 1.0));
 
     // Position handles without firing move events
     if (movedItem != _anchorMinX) _anchorMinX->setPosSilent(anchorsRect.left(), 0.0);
@@ -760,9 +770,6 @@ void LayoutScene::setAnchorValues(float minX, float maxX, float minY, float maxY
 }
 
 // FIXME: when snapping to edge of self with Shift, handle dragging is not smooth
-// TODO: Lock axis
-// TODO: presets in virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *event) override?
-// TODO: create undo command when edited through numeric value items or presets!
 void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool moveOpposite)
 {
     if (!_anchorTarget || !item) return;
@@ -1212,10 +1219,11 @@ void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 
 void LayoutScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
 {
-    if (_anchorTarget)
+    // Get all items at mouse position and find a topmost interesting
+    const auto itemsAtMouse = items(event->scenePos());
+    for (QGraphicsItem* itemAtMouse : itemsAtMouse)
     {
-        if (_anchorTarget->sceneBoundingRect().contains(event->scenePos()) ||
-            isAnchorItem(itemAt(event->scenePos(), QTransform())))
+        if (_anchorTarget && isAnchorItem(itemAtMouse))
         {
             if (!_anchorPopupMenu)
                 _anchorPopupMenu = new AnchorPopupMenu(*this);
@@ -1225,7 +1233,38 @@ void LayoutScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
             event->accept();
             return;
         }
+
+        //!!!menu must be shown even if there is no manipulator under the mouse!
+        //!!!will be no selection and no actions that require widget.
+        //!!!especially actual for an empty scene
+
+        if (auto manipulator = getManipulatorFromItem(itemAtMouse))
+        {
+            // If target manipulator is not in a current selection, select it
+            if (!manipulator->isSelected() && !manipulator->isAnyHandleSelected())
+            {
+                clearSelection();
+                //_visualMode.getHierarchyDockWidget()->getTreeView()->clearSelection();
+                manipulator->setSelected(true);
+            }
+
+            // Let's show a context menu for this manipulator
+            break;
+        }
     }
 
-    CEGUIGraphicsScene::contextMenuEvent(event);
+    // Menu is shown for the current selection
+    if (!_contextMenu)
+    {
+        auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
+
+        _contextMenu = new QMenu();
+        _contextMenu->addAction(mainWindow->getActionCut());
+        _contextMenu->addAction(mainWindow->getActionCopy());
+        _contextMenu->addAction(mainWindow->getActionPaste());
+    }
+    _contextMenu->move(event->screenPos());
+    _contextMenu->show();
+
+    event->accept();
 }

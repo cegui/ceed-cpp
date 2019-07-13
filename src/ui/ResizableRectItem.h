@@ -17,12 +17,12 @@ public:
 
     ResizableRectItem(QGraphicsItem *parent = nullptr);
 
+    virtual bool isAnyHandleSelected() const;
     virtual void deselectAllHandles();
     void hideAllHandles(const QGraphicsItem* excluding = nullptr);
     void setResizingEnabled(bool enabled = true);
     void setRect(QRectF newRect);
     void setRect(qreal ax, qreal ay, qreal w, qreal h) { setRect(QRectF(ax, ay, w, h)); }
-    bool isAnyHandleSelected() const;
     bool moveInProgress() const { return _moveInProgress; }
     bool resizeInProgress() const { return _resizeInProgress; }
     QPointF getResizeStartPos() const { return _resizeStartPos; }

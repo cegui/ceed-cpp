@@ -47,6 +47,7 @@ public:
     void resetPen();
 
     virtual void updateHandles() override;
+    virtual bool isAnyHandleSelected() const;
     virtual void deselectAllHandles() override;
 
     // For redirection from children

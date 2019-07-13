@@ -17,6 +17,7 @@ class AnchorCornerHandle;
 class NumericValueItem;
 class QtnPropertySet;
 class AnchorPopupMenu;
+class QMenu;
 
 class LayoutScene : public CEGUIGraphicsScene
 {
@@ -52,6 +53,7 @@ public:
     bool getAnchorValues(float& minX, float& maxX, float& minY, float& maxY) const;
     void setAnchorValues(float minX, float maxX, float minY, float maxY, bool preserveEffectiveSize);
 
+    LayoutManipulator* getManipulatorFromItem(QGraphicsItem* item) const;
     void collectSelectedWidgets(std::set<LayoutManipulator*>& selectedWidgets);
 
 public slots:
@@ -83,6 +85,7 @@ protected:
     size_t _multiChangeId = 0;
 
     AnchorPopupMenu* _anchorPopupMenu = nullptr;
+    QMenu* _contextMenu = nullptr;
 
     QPointF _lastCursorPos;
 

@@ -292,6 +292,12 @@ void LayoutManipulator::updateHandles()
     CEGUIManipulator::updateHandles();
 }
 
+bool LayoutManipulator::isAnyHandleSelected() const
+{
+    if (_lcHandle && _lcHandle->isSelected()) return true;
+    return CEGUIManipulator::isAnyHandleSelected();
+}
+
 void LayoutManipulator::deselectAllHandles()
 {
     if (_lcHandle) _lcHandle->setSelected(false);
