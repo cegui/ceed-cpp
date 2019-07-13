@@ -239,7 +239,7 @@ QSizeF CEGUIManipulator::getMaxSize() const
 CEGUI::Sizef CEGUIManipulator::getBaseSize() const
 {
     if (_widget && _widget->getParent() && !_widget->isNonClient())
-        return  _widget->getParent()->getUnclippedInnerRect().get().getSize();
+        return _widget->getParent()->getUnclippedInnerRect().get().getSize();
     else
         return _widget->getParentPixelSize();
 }
@@ -247,17 +247,20 @@ CEGUI::Sizef CEGUIManipulator::getBaseSize() const
 // Returns an effective parent rect in a scene coord system
 QRectF CEGUIManipulator::getParentRect() const
 {
-    const CEGUIManipulator* parentManipulator = dynamic_cast<const CEGUIManipulator*>(parentItem());
-    if (parentManipulator)
+    if (!_widget || !scene()) return QRectF();
+
+    if (_widget->getParent())
     {
-        return parentManipulator->sceneBoundingRect();
+        const CEGUI::Rectf& parentRect = _widget->getParent()->getUnclippedInnerRect().get();
+        return QRectF(static_cast<qreal>(parentRect.left()),
+                      static_cast<qreal>(parentRect.top()),
+                      static_cast<qreal>(parentRect.getWidth()),
+                      static_cast<qreal>(parentRect.getHeight()));
     }
     else
     {
-        auto ceguiScene = dynamic_cast<const CEGUIGraphicsScene*>(scene());
-        if (!ceguiScene) return QRectF();
-
-        return QRectF(0.0, 0.0, static_cast<qreal>(ceguiScene->getContextWidth()), static_cast<qreal>(ceguiScene->getContextHeight()));
+        const CEGUI::Sizef& ctxSize = _widget->getGUIContext().getSurfaceSize();
+        return QRectF(0.0, 0.0, static_cast<qreal>(ctxSize.d_width), static_cast<qreal>(ctxSize.d_height));
     }
 }
 
