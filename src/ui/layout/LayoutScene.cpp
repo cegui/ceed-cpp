@@ -89,6 +89,9 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
         addItem(rootManipulator);
 
         createAnchorItems();
+
+        Application* app = qobject_cast<Application*>(qApp);
+        rootManipulator->showLayoutContainerHandles(app->getAction("layout/show_lc_handles")->isChecked());
     }
     else
     {
@@ -648,7 +651,8 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
     // Too early call, items aren't created yet
     if (!_anchorTextX) return;
 
-    const bool showAnchors = (_anchorTarget != nullptr);
+    Application* app = qobject_cast<Application*>(qApp);
+    const bool showAnchors = (_anchorTarget != nullptr && app->getAction("layout/show_anchors")->isChecked());
 
     if (_anchorParentRect)
     {
@@ -665,6 +669,9 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
 
     if (!showAnchors || !_anchorParentRect)
     {
+        if (_anchorTarget && _anchorTarget->resizeInProgress())
+            _anchorTarget->endResizing();
+
         _anchorTextX->setVisible(false);
         _anchorTextY->setVisible(false);
 
@@ -1234,17 +1241,12 @@ void LayoutScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
             return;
         }
 
-        //!!!menu must be shown even if there is no manipulator under the mouse!
-        //!!!will be no selection and no actions that require widget.
-        //!!!especially actual for an empty scene
-
         if (auto manipulator = getManipulatorFromItem(itemAtMouse))
         {
             // If target manipulator is not in a current selection, select it
             if (!manipulator->isSelected() && !manipulator->isAnyHandleSelected())
             {
                 clearSelection();
-                //_visualMode.getHierarchyDockWidget()->getTreeView()->clearSelection();
                 manipulator->setSelected(true);
             }
 
@@ -1256,12 +1258,29 @@ void LayoutScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     // Menu is shown for the current selection
     if (!_contextMenu)
     {
-        auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
+        Application* app = qobject_cast<Application*>(qApp);
+        auto mainWindow = app->getMainWindow();
 
         _contextMenu = new QMenu();
         _contextMenu->addAction(mainWindow->getActionCut());
         _contextMenu->addAction(mainWindow->getActionCopy());
         _contextMenu->addAction(mainWindow->getActionPaste());
+        _contextMenu->addSeparator();
+
+        auto action = app->getAction("layout/show_anchors");
+        connect(action, &QAction::toggled, [this](bool /*toggled*/)
+        {
+            updateAnchorItems();
+        });
+        _contextMenu->addAction(action);
+
+        action = app->getAction("layout/show_lc_handles");
+        connect(action, &QAction::toggled, [this](bool toggled)
+        {
+            if (rootManipulator)
+                rootManipulator->showLayoutContainerHandles(toggled);
+        });
+        _contextMenu->addAction(action);
     }
     _contextMenu->move(event->screenPos());
     _contextMenu->show();

@@ -46,6 +46,7 @@ public:
 
     void resetPen();
 
+    void showLayoutContainerHandles(bool show);
     virtual void updateHandles() override;
     virtual bool isAnyHandleSelected() const;
     virtual void deselectAllHandles() override;

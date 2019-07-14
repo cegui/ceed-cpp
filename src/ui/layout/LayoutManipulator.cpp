@@ -284,6 +284,14 @@ void LayoutManipulator::resetPen()
     setPen(getNormalPen());
 }
 
+void LayoutManipulator::showLayoutContainerHandles(bool show)
+{
+    if (_lcHandle) _lcHandle->setVisible(show);
+    for (QGraphicsItem* child : childItems())
+        if (auto manipulator = dynamic_cast<LayoutManipulator*>(child))
+            manipulator->showLayoutContainerHandles(show);
+}
+
 void LayoutManipulator::updateHandles()
 {
     if (_lcHandle && _handlesDirty && !_moveInProgress)

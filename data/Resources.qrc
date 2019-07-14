@@ -110,5 +110,7 @@
         <file>icons/widgets/GLC.png</file>
         <file>icons/widgets/HLC.png</file>
         <file>icons/widgets/VLC.png</file>
+        <file>icons/widgets/GLCt.png</file>
+        <file>icons/anchors/Anchors.png</file>
     </qresource>
 </RCC>

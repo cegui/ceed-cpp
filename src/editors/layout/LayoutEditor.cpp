@@ -266,6 +266,16 @@ void LayoutEditor::createActions(Application& app)
 {
     app.getOrCreateShortcutSettingsSection("layout", "Layout Editor");
 
+    auto action = app.registerAction("layout", "show_anchors", "Show anchor handles",
+                       "Show or hide anchor handles for the selected widget.",
+                       QIcon(":/icons/anchors/Anchors.png"), QKeySequence(), true);
+    action->setChecked(true);
+
+    action = app.registerAction("layout", "show_lc_handles", "Show layout container handles",
+                       "Show or hide handles of layout containers.",
+                       QIcon(":/icons/widgets/GLCt.png"), QKeySequence(), true);
+    action->setChecked(true);
+
     app.registerAction("layout", "absolute_mode", "&Absolute Resizing && Moving Deltas",
                        "When resizing and moving widgets, if checked this makes the delta absolute, it is relative if unchecked.",
                        QIcon(":/icons/layout_editing/absolute_mode.png"), QKeySequence(Qt::Key_A), true);
