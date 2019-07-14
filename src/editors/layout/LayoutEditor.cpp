@@ -266,15 +266,13 @@ void LayoutEditor::createActions(Application& app)
 {
     app.getOrCreateShortcutSettingsSection("layout", "Layout Editor");
 
-    auto action = app.registerAction("layout", "show_anchors", "Show anchor handles",
+    app.registerAction("layout", "show_anchors", "Show anchor handles",
                        "Show or hide anchor handles for the selected widget.",
                        QIcon(":/icons/anchors/Anchors.png"), QKeySequence(), true);
-    action->setChecked(true);
 
-    action = app.registerAction("layout", "show_lc_handles", "Show layout container handles",
+    app.registerAction("layout", "show_lc_handles", "Show layout container handles",
                        "Show or hide handles of layout containers.",
                        QIcon(":/icons/widgets/GLCt.png"), QKeySequence(), true);
-    action->setChecked(true);
 
     app.registerAction("layout", "absolute_mode", "&Absolute Resizing && Moving Deltas",
                        "When resizing and moving widgets, if checked this makes the delta absolute, it is relative if unchecked.",
@@ -290,6 +288,10 @@ void LayoutEditor::createActions(Application& app)
                        "When resizing and moving widgets, if checked this makes sure they snap to a snap grid (see "
                        "settings for snap grid related entries), also shows the snap grid if checked.",
                        QIcon(":/icons/layout_editing/snap_grid.png"), QKeySequence(Qt::Key_Space), true);
+
+    app.registerAction("layout", "select_parent", "Select &Parent",
+                       "Select an immediate parent of the widget.",
+                       QIcon(":/icons/layout_editing/SelectParent.png"), QKeySequence(Qt::Key_Backspace));
 
     app.registerAction("layout", "align_hleft", "Align &Left (horizontally)",
                        "Sets horizontal alignment of all selected widgets to left.",

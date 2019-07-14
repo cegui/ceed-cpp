@@ -17,7 +17,6 @@ class AnchorCornerHandle;
 class NumericValueItem;
 class QtnPropertySet;
 class AnchorPopupMenu;
-class QMenu;
 
 class LayoutScene : public CEGUIGraphicsScene
 {
@@ -42,6 +41,7 @@ public:
     void alignSelectionVertically(CEGUI::VerticalAlignment alignment);
     void moveSelectedWidgetsInParentWidgetLists(int delta);
     bool deleteSelectedWidgets();
+    void selectParent();
 
     void ignoreSelectionChanges(bool ignore) { _ignoreSelectionChanges = ignore; }
 
@@ -56,6 +56,13 @@ public:
     LayoutManipulator* getManipulatorFromItem(QGraphicsItem* item) const;
     void collectSelectedWidgets(std::set<LayoutManipulator*>& selectedWidgets);
 
+    bool isAnchorItem(QGraphicsItem* item) const;
+    QGraphicsItem* getCurrentAnchorItem() const;
+    void updateAnchorItems(QGraphicsItem* movedItem = nullptr);
+    void updateAnchorValueItems();
+
+    void showAnchorPopupMenu(const QPoint& pos);
+
 public slots:
 
     void onSelectionChanged();
@@ -64,10 +71,6 @@ public slots:
 protected:
 
     void createAnchorItems();
-    bool isAnchorItem(QGraphicsItem* item) const;
-    QGraphicsItem* getCurrentAnchorItem() const;
-    void updateAnchorItems(QGraphicsItem* movedItem = nullptr);
-    void updateAnchorValueItems();
 
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;
@@ -85,7 +88,6 @@ protected:
     size_t _multiChangeId = 0;
 
     AnchorPopupMenu* _anchorPopupMenu = nullptr;
-    QMenu* _contextMenu = nullptr;
 
     QPointF _lastCursorPos;
 

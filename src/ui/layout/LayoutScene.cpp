@@ -50,7 +50,6 @@ LayoutScene::~LayoutScene()
     if (_multiSet) _multiSet->clearChildProperties();
     disconnect(this, &LayoutScene::selectionChanged, this, &LayoutScene::onSelectionChanged);
     delete _anchorPopupMenu;
-    delete _contextMenu;
 }
 
 void LayoutScene::updateFromWidgets()
@@ -360,6 +359,21 @@ bool LayoutScene::deleteSelectedWidgets()
     _visualMode.getEditor().getUndoStack()->push(new LayoutDeleteCommand(_visualMode, std::move(widgetPaths)));
 
     return true;
+}
+
+void LayoutScene::selectParent()
+{
+    std::set<LayoutManipulator*> selectedWidgets;
+    collectSelectedWidgets(selectedWidgets);
+
+    if (selectedWidgets.empty()) return;
+
+    auto manipulator = *selectedWidgets.begin();
+    if (auto parentManipulator = dynamic_cast<LayoutManipulator*>(manipulator->parentItem()))
+    {
+        clearSelection();
+        parentManipulator->setSelected(true);
+    }
 }
 
 void LayoutScene::onManipulatorUpdatedFromWidget(LayoutManipulator* manipulator)
@@ -1224,6 +1238,14 @@ void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
         _visualMode.getEditor().getUndoStack()->push(new LayoutResizeCommand(_visualMode, std::move(resize)));
 }
 
+void LayoutScene::showAnchorPopupMenu(const QPoint& pos)
+{
+    if (!_anchorPopupMenu)
+        _anchorPopupMenu = new AnchorPopupMenu(*this);
+    _anchorPopupMenu->move(pos);
+    _anchorPopupMenu->show();
+}
+
 void LayoutScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
 {
     // Get all items at mouse position and find a topmost interesting
@@ -1232,11 +1254,7 @@ void LayoutScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     {
         if (_anchorTarget && isAnchorItem(itemAtMouse))
         {
-            if (!_anchorPopupMenu)
-                _anchorPopupMenu = new AnchorPopupMenu(*this);
-            _anchorPopupMenu->move(event->screenPos());
-            _anchorPopupMenu->show();
-
+            showAnchorPopupMenu(event->scenePos().toPoint());
             event->accept();
             return;
         }
@@ -1256,34 +1274,9 @@ void LayoutScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     }
 
     // Menu is shown for the current selection
-    if (!_contextMenu)
-    {
-        Application* app = qobject_cast<Application*>(qApp);
-        auto mainWindow = app->getMainWindow();
-
-        _contextMenu = new QMenu();
-        _contextMenu->addAction(mainWindow->getActionCut());
-        _contextMenu->addAction(mainWindow->getActionCopy());
-        _contextMenu->addAction(mainWindow->getActionPaste());
-        _contextMenu->addSeparator();
-
-        auto action = app->getAction("layout/show_anchors");
-        connect(action, &QAction::toggled, [this](bool /*toggled*/)
-        {
-            updateAnchorItems();
-        });
-        _contextMenu->addAction(action);
-
-        action = app->getAction("layout/show_lc_handles");
-        connect(action, &QAction::toggled, [this](bool toggled)
-        {
-            if (rootManipulator)
-                rootManipulator->showLayoutContainerHandles(toggled);
-        });
-        _contextMenu->addAction(action);
-    }
-    _contextMenu->move(event->screenPos());
-    _contextMenu->show();
+    auto contextMenu = _visualMode.getContextMenu();
+    contextMenu->move(event->screenPos());
+    contextMenu->show();
 
     event->accept();
 }

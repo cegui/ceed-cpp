@@ -44,6 +44,7 @@ public:
     LayoutScene* getScene() const { return scene; }
     CreateWidgetDockWidget* getCreateWidgetDockWidget() const { return createWidgetDockWidget; }
     WidgetHierarchyDockWidget* getHierarchyDockWidget() const { return hierarchyDockWidget; }
+    QMenu* getContextMenu() const { return contextMenu; }
     QAction* getAbsoluteModeAction() const { return actionAbsoluteMode; }
     const QBrush& getSnapGridBrush() const;
 
@@ -67,7 +68,9 @@ protected:
     CreateWidgetDockWidget* createWidgetDockWidget = nullptr;
     WidgetHierarchyDockWidget* hierarchyDockWidget = nullptr;
     QMenu* _editorMenu = nullptr; // Not owned, just stored when we have control over its content
+    QMenu* contextMenu = nullptr;
 
+    QAction* actionSelectParent = nullptr;
     QAction* actionAlignHLeft = nullptr;
     QAction* actionAlignHCenter = nullptr;
     QAction* actionAlignHRight = nullptr;

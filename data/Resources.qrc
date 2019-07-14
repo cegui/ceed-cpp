@@ -112,5 +112,6 @@
         <file>icons/widgets/VLC.png</file>
         <file>icons/widgets/GLCt.png</file>
         <file>icons/anchors/Anchors.png</file>
+        <file>icons/layout_editing/SelectParent.png</file>
     </qresource>
 </RCC>

@@ -37,6 +37,7 @@ void LayoutContainerHandle::updateLook()
 {
     const bool active = _mouseOver || isSelected() || parentItem()->isSelected();
     setOpacity(active ? 1.0 : 0.5);
+    setZValue(active ? 1.0 : 0.0);
 }
 
 // FIXME: partially duplicated code, see ResizingHandle

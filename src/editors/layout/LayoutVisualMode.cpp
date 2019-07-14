@@ -112,6 +112,7 @@ void LayoutVisualMode::rebuildEditorMenu(QMenu* editorMenu)
 
 void LayoutVisualMode::setActionsEnabled(bool enabled)
 {
+    actionSelectParent->setEnabled(enabled);
     actionAlignHLeft->setEnabled(enabled);
     actionAlignHCenter->setEnabled(enabled);
     actionAlignHRight->setEnabled(enabled);
@@ -130,6 +131,18 @@ void LayoutVisualMode::setupActions()
 {
     Application* app = qobject_cast<Application*>(qApp);
 
+    auto actionShowAnchors = app->getAction("layout/show_anchors");
+    actionShowAnchors->setChecked(true);
+    connect(actionShowAnchors, &QAction::toggled, [this](bool /*toggled*/) { scene->updateAnchorItems(); });
+
+    auto actionShowLCHandles = app->getAction("layout/show_lc_handles");
+    actionShowLCHandles->setChecked(true);
+    connect(actionShowLCHandles, &QAction::toggled, [this](bool toggled)
+    {
+        if (scene->getRootWidgetManipulator())
+            scene->getRootWidgetManipulator()->showLayoutContainerHandles(toggled);
+    });
+
     actionAbsoluteMode = app->getAction("layout/absolute_mode");
     actionAbsoluteMode->setChecked(true);
 
@@ -137,7 +150,10 @@ void LayoutVisualMode::setupActions()
     actionAbsoluteIntegerMode->setChecked(true);
 
     actionSnapGrid = app->getAction("layout/snap_grid");
-    actionAbsoluteIntegerMode->setChecked(false);
+    actionSnapGrid->setChecked(false);
+
+    actionSelectParent = app->getAction("layout/select_parent");
+    connect(actionSelectParent, &QAction::triggered, [this]() { scene->selectParent(); });
 
     actionAlignHLeft = app->getAction("layout/align_hleft");
     connect(actionAlignHLeft, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Left); });
@@ -179,6 +195,23 @@ void LayoutVisualMode::setupActions()
         self.focusPropertyInspectorFilterBoxAction = action.getAction("layout/focus_property_inspector_filter_box")
         self.connectionGroup.add(self.focusPropertyInspectorFilterBoxAction, receiver = lambda: self.focusPropertyInspectorFilterBox())
     */
+
+    auto mainWindow = app->getMainWindow();
+
+    contextMenu = new QMenu(this);
+
+    QAction* actionAnchorPresets = new QAction(QIcon(":/icons/anchors/SelfBottom.png"), "Anchor Presets", contextMenu);
+    connect(actionAnchorPresets, &QAction::triggered, [this]() { scene->showAnchorPopupMenu(QCursor::pos()); });
+
+    contextMenu->addAction(actionSelectParent);
+    contextMenu->addSeparator();
+    contextMenu->addAction(mainWindow->getActionCut());
+    contextMenu->addAction(mainWindow->getActionCopy());
+    contextMenu->addAction(mainWindow->getActionPaste());
+    contextMenu->addSeparator();
+    contextMenu->addAction(actionAnchorPresets);
+    contextMenu->addAction(actionShowAnchors);
+    contextMenu->addAction(actionShowLCHandles);
 }
 
 //!!!???to PropertyWidget / PropertyDockWidget?
