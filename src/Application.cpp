@@ -57,6 +57,12 @@ Application::Application(int& argc, char** argv)
     }
 }
 
+Application::~Application()
+{
+    delete _mainWindow;
+    delete _settings;
+}
+
 SettingsSection* Application::getOrCreateShortcutSettingsSection(const QString& groupId, const QString& label)
 {
     auto category = _settings->getCategory("shortcuts");

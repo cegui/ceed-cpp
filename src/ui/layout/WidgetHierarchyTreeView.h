@@ -16,6 +16,7 @@ class WidgetHierarchyTreeView : public QTreeView
 public:
 
     WidgetHierarchyTreeView(QWidget* parent = nullptr);
+    virtual ~WidgetHierarchyTreeView() override;
 
     void setupContextMenu();
 
@@ -31,6 +32,7 @@ protected:
 
     virtual void selectionChanged(const QItemSelection& selected, const QItemSelection& deselected) override;
     virtual void contextMenuEvent(QContextMenuEvent* event) override;
+    virtual void dropEvent(QDropEvent* event) override;
 
     QMenu* contextMenu = nullptr;
     QAction* actionCopyWidgetPath = nullptr;

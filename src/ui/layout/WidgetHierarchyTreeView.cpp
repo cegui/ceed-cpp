@@ -12,11 +12,54 @@
 #include "qevent.h"
 #include "qstandarditemmodel.h"
 #include "qclipboard.h"
+#include <qproxystyle.h>
+#include <qpainter.h>
 #include <set>
+
+class DropIndicatorStyle : public QProxyStyle
+{
+public:
+
+    DropIndicatorStyle(QStyle* baseStyle = nullptr) : QProxyStyle(baseStyle) {}
+
+    void drawPrimitive(PrimitiveElement element, const QStyleOption* option, QPainter* painter, const QWidget* widget) const
+    {
+        if (element == QStyle::PE_IndicatorItemViewItemDrop)
+        {
+            painter->setRenderHint(QPainter::Antialiasing, true);
+
+            if (option->rect.height() == 0)
+            {
+                painter->setPen(QPen(Qt::black, 2));
+                painter->setBrush(QColor(0, 0, 0, 180));
+
+                painter->drawEllipse(option->rect.topLeft(), 2, 2);
+                painter->drawLine(QPoint(option->rect.topLeft().x() + 2, option->rect.topLeft().y()), option->rect.topRight());
+            }
+            else
+            {
+                // Otherwise (drop into an item) we intentionally draw nothing, because
+                // tree view draws a selected background for thiat item. We can draw
+                // here something with a meaning of inserting as a child in a future.
+            }
+        }
+        else
+        {
+            QProxyStyle::drawPrimitive(element, option, painter, widget);
+        }
+    }
+};
 
 WidgetHierarchyTreeView::WidgetHierarchyTreeView(QWidget* parent)
     : QTreeView(parent)
 {
+    setStyle(new DropIndicatorStyle(style()));
+}
+
+WidgetHierarchyTreeView::~WidgetHierarchyTreeView()
+{
+    // Qt 5.13 QWidget::setStyle docs: The ownership of the style object is not transferred.
+    delete style();
 }
 
 void WidgetHierarchyTreeView::setupContextMenu()
@@ -179,4 +222,21 @@ void WidgetHierarchyTreeView::contextMenuEvent(QContextMenuEvent* event)
     actionLockWidgetRecursively->setEnabled(hasSelection);
     actionUnlockWidgetRecursively->setEnabled(hasSelection);
     contextMenu->exec(event->globalPos());
+}
+
+void WidgetHierarchyTreeView::dropEvent(QDropEvent* event)
+{
+    switch (dropIndicatorPosition())
+    {
+        case QAbstractItemView::AboveItem:
+        case QAbstractItemView::BelowItem:
+            //event->setDropAction(Qt::DropAction::MoveAction);
+            break;
+        case QAbstractItemView::OnItem:
+            break;
+        case QAbstractItemView::OnViewport:
+            break;
+    }
+
+    QTreeView::dropEvent(event);
 }

@@ -17,6 +17,7 @@ class Application : public QApplication
 public:
 
     Application(int& argc, char** argv);
+    virtual ~Application() override;
 
     MainWindow* getMainWindow() { return _mainWindow; }
     Settings* getSettings() const { return _settings; }
