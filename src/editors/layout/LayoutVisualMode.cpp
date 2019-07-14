@@ -84,6 +84,8 @@ CEGUI::Window* LayoutVisualMode::getRootWidget() const
 void LayoutVisualMode::rebuildEditorMenu(QMenu* editorMenu)
 {
     // Similar to the toolbar, includes the focus filter box action
+    editorMenu->addAction(actionSelectParent);
+    editorMenu->addSeparator();
     editorMenu->addAction(actionAlignHLeft);
     editorMenu->addAction(actionAlignHCenter);
     editorMenu->addAction(actionAlignHRight);

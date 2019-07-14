@@ -73,7 +73,7 @@ QAction* Application::registerAction(const QString& groupId, const QString& id, 
 
     QAction* action = new QAction(this);
     action->setObjectName(id);
-    action->setText(label);
+    action->setText(actualLabel);
     action->setIcon(icon);
     action->setToolTip(settingsLabel);
     action->setStatusTip(help);
