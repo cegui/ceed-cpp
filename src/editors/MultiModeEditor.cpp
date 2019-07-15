@@ -7,11 +7,20 @@ IEditMode::~IEditMode()
 }
 
 // Connections must be disconnected when editor becomes inactive, since actions are shared
+void IEditMode::disconnectActiveStateConnections()
+{
+    for (const auto& connection : _activeStateConnections)
+        QObject::disconnect(connection);
+    _activeStateConnections.clear();
+}
+
 void IEditMode::disconnectAllConnections()
 {
-    for (const auto& connection : _connections)
+    disconnectActiveStateConnections();
+
+    for (const auto& connection : _anyStateConnections)
         QObject::disconnect(connection);
-    _connections.clear();
+    _anyStateConnections.clear();
 }
 
 //---------------------------------------------------------------------

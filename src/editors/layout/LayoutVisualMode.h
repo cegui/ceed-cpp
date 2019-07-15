@@ -53,7 +53,7 @@ public:
 
 protected:
 
-    void enableActionConnections();
+    void createActiveStateConnections();
     void focusPropertyInspectorFilterBox();
 
     virtual void showEvent(QShowEvent* event) override;

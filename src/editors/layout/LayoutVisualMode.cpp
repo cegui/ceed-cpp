@@ -75,6 +75,10 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     actionAbsoluteIntegerMode->setChecked(true);
     actionSnapGrid->setChecked(false);
 
+    // These actions are global (cross-scene), we connect to them once and keep the connection active
+    _anyStateConnections.push_back(connect(actionShowAnchors, &QAction::toggled, [this](bool /*toggled*/) { scene->updateAnchorItems(); }));
+    _anyStateConnections.push_back(connect(actionShowLCHandles, &QAction::toggled, scene, &LayoutScene::showLayoutContainerHandles));
+
     auto mainWindow = app->getMainWindow();
 
     contextMenu = new QMenu(this);
@@ -152,28 +156,26 @@ void LayoutVisualMode::rebuildEditorMenu(QMenu* editorMenu)
     _editorMenu = editorMenu;
 }
 
-void LayoutVisualMode::enableActionConnections()
+void LayoutVisualMode::createActiveStateConnections()
 {
-    _connections.push_back(connect(hierarchyDockWidget, &WidgetHierarchyDockWidget::deleteRequested, scene, &LayoutScene::deleteSelectedWidgets));
-    _connections.push_back(connect(actionShowAnchors, &QAction::toggled, [this](bool /*toggled*/) { scene->updateAnchorItems(); }));
-    _connections.push_back(connect(actionShowLCHandles, &QAction::toggled, scene, &LayoutScene::showLayoutContainerHandles));
-    _connections.push_back(connect(actionSelectParent, &QAction::triggered, scene, &LayoutScene::selectParent));
-    _connections.push_back(connect(actionAlignHLeft, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Left); }));
-    _connections.push_back(connect(actionAlignHCenter, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Centre); }));
-    _connections.push_back(connect(actionAlignHRight, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Right); }));
-    _connections.push_back(connect(actionAlignVTop, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Top); }));
-    _connections.push_back(connect(actionAlignVCenter, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Centre); }));
-    _connections.push_back(connect(actionAlignVBottom, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Bottom); }));
-    _connections.push_back(connect(actionNormalizePosition, &QAction::triggered, scene, &LayoutScene::normalizePositionOfSelectedWidgets));
-    _connections.push_back(connect(actionNormalizeSize, &QAction::triggered, scene, &LayoutScene::normalizeSizeOfSelectedWidgets));
-    _connections.push_back(connect(actionRoundPosition, &QAction::triggered, scene, &LayoutScene::roundPositionOfSelectedWidgets));
-    _connections.push_back(connect(actionRoundSize, &QAction::triggered, scene, &LayoutScene::roundSizeOfSelectedWidgets));
-    _connections.push_back(connect(actionMoveBackward, &QAction::triggered, [this]() { scene->moveSelectedWidgetsInParentWidgetLists(-1); }));
-    _connections.push_back(connect(actionMoveForward, &QAction::triggered, [this]() { scene->moveSelectedWidgetsInParentWidgetLists(+1); }));
+    _activeStateConnections.push_back(connect(hierarchyDockWidget, &WidgetHierarchyDockWidget::deleteRequested, scene, &LayoutScene::deleteSelectedWidgets));
+    _activeStateConnections.push_back(connect(actionSelectParent, &QAction::triggered, scene, &LayoutScene::selectParent));
+    _activeStateConnections.push_back(connect(actionAlignHLeft, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Left); }));
+    _activeStateConnections.push_back(connect(actionAlignHCenter, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Centre); }));
+    _activeStateConnections.push_back(connect(actionAlignHRight, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Right); }));
+    _activeStateConnections.push_back(connect(actionAlignVTop, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Top); }));
+    _activeStateConnections.push_back(connect(actionAlignVCenter, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Centre); }));
+    _activeStateConnections.push_back(connect(actionAlignVBottom, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Bottom); }));
+    _activeStateConnections.push_back(connect(actionNormalizePosition, &QAction::triggered, scene, &LayoutScene::normalizePositionOfSelectedWidgets));
+    _activeStateConnections.push_back(connect(actionNormalizeSize, &QAction::triggered, scene, &LayoutScene::normalizeSizeOfSelectedWidgets));
+    _activeStateConnections.push_back(connect(actionRoundPosition, &QAction::triggered, scene, &LayoutScene::roundPositionOfSelectedWidgets));
+    _activeStateConnections.push_back(connect(actionRoundSize, &QAction::triggered, scene, &LayoutScene::roundSizeOfSelectedWidgets));
+    _activeStateConnections.push_back(connect(actionMoveBackward, &QAction::triggered, [this]() { scene->moveSelectedWidgetsInParentWidgetLists(-1); }));
+    _activeStateConnections.push_back(connect(actionMoveForward, &QAction::triggered, [this]() { scene->moveSelectedWidgetsInParentWidgetLists(+1); }));
     /*
         self.connectionGroup.add(self.focusPropertyInspectorFilterBoxAction, receiver = lambda: self.focusPropertyInspectorFilterBox())
     */
-    _connections.push_back(connect(actionAnchorPresets, &QAction::triggered, [this]() { scene->showAnchorPopupMenu(QCursor::pos()); }));
+    _activeStateConnections.push_back(connect(actionAnchorPresets, &QAction::triggered, [this]() { scene->showAnchorPopupMenu(QCursor::pos()); }));
 }
 
 //!!!???to PropertyWidget / PropertyDockWidget?
@@ -354,14 +356,14 @@ void LayoutVisualMode::showEvent(QShowEvent* event)
     // back to visual editing and all manipulators are of different size than they should be
     scene->updateFromWidgets();
 
-    enableActionConnections();
+    createActiveStateConnections();
 
     QWidget::showEvent(event);
 }
 
 void LayoutVisualMode::hideEvent(QHideEvent* event)
 {
-    disconnectAllConnections();
+    disconnectActiveStateConnections();
 
     auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
 

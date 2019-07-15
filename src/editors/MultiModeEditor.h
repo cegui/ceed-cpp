@@ -18,6 +18,7 @@ public:
     virtual void activate() {}
     virtual bool deactivate() { return true; } // If this returns false, the action is terminated and the mode stays in place
 
+    void disconnectActiveStateConnections();
     void disconnectAllConnections();
 
     MultiModeEditor& getEditor() const { return _editor; }
@@ -26,7 +27,8 @@ protected:
 
     MultiModeEditor& _editor;
 
-    std::vector<QMetaObject::Connection> _connections;
+    std::vector<QMetaObject::Connection> _activeStateConnections;
+    std::vector<QMetaObject::Connection> _anyStateConnections;
 };
 
 // This class represents tabbed editor that has little tabs on the bottom

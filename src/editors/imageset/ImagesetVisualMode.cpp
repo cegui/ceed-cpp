@@ -88,13 +88,13 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
     connect(this, &ImagesetVisualMode::customContextMenuRequested, this, &ImagesetVisualMode::slot_customContextMenu);
 }
 
-void ImagesetVisualMode::enableActionConnections()
+void ImagesetVisualMode::createActiveStateConnections()
 {
-    _connections.push_back(connect(editOffsetsAction, &QAction::toggled, this, &ImagesetVisualMode::slot_toggleEditOffsets));
-    _connections.push_back(connect(cycleOverlappingAction, &QAction::triggered, this, &ImagesetVisualMode::cycleOverlappingImages));
-    _connections.push_back(connect(createImageAction, &QAction::triggered, this, &ImagesetVisualMode::createImageEntryAtCursor));
-    _connections.push_back(connect(duplicateSelectedImagesAction, &QAction::triggered, this, &ImagesetVisualMode::duplicateSelectedImageEntries));
-    _connections.push_back(connect(focusImageListFilterBoxAction, &QAction::triggered, dockWidget, &ImagesetEditorDockWidget::focusImageListFilterBox));
+    _activeStateConnections.push_back(connect(editOffsetsAction, &QAction::toggled, this, &ImagesetVisualMode::slot_toggleEditOffsets));
+    _activeStateConnections.push_back(connect(cycleOverlappingAction, &QAction::triggered, this, &ImagesetVisualMode::cycleOverlappingImages));
+    _activeStateConnections.push_back(connect(createImageAction, &QAction::triggered, this, &ImagesetVisualMode::createImageEntryAtCursor));
+    _activeStateConnections.push_back(connect(duplicateSelectedImagesAction, &QAction::triggered, this, &ImagesetVisualMode::duplicateSelectedImageEntries));
+    _activeStateConnections.push_back(connect(focusImageListFilterBoxAction, &QAction::triggered, dockWidget, &ImagesetEditorDockWidget::focusImageListFilterBox));
 }
 
 void ImagesetVisualMode::loadImagesetEntryFromElement(const QDomElement& xmlRoot)
@@ -428,7 +428,7 @@ void ImagesetVisualMode::showEvent(QShowEvent* event)
     //???signal from editor to main window instead of storing ptr here?
     if (_editorMenu) _editorMenu->menuAction()->setEnabled(true);
 
-    enableActionConnections();
+    createActiveStateConnections();
 
     // Call this every time the visual editing is shown to sync all entries up
     slot_toggleEditOffsets(editOffsetsAction->isChecked());
@@ -438,7 +438,7 @@ void ImagesetVisualMode::showEvent(QShowEvent* event)
 
 void ImagesetVisualMode::hideEvent(QHideEvent* event)
 {
-    disconnectAllConnections();
+    disconnectActiveStateConnections();
 
     //???signal from editor to main window instead of storing ptr here?
     if (_editorMenu) _editorMenu->menuAction()->setEnabled(false);
