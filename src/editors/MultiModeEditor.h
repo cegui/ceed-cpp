@@ -18,14 +18,15 @@ public:
     virtual void activate() {}
     virtual bool deactivate() { return true; } // If this returns false, the action is terminated and the mode stays in place
 
+    void disconnectAllConnections();
+
     MultiModeEditor& getEditor() const { return _editor; }
 
 protected:
 
     MultiModeEditor& _editor;
 
-    // Functor connections aren't disconnected in a destructor, so we do it manually
-    std::vector<QMetaObject::Connection> functorConnections;
+    std::vector<QMetaObject::Connection> _connections;
 };
 
 // This class represents tabbed editor that has little tabs on the bottom

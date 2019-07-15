@@ -55,7 +55,7 @@ protected:
     virtual void mouseReleaseEvent(QMouseEvent* event) override;
     virtual void keyReleaseEvent(QKeyEvent* event) override;
 
-    void setupActions();
+    void enableActionConnections();
     QString getNewImageName(const QString& desiredName, QString copyPrefix = "", QString copySuffix = "_copy");
 
     QPointF lastCursorPosition;

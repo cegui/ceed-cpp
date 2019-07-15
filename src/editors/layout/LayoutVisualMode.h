@@ -31,7 +31,6 @@ public:
     void setRootWidgetManipulator(LayoutManipulator* manipulator);
     CEGUI::Window* getRootWidget() const;
     void rebuildEditorMenu(QMenu* editorMenu);
-    void setActionsEnabled(bool enabled);
 
     bool cut();
     bool copy();
@@ -54,7 +53,7 @@ public:
 
 protected:
 
-    void setupActions();
+    void enableActionConnections();
     void focusPropertyInspectorFilterBox();
 
     virtual void showEvent(QShowEvent* event) override;
@@ -70,6 +69,8 @@ protected:
     QMenu* _editorMenu = nullptr; // Not owned, just stored when we have control over its content
     QMenu* contextMenu = nullptr;
 
+    QAction* actionShowAnchors = nullptr;
+    QAction* actionShowLCHandles = nullptr;
     QAction* actionSelectParent = nullptr;
     QAction* actionAlignHLeft = nullptr;
     QAction* actionAlignHCenter = nullptr;
@@ -86,6 +87,7 @@ protected:
     QAction* actionAbsoluteMode = nullptr;
     QAction* actionAbsoluteIntegerMode = nullptr;
     QAction* actionSnapGrid = nullptr;
+    QAction* actionAnchorPresets = nullptr;
 };
 
 #endif // LAYOUTVISUALMODE_H

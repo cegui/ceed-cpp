@@ -60,30 +60,16 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
 
     dockWidget = new ImagesetEditorDockWidget(*this);
 
-    setupActions();
-}
-
-void ImagesetVisualMode::setupActions()
-{
     Application* app = qobject_cast<Application*>(qApp);
-    auto mainWindow = app->getMainWindow();
 
     editOffsetsAction = app->getAction("imageset/edit_offsets");
-    connect(editOffsetsAction, &QAction::toggled, this, &ImagesetVisualMode::slot_toggleEditOffsets);
-
     cycleOverlappingAction = app->getAction("imageset/cycle_overlapping");
-    connect(cycleOverlappingAction, &QAction::triggered, this, &ImagesetVisualMode::cycleOverlappingImages);
-
     createImageAction = app->getAction("imageset/create_image");
-    connect(createImageAction, &QAction::triggered, this, &ImagesetVisualMode::createImageEntryAtCursor);
-
     duplicateSelectedImagesAction = app->getAction("imageset/duplicate_image");
-    connect(duplicateSelectedImagesAction, &QAction::triggered, this, &ImagesetVisualMode::duplicateSelectedImageEntries);
-
     focusImageListFilterBoxAction = app->getAction("imageset/focus_image_list_filter_box");
-    connect(focusImageListFilterBoxAction, &QAction::triggered, dockWidget, &ImagesetEditorDockWidget::focusImageListFilterBox);
+    //app->setActionsEnabled("imageset", false);
 
-    app->setActionsEnabled("imageset", false);
+    auto mainWindow = app->getMainWindow();
 
     contextMenu = new QMenu(this);
     contextMenu->addAction(createImageAction);
@@ -100,6 +86,15 @@ void ImagesetVisualMode::setupActions()
 
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, &ImagesetVisualMode::customContextMenuRequested, this, &ImagesetVisualMode::slot_customContextMenu);
+}
+
+void ImagesetVisualMode::enableActionConnections()
+{
+    _connections.push_back(connect(editOffsetsAction, &QAction::toggled, this, &ImagesetVisualMode::slot_toggleEditOffsets));
+    _connections.push_back(connect(cycleOverlappingAction, &QAction::triggered, this, &ImagesetVisualMode::cycleOverlappingImages));
+    _connections.push_back(connect(createImageAction, &QAction::triggered, this, &ImagesetVisualMode::createImageEntryAtCursor));
+    _connections.push_back(connect(duplicateSelectedImagesAction, &QAction::triggered, this, &ImagesetVisualMode::duplicateSelectedImageEntries));
+    _connections.push_back(connect(focusImageListFilterBoxAction, &QAction::triggered, dockWidget, &ImagesetEditorDockWidget::focusImageListFilterBox));
 }
 
 void ImagesetVisualMode::loadImagesetEntryFromElement(const QDomElement& xmlRoot)
@@ -425,8 +420,7 @@ void ImagesetVisualMode::slot_customContextMenu(QPoint point)
 
 void ImagesetVisualMode::showEvent(QShowEvent* event)
 {
-    Application& app = *qobject_cast<Application*>(qApp);
-    auto mainWindow = app.getMainWindow();
+    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
 
     dockWidget->setEnabled(true);
     mainWindow->getToolbar("Imageset")->setEnabled(true);
@@ -434,7 +428,7 @@ void ImagesetVisualMode::showEvent(QShowEvent* event)
     //???signal from editor to main window instead of storing ptr here?
     if (_editorMenu) _editorMenu->menuAction()->setEnabled(true);
 
-    app.setActionsEnabled("imageset", true);
+    enableActionConnections();
 
     // Call this every time the visual editing is shown to sync all entries up
     slot_toggleEditOffsets(editOffsetsAction->isChecked());
@@ -444,13 +438,12 @@ void ImagesetVisualMode::showEvent(QShowEvent* event)
 
 void ImagesetVisualMode::hideEvent(QHideEvent* event)
 {
-    Application& app = *qobject_cast<Application*>(qApp);
-    auto mainWindow = app.getMainWindow();
-
-    app.setActionsEnabled("imageset", false);
+    disconnectAllConnections();
 
     //???signal from editor to main window instead of storing ptr here?
     if (_editorMenu) _editorMenu->menuAction()->setEnabled(false);
+
+    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
 
     dockWidget->setEnabled(false);
     mainWindow->getToolbar("Imageset")->setEnabled(false);

@@ -2,8 +2,16 @@
 
 IEditMode::~IEditMode()
 {
-    for (const auto& connection : functorConnections)
+    // Functor connections aren't disconnected in a destructor, so we do it manually
+    disconnectAllConnections();
+}
+
+// Connections must be disconnected when editor becomes inactive, since actions are shared
+void IEditMode::disconnectAllConnections()
+{
+    for (const auto& connection : _connections)
         QObject::disconnect(connection);
+    _connections.clear();
 }
 
 //---------------------------------------------------------------------

@@ -25,10 +25,7 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     : IEditMode(editor)
 {
     scene = new LayoutScene(*this);
-
     hierarchyDockWidget = new WidgetHierarchyDockWidget(*this);
-    connect(hierarchyDockWidget, &WidgetHierarchyDockWidget::deleteRequested, scene, &LayoutScene::deleteSelectedWidgets);
-
     createWidgetDockWidget = new CreateWidgetDockWidget(this);
 
     auto layout = new QVBoxLayout(this);
@@ -43,7 +40,53 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     ceguiWidget->setScene(scene);
     ceguiWidget->setViewFeatures(true, true, continuousRendering);
 
-    setupActions();
+    Application* app = qobject_cast<Application*>(qApp);
+
+    actionShowAnchors = app->getAction("layout/show_anchors");
+    actionShowLCHandles = app->getAction("layout/show_lc_handles");
+    actionAbsoluteMode = app->getAction("layout/absolute_mode");
+    actionAbsoluteIntegerMode = app->getAction("layout/abs_integers_mode");
+    actionSnapGrid = app->getAction("layout/snap_grid");
+    actionSelectParent = app->getAction("layout/select_parent");
+    actionAlignHLeft = app->getAction("layout/align_hleft");
+    actionAlignHCenter = app->getAction("layout/align_hcentre");
+    actionAlignHRight = app->getAction("layout/align_hright");
+    actionAlignVTop = app->getAction("layout/align_vtop");
+    actionAlignVCenter = app->getAction("layout/align_vcentre");
+    actionAlignVBottom = app->getAction("layout/align_vbottom");
+    actionNormalizePosition = app->getAction("layout/normalise_position");
+    actionNormalizeSize = app->getAction("layout/normalise_size");
+    actionRoundPosition = app->getAction("layout/round_position");
+    actionRoundSize = app->getAction("layout/round_size");
+    actionMoveBackward = app->getAction("layout/move_backward_in_parent_list");
+    actionMoveForward = app->getAction("layout/move_forward_in_parent_list");
+
+    /*
+        self.focusPropertyInspectorFilterBoxAction = action.getAction("layout/focus_property_inspector_filter_box")
+    */
+
+    // For a context menu only
+    actionAnchorPresets = new QAction(QIcon(":/icons/anchors/SelfBottom.png"), "Anchor Presets", contextMenu);
+
+    // Initial state of checkable actions
+    actionShowAnchors->setChecked(true);
+    actionShowLCHandles->setChecked(true);
+    actionAbsoluteMode->setChecked(true);
+    actionAbsoluteIntegerMode->setChecked(true);
+    actionSnapGrid->setChecked(false);
+
+    auto mainWindow = app->getMainWindow();
+
+    contextMenu = new QMenu(this);
+    contextMenu->addAction(actionSelectParent);
+    contextMenu->addSeparator();
+    contextMenu->addAction(mainWindow->getActionCut());
+    contextMenu->addAction(mainWindow->getActionCopy());
+    contextMenu->addAction(mainWindow->getActionPaste());
+    contextMenu->addSeparator();
+    contextMenu->addAction(actionAnchorPresets);
+    contextMenu->addAction(actionShowAnchors);
+    contextMenu->addAction(actionShowLCHandles);
 
     hierarchyDockWidget->setupContextMenu();
 
@@ -109,104 +152,28 @@ void LayoutVisualMode::rebuildEditorMenu(QMenu* editorMenu)
     _editorMenu = editorMenu;
 }
 
-void LayoutVisualMode::setActionsEnabled(bool enabled)
+void LayoutVisualMode::enableActionConnections()
 {
-    actionSelectParent->setEnabled(enabled);
-    actionAlignHLeft->setEnabled(enabled);
-    actionAlignHCenter->setEnabled(enabled);
-    actionAlignHRight->setEnabled(enabled);
-    actionAlignVTop->setEnabled(enabled);
-    actionAlignVCenter->setEnabled(enabled);
-    actionAlignVBottom->setEnabled(enabled);
-    actionNormalizePosition->setEnabled(enabled);
-    actionNormalizeSize->setEnabled(enabled);
-    actionRoundPosition->setEnabled(enabled);
-    actionRoundSize->setEnabled(enabled);
-    actionMoveBackward->setEnabled(enabled);
-    actionMoveForward->setEnabled(enabled);
-}
-
-void LayoutVisualMode::setupActions()
-{
-    Application* app = qobject_cast<Application*>(qApp);
-
-    auto actionShowAnchors = app->getAction("layout/show_anchors");
-    actionShowAnchors->setChecked(true);
-    functorConnections.push_back(connect(actionShowAnchors, &QAction::toggled, [this](bool /*toggled*/) { scene->updateAnchorItems(); }));
-
-    auto actionShowLCHandles = app->getAction("layout/show_lc_handles");
-    actionShowLCHandles->setChecked(true);
-    connect(actionShowLCHandles, &QAction::toggled, scene, &LayoutScene::showLayoutContainerHandles);
-
-    actionAbsoluteMode = app->getAction("layout/absolute_mode");
-    actionAbsoluteMode->setChecked(true);
-
-    actionAbsoluteIntegerMode = app->getAction("layout/abs_integers_mode");
-    actionAbsoluteIntegerMode->setChecked(true);
-
-    actionSnapGrid = app->getAction("layout/snap_grid");
-    actionSnapGrid->setChecked(false);
-
-    actionSelectParent = app->getAction("layout/select_parent");
-    connect(actionSelectParent, &QAction::triggered, scene, &LayoutScene::selectParent);
-
-    actionAlignHLeft = app->getAction("layout/align_hleft");
-    functorConnections.push_back(connect(actionAlignHLeft, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Left); }));
-
-    actionAlignHCenter = app->getAction("layout/align_hcentre");
-    functorConnections.push_back(connect(actionAlignHCenter, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Centre); }));
-
-    actionAlignHRight = app->getAction("layout/align_hright");
-    functorConnections.push_back(connect(actionAlignHRight, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Right); }));
-
-    actionAlignVTop = app->getAction("layout/align_vtop");
-    functorConnections.push_back(connect(actionAlignVTop, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Top); }));
-
-    actionAlignVCenter = app->getAction("layout/align_vcentre");
-    functorConnections.push_back(connect(actionAlignVCenter, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Centre); }));
-
-    actionAlignVBottom = app->getAction("layout/align_vbottom");
-    functorConnections.push_back(connect(actionAlignVBottom, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Bottom); }));
-
-    actionNormalizePosition = app->getAction("layout/normalise_position");
-    connect(actionNormalizePosition, &QAction::triggered, scene, &LayoutScene::normalizePositionOfSelectedWidgets);
-
-    actionNormalizeSize = app->getAction("layout/normalise_size");
-    connect(actionNormalizeSize, &QAction::triggered, scene, &LayoutScene::normalizeSizeOfSelectedWidgets);
-
-    actionRoundPosition = app->getAction("layout/round_position");
-    connect(actionRoundPosition, &QAction::triggered, scene, &LayoutScene::roundPositionOfSelectedWidgets);
-
-    actionRoundSize = app->getAction("layout/round_size");
-    connect(actionRoundSize, &QAction::triggered, scene, &LayoutScene::roundSizeOfSelectedWidgets);
-
-    actionMoveBackward = app->getAction("layout/move_backward_in_parent_list");
-    functorConnections.push_back(connect(actionMoveBackward, &QAction::triggered, [this]() { scene->moveSelectedWidgetsInParentWidgetLists(-1); }));
-
-    actionMoveForward = app->getAction("layout/move_forward_in_parent_list");
-    functorConnections.push_back(connect(actionMoveForward, &QAction::triggered, [this]() { scene->moveSelectedWidgetsInParentWidgetLists(+1); }));
-
+    _connections.push_back(connect(hierarchyDockWidget, &WidgetHierarchyDockWidget::deleteRequested, scene, &LayoutScene::deleteSelectedWidgets));
+    _connections.push_back(connect(actionShowAnchors, &QAction::toggled, [this](bool /*toggled*/) { scene->updateAnchorItems(); }));
+    _connections.push_back(connect(actionShowLCHandles, &QAction::toggled, scene, &LayoutScene::showLayoutContainerHandles));
+    _connections.push_back(connect(actionSelectParent, &QAction::triggered, scene, &LayoutScene::selectParent));
+    _connections.push_back(connect(actionAlignHLeft, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Left); }));
+    _connections.push_back(connect(actionAlignHCenter, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Centre); }));
+    _connections.push_back(connect(actionAlignHRight, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Right); }));
+    _connections.push_back(connect(actionAlignVTop, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Top); }));
+    _connections.push_back(connect(actionAlignVCenter, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Centre); }));
+    _connections.push_back(connect(actionAlignVBottom, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Bottom); }));
+    _connections.push_back(connect(actionNormalizePosition, &QAction::triggered, scene, &LayoutScene::normalizePositionOfSelectedWidgets));
+    _connections.push_back(connect(actionNormalizeSize, &QAction::triggered, scene, &LayoutScene::normalizeSizeOfSelectedWidgets));
+    _connections.push_back(connect(actionRoundPosition, &QAction::triggered, scene, &LayoutScene::roundPositionOfSelectedWidgets));
+    _connections.push_back(connect(actionRoundSize, &QAction::triggered, scene, &LayoutScene::roundSizeOfSelectedWidgets));
+    _connections.push_back(connect(actionMoveBackward, &QAction::triggered, [this]() { scene->moveSelectedWidgetsInParentWidgetLists(-1); }));
+    _connections.push_back(connect(actionMoveForward, &QAction::triggered, [this]() { scene->moveSelectedWidgetsInParentWidgetLists(+1); }));
     /*
-        self.focusPropertyInspectorFilterBoxAction = action.getAction("layout/focus_property_inspector_filter_box")
         self.connectionGroup.add(self.focusPropertyInspectorFilterBoxAction, receiver = lambda: self.focusPropertyInspectorFilterBox())
     */
-
-    auto mainWindow = app->getMainWindow();
-
-    contextMenu = new QMenu(this);
-
-    QAction* actionAnchorPresets = new QAction(QIcon(":/icons/anchors/SelfBottom.png"), "Anchor Presets", contextMenu);
-    functorConnections.push_back(connect(actionAnchorPresets, &QAction::triggered, [this]() { scene->showAnchorPopupMenu(QCursor::pos()); }));
-
-    contextMenu->addAction(actionSelectParent);
-    contextMenu->addSeparator();
-    contextMenu->addAction(mainWindow->getActionCut());
-    contextMenu->addAction(mainWindow->getActionCopy());
-    contextMenu->addAction(mainWindow->getActionPaste());
-    contextMenu->addSeparator();
-    contextMenu->addAction(actionAnchorPresets);
-    contextMenu->addAction(actionShowAnchors);
-    contextMenu->addAction(actionShowLCHandles);
+    _connections.push_back(connect(actionAnchorPresets, &QAction::triggered, [this]() { scene->showAnchorPopupMenu(QCursor::pos()); }));
 }
 
 //!!!???to PropertyWidget / PropertyDockWidget?
@@ -387,16 +354,16 @@ void LayoutVisualMode::showEvent(QShowEvent* event)
     // back to visual editing and all manipulators are of different size than they should be
     scene->updateFromWidgets();
 
-    setActionsEnabled(true);
+    enableActionConnections();
 
     QWidget::showEvent(event);
 }
 
 void LayoutVisualMode::hideEvent(QHideEvent* event)
 {
-    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
+    disconnectAllConnections();
 
-    setActionsEnabled(false);
+    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
 
     hierarchyDockWidget->setEnabled(false);
     mainWindow->getPropertyDockWidget()->setEnabled(false);
