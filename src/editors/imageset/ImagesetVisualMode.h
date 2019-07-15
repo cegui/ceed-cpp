@@ -17,6 +17,7 @@ class ImagesetVisualMode : public ResizableGraphicsView, public IEditMode
 public:
 
     ImagesetVisualMode(MultiModeEditor& editor);
+    virtual ~ImagesetVisualMode() override;
 
     void loadImagesetEntryFromElement(const QDomElement& xmlRoot);
     void rebuildEditorMenu(QMenu* editorMenu);

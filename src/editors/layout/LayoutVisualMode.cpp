@@ -106,6 +106,9 @@ LayoutVisualMode::~LayoutVisualMode()
     auto oldRoot = getRootWidget();
     if (oldRoot)
         CEGUI::WindowManager::getSingleton().destroyWindow(oldRoot);
+
+    delete hierarchyDockWidget;
+    delete createWidgetDockWidget;
 }
 
 void LayoutVisualMode::setRootWidgetManipulator(LayoutManipulator* manipulator)

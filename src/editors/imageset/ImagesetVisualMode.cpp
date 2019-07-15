@@ -88,6 +88,13 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
     connect(this, &ImagesetVisualMode::customContextMenuRequested, this, &ImagesetVisualMode::slot_customContextMenu);
 }
 
+ImagesetVisualMode::~ImagesetVisualMode()
+{
+    // Order matters!
+    delete imagesetEntry;
+    delete dockWidget;
+}
+
 void ImagesetVisualMode::createActiveStateConnections()
 {
     _activeStateConnections.push_back(connect(editOffsetsAction, &QAction::toggled, this, &ImagesetVisualMode::slot_toggleEditOffsets));

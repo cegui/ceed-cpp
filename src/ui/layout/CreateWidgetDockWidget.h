@@ -16,7 +16,7 @@ class CreateWidgetDockWidget : public QDockWidget
 public:
 
     explicit CreateWidgetDockWidget(QWidget *parent = nullptr);
-    ~CreateWidgetDockWidget();
+    virtual ~CreateWidgetDockWidget() override;
 
     void populate();
 
