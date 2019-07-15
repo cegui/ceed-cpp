@@ -1,5 +1,13 @@
 #include "src/editors/MultiModeEditor.h"
 
+IEditMode::~IEditMode()
+{
+    for (const auto& connection : functorConnections)
+        QObject::disconnect(connection);
+}
+
+//---------------------------------------------------------------------
+
 MultiModeEditor::MultiModeEditor(/*compatibilityManager, */ const QString& filePath)
     : EditorBase(filePath, true)
 {

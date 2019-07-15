@@ -27,10 +27,7 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     scene = new LayoutScene(*this);
 
     hierarchyDockWidget = new WidgetHierarchyDockWidget(*this);
-    connect(hierarchyDockWidget, &WidgetHierarchyDockWidget::deleteRequested, [this]()
-    {
-        if (scene) scene->deleteSelectedWidgets();
-    });
+    connect(hierarchyDockWidget, &WidgetHierarchyDockWidget::deleteRequested, scene, &LayoutScene::deleteSelectedWidgets);
 
     createWidgetDockWidget = new CreateWidgetDockWidget(this);
 
@@ -135,15 +132,11 @@ void LayoutVisualMode::setupActions()
 
     auto actionShowAnchors = app->getAction("layout/show_anchors");
     actionShowAnchors->setChecked(true);
-    connect(actionShowAnchors, &QAction::toggled, [this](bool /*toggled*/) { scene->updateAnchorItems(); });
+    functorConnections.push_back(connect(actionShowAnchors, &QAction::toggled, [this](bool /*toggled*/) { scene->updateAnchorItems(); }));
 
     auto actionShowLCHandles = app->getAction("layout/show_lc_handles");
     actionShowLCHandles->setChecked(true);
-    connect(actionShowLCHandles, &QAction::toggled, [this](bool toggled)
-    {
-        if (scene->getRootWidgetManipulator())
-            scene->getRootWidgetManipulator()->showLayoutContainerHandles(toggled);
-    });
+    connect(actionShowLCHandles, &QAction::toggled, scene, &LayoutScene::showLayoutContainerHandles);
 
     actionAbsoluteMode = app->getAction("layout/absolute_mode");
     actionAbsoluteMode->setChecked(true);
@@ -155,43 +148,43 @@ void LayoutVisualMode::setupActions()
     actionSnapGrid->setChecked(false);
 
     actionSelectParent = app->getAction("layout/select_parent");
-    connect(actionSelectParent, &QAction::triggered, [this]() { scene->selectParent(); });
+    connect(actionSelectParent, &QAction::triggered, scene, &LayoutScene::selectParent);
 
     actionAlignHLeft = app->getAction("layout/align_hleft");
-    connect(actionAlignHLeft, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Left); });
+    functorConnections.push_back(connect(actionAlignHLeft, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Left); }));
 
     actionAlignHCenter = app->getAction("layout/align_hcentre");
-    connect(actionAlignHCenter, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Centre); });
+    functorConnections.push_back(connect(actionAlignHCenter, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Centre); }));
 
     actionAlignHRight = app->getAction("layout/align_hright");
-    connect(actionAlignHRight, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Right); });
+    functorConnections.push_back(connect(actionAlignHRight, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Right); }));
 
     actionAlignVTop = app->getAction("layout/align_vtop");
-    connect(actionAlignVTop, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Top); });
+    functorConnections.push_back(connect(actionAlignVTop, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Top); }));
 
     actionAlignVCenter = app->getAction("layout/align_vcentre");
-    connect(actionAlignVCenter, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Centre); });
+    functorConnections.push_back(connect(actionAlignVCenter, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Centre); }));
 
     actionAlignVBottom = app->getAction("layout/align_vbottom");
-    connect(actionAlignVBottom, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Bottom); });
+    functorConnections.push_back(connect(actionAlignVBottom, &QAction::triggered, [this]() { scene->alignSelectionVertically(CEGUI::VerticalAlignment::Bottom); }));
 
     actionNormalizePosition = app->getAction("layout/normalise_position");
-    connect(actionNormalizePosition, &QAction::triggered, [this]() { scene->normalizePositionOfSelectedWidgets(); });
+    connect(actionNormalizePosition, &QAction::triggered, scene, &LayoutScene::normalizePositionOfSelectedWidgets);
 
     actionNormalizeSize = app->getAction("layout/normalise_size");
-    connect(actionNormalizeSize, &QAction::triggered, [this]() { scene->normalizeSizeOfSelectedWidgets(); });
+    connect(actionNormalizeSize, &QAction::triggered, scene, &LayoutScene::normalizeSizeOfSelectedWidgets);
 
     actionRoundPosition = app->getAction("layout/round_position");
-    connect(actionRoundPosition, &QAction::triggered, [this]() { scene->roundPositionOfSelectedWidgets(); });
+    connect(actionRoundPosition, &QAction::triggered, scene, &LayoutScene::roundPositionOfSelectedWidgets);
 
     actionRoundSize = app->getAction("layout/round_size");
-    connect(actionRoundSize, &QAction::triggered, [this]() { scene->roundSizeOfSelectedWidgets(); });
+    connect(actionRoundSize, &QAction::triggered, scene, &LayoutScene::roundSizeOfSelectedWidgets);
 
     actionMoveBackward = app->getAction("layout/move_backward_in_parent_list");
-    connect(actionMoveBackward, &QAction::triggered, [this]() { scene->moveSelectedWidgetsInParentWidgetLists(-1); });
+    functorConnections.push_back(connect(actionMoveBackward, &QAction::triggered, [this]() { scene->moveSelectedWidgetsInParentWidgetLists(-1); }));
 
     actionMoveForward = app->getAction("layout/move_forward_in_parent_list");
-    connect(actionMoveForward, &QAction::triggered, [this]() { scene->moveSelectedWidgetsInParentWidgetLists(+1); });
+    functorConnections.push_back(connect(actionMoveForward, &QAction::triggered, [this]() { scene->moveSelectedWidgetsInParentWidgetLists(+1); }));
 
     /*
         self.focusPropertyInspectorFilterBoxAction = action.getAction("layout/focus_property_inspector_filter_box")
@@ -203,7 +196,7 @@ void LayoutVisualMode::setupActions()
     contextMenu = new QMenu(this);
 
     QAction* actionAnchorPresets = new QAction(QIcon(":/icons/anchors/SelfBottom.png"), "Anchor Presets", contextMenu);
-    connect(actionAnchorPresets, &QAction::triggered, [this]() { scene->showAnchorPopupMenu(QCursor::pos()); });
+    functorConnections.push_back(connect(actionAnchorPresets, &QAction::triggered, [this]() { scene->showAnchorPopupMenu(QCursor::pos()); }));
 
     contextMenu->addAction(actionSelectParent);
     contextMenu->addSeparator();

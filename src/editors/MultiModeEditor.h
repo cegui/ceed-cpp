@@ -13,7 +13,7 @@ class IEditMode
 public:
 
     IEditMode(MultiModeEditor& editor) : _editor(editor) {}
-    virtual ~IEditMode() {}
+    virtual ~IEditMode();
 
     virtual void activate() {}
     virtual bool deactivate() { return true; } // If this returns false, the action is terminated and the mode stays in place
@@ -23,6 +23,9 @@ public:
 protected:
 
     MultiModeEditor& _editor;
+
+    // Functor connections aren't disconnected in a destructor, so we do it manually
+    std::vector<QMetaObject::Connection> functorConnections;
 };
 
 // This class represents tabbed editor that has little tabs on the bottom

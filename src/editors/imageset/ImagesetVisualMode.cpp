@@ -81,10 +81,7 @@ void ImagesetVisualMode::setupActions()
     connect(duplicateSelectedImagesAction, &QAction::triggered, this, &ImagesetVisualMode::duplicateSelectedImageEntries);
 
     focusImageListFilterBoxAction = app->getAction("imageset/focus_image_list_filter_box");
-    connect(focusImageListFilterBoxAction, &QAction::triggered, [this]()
-    {
-        dockWidget->focusImageListFilterBox();
-    });
+    connect(focusImageListFilterBoxAction, &QAction::triggered, dockWidget, &ImagesetEditorDockWidget::focusImageListFilterBox);
 
     app->setActionsEnabled("imageset", false);
 

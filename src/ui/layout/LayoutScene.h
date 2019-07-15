@@ -20,6 +20,8 @@ class AnchorPopupMenu;
 
 class LayoutScene : public CEGUIGraphicsScene
 {
+    Q_OBJECT
+
 public:
 
     LayoutScene(LayoutVisualMode& visualMode);
@@ -33,15 +35,9 @@ public:
     LayoutManipulator* getManipulatorByPath(const QString& widgetPath) const;
     size_t getMultiSelectionChangeId() const;
 
-    void normalizePositionOfSelectedWidgets();
-    void normalizeSizeOfSelectedWidgets();
-    void roundPositionOfSelectedWidgets();
-    void roundSizeOfSelectedWidgets();
     void alignSelectionHorizontally(CEGUI::HorizontalAlignment alignment);
     void alignSelectionVertically(CEGUI::VerticalAlignment alignment);
     void moveSelectedWidgetsInParentWidgetLists(int delta);
-    bool deleteSelectedWidgets();
-    void selectParent();
 
     void ignoreSelectionChanges(bool ignore) { _ignoreSelectionChanges = ignore; }
 
@@ -64,6 +60,14 @@ public:
     void showAnchorPopupMenu(const QPoint& pos);
 
 public slots:
+
+    void normalizePositionOfSelectedWidgets();
+    void normalizeSizeOfSelectedWidgets();
+    void roundPositionOfSelectedWidgets();
+    void roundSizeOfSelectedWidgets();
+    void selectParent();
+    bool deleteSelectedWidgets();
+    void showLayoutContainerHandles(bool show);
 
     void onSelectionChanged();
     void onBeforePropertyEdited();

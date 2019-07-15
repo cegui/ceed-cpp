@@ -30,10 +30,13 @@ public:
     void refreshImagesetInfo();
     void refresh();
     void scrollToEntry(ImageEntry* entry);
-    void focusImageListFilterBox();
 
     bool isSelectionUnderway() const { return selectionUnderway; }
     void setSelectionSynchronizationUnderway(bool on) { selectionSynchronizationUnderway = on; }
+
+public slots:
+
+    void focusImageListFilterBox();
 
 private slots:
 

@@ -361,6 +361,11 @@ bool LayoutScene::deleteSelectedWidgets()
     return true;
 }
 
+void LayoutScene::showLayoutContainerHandles(bool show)
+{
+    if (rootManipulator) rootManipulator->showLayoutContainerHandles(show);
+}
+
 void LayoutScene::selectParent()
 {
     std::set<LayoutManipulator*> selectedWidgets;
