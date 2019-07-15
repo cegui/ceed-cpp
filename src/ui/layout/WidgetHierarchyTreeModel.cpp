@@ -130,6 +130,12 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
             const QString oldWidgetName = widgetPath.mid(sepPos + 1);
             const QString oldWidgetParentPath = widgetPath.left(sepPos);
 
+            //!!!DBG TMP! need undo command!
+            //???reparent - add position in parent (in old & in new), allow same parent?
+            //???or use command for moving in a parent? (+1/-1)
+            if (oldWidgetParentPath == newParentManipulator->getWidgetPath())
+                continue;
+
             // Prevent name clashes at the new parent
             // When a name clash occurs, we suggest a new name to the user and
             // ask them to confirm it/enter their own.
