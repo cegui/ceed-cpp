@@ -191,13 +191,15 @@ protected:
 
 // This command changes parent of given windows
 // NB: we don't merge these commands
-class LayoutReparentCommand : public QUndoCommand
+class LayoutMoveInHierarchyCommand : public QUndoCommand
 {
 public:
 
     struct Record
     {
         QString oldParentPath;
+        size_t oldChildIndex;
+        size_t newChildIndex;
 
         // For the case when the new parent contains a child with the same name
         QString oldName;
@@ -208,7 +210,7 @@ public:
         CEGUI::USize oldSize;
     };
 
-    LayoutReparentCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, const QString& newParentPath);
+    LayoutMoveInHierarchyCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, const QString& newParentPath);
 
     virtual void undo() override;
     virtual void redo() override;

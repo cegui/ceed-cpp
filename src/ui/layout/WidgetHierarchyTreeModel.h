@@ -19,7 +19,6 @@ public:
     virtual bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) override;
 
     void setRootManipulator(LayoutManipulator* rootManipulator);
-    WidgetHierarchyItem* getRootHierarchyItem() const;
 
 protected:
 

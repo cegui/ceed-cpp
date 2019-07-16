@@ -7,6 +7,7 @@
 #include "src/cegui/CEGUIUtils.h"
 #include "qmimedata.h"
 #include "qinputdialog.h"
+#include <CEGUI/Window.h>
 #include <unordered_set>
 
 WidgetHierarchyTreeModel::WidgetHierarchyTreeModel(LayoutVisualMode& visualMode)
@@ -32,17 +33,13 @@ bool WidgetHierarchyTreeModel::setData(const QModelIndex& index, const QVariant&
     return QStandardItemModel::setData(index, value, role);
 }
 
-// If the selection contains children of something that is also selected, we don't include that
-// (it doesn't make sense to move it anyways, it will be moved with its parent)
 // DFS, Qt doesn't have helper methods for this it seems to me :-/
-static bool isChild(QStandardItem* parent, QStandardItem* potentialChild)
+static bool isChild(QStandardItem* potentialChild, QStandardItem* parent)
 {
-    int i = 0;
-    while (i < parent->rowCount())
+    for (int i = 0; i < parent->rowCount(); ++i)
     {
-        auto child = parent->child(i);
-        if (child == potentialChild || isChild(child, potentialChild)) return true;
-        ++i;
+        auto immediateChild = parent->child(i);
+        if (potentialChild == immediateChild || isChild(potentialChild, immediateChild)) return true;
     }
 
     return false;
@@ -50,7 +47,13 @@ static bool isChild(QStandardItem* parent, QStandardItem* potentialChild)
 
 QMimeData* WidgetHierarchyTreeModel::mimeData(const QModelIndexList& indexes) const
 {
-    std::vector<QStandardItem*> topItems;
+    if (indexes.empty()) return nullptr;
+
+    QByteArray bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+
+    // Serialize only top-level items. If the selection contains children of something that
+    // is also selected, it doesn't make sense to move it, it will be moved with its parent.
     for (const auto& index : indexes)
     {
         auto item = itemFromIndex(index);
@@ -58,26 +61,17 @@ QMimeData* WidgetHierarchyTreeModel::mimeData(const QModelIndexList& indexes) co
         bool hasParent = false;
         for (const auto& parentIndex : indexes)
         {
-            if (parentIndex == index) continue;
-
-            auto potentialParent = itemFromIndex(parentIndex);
-
-            //???potentialParent here, potentialChild in isChild? was in original CEED.
-            if (isChild(item, potentialParent))
+            if (parentIndex != index && isChild(item, itemFromIndex(parentIndex)))
             {
                 hasParent = true;
                 break;
             }
         }
 
-        if (!hasParent) topItems.push_back(item);
-    }
-
-    QByteArray bytes;
-    QDataStream stream(&bytes, QIODevice::WriteOnly);
-    for (auto item : topItems)
-    {
-        stream << item->data(Qt::UserRole).toString();
+        if (!hasParent)
+        {
+            stream << item->data(Qt::UserRole).toString();
+        }
     }
 
     QMimeData* ret = new QMimeData();
@@ -90,12 +84,12 @@ QStringList WidgetHierarchyTreeModel::mimeTypes() const
     return { "application/x-ceed-widget-paths", "application/x-ceed-widget-type" };
 }
 
-bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int /*row*/, int /*column*/, const QModelIndex& parent)
+bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* mimeData, Qt::DropAction action, int row, int /*column*/, const QModelIndex& parent)
 {
-    if (data->hasFormat("application/x-ceed-widget-paths"))
+    if (mimeData->hasFormat("application/x-ceed-widget-paths"))
     {
         QStringList widgetPaths;
-        QByteArray bytes = data->data("application/x-ceed-widget-paths");
+        QByteArray bytes = mimeData->data("application/x-ceed-widget-paths");
         QDataStream stream(&bytes, QIODevice::ReadOnly);
         while (!stream.atEnd())
         {
@@ -106,13 +100,7 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
 
         if (widgetPaths.empty()) return false;
 
-        auto newParent = itemFromIndex(parent);
-        if (!newParent) return false;
-
-        QStringList targetWidgetPaths;
-        std::unordered_set<QString> usedNames;
-
-        const QString newParentPath = newParent->data(Qt::UserRole).toString();
+        const QString newParentPath = data(parent, Qt::UserRole).toString();
         auto newParentManipulator = _visualMode.getScene()->getManipulatorByPath(newParentPath);
         if (!newParentManipulator)
         {
@@ -122,43 +110,59 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
 
         if (!newParentManipulator->canAcceptChildren(true)) return false;
 
-        std::vector<LayoutReparentCommand::Record> records;
+        size_t newChildIndex = (row > 0) ? static_cast<size_t>(data(index(row - 1, 0, parent), Qt::UserRole + 1).toULongLong()) + 1 : 0;
+
+        std::vector<LayoutMoveInHierarchyCommand::Record> records;
+        QStringList targetWidgetPaths;
+        std::unordered_set<QString> usedNames;
 
         for (const QString& widgetPath : widgetPaths)
         {
-            int sepPos = widgetPath.lastIndexOf('/');
-            const QString oldWidgetName = widgetPath.mid(sepPos + 1);
-            const QString oldWidgetParentPath = widgetPath.left(sepPos);
+            auto manipulator = _visualMode.getScene()->getManipulatorByPath(widgetPath);
+            if (!manipulator) continue;
 
-            //!!!DBG TMP! need undo command!
-            //???reparent - add position in parent (in old & in new), allow same parent?
-            //???or use command for moving in a parent? (+1/-1)
-            if (oldWidgetParentPath == newParentManipulator->getWidgetPath())
-                continue;
-
-            // Prevent name clashes at the new parent
-            // When a name clash occurs, we suggest a new name to the user and
-            // ask them to confirm it/enter their own.
-            // The tricky part is that we have to consider the other widget renames
-            // too (in case we're reparenting and renaming more than one widget)
-            // and we must prevent invalid names (i.e. containing "/")
+            auto oldParentManipulator = dynamic_cast<LayoutManipulator*>(manipulator->parentItem());
+            const size_t oldChildIndex = manipulator->getWidgetIndexInParent();
+            const QString oldWidgetName = manipulator->getWidgetName();
             QString suggestedName = oldWidgetName;
-            QString error;
-            while (true)
-            {
-                // Get a name that's not used in the new parent, trying to keep
-                // the suggested name (which is the same as the old widget name at
-                // the beginning)
-                QString tempName = CEGUIUtils::getUniqueChildWidgetName(*newParentManipulator->getWidget(), suggestedName);
 
-                // If the name we got is the same as the one we wanted...
-                if (tempName == suggestedName)
+            if (newParentManipulator == oldParentManipulator)
+            {
+                // FIXME: allow reordering in any window? Needs CEGUI change.
+                // http://cegui.org.uk/forum/viewtopic.php?f=3&t=7542
+                if (!newParentManipulator->isLayoutContainer())
                 {
-                    // ...we need to check our own usedNames list too, in case
-                    // another widget we're reparenting has got this name.
-                    int counter = 2;
-                    while (usedNames.find(suggestedName) != usedNames.end())
+                    // Reordering inside a parent is supported only for layout containers for now
+                    continue;
+                }
+
+                // Already at the destination
+                if (newChildIndex == oldChildIndex) continue;
+            }
+            else
+            {
+                // Prevent name clashes at the new parent
+                // When a name clash occurs, we suggest a new name to the user and
+                // ask them to confirm it/enter their own.
+                // The tricky part is that we have to consider the other widget renames
+                // too (in case we're reparenting and renaming more than one widget)
+                // and we must prevent invalid names (i.e. containing "/")
+                QString error;
+                while (true)
+                {
+                    // Get a name that's not used in the new parent, trying to keep
+                    // the suggested name (which is the same as the old widget name at
+                    // the beginning)
+                    QString tempName = CEGUIUtils::getUniqueChildWidgetName(*newParentManipulator->getWidget(), suggestedName);
+
+                    // If the name we got is the same as the one we wanted...
+                    if (tempName == suggestedName)
                     {
+                        // ...we need to check our own usedNames list too, in case
+                        // another widget we're reparenting has got this name.
+                        int counter = 2;
+                        while (usedNames.find(suggestedName) != usedNames.end())
+                        {
                         // When this happens, we simply add a numeric suffix to
                         // the suggested name. The result could theoretically
                         // collide in the new parent but it's OK because this
@@ -167,55 +171,57 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
                         suggestedName = tempName + QString::number(counter);
                         ++counter;
                         error = QString("Widget name is in use by another widget being ") + ((action == Qt::CopyAction) ? "copied" : "moved");
+                        }
+
+                        // If we had no collision, we can keep this name!
+                        if (counter == 2) break;
+                    }
+                    else
+                    {
+                        // The new parent had a child with that name already and so
+                        // it gave us a new suggested name.
+                        suggestedName = tempName;
+                        error = "Widget name already exists in the new parent";
                     }
 
-                    // If we had no collision, we can keep this name!
-                    if (counter == 2) break;
-                 }
-                 else
-                 {
-                     // The new parent had a child with that name already and so
-                     // it gave us a new suggested name.
-                     suggestedName = tempName;
-                     error = "Widget name already exists in the new parent";
-                 }
+                    // Ask the user to confirm our suggested name or enter a new one.
+                    // We do this in a loop because we validate the user input.
+                    while (true)
+                    {
+                        bool ok = false;
+                        suggestedName = QInputDialog::getText(&_visualMode, error,
+                                                              "New name for '" + oldWidgetName + "':",
+                                                              QLineEdit::Normal, suggestedName, &ok);
 
-                 // Ask the user to confirm our suggested name or enter a new one.
-                 // We do this in a loop because we validate the user input.
-                 while (true)
-                 {
-                     bool ok = false;
-                     suggestedName = QInputDialog::getText(
-                                         &_visualMode,
-                                         error,
-                                         "New name for '" + oldWidgetName + "':",
-                                         QLineEdit::Normal,
-                                         suggestedName,
-                                         &ok);
+                        // Abort everything if the user cancels the dialog
+                        if (!ok) return false;
 
-                     // Abort everything if the user cancels the dialog
-                     if (!ok) return false;
-
-                     // Validate the entered name
-                     suggestedName = CEGUIUtils::getValidWidgetName(suggestedName);
-                     if (!suggestedName.isEmpty()) break;
-                     error = "Invalid name, please try again";
-                 }
-             }
+                        // Validate the entered name
+                        suggestedName = CEGUIUtils::getValidWidgetName(suggestedName);
+                        if (!suggestedName.isEmpty()) break;
+                        error = "Invalid name, please try again";
+                    }
+                }
+            }
 
             usedNames.insert(suggestedName);
             targetWidgetPaths.append(newParentPath + "/" + suggestedName);
 
-            LayoutReparentCommand::Record rec;
+            LayoutMoveInHierarchyCommand::Record rec;
+            rec.oldParentPath = oldParentManipulator->getWidgetPath();
+            rec.oldChildIndex = oldChildIndex;
+            rec.newChildIndex = newChildIndex;
             rec.oldName = oldWidgetName;
             rec.newName = suggestedName;
-            rec.oldParentPath = oldWidgetParentPath;
             records.push_back(std::move(rec));
+
+            // To insert in order
+            ++newChildIndex;
         }
 
         if (action == Qt::MoveAction)
         {
-            _visualMode.getEditor().getUndoStack()->push(new LayoutReparentCommand(_visualMode, std::move(records), newParentPath));
+            _visualMode.getEditor().getUndoStack()->push(new LayoutMoveInHierarchyCommand(_visualMode, std::move(records), newParentPath));
             return true;
         }
         else if (action == Qt::CopyAction)
@@ -225,9 +231,9 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
             return false;
         }
     }
-    else if (data->hasFormat("application/x-ceed-widget-type"))
+    else if (mimeData->hasFormat("application/x-ceed-widget-type"))
     {
-        QString widgetType = data->data("application/x-ceed-widget-type").data();
+        QString widgetType = mimeData->data("application/x-ceed-widget-type").data();
 
         auto parentItem = itemFromIndex(parent);
 
@@ -253,16 +259,11 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* data, Qt::DropActio
 
 void WidgetHierarchyTreeModel::setRootManipulator(LayoutManipulator* rootManipulator)
 {
-    if (!synchroniseSubtree(getRootHierarchyItem(), rootManipulator))
+    if (!rowCount() || !synchroniseSubtree(static_cast<WidgetHierarchyItem*>(item(0)), rootManipulator))
     {
         clear();
         if (rootManipulator) appendRow(constructSubtree(rootManipulator));
     }
-}
-
-WidgetHierarchyItem* WidgetHierarchyTreeModel::getRootHierarchyItem() const
-{
-    return rowCount() > 0 ? static_cast<WidgetHierarchyItem*>(item(0)) : nullptr;
 }
 
 // Attempts to synchronise subtree with given widget manipulator, returns false if impossible.

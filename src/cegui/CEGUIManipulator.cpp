@@ -667,6 +667,11 @@ QString CEGUIManipulator::getWidgetPath() const
     return _widget ? CEGUIUtils::stringToQString(_widget->getNamePath()) : "<Unknown>";
 }
 
+size_t CEGUIManipulator::getWidgetIndexInParent() const
+{
+    return (_widget && _widget->getParent()) ? _widget->getParent()->getChildIdx(_widget) : 0;
+}
+
 // Creates a child manipulator suitable for a child widget of manipulated widget
 // This is there to allow overriding (if user subclasses the Manipulator, child manipulators are likely to be also subclassed)
 CEGUIManipulator* CEGUIManipulator::createChildManipulator(CEGUI::Window* childWidget)

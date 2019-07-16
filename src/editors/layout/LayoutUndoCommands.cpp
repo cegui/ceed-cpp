@@ -629,7 +629,7 @@ void LayoutVerticalAlignCommand::refreshText()
 
 //---------------------------------------------------------------------
 
-LayoutReparentCommand::LayoutReparentCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, const QString& newParentPath)
+LayoutMoveInHierarchyCommand::LayoutMoveInHierarchyCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records, const QString& newParentPath)
     : _visualMode(visualMode)
     , _records(std::move(records))
     , _newParentPath(newParentPath)
@@ -643,12 +643,12 @@ LayoutReparentCommand::LayoutReparentCommand(LayoutVisualMode& visualMode, std::
     }
 
     if (_records.size() == 1)
-        setText(QString("Reparent '%1' to '%2'").arg(_records[0].oldName, _newParentPath));
+        setText(QString("Move '%1' in hierarchy").arg(_records[0].oldName));
     else
-        setText(QString("Reparent %1 widgets").arg(_records.size()));
+        setText(QString("Move %1 widgets in hierarchy").arg(_records.size()));
 }
 
-void LayoutReparentCommand::undo()
+void LayoutMoveInHierarchyCommand::undo()
 {
     QUndoCommand::undo();
 
@@ -662,8 +662,11 @@ void LayoutReparentCommand::undo()
         auto newParentManipulator = dynamic_cast<LayoutManipulator*>(widgetManipulator->parentItem());
 
         // Remove it from the current CEGUI parent widget
-        auto parentWidget = widgetManipulator->getWidget()->getParent();
-        if (parentWidget) parentWidget->removeChild(widgetManipulator->getWidget());
+        if (oldParentManipulator != newParentManipulator)
+        {
+            auto parentWidget = widgetManipulator->getWidget()->getParent();
+            if (parentWidget) parentWidget->removeChild(widgetManipulator->getWidget());
+        }
 
         // Rename it if necessary
         if (rec.oldName != rec.newName)
@@ -681,13 +684,23 @@ void LayoutReparentCommand::undo()
             widgetManipulator->updatePropertiesFromWidget({"Size", "Position", "Area"});
         }
 
-        // Add it to the old CEGUI parent widget
-        oldParentManipulator->getWidget()->addChild(widgetManipulator->getWidget());
+        if (oldParentManipulator != newParentManipulator)
+        {
+            // Add it to the old CEGUI parent widget and sort out the manipulators
+            oldParentManipulator->getWidget()->addChild(widgetManipulator->getWidget());
+            widgetManipulator->setParentItem(oldParentManipulator);
+        }
 
-        // And sort out the manipulators
-        widgetManipulator->setParentItem(oldParentManipulator);
+        // FIXME: allow reordering in any window? Needs CEGUI change.
+        // http://cegui.org.uk/forum/viewtopic.php?f=3&t=7542
+        auto parentLC = dynamic_cast<CEGUI::LayoutContainer*>(oldParentManipulator->getWidget());
+        if (parentLC && rec.oldChildIndex < parentLC->getChildCount() - 1)
+        {
+            //!!!addChildToIndex, moveChildToIndex - at least for all LCs!
+            parentLC->swapChildPositions(rec.oldChildIndex, parentLC->getChildCount() - 1);
+        }
 
-        // Update widget and its previous parent (mostly for the layout container case)
+        // Update widget and its previous parent (the second is mostly for the layout container case)
         widgetManipulator->updateFromWidget(true, true);
         if (newParentManipulator) newParentManipulator->updateFromWidget(true, true);
     }
@@ -695,7 +708,7 @@ void LayoutReparentCommand::undo()
     _visualMode.getHierarchyDockWidget()->refresh();
 }
 
-void LayoutReparentCommand::redo()
+void LayoutMoveInHierarchyCommand::redo()
 {
     _visualMode.getScene()->clearSelection();
     _visualMode.getHierarchyDockWidget()->getTreeView()->clearSelection();
@@ -706,9 +719,20 @@ void LayoutReparentCommand::redo()
         auto newParentManipulator = _visualMode.getScene()->getManipulatorByPath(_newParentPath);
         auto oldParentManipulator = dynamic_cast<LayoutManipulator*>(widgetManipulator->parentItem());
 
+        // FIXME: allow reordering in any window? Needs CEGUI change.
+        if (newParentManipulator == oldParentManipulator && !newParentManipulator->isLayoutContainer())
+        {
+            // Reordering inside a parent is supported only for layout containers for now
+            assert(false);
+            continue;
+        }
+
         // Remove it from the current CEGUI parent widget
-        auto parentWidget = widgetManipulator->getWidget()->getParent();
-        if (parentWidget) parentWidget->removeChild(widgetManipulator->getWidget());
+        if (oldParentManipulator != newParentManipulator)
+        {
+            auto parentWidget = widgetManipulator->getWidget()->getParent();
+            if (parentWidget) parentWidget->removeChild(widgetManipulator->getWidget());
+        }
 
         // Rename it if necessary
         if (rec.oldName != rec.newName)
@@ -717,13 +741,23 @@ void LayoutReparentCommand::redo()
             widgetManipulator->updatePropertiesFromWidget({"Name", "NamePath"});
         }
 
-        // Add it to the new CEGUI parent widget
-        newParentManipulator->getWidget()->addChild(widgetManipulator->getWidget());
+        if (oldParentManipulator != newParentManipulator)
+        {
+            // Add it to the new CEGUI parent widget and sort out the manipulators
+            newParentManipulator->getWidget()->addChild(widgetManipulator->getWidget());
+            widgetManipulator->setParentItem(newParentManipulator);
+        }
 
-        // And sort out the manipulators
-        widgetManipulator->setParentItem(newParentManipulator);
+        // FIXME: allow reordering in any window? Needs CEGUI change.
+        // http://cegui.org.uk/forum/viewtopic.php?f=3&t=7542
+        auto parentLC = dynamic_cast<CEGUI::LayoutContainer*>(newParentManipulator->getWidget());
+        if (parentLC && rec.newChildIndex < parentLC->getChildCount() - 1)
+        {
+            //!!!addChildToIndex, moveChildToIndex - at least for all LCs!
+            parentLC->swapChildPositions(rec.newChildIndex, parentLC->getChildCount() - 1);
+        }
 
-        // Update widget and its previous parent (mostly for the layout container case)
+        // Update widget and its previous parent (the second is mostly for the layout container case)
         widgetManipulator->updateFromWidget(true, true);
         if (oldParentManipulator) oldParentManipulator->updateFromWidget(true, true);
     }
