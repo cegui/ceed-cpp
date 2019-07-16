@@ -4,14 +4,12 @@
 #include "qtreeview.h"
 
 // The actual widget hierarchy tree widget - what a horrible name
-// This is a Qt widget that does exactly the same as QTreeWidget for now,
-// it is a placeholder that will be put to use once the need arises - and it will.
 
 class LayoutManipulator;
 
 class WidgetHierarchyTreeView : public QTreeView
 {
-    Q_OBJECT;
+    Q_OBJECT
 
 public:
 
@@ -24,6 +22,8 @@ public slots:
 
     void copySelectedWidgetPaths();
     void editSelectedWidgetName();
+    void expandChildrenOfSelected();
+    void collapseChildrenOfSelected();
 
 protected:
 
@@ -32,7 +32,6 @@ protected:
 
     virtual void selectionChanged(const QItemSelection& selected, const QItemSelection& deselected) override;
     virtual void contextMenuEvent(QContextMenuEvent* event) override;
-    virtual void dropEvent(QDropEvent* event) override;
 
     QMenu* contextMenu = nullptr;
     QAction* actionCopyWidgetPath = nullptr;
@@ -41,6 +40,8 @@ protected:
     QAction* actionUnlockWidget = nullptr;
     QAction* actionLockWidgetRecursively = nullptr;
     QAction* actionUnlockWidgetRecursively = nullptr;
+    QAction* actionExpandChildren = nullptr;
+    QAction* actionCollapseChildren = nullptr;
 };
 
 #endif // WIDGETHIERARCHYTREEVIEW_H

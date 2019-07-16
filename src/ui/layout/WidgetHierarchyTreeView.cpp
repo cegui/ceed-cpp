@@ -39,7 +39,7 @@ public:
             else
             {
                 // Otherwise (drop into an item) we intentionally draw nothing, because
-                // tree view draws a selected background for thiat item. We can draw
+                // tree view draws a selected background for that item. We can draw
                 // here something with a meaning of inserting as a child in a future.
             }
         }
@@ -75,7 +75,7 @@ void WidgetHierarchyTreeView::setupContextMenu()
     connect(actionRename, &QAction::triggered, this, &WidgetHierarchyTreeView::editSelectedWidgetName);
 
     actionLockWidget = app->getAction("layout/lock_widget");
-    connect(actionLockWidget, &QAction::triggered, [this]() { setSelectedWidgetsLocked(true, false); });
+    connect(actionLockWidget, &QAction::triggered, this, [this]() { setSelectedWidgetsLocked(true, false); });
 
     actionUnlockWidget = app->getAction("layout/unlock_widget");
     connect(actionUnlockWidget, &QAction::triggered, this, [this]() { setSelectedWidgetsLocked(false, false); });
@@ -86,8 +86,17 @@ void WidgetHierarchyTreeView::setupContextMenu()
     actionUnlockWidgetRecursively = app->getAction("layout/recursively_unlock_widget");
     connect(actionUnlockWidgetRecursively, &QAction::triggered, this, [this]() { setSelectedWidgetsLocked(false, true); });
 
+    actionExpandChildren = new QAction("Expand Children", this);
+    connect(actionExpandChildren, &QAction::triggered, this, &WidgetHierarchyTreeView::expandChildrenOfSelected);
+
+    actionCollapseChildren = new QAction("Collapse Children", this);
+    connect(actionCollapseChildren, &QAction::triggered, this, &WidgetHierarchyTreeView::collapseChildrenOfSelected);
+
     contextMenu = new QMenu(this);
     contextMenu->addAction(actionRename);
+    contextMenu->addSeparator();
+    contextMenu->addAction(actionExpandChildren);
+    contextMenu->addAction(actionCollapseChildren);
     contextMenu->addSeparator();
     contextMenu->addAction(actionLockWidget);
     contextMenu->addAction(actionUnlockWidget);
@@ -133,14 +142,27 @@ void WidgetHierarchyTreeView::editSelectedWidgetName()
     edit(selection[0]);
 }
 
-void WidgetHierarchyTreeView::setSelectedWidgetsLocked(bool locked, bool recursive)
+void WidgetHierarchyTreeView::expandChildrenOfSelected()
 {
     auto selection = selectedIndexes();
-    if (selection.empty()) return;
+    for (const auto& index : selection)
+        expandRecursively(index, 1);
+}
 
+void WidgetHierarchyTreeView::collapseChildrenOfSelected()
+{
+    auto selection = selectedIndexes();
+    for (const auto& index : selection)
+        for (int i = 0; i < model()->rowCount(index); ++i)
+            collapse(model()->index(i, 0, index));
+}
+
+void WidgetHierarchyTreeView::setSelectedWidgetsLocked(bool locked, bool recursive)
+{
     // It is possible that we will make superfluous lock actions if user selects widgets
     // in a hierarchy (parent & child) and then does a recursive lock. This doesn't do anything
     // harmful so we don't have any logic to prevent that.
+    auto selection = selectedIndexes();
     for (const auto& index : selection)
     {
         auto item = static_cast<WidgetHierarchyItem*>(static_cast<QStandardItemModel*>(model())->itemFromIndex(index));
@@ -221,22 +243,6 @@ void WidgetHierarchyTreeView::contextMenuEvent(QContextMenuEvent* event)
     actionUnlockWidget->setEnabled(hasSelection);
     actionLockWidgetRecursively->setEnabled(hasSelection);
     actionUnlockWidgetRecursively->setEnabled(hasSelection);
+    actionExpandChildren->setEnabled(hasSelection);
     contextMenu->exec(event->globalPos());
-}
-
-void WidgetHierarchyTreeView::dropEvent(QDropEvent* event)
-{
-    switch (dropIndicatorPosition())
-    {
-        case QAbstractItemView::AboveItem:
-        case QAbstractItemView::BelowItem:
-            //event->setDropAction(Qt::DropAction::MoveAction);
-            break;
-        case QAbstractItemView::OnItem:
-            break;
-        case QAbstractItemView::OnViewport:
-            break;
-    }
-
-    QTreeView::dropEvent(event);
 }
