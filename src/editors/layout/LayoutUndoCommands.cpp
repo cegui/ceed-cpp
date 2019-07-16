@@ -694,10 +694,11 @@ void LayoutMoveInHierarchyCommand::undo()
         // FIXME: allow reordering in any window? Needs CEGUI change.
         // http://cegui.org.uk/forum/viewtopic.php?f=3&t=7542
         auto parentLC = dynamic_cast<CEGUI::LayoutContainer*>(oldParentManipulator->getWidget());
-        if (parentLC && rec.oldChildIndex < parentLC->getChildCount() - 1)
+        if (parentLC)
         {
-            //???moveChildToIndex(idxFrom, idxTo)?
-            parentLC->moveChildToIndex(widgetManipulator->getWidget(), rec.oldChildIndex);
+            const size_t currIndex = widgetManipulator->getWidgetIndexInParent();
+            const size_t destIndex = rec.oldChildIndex;
+            parentLC->moveChildToIndex(currIndex, destIndex > currIndex ? destIndex + 1 : destIndex);
         }
 
         // Update widget and its previous parent (the second is mostly for the layout container case)
@@ -751,11 +752,8 @@ void LayoutMoveInHierarchyCommand::redo()
         // FIXME: allow reordering in any window? Needs CEGUI change.
         // http://cegui.org.uk/forum/viewtopic.php?f=3&t=7542
         auto parentLC = dynamic_cast<CEGUI::LayoutContainer*>(newParentManipulator->getWidget());
-        if (parentLC && rec.newChildIndex < parentLC->getChildCount() - 1)
-        {
-            //???moveChildToIndex(idxFrom, idxTo)?
+        if (parentLC)
             parentLC->moveChildToIndex(widgetManipulator->getWidget(), rec.newChildIndex);
-        }
 
         // Update widget and its previous parent (the second is mostly for the layout container case)
         widgetManipulator->updateFromWidget(true, true);

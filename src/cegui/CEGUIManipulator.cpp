@@ -1126,11 +1126,17 @@ bool CEGUIManipulator::canAcceptChildren(size_t count, bool showErrorMessages) c
                 QMessageBox::warning(nullptr, "Can't accept a child", "Grid layout container must have non-zero dimensions to accept children");
             return false;
         }
-        else if (capacity < glc->getActualChildCount() + count)
+        else
         {
-            if (showErrorMessages)
-                QMessageBox::warning(nullptr, "Can't accept a child", "Grid layout container is full");
-            return false;
+            auto childCount = glc->getActualChildCount();
+            if (capacity < childCount + count)
+            {
+                if (showErrorMessages)
+                    QMessageBox::warning(nullptr, "Can't accept a child",
+                                         QString("You must increase grid dimensions to insert %1 children.\n"
+                                                 "There are %2 free cells.").arg(count).arg(capacity - childCount));
+                return false;
+            }
         }
     }
 
