@@ -13,7 +13,7 @@
 #include "src/editors/layout/LayoutUndoCommands.h"
 #include <CEGUI/CoordConverter.h>
 #include <CEGUI/GUIContext.h>
-#include <CEGUI/widgets/SequentialLayoutContainer.h>
+#include <CEGUI/widgets/LayoutContainer.h>
 #include "qgraphicssceneevent.h"
 #include "qevent.h"
 #include "qmimedata.h"
@@ -331,10 +331,10 @@ void LayoutScene::moveSelectedWidgetsInParentWidgetLists(int delta)
         auto parentManipulator = dynamic_cast<LayoutManipulator*>(manipulator->parentItem());
         if (!parentManipulator) continue;
 
-        auto container = dynamic_cast<CEGUI::SequentialLayoutContainer*>(parentManipulator->getWidget());
+        auto container = dynamic_cast<CEGUI::LayoutContainer*>(parentManipulator->getWidget());
         if (!container) continue;
 
-        const int potentialPos = static_cast<int>(container->getChildIdx(manipulator->getWidget())) + delta;
+        const int potentialPos = static_cast<int>(container->getChildIndex(manipulator->getWidget())) + delta;
         if (potentialPos < 0 || potentialPos >= static_cast<int>(container->getChildCount())) continue;
 
         paths.append(manipulator->getWidgetPath());

@@ -5,7 +5,7 @@
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
 #include "src/ui/layout/WidgetHierarchyItem.h"
 #include "src/cegui/CEGUIUtils.h"
-#include <CEGUI/widgets/SequentialLayoutContainer.h>
+#include <CEGUI/widgets/LayoutContainer.h>
 #include <CEGUI/WindowManager.h>
 #include <CEGUI/CoordConverter.h>
 #include "qtreeview.h"
@@ -696,8 +696,8 @@ void LayoutMoveInHierarchyCommand::undo()
         auto parentLC = dynamic_cast<CEGUI::LayoutContainer*>(oldParentManipulator->getWidget());
         if (parentLC && rec.oldChildIndex < parentLC->getChildCount() - 1)
         {
-            //!!!addChildToIndex, moveChildToIndex - at least for all LCs!
-            parentLC->swapChildPositions(rec.oldChildIndex, parentLC->getChildCount() - 1);
+            //???moveChildToIndex(idxFrom, idxTo)?
+            parentLC->moveChildToIndex(widgetManipulator->getWidget(), rec.oldChildIndex);
         }
 
         // Update widget and its previous parent (the second is mostly for the layout container case)
@@ -753,8 +753,8 @@ void LayoutMoveInHierarchyCommand::redo()
         auto parentLC = dynamic_cast<CEGUI::LayoutContainer*>(newParentManipulator->getWidget());
         if (parentLC && rec.newChildIndex < parentLC->getChildCount() - 1)
         {
-            //!!!addChildToIndex, moveChildToIndex - at least for all LCs!
-            parentLC->swapChildPositions(rec.newChildIndex, parentLC->getChildCount() - 1);
+            //???moveChildToIndex(idxFrom, idxTo)?
+            parentLC->moveChildToIndex(widgetManipulator->getWidget(), rec.newChildIndex);
         }
 
         // Update widget and its previous parent (the second is mostly for the layout container case)
@@ -889,12 +889,12 @@ void MoveInParentWidgetListCommand::undo()
     {
         auto manipulator = _visualMode.getScene()->getManipulatorByPath(path);
         auto parentManipulator = static_cast<LayoutManipulator*>(manipulator->parentItem());
-        auto container = static_cast<CEGUI::SequentialLayoutContainer*>(parentManipulator->getWidget());
+        auto container = static_cast<CEGUI::LayoutContainer*>(parentManipulator->getWidget());
 
-        size_t oldPos = container->getChildIdx(manipulator->getWidget());
+        size_t oldPos = container->getChildIndex(manipulator->getWidget());
         size_t newPos = static_cast<size_t>(static_cast<int>(oldPos) - _delta);
-        container->swapChildPositions(oldPos, newPos);
-        assert(newPos == container->getChildIdx(manipulator->getWidget()));
+        container->swapChildren(oldPos, newPos);
+        assert(newPos == container->getChildIndex(manipulator->getWidget()));
 
         parentManipulator->updateFromWidget(true, true);
         parentManipulator->getTreeItem()->refreshOrderingData();
@@ -909,12 +909,12 @@ void MoveInParentWidgetListCommand::redo()
     {
         auto manipulator = _visualMode.getScene()->getManipulatorByPath(path);
         auto parentManipulator = static_cast<LayoutManipulator*>(manipulator->parentItem());
-        auto container = static_cast<CEGUI::SequentialLayoutContainer*>(parentManipulator->getWidget());
+        auto container = static_cast<CEGUI::LayoutContainer*>(parentManipulator->getWidget());
 
-        size_t oldPos = container->getChildIdx(manipulator->getWidget());
+        size_t oldPos = container->getChildIndex(manipulator->getWidget());
         size_t newPos = static_cast<size_t>(static_cast<int>(oldPos) + _delta);
-        container->swapChildPositions(oldPos, newPos);
-        assert(newPos == container->getChildIdx(manipulator->getWidget()));
+        container->swapChildren(oldPos, newPos);
+        assert(newPos == container->getChildIndex(manipulator->getWidget()));
 
         parentManipulator->updateFromWidget(true, true);
         parentManipulator->getTreeItem()->refreshOrderingData();

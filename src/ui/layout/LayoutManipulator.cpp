@@ -337,7 +337,7 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
     auto data = event->mimeData()->data("application/x-ceed-widget-type");
     if (data.size() > 0)
     {
-        if (canAcceptChildren(true))
+        if (canAcceptChildren(1, true))
         {
             QString widgetType = data.data();
             int sepPos = widgetType.lastIndexOf('/');

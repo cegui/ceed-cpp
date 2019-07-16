@@ -267,7 +267,7 @@ bool LayoutVisualMode::paste()
     if (selectedWidgets.size() > 1) return false;
 
     LayoutManipulator* target = selectedWidgets.empty() ? nullptr : *selectedWidgets.begin();
-    if (target && !target->canAcceptChildren(true)) return false;
+    if (target && !target->canAcceptChildren(1, true)) return false;
 
     _editor.getUndoStack()->push(new LayoutPasteCommand(*this, target ? target->getWidgetPath() : QString(), std::move(bytes)));
 

@@ -76,7 +76,7 @@ public:
     void moveToFront();
     bool shouldBeSkipped() const;
     bool hasNonAutoWidgetDescendants() const;
-    bool canAcceptChildren(bool showErrorMessages = false) const;
+    bool canAcceptChildren(size_t count = 1, bool showErrorMessages = false) const;
 
     void updatePropertiesFromWidget(const QStringList& propertyNames);
     void updateAllPropertiesFromWidget();

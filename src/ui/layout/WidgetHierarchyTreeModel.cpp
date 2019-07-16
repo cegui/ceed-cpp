@@ -108,13 +108,12 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* mimeData, Qt::DropA
             return false;
         }
 
-        if (!newParentManipulator->canAcceptChildren(true)) return false;
-
         size_t newChildIndex = (row > 0) ? static_cast<size_t>(data(index(row - 1, 0, parent), Qt::UserRole + 1).toULongLong()) + 1 : 0;
 
         std::vector<LayoutMoveInHierarchyCommand::Record> records;
         QStringList targetWidgetPaths;
         std::unordered_set<QString> usedNames;
+        size_t addedChildCount = 0;
 
         for (const QString& widgetPath : widgetPaths)
         {
@@ -141,6 +140,8 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* mimeData, Qt::DropA
             }
             else
             {
+                ++addedChildCount;
+
                 // Prevent name clashes at the new parent
                 // When a name clash occurs, we suggest a new name to the user and
                 // ask them to confirm it/enter their own.
@@ -219,6 +220,8 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* mimeData, Qt::DropA
             ++newChildIndex;
         }
 
+        if (!newParentManipulator->canAcceptChildren(addedChildCount, true)) return false;
+
         if (action == Qt::MoveAction)
         {
             _visualMode.getEditor().getUndoStack()->push(new LayoutMoveInHierarchyCommand(_visualMode, std::move(records), newParentPath));
@@ -243,7 +246,7 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* mimeData, Qt::DropA
         const QString parentItemPath = parentItem ? parentItem->data(Qt::UserRole).toString() : (rootManip ? rootManip->getWidgetName() : "");
         LayoutManipulator* parentManipulator = parentItemPath.isEmpty() ? nullptr : _visualMode.getScene()->getManipulatorByPath(parentItemPath);
 
-        if (!parentManipulator->canAcceptChildren(true)) return false;
+        if (!parentManipulator->canAcceptChildren(1, true)) return false;
 
         QString uniqueName = widgetType.mid(widgetType.lastIndexOf('/') + 1);
         if (parentManipulator)

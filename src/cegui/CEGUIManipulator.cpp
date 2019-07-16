@@ -669,7 +669,7 @@ QString CEGUIManipulator::getWidgetPath() const
 
 size_t CEGUIManipulator::getWidgetIndexInParent() const
 {
-    return (_widget && _widget->getParent()) ? _widget->getParent()->getChildIdx(_widget) : 0;
+    return (_widget && _widget->getParent()) ? _widget->getParent()->getChildIndex(_widget) : 0;
 }
 
 // Creates a child manipulator suitable for a child widget of manipulated widget
@@ -1110,8 +1110,10 @@ bool CEGUIManipulator::hasNonAutoWidgetDescendants() const
     return impl_hasNonAutoWidgetDescendants(_widget);
 }
 
-bool CEGUIManipulator::canAcceptChildren(bool showErrorMessages) const
+bool CEGUIManipulator::canAcceptChildren(size_t count, bool showErrorMessages) const
 {
+    if (!count) return true;
+
     // Grid layout accepts fixed number of children.
     // TODO: it is possible to add auto-extension in the CEGUI::GridLayoutContainer class.
     auto glc = dynamic_cast<CEGUI::GridLayoutContainer*>(_widget);
@@ -1124,7 +1126,7 @@ bool CEGUIManipulator::canAcceptChildren(bool showErrorMessages) const
                 QMessageBox::warning(nullptr, "Can't accept a child", "Grid layout container must have non-zero dimensions to accept children");
             return false;
         }
-        else if (capacity <= glc->getActualChildCount())
+        else if (capacity < glc->getActualChildCount() + count)
         {
             if (showErrorMessages)
                 QMessageBox::warning(nullptr, "Can't accept a child", "Grid layout container is full");
