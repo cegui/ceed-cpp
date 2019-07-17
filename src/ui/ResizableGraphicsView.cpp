@@ -57,10 +57,16 @@ void ResizableGraphicsView::wheelEvent(QWheelEvent *event)
 {
     if (wheelZoomEnabled && (!ctrlZoom || (event->modifiers() & Qt::ControlModifier)))
     {
+        setTransformationAnchor(AnchorUnderMouse);
+        setResizeAnchor(AnchorUnderMouse);
+
         if (event->delta() > 0)
             zoomIn();
         else if (event->delta() < 0)
             zoomOut();
+
+        setTransformationAnchor(AnchorViewCenter);
+        setResizeAnchor(AnchorViewCenter);
 
         return;
     }
