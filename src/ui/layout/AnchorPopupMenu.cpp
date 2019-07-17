@@ -337,15 +337,17 @@ void AnchorPopupMenu::showEvent(QShowEvent* event)
     float minX, maxX, minY, maxY;
     if (!_scene.getAnchorValues(minX, maxX, minY, maxY)) return;
 
-    constexpr float tolerance = 1.f / 1920.f;
+    const QRectF parentRect = _scene.getAnchorTarget()->getParentRect();
+    const float toleranceX = 1.f / static_cast<float>(parentRect.width()) - std::numeric_limits<float>().epsilon();
+    const float toleranceY = 1.f / static_cast<float>(parentRect.height()) - std::numeric_limits<float>().epsilon();
 
-    if (compareFloat(minX, 0.f, tolerance) && compareFloat(maxX, 0.f, tolerance))
+    if (compareFloat(minX, 0.f, toleranceX) && compareFloat(maxX, 0.f, toleranceX))
         ui->actionParentLeft->setChecked(true);
-    else if (compareFloat(minX, 0.f, tolerance) && compareFloat(maxX, 1.f, tolerance))
+    else if (compareFloat(minX, 0.f, toleranceX) && compareFloat(maxX, 1.f, toleranceX))
         ui->actionParentHStretch->setChecked(true);
-    else if (compareFloat(minX, 0.5f, tolerance) && compareFloat(maxX, 0.5f, tolerance))
+    else if (compareFloat(minX, 0.5f, toleranceX) && compareFloat(maxX, 0.5f, toleranceX))
         ui->actionParentHCenter->setChecked(true);
-    else if (compareFloat(minX, 1.f, tolerance) && compareFloat(maxX, 1.f, tolerance))
+    else if (compareFloat(minX, 1.f, toleranceX) && compareFloat(maxX, 1.f, toleranceX))
         ui->actionParentRight->setChecked(true);
     else
     {
@@ -358,26 +360,26 @@ void AnchorPopupMenu::showEvent(QShowEvent* event)
         const auto midAnchorValue = CEGUI::CoordConverter::asRelative(midPt, baseSize.d_width);
         const auto maxAnchorValue = CEGUI::CoordConverter::asRelative(maxPt, baseSize.d_width);
 
-        if (compareFloat(minX, minAnchorValue, tolerance))
+        if (compareFloat(minX, minAnchorValue, toleranceX))
         {
-            if (compareFloat(maxX, minAnchorValue, tolerance))
+            if (compareFloat(maxX, minAnchorValue, toleranceX))
                 ui->actionSelfLeft->setChecked(true);
-            else if (compareFloat(maxX, maxAnchorValue, tolerance))
+            else if (compareFloat(maxX, maxAnchorValue, toleranceX))
                 ui->actionSelfHStretch->setChecked(true);
         }
-        else if (compareFloat(minX, midAnchorValue, tolerance) && compareFloat(maxX, midAnchorValue, tolerance))
+        else if (compareFloat(minX, midAnchorValue, toleranceX) && compareFloat(maxX, midAnchorValue, toleranceX))
             ui->actionSelfHCenter->setChecked(true);
-        else if (compareFloat(minX, maxAnchorValue, tolerance) && compareFloat(maxX, maxAnchorValue, tolerance))
+        else if (compareFloat(minX, maxAnchorValue, toleranceX) && compareFloat(maxX, maxAnchorValue, toleranceX))
             ui->actionSelfRight->setChecked(true);
     }
 
-    if (compareFloat(minY, 0.f, tolerance) && compareFloat(maxY, 0.f, tolerance))
+    if (compareFloat(minY, 0.f, toleranceY) && compareFloat(maxY, 0.f, toleranceY))
         ui->actionParentTop->setChecked(true);
-    else if (compareFloat(minY, 0.f, tolerance) && compareFloat(maxY, 1.f, tolerance))
+    else if (compareFloat(minY, 0.f, toleranceY) && compareFloat(maxY, 1.f, toleranceY))
         ui->actionParentVStretch->setChecked(true);
-    else if (compareFloat(minY, 0.5f, tolerance) && compareFloat(maxY, 0.5f, tolerance))
+    else if (compareFloat(minY, 0.5f, toleranceY) && compareFloat(maxY, 0.5f, toleranceY))
         ui->actionParentVCenter->setChecked(true);
-    else if (compareFloat(minY, 1.f, tolerance) && compareFloat(maxY, 1.f, tolerance))
+    else if (compareFloat(minY, 1.f, toleranceY) && compareFloat(maxY, 1.f, toleranceY))
         ui->actionParentBottom->setChecked(true);
     else
     {
@@ -390,16 +392,16 @@ void AnchorPopupMenu::showEvent(QShowEvent* event)
         const auto midAnchorValue = CEGUI::CoordConverter::asRelative(midPt, baseSize.d_height);
         const auto maxAnchorValue = CEGUI::CoordConverter::asRelative(maxPt, baseSize.d_height);
 
-        if (compareFloat(minY, minAnchorValue, tolerance))
+        if (compareFloat(minY, minAnchorValue, toleranceY))
         {
-            if (compareFloat(maxY, minAnchorValue, tolerance))
+            if (compareFloat(maxY, minAnchorValue, toleranceY))
                 ui->actionSelfTop->setChecked(true);
-            else if (compareFloat(maxY, maxAnchorValue, tolerance))
+            else if (compareFloat(maxY, maxAnchorValue, toleranceY))
                 ui->actionSelfVStretch->setChecked(true);
         }
-        else if (compareFloat(minY, midAnchorValue, tolerance) && compareFloat(maxY, midAnchorValue, tolerance))
+        else if (compareFloat(minY, midAnchorValue, toleranceY) && compareFloat(maxY, midAnchorValue, toleranceY))
             ui->actionSelfVCenter->setChecked(true);
-        else if (compareFloat(minY, maxAnchorValue, tolerance) && compareFloat(maxY, maxAnchorValue, tolerance))
+        else if (compareFloat(minY, maxAnchorValue, toleranceY) && compareFloat(maxY, maxAnchorValue, toleranceY))
             ui->actionSelfBottom->setChecked(true);
     }
 
