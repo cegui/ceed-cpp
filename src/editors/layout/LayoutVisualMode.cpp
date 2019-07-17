@@ -32,6 +32,24 @@
 #include <unordered_set>
 #include <qinputdialog.h>
 
+void LayoutVisualMode::removeNestedManipulators(std::set<LayoutManipulator*>& manipulators)
+{
+    for (auto it = manipulators.begin(); it != manipulators.end(); /**/)
+    {
+        bool erased = false;
+        const LayoutManipulator* manipulator = *it;
+        for (LayoutManipulator* potentialParent : manipulators)
+            if (potentialParent->isAncestorOf(manipulator))
+            {
+                it = manipulators.erase(it);
+                erased = true;
+                break;
+            }
+
+        if (!erased) ++it;
+    }
+}
+
 LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     : IEditMode(editor)
 {
@@ -226,36 +244,17 @@ bool LayoutVisualMode::cut()
 
 bool LayoutVisualMode::copy()
 {
-    std::vector<LayoutManipulator*> topMostSelected;
+    std::set<LayoutManipulator*> selectedWidgets;
+    scene->collectSelectedWidgets(selectedWidgets);
 
-    {
-        std::set<LayoutManipulator*> selectedWidgets;
-        scene->collectSelectedWidgets(selectedWidgets);
+    // We serialize only topmost selected widgets (and thus their entire hierarchies)
+    removeNestedManipulators(selectedWidgets);
 
-        for (LayoutManipulator* manipulator : selectedWidgets)
-        {
-            bool hasAncestorSelected = false;
-            for (LayoutManipulator* manipulator2 : selectedWidgets)
-            {
-                if (manipulator == manipulator2) continue;
+    if (selectedWidgets.empty()) return false;
 
-                if (manipulator2->isAncestorOf(manipulator))
-                {
-                    hasAncestorSelected = true;
-                    break;
-                }
-            }
-
-            if (!hasAncestorSelected) topMostSelected.push_back(manipulator);
-        }
-    }
-
-    if (topMostSelected.empty()) return false;
-
-    // Now we serialize the topmost selected widgets (and thus their entire hierarchies)
     QByteArray bytes;
     QDataStream stream(&bytes, QIODevice::WriteOnly);
-    for (LayoutManipulator* manipulator : topMostSelected)
+    for (LayoutManipulator* manipulator : selectedWidgets)
     {
         if (!CEGUIUtils::serializeWidget(*manipulator->getWidget(), stream, true))
             return false;

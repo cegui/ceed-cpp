@@ -592,7 +592,7 @@ void CEGUIManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs)
         {
             static_cast<CEGUIManipulator*>(topmostLC)->updateFromWidget(true, false);
 
-            // No need to continue, this method will get called again with updateAncestorLCs = False
+            // No need to continue, this method will get called again with updateAncestorLCs = false
             return;
         }
     }

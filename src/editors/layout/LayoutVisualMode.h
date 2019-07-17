@@ -3,6 +3,7 @@
 
 #include "src/editors/MultiModeEditor.h"
 #include "qwidget.h"
+#include <set>
 
 // This is the layout visual editing mode
 
@@ -26,6 +27,8 @@ class LayoutVisualMode : public QWidget, public IEditMode
     Q_OBJECT
 
 public:
+
+    static void removeNestedManipulators(std::set<LayoutManipulator*>& manipulators);
 
     LayoutVisualMode(LayoutEditor& editor);
     virtual ~LayoutVisualMode() override;
