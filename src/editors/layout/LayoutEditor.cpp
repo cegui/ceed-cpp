@@ -329,19 +329,19 @@ void LayoutEditor::createActions(Application& app)
                        "If the size is mixed (absolute and relative) it becomes relative only, if it's relative it becomes absolute, if it's absolute it becomes relative.",
                        QIcon(":/icons/layout_editing/normalise_size.png"), QKeySequence(Qt::Key_S));
 
-    app.registerAction("layout", "round_position", "Rounds the absolute position to nearest integer",
+    app.registerAction("layout", "round_position", "Round the absolute position to nearest integer",
                        "The value of the absolute position will be rounded to the nearest integer value (e.g.: 1.7 will become 2.0 and -4.2 will become -4.0",
                        QIcon(":/icons/layout_editing/round_position.png"), QKeySequence(Qt::Key_M));
 
-    app.registerAction("layout", "round_size", "Rounds the absolute size to nearest integer",
+    app.registerAction("layout", "round_size", "Round the absolute size to nearest integer",
                        "The value of the absolute size will be rounded to the nearest integer value (e.g.: 1.7 will become 2.0 and -4.2 will become -4.0",
                        QIcon(":/icons/layout_editing/round_size.png"), QKeySequence(Qt::Key_N));
 
-    app.registerAction("layout", "move_backward_in_parent_list", "Moves widget -1 step in the parent's widget list",
+    app.registerAction("layout", "move_backward_in_parent_list", "Move widget -1 step in the parent's widget list",
                        "Moves selected widget(s) one step backward in their parent's widget list (Only applicable to LayoutContainer widgets)",
                        QIcon(":/icons/layout_editing/move_backward_in_parent_list.png"));
 
-    app.registerAction("layout", "move_forward_in_parent_list", "Moves widget +1 step in the parent's widget list",
+    app.registerAction("layout", "move_forward_in_parent_list", "Move widget +1 step in the parent's widget list",
                        "Moves selected widget(s) one step forward in their parent's widget list (Only applicable to LayoutContainer widgets)",
                        QIcon(":/icons/layout_editing/move_forward_in_parent_list.png"));
 

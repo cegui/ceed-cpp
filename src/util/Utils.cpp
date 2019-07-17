@@ -29,11 +29,11 @@ QBrush getCheckerboardBrush(int halfWidth, int halfHeight, QColor firstColour, Q
     return ret;
 }
 
-void fillTransparencyWithChecker(QImage& image)
+void fillTransparencyWithChecker(QImage& image, int halfWidth, int halfHeight, QColor firstColour, QColor secondColour)
 {
     QPainter painter(&image);
     painter.setCompositionMode(QPainter::CompositionMode_DestinationOver);
-    painter.setBrush(getCheckerboardBrush(5, 5, Qt::darkGray, Qt::lightGray));
+    painter.setBrush(getCheckerboardBrush(halfWidth, halfHeight, firstColour, secondColour));
     painter.drawRect(image.rect());
     painter.end();
 }

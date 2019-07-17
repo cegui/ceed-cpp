@@ -364,27 +364,44 @@ void LayoutVisualMode::takeScreenshot()
     QImage screenshot = scene->getCEGUIScreenshot();
     if (screenshot.isNull()) return;
 
-    // TODO: add project subfolder (need name), optional through settings
-    const QDir dir(QDir(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)).filePath("CEED"));
-    const QString fileName = QString("%1-%2x%3-%4.png")
-            .arg(QFileInfo(getEditor().getFilePath()).baseName())
-            .arg(static_cast<int>(scene->getContextWidth()))
-            .arg(static_cast<int>(scene->getContextHeight()))
-            .arg(QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss"));
-    const QString filePath = dir.filePath(fileName);
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
 
-    dir.mkpath(".");
-    if (screenshot.save(filePath, "PNG", 50))
+    if (settings->getEntryValue("cegui/screenshots/save", true).toBool())
     {
-        // TODO: https://stackoverflow.com/questions/3490336/how-to-reveal-in-finder-or-show-in-explorer-with-qt
-        // TODO: option in settings (open dir / file / nothing)
-        QDesktopServices::openUrl(QUrl::fromLocalFile(dir.path()));
+        // TODO: add project subfolder (need name), optional through settings
+        const QDir dir(QDir(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)).filePath("CEED"));
+        const QString fileName = QString("%1-%2x%3-%4.png")
+                .arg(QFileInfo(getEditor().getFilePath()).baseName())
+                .arg(static_cast<int>(scene->getContextWidth()))
+                .arg(static_cast<int>(scene->getContextHeight()))
+                .arg(QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss"));
+        const QString filePath = dir.filePath(fileName);
+
+        dir.mkpath(".");
+        if (screenshot.save(filePath, "PNG", 50))
+        {
+            const auto action = settings->getEntryValue("cegui/screenshots/after_save_action").toInt();
+            switch (action)
+            {
+                // TODO: https://stackoverflow.com/questions/3490336/how-to-reveal-in-finder-or-show-in-explorer-with-qt
+                case 0: QDesktopServices::openUrl(QUrl::fromLocalFile(dir.path())); break;
+                case 1: QDesktopServices::openUrl(QUrl::fromLocalFile(filePath)); break;
+                default: break;
+            }
+        }
     }
 
-    // TODO: option in settings - save to file or not. Always copy to clipboard?
-    // TODO: keepTransparencyInClipboard to settings
-    constexpr bool keepTransparencyInClipboard = false;
-    if (keepTransparencyInClipboard)
+    if (settings->getEntryValue("cegui/screenshots/bg_checker", true).toBool())
+    {
+        // NB: here we alter screenshot data, so saving to file must happen before this
+        const auto checkerWidth = settings->getEntryValue("cegui/background/checker_width").toInt();
+        const auto checkerHeight = settings->getEntryValue("cegui/background/checker_height").toInt();
+        const auto checkerFirstColour = settings->getEntryValue("cegui/background/first_colour").value<QColor>();
+        const auto checkerSecondColour = settings->getEntryValue("cegui/background/second_colour").value<QColor>();
+        Utils::fillTransparencyWithChecker(screenshot, checkerWidth, checkerHeight, checkerFirstColour, checkerSecondColour);
+        QApplication::clipboard()->setImage(screenshot);
+    }
+    else
     {
         QByteArray pngData;
         QBuffer buffer(&pngData);
@@ -397,12 +414,6 @@ void LayoutVisualMode::takeScreenshot()
         QMimeData* data = new QMimeData();
         data->setData("PNG", pngData);
         QApplication::clipboard()->setMimeData(data);
-    }
-    else
-    {
-        // NB: here we alter screenshot data, so saving to file must happen before this
-        Utils::fillTransparencyWithChecker(screenshot);
-        QApplication::clipboard()->setImage(screenshot);
     }
 }
 

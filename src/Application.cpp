@@ -213,6 +213,24 @@ void Application::createSettingsEntries()
                                   "colour", false, 4));
     secBG->addEntry(std::move(entry));
 
+    auto secScreenshots = catCEGUI->createSection("screenshots", "Screenshots");
+
+    entry.reset(new SettingsEntry(*secScreenshots, "bg_checker", true, "Checkered background in clipboard",
+                                  "Fill screenshot background with a checkerboard (if no, transparency is kept "
+                                  "and MIME type in a clipboard becomes 'PNG')",
+                                  "checkbox", false, 1));
+    secScreenshots->addEntry(std::move(entry));
+
+    entry.reset(new SettingsEntry(*secScreenshots, "save", true, "Save to file",
+                                  "Save screenshot to file (otherwise it is only copied to the clipboard)",
+                                  "checkbox", false, 2));
+    secScreenshots->addEntry(std::move(entry));
+
+    entry.reset(new SettingsEntry(*secScreenshots, "after_save_action", 0, "After save",
+                                  "Sets the size of the toolbar icons",
+                                  "combobox", false, 3, { {0, "Open folder"}, {1, "Open file"}, {2, "Do nothing"} }));
+    secScreenshots->addEntry(std::move(entry));
+
     ImagesetEditor::createSettings(*_settings);
     LayoutEditor::createSettings(*_settings);
     LookNFeelEditor::createSettings(*_settings);

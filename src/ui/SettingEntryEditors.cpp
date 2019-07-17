@@ -335,8 +335,7 @@ SettingSectionWidget::SettingSectionWidget(SettingsSection& section, QWidget* pa
         auto label = new QLabel(entry->getLabel());
         label->setMinimumWidth(200);
         label->setWordWrap(true);
-
-        //???for empty hint check value type, option list etc?
+        label->setToolTip(entry->getHelp());
 
         if (entry->getWidgetHint() == "string")
             newLayout->addRow(label, new SettingEntryEditorString(*entry));
