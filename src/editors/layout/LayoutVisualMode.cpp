@@ -11,6 +11,7 @@
 #include "src/util/Settings.h"
 #include "src/util/SettingsCategory.h"
 #include "src/util/SettingsEntry.h"
+#include "src/util/Utils.h"
 #include "src/Application.h"
 #include <CEGUI/GUIContext.h>
 #include <CEGUI/WindowManager.h>
@@ -20,6 +21,14 @@
 #include "qmenu.h"
 #include "qmimedata.h"
 #include "qclipboard.h"
+#include <qdatetime.h>
+#include <qstandardpaths.h>
+#include <qfileinfo.h>
+#include <qdir.h>
+#include <qdesktopservices.h>
+#include <qurl.h>
+#include <qclipboard.h>
+#include <qbuffer.h>
 
 LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     : IEditMode(editor)
@@ -47,6 +56,7 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     actionAbsoluteMode = app->getAction("layout/absolute_mode");
     actionAbsoluteIntegerMode = app->getAction("layout/abs_integers_mode");
     actionSnapGrid = app->getAction("layout/snap_grid");
+    actionScreenshot = app->getAction("layout/screenshot");
     actionSelectParent = app->getAction("layout/select_parent");
     actionAlignHLeft = app->getAction("layout/align_hleft");
     actionAlignHCenter = app->getAction("layout/align_hcentre");
@@ -87,6 +97,8 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     contextMenu->addAction(mainWindow->getActionCut());
     contextMenu->addAction(mainWindow->getActionCopy());
     contextMenu->addAction(mainWindow->getActionPaste());
+    contextMenu->addSeparator();
+    contextMenu->addAction(actionScreenshot);
     contextMenu->addSeparator();
     contextMenu->addAction(actionAnchorPresets);
     contextMenu->addAction(actionShowAnchors);
@@ -133,6 +145,8 @@ void LayoutVisualMode::rebuildEditorMenu(QMenu* editorMenu)
     // Similar to the toolbar, includes the focus filter box action
     editorMenu->addAction(actionSelectParent);
     editorMenu->addSeparator();
+    editorMenu->addAction(actionScreenshot);
+    editorMenu->addSeparator();
     editorMenu->addAction(actionAlignHLeft);
     editorMenu->addAction(actionAlignHCenter);
     editorMenu->addAction(actionAlignHRight);
@@ -162,6 +176,7 @@ void LayoutVisualMode::rebuildEditorMenu(QMenu* editorMenu)
 void LayoutVisualMode::createActiveStateConnections()
 {
     _activeStateConnections.push_back(connect(hierarchyDockWidget, &WidgetHierarchyDockWidget::deleteRequested, scene, &LayoutScene::deleteSelectedWidgets));
+    _activeStateConnections.push_back(connect(actionScreenshot, &QAction::triggered, this, &LayoutVisualMode::takeScreenshot));
     _activeStateConnections.push_back(connect(actionSelectParent, &QAction::triggered, scene, &LayoutScene::selectParent));
     _activeStateConnections.push_back(connect(actionAlignHLeft, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Left); }));
     _activeStateConnections.push_back(connect(actionAlignHCenter, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Centre); }));
@@ -340,6 +355,55 @@ bool LayoutVisualMode::isAbsoluteIntegerMode() const
 bool LayoutVisualMode::isSnapGridEnabled() const
 {
     return actionSnapGrid ? actionSnapGrid->isChecked() : false;
+}
+
+void LayoutVisualMode::takeScreenshot()
+{
+    if (!scene) return;
+
+    QImage screenshot = scene->getCEGUIScreenshot();
+    if (screenshot.isNull()) return;
+
+    // TODO: add project subfolder (need name), optional through settings
+    const QDir dir(QDir(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)).filePath("CEED"));
+    const QString fileName = QString("%1-%2x%3-%4.png")
+            .arg(QFileInfo(getEditor().getFilePath()).baseName())
+            .arg(static_cast<int>(scene->getContextWidth()))
+            .arg(static_cast<int>(scene->getContextHeight()))
+            .arg(QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss"));
+    const QString filePath = dir.filePath(fileName);
+
+    dir.mkpath(".");
+    if (screenshot.save(filePath, "PNG", 50))
+    {
+        // TODO: https://stackoverflow.com/questions/3490336/how-to-reveal-in-finder-or-show-in-explorer-with-qt
+        // TODO: option in settings (open dir / file / nothing)
+        QDesktopServices::openUrl(QUrl::fromLocalFile(dir.path()));
+    }
+
+    // TODO: option in settings - save to file or not. Always copy to clipboard?
+    // TODO: keepTransparencyInClipboard to settings
+    constexpr bool keepTransparencyInClipboard = false;
+    if (keepTransparencyInClipboard)
+    {
+        QByteArray pngData;
+        QBuffer buffer(&pngData);
+        if (buffer.open(QIODevice::WriteOnly))
+        {
+            screenshot.save(&buffer, "PNG", 100);
+            buffer.close();
+        }
+
+        QMimeData* data = new QMimeData();
+        data->setData("PNG", pngData);
+        QApplication::clipboard()->setMimeData(data);
+    }
+    else
+    {
+        // NB: here we alter screenshot data, so saving to file must happen before this
+        Utils::fillTransparencyWithChecker(screenshot);
+        QApplication::clipboard()->setImage(screenshot);
+    }
 }
 
 void LayoutVisualMode::showEvent(QShowEvent* event)

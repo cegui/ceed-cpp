@@ -1,5 +1,5 @@
 #include "src/util/Utils.h"
-#include "qpainter.h"
+#include <qpainter.h>
 
 namespace Utils
 {
@@ -27,6 +27,15 @@ QBrush getCheckerboardBrush(int halfWidth, int halfHeight, QColor firstColour, Q
     ret.setTexture(texture);
 
     return ret;
+}
+
+void fillTransparencyWithChecker(QImage& image)
+{
+    QPainter painter(&image);
+    painter.setCompositionMode(QPainter::CompositionMode_DestinationOver);
+    painter.setBrush(getCheckerboardBrush(5, 5, Qt::darkGray, Qt::lightGray));
+    painter.drawRect(image.rect());
+    painter.end();
 }
 
 };

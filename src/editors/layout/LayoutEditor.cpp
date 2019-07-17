@@ -289,6 +289,10 @@ void LayoutEditor::createActions(Application& app)
                        "settings for snap grid related entries), also shows the snap grid if checked.",
                        QIcon(":/icons/layout_editing/snap_grid.png"), QKeySequence(Qt::Key_Space), true);
 
+    app.registerAction("layout", "screenshot", "Scene Screenshot",
+                       "Takes a screenshot of the whole scene in 100% zoom and without HUD items.",
+                       QIcon(":/icons/actions/screenshot.png"), QKeySequence(Qt::Key_Pause));
+
     app.registerAction("layout", "select_parent", "Select &Parent",
                        "Select an immediate parent of the widget.",
                        QIcon(":/icons/layout_editing/SelectParent.png"), QKeySequence(Qt::Key_Backspace));

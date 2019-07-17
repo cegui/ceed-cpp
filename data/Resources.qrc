@@ -113,5 +113,6 @@
         <file>icons/widgets/GLCt.png</file>
         <file>icons/anchors/Anchors.png</file>
         <file>icons/layout_editing/SelectParent.png</file>
+        <file>icons/actions/screenshot.png</file>
     </qresource>
 </RCC>

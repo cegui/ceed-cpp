@@ -23,6 +23,8 @@ class QAction;
 
 class LayoutVisualMode : public QWidget, public IEditMode
 {
+    Q_OBJECT
+
 public:
 
     LayoutVisualMode(LayoutEditor& editor);
@@ -51,6 +53,10 @@ public:
     bool isAbsoluteIntegerMode() const;
     bool isSnapGridEnabled() const;
 
+public slots:
+
+    void takeScreenshot();
+
 protected:
 
     void createActiveStateConnections();
@@ -71,6 +77,7 @@ protected:
 
     QAction* actionShowAnchors = nullptr;
     QAction* actionShowLCHandles = nullptr;
+    QAction* actionScreenshot = nullptr;
     QAction* actionSelectParent = nullptr;
     QAction* actionAlignHLeft = nullptr;
     QAction* actionAlignHCenter = nullptr;

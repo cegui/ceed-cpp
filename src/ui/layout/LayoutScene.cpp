@@ -8,7 +8,6 @@
 #include "src/ui/layout/LayoutContainerHandle.h"
 #include "src/ui/NumericValueItem.h"
 #include "src/ui/ResizingHandle.h"
-#include "src/util/Utils.h"
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutUndoCommands.h"
 #include <CEGUI/CoordConverter.h>
@@ -19,14 +18,6 @@
 #include "qmimedata.h"
 #include "qtreeview.h"
 #include "qstandarditemmodel.h"
-#include <qdatetime.h>
-#include <qstandardpaths.h>
-#include <qfileinfo.h>
-#include <qdir.h>
-#include <qdesktopservices.h>
-#include <qclipboard.h>
-#include <qbuffer.h>
-#include <qpainter.h>
 #include <qmenu.h>
 #include <set>
 
@@ -1117,60 +1108,6 @@ void LayoutScene::keyReleaseEvent(QKeyEvent* event)
     if (event->key() == Qt::Key_Delete)
     {
         handled = deleteSelectedWidgets();
-    }
-    else if (event->key() == Qt::Key_Pause)
-    {
-        QImage screenshot = getCEGUIScreenshot();
-        if (!screenshot.isNull())
-        {
-            handled = true;
-
-            // TODO: rewrite through action?
-            // TODO: add project subfolder (need name), optional through settings
-            const QDir dir(QDir(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)).filePath("CEED"));
-            const QString fileName = QString("%1-%2x%3-%4.png")
-                    .arg(QFileInfo(_visualMode.getEditor().getFilePath()).baseName())
-                    .arg(static_cast<int>(contextWidth))
-                    .arg(static_cast<int>(contextHeight))
-                    .arg(QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss"));
-            const QString filePath = dir.filePath(fileName);
-
-            dir.mkpath(".");
-            if (screenshot.save(filePath, "PNG", 50))
-            {
-                // TODO: https://stackoverflow.com/questions/3490336/how-to-reveal-in-finder-or-show-in-explorer-with-qt
-                // TODO: option in settings (open dir / file / nothing)
-                QDesktopServices::openUrl(QUrl::fromLocalFile(dir.path()));
-            }
-
-            // TODO: option in settings - save to file or not. Always copy to clipboard?
-            // TODO: keepTransparencyInClipboard to settings
-            constexpr bool keepTransparencyInClipboard = false;
-            if (keepTransparencyInClipboard)
-            {
-                QByteArray pngData;
-                QBuffer buffer(&pngData);
-                if (buffer.open(QIODevice::WriteOnly))
-                {
-                    screenshot.save(&buffer, "PNG", 100);
-                    buffer.close();
-                }
-
-                QMimeData* data = new QMimeData();
-                data->setData("PNG", pngData);
-                QApplication::clipboard()->setMimeData(data);
-            }
-            else
-            {
-                // NB: here we alter screenshot data, so saving to file must happen before this
-                QPainter painter(&screenshot);
-                painter.setCompositionMode(QPainter::CompositionMode_DestinationOver);
-                painter.setBrush(Utils::getCheckerboardBrush(5, 5, Qt::darkGray, Qt::lightGray));
-                painter.drawRect(screenshot.rect());
-                painter.end();
-                QApplication::clipboard()->setImage(screenshot);
-            }
-        }
     }
 
     if (handled)
