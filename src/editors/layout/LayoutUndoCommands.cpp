@@ -205,23 +205,9 @@ bool LayoutResizeCommand::mergeWith(const QUndoCommand* other)
 
 LayoutDeleteCommand::LayoutDeleteCommand(LayoutVisualMode& visualMode, QStringList&& paths)
     : _visualMode(visualMode)
+    , _paths(std::move(paths))
 {
-    // Exclude child widgets of widgets being deleted from the explicit list
-    for (const QString& currPath : paths)
-    {
-        bool parentFound = false;
-        for (const QString& potentialParentPath : paths)
-        {
-            if (currPath.startsWith(potentialParentPath + '/'))
-            {
-                parentFound = true;
-                break;
-            }
-        }
-
-        if (!parentFound && !_paths.contains(currPath))
-            _paths.push_back(std::move(currPath));
-    }
+    CEGUIUtils::removeNestedPaths(_paths);
 
     // Serialize deleted hierarchies for undo
     QDataStream stream(&_data, QIODevice::WriteOnly);

@@ -11,10 +11,11 @@
 #include "QtnProperty/PropertySet.h"
 #include "qpen.h"
 #include "qpainter.h"
-#include "qgraphicssceneevent.h"
+#include <qgraphicssceneevent.h>
 #include "qmimedata.h"
 #include "qaction.h"
 #include "qmessagebox.h"
+#include <qdrag.h>
 
 LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, CEGUI::Window* widget)
     : CEGUIManipulator(parent, widget)
@@ -314,7 +315,8 @@ void LayoutManipulator::deselectAllHandles()
 
 void LayoutManipulator::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
 {
-    if (event->mimeData()->hasFormat("application/x-ceed-widget-type"))
+    if (event->mimeData()->hasFormat("application/x-ceed-widget-type") ||
+        event->mimeData()->hasFormat("application/x-ceed-widget-paths"))
     {
         event->acceptProposedAction();
         setPen(QPen(QColor(255, 255, 0)));
@@ -334,23 +336,97 @@ void LayoutManipulator::dragLeaveEvent(QGraphicsSceneDragDropEvent* /*event*/)
 // (dragging from the CreateWidgetDockWidget)
 void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
 {
-    auto data = event->mimeData()->data("application/x-ceed-widget-type");
-    if (data.size() > 0)
+    auto bytes = event->mimeData()->data("application/x-ceed-widget-type");
+    if (bytes.size() > 0)
     {
         if (canAcceptChildren(1, true))
         {
-            QString widgetType = data.data();
+            QString widgetType = bytes.data();
             int sepPos = widgetType.lastIndexOf('/');
             QString widgetName = CEGUIUtils::getUniqueChildWidgetName(*_widget, (sepPos < 0) ? widgetType : widgetType.mid(sepPos + 1));
             _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, getWidgetPath(), widgetType, widgetName, event->scenePos()));
         }
 
         event->acceptProposedAction();
+        return;
     }
-    else
+
+    bytes = event->mimeData()->data("application/x-ceed-widget-paths");
+    if (bytes.size() > 0)
     {
-        event->ignore();
+        QStringList widgetPaths;
+        QDataStream stream(&bytes, QIODevice::ReadOnly);
+        while (!stream.atEnd())
+        {
+            QString name;
+            stream >> name;
+            widgetPaths.append(name);
+        }
+
+        if (event->dropAction() == Qt::MoveAction)
+        {
+            _visualMode.moveWidgetsInHierarchy(std::move(widgetPaths), this, getWidget()->getChildCount());
+            event->acceptProposedAction();
+            return;
+        }
     }
+
+    event->ignore();
+}
+
+void LayoutManipulator::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
+{
+    if (event->modifiers() & Qt::ControlModifier)
+    {
+        event->accept();
+
+        if (QLineF(event->screenPos(), event->buttonDownScreenPos(Qt::LeftButton)).length() >= QApplication::startDragDistance())
+        {
+            setCursor(Qt::ClosedHandCursor);
+
+            std::set<LayoutManipulator*> selectedWidgets;
+            _visualMode.getScene()->collectSelectedWidgets(selectedWidgets);
+
+            selectedWidgets.insert(this);
+
+            //!!!FIXME: delete children! top-level only!
+
+            QByteArray bytes;
+            QDataStream stream(&bytes, QIODevice::WriteOnly);
+            for (LayoutManipulator* manipulator : selectedWidgets)
+            {
+                stream << manipulator->getWidgetPath();
+            }
+
+            QDrag* drag = new QDrag(event->widget());
+            QMimeData* mime = new QMimeData();
+            drag->setMimeData(mime);
+            mime->setData("application/x-ceed-widget-paths", bytes);
+
+            /*
+                QPixmap pixmap(34, 34);
+                pixmap.fill(Qt::white);
+
+                QPainter painter(&pixmap);
+                painter.translate(15, 15);
+                painter.setRenderHint(QPainter::Antialiasing);
+                paint(&painter, 0, 0);
+                painter.end();
+
+                pixmap.setMask(pixmap.createHeuristicMask());
+
+                drag->setPixmap(pixmap);
+                drag->setHotSpot(QPoint(15, 20));
+            */
+
+            drag->exec();
+            setCursor(Qt::OpenHandCursor);
+        }
+
+        return;
+    }
+
+    CEGUIManipulator::mouseMoveEvent(event);
 }
 
 QVariant LayoutManipulator::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value)

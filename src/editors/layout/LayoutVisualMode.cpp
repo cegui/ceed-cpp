@@ -29,6 +29,8 @@
 #include <qurl.h>
 #include <qclipboard.h>
 #include <qbuffer.h>
+#include <unordered_set>
+#include <qinputdialog.h>
 
 LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     : IEditMode(editor)
@@ -307,6 +309,124 @@ void LayoutVisualMode::zoomOut()
 void LayoutVisualMode::zoomReset()
 {
     ceguiWidget->getView()->zoomReset();
+}
+
+bool LayoutVisualMode::moveWidgetsInHierarchy(QStringList&& paths, LayoutManipulator* newParentManipulator, size_t newChildIndex)
+{
+    if (!newParentManipulator || paths.empty()) return false;
+
+    CEGUIUtils::removeNestedPaths(paths);
+
+    std::vector<LayoutMoveInHierarchyCommand::Record> records;
+    std::unordered_set<QString> usedNames;
+    size_t addedChildCount = 0;
+
+    for (const QString& widgetPath : paths)
+    {
+        auto manipulator = scene->getManipulatorByPath(widgetPath);
+        if (!manipulator) continue;
+
+        auto oldParentManipulator = dynamic_cast<LayoutManipulator*>(manipulator->parentItem());
+        const size_t oldChildIndex = manipulator->getWidgetIndexInParent();
+        const QString oldWidgetName = manipulator->getWidgetName();
+        QString suggestedName = oldWidgetName;
+
+        if (newParentManipulator == oldParentManipulator)
+        {
+            // FIXME: allow reordering in any window? Needs CEGUI change.
+            // http://cegui.org.uk/forum/viewtopic.php?f=3&t=7542
+            if (!newParentManipulator->isLayoutContainer())
+            {
+                // Reordering inside a parent is supported only for layout containers for now
+                continue;
+            }
+
+            // Already at the destination
+            if (newChildIndex == oldChildIndex) continue;
+        }
+        else
+        {
+            ++addedChildCount;
+
+            // Prevent name clashes at the new parent
+            // When a name clash occurs, we suggest a new name to the user and
+            // ask them to confirm it/enter their own.
+            // The tricky part is that we have to consider the other widget renames
+            // too (in case we're reparenting and renaming more than one widget)
+            // and we must prevent invalid names (i.e. containing "/")
+            QString error;
+            while (true)
+            {
+                // Get a name that's not used in the new parent, trying to keep
+                // the suggested name (which is the same as the old widget name at
+                // the beginning)
+                QString tempName = CEGUIUtils::getUniqueChildWidgetName(*newParentManipulator->getWidget(), suggestedName);
+
+                // If the name we got is the same as the one we wanted...
+                if (tempName == suggestedName)
+                {
+                    // ...we need to check our own usedNames list too, in case
+                    // another widget we're reparenting has got this name.
+                    int counter = 2;
+                    while (usedNames.find(suggestedName) != usedNames.end())
+                    {
+                        // When this happens, we simply add a numeric suffix to
+                        // the suggested name. The result could theoretically
+                        // collide in the new parent but it's OK because this
+                        // is just a suggestion and will be checked again when
+                        // the 'while' loops.
+                        suggestedName = tempName + QString::number(counter);
+                        ++counter;
+                        error = QString("Widget name is in use by another widget being processed");
+                    }
+
+                    // If we had no collision, we can keep this name!
+                    if (counter == 2) break;
+                }
+                else
+                {
+                    // The new parent had a child with that name already and so
+                    // it gave us a new suggested name.
+                    suggestedName = tempName;
+                    error = "Widget name already exists in the new parent";
+                }
+
+                // Ask the user to confirm our suggested name or enter a new one.
+                // We do this in a loop because we validate the user input.
+                while (true)
+                {
+                    bool ok = false;
+                    suggestedName = QInputDialog::getText(this, error,
+                                                          "New name for '" + oldWidgetName + "':",
+                                                          QLineEdit::Normal, suggestedName, &ok);
+
+                    // Abort everything if the user cancels the dialog
+                    if (!ok) return false;
+
+                    // Validate the entered name
+                    suggestedName = CEGUIUtils::getValidWidgetName(suggestedName);
+                    if (!suggestedName.isEmpty()) break;
+                    error = "Invalid name, please try again";
+                }
+            }
+        }
+
+        usedNames.insert(suggestedName);
+
+        LayoutMoveInHierarchyCommand::Record rec;
+        rec.oldParentPath = oldParentManipulator->getWidgetPath();
+        rec.oldChildIndex = oldChildIndex;
+        rec.newChildIndex = newChildIndex;
+        rec.oldName = oldWidgetName;
+        rec.newName = suggestedName;
+        records.push_back(std::move(rec));
+    }
+
+    // FIXME: better to calculate addedChildCount, then do this check, then suggest renaming
+    if (!newParentManipulator->canAcceptChildren(addedChildCount, true)) return false;
+
+    getEditor().getUndoStack()->push(new LayoutMoveInHierarchyCommand(*this, std::move(records), newParentManipulator->getWidgetPath()));
+    return true;
 }
 
 // Retrieves a (cached) snap grid brush

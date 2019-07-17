@@ -21,6 +21,8 @@ namespace CEGUIUtils
     QString getUniqueChildWidgetName(const CEGUI::Window& parent, const QString& baseName);
     CEGUI::String getUniqueChildWidgetName(const CEGUI::Window& parent, const CEGUI::String& baseName);
 
+    void removeNestedPaths(QStringList& paths);
+
     bool serializeWidget(const CEGUI::Window& widget, QDataStream& stream, bool recursive);
     CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent = nullptr);
 

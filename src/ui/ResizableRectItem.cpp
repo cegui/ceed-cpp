@@ -8,6 +8,7 @@ ResizableRectItem::ResizableRectItem(QGraphicsItem* parent)
 {
     setFlags(ItemSendsGeometryChanges | ItemIsMovable);
     setAcceptHoverEvents(true);
+    setAcceptedMouseButtons(Qt::LeftButton);
 
     topEdgeHandle = new ResizingHandle(ResizingHandle::Type::Top, this);
     bottomEdgeHandle = new ResizingHandle(ResizingHandle::Type::Bottom, this);

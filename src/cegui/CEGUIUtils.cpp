@@ -49,6 +49,18 @@ CEGUI::String getUniqueChildWidgetName(const CEGUI::Window& parent, const CEGUI:
     return candidate;
 }
 
+void removeNestedPaths(QStringList& paths)
+{
+    paths.erase(std::remove_if(paths.begin(), paths.end(), [&](const QString& path)
+    {
+        for (const QString& potentialParentPath : paths)
+            if (path.startsWith(potentialParentPath + '/'))
+                return true;
+
+        return false;
+    }), paths.end());
+}
+
 bool serializeWidget(const CEGUI::Window& widget, QDataStream& stream, bool recursive)
 {
     if (!stream.device()->isWritable()) return false;

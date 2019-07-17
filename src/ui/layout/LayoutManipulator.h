@@ -48,7 +48,7 @@ public:
 
     void showLayoutContainerHandles(bool show);
     virtual void updateHandles() override;
-    virtual bool isAnyHandleSelected() const;
+    virtual bool isAnyHandleSelected() const override;
     virtual void deselectAllHandles() override;
 
     // For redirection from children
@@ -57,6 +57,8 @@ public:
     virtual void dropEvent(QGraphicsSceneDragDropEvent* event) override;
 
 protected:
+
+    virtual void mouseMoveEvent(QGraphicsSceneMouseEvent* event) override;
 
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
     virtual void onPropertyChanged(const QtnPropertyBase* changedProperty, CEGUI::Property* ceguiProperty) override;
