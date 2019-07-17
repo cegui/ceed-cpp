@@ -9,7 +9,7 @@ AnchorCornerHandle::AnchorCornerHandle(bool left, bool top, QGraphicsItem* paren
     , _hoverColor(hoverColor)
     , _moveOppositeThreshold(size * size * 1.5)
 {
-    setFlags(ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges);
+    setFlags(ItemIsSelectable | ItemIsMovable | ItemSendsGeometryChanges | ItemIgnoresTransformations);
     setAcceptHoverEvents(true);
 
     QPolygonF poly;

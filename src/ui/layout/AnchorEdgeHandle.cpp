@@ -4,6 +4,8 @@
 AnchorEdgeHandle::AnchorEdgeHandle(bool horizontal, QGraphicsItem* parent, int width, Qt::PenStyle style, QColor normalColor, QColor hoverColor, size_t mouseInteractionDistance)
     : GuideLine(horizontal, parent, width, style, normalColor, hoverColor, mouseInteractionDistance)
 {
+    // TODO: not working, intersection rect width depends on the scale
+    setFlags(flags() | ItemIgnoresTransformations);
 }
 
 AnchorEdgeHandle::AnchorEdgeHandle(bool horizontal, QGraphicsItem* parent, const QPen& pen, QColor hoverColor, size_t mouseInteractionDistance)
