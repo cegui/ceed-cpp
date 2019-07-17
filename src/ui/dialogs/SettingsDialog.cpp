@@ -44,7 +44,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     connect(buttonBox, &QDialogButtonBox::clicked, this, &SettingsDialog::onButtonBoxClicked);
     newLayout->addWidget(buttonBox);
 
-    resize(600, 500);
+    resize(600, 600);
 }
 
 void SettingsDialog::onButtonBoxClicked(QAbstractButton* button)

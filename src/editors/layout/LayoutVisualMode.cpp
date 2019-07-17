@@ -366,6 +366,8 @@ void LayoutVisualMode::takeScreenshot()
 
     auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
 
+    // Save to file
+
     if (settings->getEntryValue("cegui/screenshots/save", true).toBool())
     {
         // TODO: add project subfolder (need name), optional through settings
@@ -391,30 +393,62 @@ void LayoutVisualMode::takeScreenshot()
         }
     }
 
-    if (settings->getEntryValue("cegui/screenshots/bg_checker", true).toBool())
-    {
-        // NB: here we alter screenshot data, so saving to file must happen before this
-        const auto checkerWidth = settings->getEntryValue("cegui/background/checker_width").toInt();
-        const auto checkerHeight = settings->getEntryValue("cegui/background/checker_height").toInt();
-        const auto checkerFirstColour = settings->getEntryValue("cegui/background/first_colour").value<QColor>();
-        const auto checkerSecondColour = settings->getEntryValue("cegui/background/second_colour").value<QColor>();
+    // Copy to clipboard
+    // NB: here we alter screenshot data, so saving to file must happen before this
+
+    // Oh... -_-
+    // I'm not surprised there are wars and all that sh*t in the world.
+    // How could it be otherwise if people at 2019 A.D. can't come to an agreement
+    // about pasting images to applications. Is it really so hard or rarely used?
+    // Here is a table of what I discovered on Windows. Not even tested other systems.
+    // Ability to paste opaque / transparent image:
+    //       Windows 8.1      | MS Word 2016 | MS Paint | GIMP 2.10.12 | Slack 4.0.0
+    // --------------------------------------------------------------------------------
+    // Qt setImageData        |   Opaque     |  Opaque  |     ---      |  Opaque
+    // PNG                    | Transparent  |   ---    | Transparent  |   ---
+    // Qt setImageData + PNG  |     ---      |  Opaque  | Transparent  |  Opaque
+    // --------------------------------------------------------------------------------
+    // Please, do something with it, if you can. In the meantime I leave here a couple of
+    // settings that can be used to paste to different software.
+
+    QMimeData* data = new QMimeData();
+
+    const auto checkerWidth = settings->getEntryValue("cegui/background/checker_width").toInt();
+    const auto checkerHeight = settings->getEntryValue("cegui/background/checker_height").toInt();
+    const auto checkerFirstColour = settings->getEntryValue("cegui/background/first_colour").value<QColor>();
+    const auto checkerSecondColour = settings->getEntryValue("cegui/background/second_colour").value<QColor>();
+    const bool needChecker = settings->getEntryValue("cegui/screenshots/bg_checker", true).toBool();
+
+    // Save PNG. It keeps transparency if checker background is not explicitly requested.
+
+    if (needChecker)
         Utils::fillTransparencyWithChecker(screenshot, checkerWidth, checkerHeight, checkerFirstColour, checkerSecondColour);
-        QApplication::clipboard()->setImage(screenshot);
-    }
-    else
+
     {
-        QByteArray pngData;
-        QBuffer buffer(&pngData);
+        QByteArray imageData;
+        QBuffer buffer(&imageData);
         if (buffer.open(QIODevice::WriteOnly))
         {
             screenshot.save(&buffer, "PNG", 100);
             buffer.close();
         }
 
-        QMimeData* data = new QMimeData();
-        data->setData("PNG", pngData);
-        QApplication::clipboard()->setMimeData(data);
+        data->setData("PNG", imageData);
     }
+
+    // Save with Qt. On Windows it expands into a whole bunch of formats inside a clipboard,
+    // and we can't access them here. Qt doesn't handle transparency, all transparent pixels
+    // become black. We fill the background with a checker instead.
+
+    if (settings->getEntryValue("cegui/screenshots/use_qt_setimage", true).toBool())
+    {
+        if (!needChecker)
+            Utils::fillTransparencyWithChecker(screenshot, checkerWidth, checkerHeight, checkerFirstColour, checkerSecondColour);
+
+        data->setImageData(screenshot);
+    }
+
+    QApplication::clipboard()->setMimeData(data);
 }
 
 void LayoutVisualMode::showEvent(QShowEvent* event)
