@@ -634,9 +634,41 @@ LayoutMoveInHierarchyCommand::LayoutMoveInHierarchyCommand(LayoutVisualMode& vis
     , _records(std::move(records))
     , _newParentPath(newParentPath)
 {
-    // Remember initial position and size
+    // Sort by old child index to maintain predictable insertion order.
+    // Otherwise it would depend on the order in which user selected items.
+    std::sort(_records.begin(), _records.end(), [this](const Record& a, const Record& b)
+    {
+        // Inside a parent sort by index asc
+        if (a.oldParentPath == b.oldParentPath)
+            return a.oldChildIndex < b.oldChildIndex;
+
+        // Force the target parent be the first processed
+        if (a.oldParentPath == _newParentPath) return true;
+        if (b.oldParentPath == _newParentPath) return false;
+
+        // Otherwise sort by parent, no much difference in what exact order
+        return a.oldParentPath < b.oldParentPath;
+    });
+
+    // Fix indices to take into account offsets that happen during the command execution.
+    // We have only one target widget, it simplifies things a lot.
+    size_t beforeTargetPos = 0;
+    size_t afterTargetPos = 0;
     for (auto& rec : _records)
     {
+        if (rec.oldParentPath == _newParentPath && rec.oldChildIndex < rec.newChildIndex)
+        {
+            rec.oldChildIndex -= beforeTargetPos;
+            ++beforeTargetPos;
+        }
+        else
+        {
+            // All items from other parents are inserted after our own moved ones
+            rec.newChildIndex += afterTargetPos;
+            ++afterTargetPos;
+        }
+
+        // Remember initial position and size
         auto widget = _visualMode.getScene()->getManipulatorByPath(rec.oldParentPath + '/' + rec.oldName)->getWidget();
         rec.oldPos = widget->getPosition();
         rec.oldSize = widget->getSize();
@@ -655,11 +687,20 @@ void LayoutMoveInHierarchyCommand::undo()
     _visualMode.getScene()->clearSelection();
     _visualMode.getHierarchyDockWidget()->getTreeView()->clearSelection();
 
-    for (const auto& rec : _records)
+    for (auto it = _records.rbegin(); it != _records.rend(); ++it)
     {
+        const auto& rec = *it;
         auto widgetManipulator = _visualMode.getScene()->getManipulatorByPath(_newParentPath + '/' + rec.newName);
         auto oldParentManipulator = _visualMode.getScene()->getManipulatorByPath(rec.oldParentPath);
         auto newParentManipulator = dynamic_cast<LayoutManipulator*>(widgetManipulator->parentItem());
+
+        // FIXME: allow reordering in any window? Needs CEGUI change.
+        if (newParentManipulator == oldParentManipulator && !newParentManipulator->isLayoutContainer())
+        {
+            // Reordering inside a parent is supported only for layout containers for now
+            assert(false);
+            continue;
+        }
 
         // Remove it from the current CEGUI parent widget
         if (oldParentManipulator != newParentManipulator)

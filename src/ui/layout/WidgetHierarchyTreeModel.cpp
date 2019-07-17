@@ -88,6 +88,7 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* mimeData, Qt::DropA
 {
     if (mimeData->hasFormat("application/x-ceed-widget-paths"))
     {
+        // We guarantree that no path in widgetPaths is the child of another path in widgetPaths
         QStringList widgetPaths;
         QByteArray bytes = mimeData->data("application/x-ceed-widget-paths");
         QDataStream stream(&bytes, QIODevice::ReadOnly);
@@ -111,7 +112,6 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* mimeData, Qt::DropA
         size_t newChildIndex = (row > 0) ? static_cast<size_t>(data(index(row - 1, 0, parent), Qt::UserRole + 1).toULongLong()) + 1 : 0;
 
         std::vector<LayoutMoveInHierarchyCommand::Record> records;
-        QStringList targetWidgetPaths;
         std::unordered_set<QString> usedNames;
         size_t addedChildCount = 0;
 
@@ -206,7 +206,6 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* mimeData, Qt::DropA
             }
 
             usedNames.insert(suggestedName);
-            targetWidgetPaths.append(newParentPath + "/" + suggestedName);
 
             LayoutMoveInHierarchyCommand::Record rec;
             rec.oldParentPath = oldParentManipulator->getWidgetPath();
@@ -215,11 +214,9 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* mimeData, Qt::DropA
             rec.oldName = oldWidgetName;
             rec.newName = suggestedName;
             records.push_back(std::move(rec));
-
-            // To insert in order
-            ++newChildIndex;
         }
 
+        // FIXME: better to calculate addedChildCount, then do this check, then suggest renaming
         if (!newParentManipulator->canAcceptChildren(addedChildCount, true)) return false;
 
         if (action == Qt::MoveAction)
@@ -229,7 +226,7 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* mimeData, Qt::DropA
         }
         else if (action == Qt::CopyAction)
         {
-            // FIXME: TODO
+            // FIXME: TODO, may need another sorting / fixing than MoveAction (LayoutMoveInHierarchyCommand)
             assert(false && "NOT IMPLEMENTED!!!");
             return false;
         }

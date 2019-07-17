@@ -189,7 +189,8 @@ protected:
     CEGUI::VerticalAlignment _newAlignment;
 };
 
-// This command changes parent of given windows
+// This command changes the parent of given windows and their positions in it.
+// Only one new parent can be specified due to the complexity of the logic.
 // NB: we don't merge these commands
 class LayoutMoveInHierarchyCommand : public QUndoCommand
 {
