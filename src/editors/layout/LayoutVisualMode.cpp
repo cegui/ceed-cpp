@@ -323,7 +323,7 @@ bool LayoutVisualMode::moveWidgetsInHierarchy(QStringList&& paths, LayoutManipul
     for (const QString& widgetPath : paths)
     {
         auto manipulator = scene->getManipulatorByPath(widgetPath);
-        if (!manipulator) continue;
+        if (!manipulator || manipulator == newParentManipulator) continue;
 
         auto oldParentManipulator = dynamic_cast<LayoutManipulator*>(manipulator->parentItem());
         const size_t oldChildIndex = manipulator->getWidgetIndexInParent();

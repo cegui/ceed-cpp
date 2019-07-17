@@ -81,7 +81,7 @@ void LayoutContainerHandle::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
     if (event->mimeData()->hasFormat("application/x-ceed-widget-type"))
     {
         updateLook();
-        return static_cast<LayoutManipulator*>(parentItem())->dragEnterEvent(event);
+        static_cast<LayoutManipulator*>(parentItem())->dragEnterEvent(event);
     }
 }
 
@@ -89,13 +89,18 @@ void LayoutContainerHandle::dragLeaveEvent(QGraphicsSceneDragDropEvent* event)
 {
     _mouseOver = false;
     updateLook();
-    return static_cast<LayoutManipulator*>(parentItem())->dragLeaveEvent(event);
+    static_cast<LayoutManipulator*>(parentItem())->dragLeaveEvent(event);
 }
 
 void LayoutContainerHandle::dropEvent(QGraphicsSceneDragDropEvent* event)
 {
     updateLook();
-    return static_cast<LayoutManipulator*>(parentItem())->dropEvent(event);
+    static_cast<LayoutManipulator*>(parentItem())->dropEvent(event);
+}
+
+void LayoutContainerHandle::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
+{
+    static_cast<LayoutManipulator*>(parentItem())->mouseMoveEvent(event);
 }
 
 QVariant LayoutContainerHandle::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value)

@@ -55,10 +55,9 @@ public:
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dropEvent(QGraphicsSceneDragDropEvent* event) override;
+    virtual void mouseMoveEvent(QGraphicsSceneMouseEvent* event) override;
 
 protected:
-
-    virtual void mouseMoveEvent(QGraphicsSceneMouseEvent* event) override;
 
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
     virtual void onPropertyChanged(const QtnPropertyBase* changedProperty, CEGUI::Property* ceguiProperty) override;

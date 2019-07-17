@@ -386,17 +386,13 @@ void LayoutManipulator::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
 
             std::set<LayoutManipulator*> selectedWidgets;
             _visualMode.getScene()->collectSelectedWidgets(selectedWidgets);
-
             selectedWidgets.insert(this);
-
-            //!!!FIXME: delete children! top-level only!
+            LayoutVisualMode::removeNestedManipulators(selectedWidgets);
 
             QByteArray bytes;
             QDataStream stream(&bytes, QIODevice::WriteOnly);
             for (LayoutManipulator* manipulator : selectedWidgets)
-            {
                 stream << manipulator->getWidgetPath();
-            }
 
             QDrag* drag = new QDrag(event->widget());
             QMimeData* mime = new QMimeData();
