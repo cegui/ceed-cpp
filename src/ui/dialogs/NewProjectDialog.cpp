@@ -1,4 +1,5 @@
 #include "src/ui/dialogs/NewProjectDialog.h"
+#include "src/cegui/CEGUIManager.h"
 #include "ui_NewProjectDialog.h"
 #include "qmessagebox.h"
 #include "qcheckbox.h"
@@ -12,7 +13,7 @@ NewProjectDialog::NewProjectDialog(QWidget *parent) :
     ui->setupUi(this);
 
     auto projectFilePath = findChild<FileLineEdit*>("projectFilePath");
-    projectFilePath->setFilter("Project file (*.project)");
+    projectFilePath->setFilter(QString("CEED project file (*.%1)").arg(CEGUIManager::ceedProjectExtension()));
     projectFilePath->setMode(FileLineEdit::Mode::NewFile);
 }
 

@@ -171,6 +171,11 @@ bool CEGUIProject::checkAllDirectories() const
     return true;
 }
 
+QString CEGUIProject::getName() const
+{
+    return QFileInfo(filePath).baseName();
+}
+
 // Converts project relative paths to absolute paths
 QString CEGUIProject::getAbsolutePathOf(const QString& relPath) const
 {

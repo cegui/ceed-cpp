@@ -120,6 +120,7 @@ private:
     EditorBase* getEditorForTab(QWidget* tabWidget) const;
 
     Ui::MainWindow* ui;
+    QString _title;
     ProjectManager* projectManager = nullptr;
     FileSystemBrowser* fsBrowser = nullptr;
     UndoViewer* undoViewer = nullptr;

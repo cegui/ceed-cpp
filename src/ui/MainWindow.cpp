@@ -68,6 +68,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
+    _title = windowTitle();
+
     ui->tabs->tabBar()->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tabs->tabBar(), SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(slot_tabBarCustomContextMenuRequested(QPoint)));
 
@@ -329,6 +331,8 @@ void MainWindow::updateProjectDependentUI(CEGUIProject* newProject)
         auto baseDir = newProject->getAbsolutePathOf("");
         if (QFileInfo(baseDir).isDir())
             fsBrowser->setDirectory(baseDir);
+
+        setWindowTitle(QString("%1 - %2").arg(newProject->getName(), _title));
     }
     else
     {
@@ -338,6 +342,8 @@ void MainWindow::updateProjectDependentUI(CEGUIProject* newProject)
         assert(closeAllTabsRequiringProject());
 
         fsBrowser->setDirectory(QDir::homePath());
+
+        setWindowTitle(_title);
     }
 
     fsBrowser->projectDirectoryButton()->setEnabled(isProjectLoaded);
@@ -433,7 +439,7 @@ void MainWindow::on_actionOpenProject_triggered()
     auto fileName = QFileDialog::getOpenFileName(this,
                                                 "Open existing project file",
                                                 "",
-                                                "Project files (*.project)");
+                                                QString("CEED project files (*.%1)").arg(CEGUIManager::ceedProjectExtension()));
     loadProject(fileName);
 }
 
@@ -851,7 +857,7 @@ EditorBasePtr MainWindow::createEditorForFile(const QString& absolutePath)
         // the editor without introducing exceptions, etc...
         if (possibleFactories.empty())
         {
-            if (absolutePath.endsWith(".project"))
+            if (absolutePath.endsWith("." + CEGUIManager::ceedProjectExtension()))
             {
                 // Provide a more newbie-friendly message in case they are
                 // trying to open a project file as if it were a file

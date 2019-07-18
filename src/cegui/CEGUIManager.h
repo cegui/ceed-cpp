@@ -21,6 +21,7 @@ class CEGUIManager
 {
 public:
 
+    static QString ceedProjectExtension() { return "ceed"; }
     static QString getEditorIDStringPrefix() { return "ceed_internal-"; }
 
     CEGUIManager();

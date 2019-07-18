@@ -28,6 +28,7 @@ public:
     bool isModified() const { return changed; }
     void setModified() { changed = true; }
 
+    QString getName() const;
     QString getAbsolutePathOf(const QString& relPath) const;
     QString getRelativePathOf(const QString& absPath) const;
     QString getResourceFilePath(const QString& fileName, const QString& resourceGroup) const;

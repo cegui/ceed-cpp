@@ -101,8 +101,9 @@ CEGUIProject* CEGUIManager::createProject(const QString& filePath, bool createRe
     currentProject->filePath = filePath;
 
     // Enforce the "project" extension
-    if (!currentProject->filePath.endsWith(".project"))
-        currentProject->filePath += ".project";
+    auto ext = "." + ceedProjectExtension();
+    if (!currentProject->filePath.endsWith(ext))
+        currentProject->filePath += ext;
 
     if (createResourceDirs)
     {
