@@ -35,12 +35,12 @@ public:
     virtual QSizeF getMinSize() const override;
     virtual QSizeF getMaxSize() const override;
     CEGUI::Sizef getBaseSize() const;
-    QRectF getParentSceneRect() const;
-    QRectF getAnchorsSceneRect() const;
     float getAnchorMinX() const;
     float getAnchorMaxX() const;
     float getAnchorMinY() const;
     float getAnchorMaxY() const;
+    QRectF getParentSceneRect() const;
+    QRectF getAnchorsSceneRect() const;
     QPointF scenePixelToAnchor(QPointF scenePixel) const;
     void setAnchors(float minX, float maxX, float minY, float maxY, bool preserveEffectiveSize);
 
