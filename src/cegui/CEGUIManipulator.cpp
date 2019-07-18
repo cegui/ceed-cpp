@@ -214,6 +214,11 @@ bool CEGUIManipulator::isLayoutContainer() const
     return !!dynamic_cast<CEGUI::LayoutContainer*>(_widget);
 }
 
+bool CEGUIManipulator::isInLayoutContainer() const
+{
+    return _widget->getParent() && dynamic_cast<CEGUI::LayoutContainer*>(_widget->getParent());
+}
+
 QSizeF CEGUIManipulator::getMinSize() const
 {
     if (_widget)
@@ -408,8 +413,7 @@ void CEGUIManipulator::notifyResizeStarted()
     }
 
     // Hide siblings in the same layout container
-    auto parent = _widget->getParent();
-    if (parent && dynamic_cast<CEGUI::LayoutContainer*>(parent))
+    if (isInLayoutContainer())
         for (auto item : parentItem()->childItems())
             if (item != this && dynamic_cast<CEGUIManipulator*>(item))
                 item->setVisible(false);
@@ -490,8 +494,7 @@ void CEGUIManipulator::notifyResizeFinished(QPointF newPos, QSizeF newSize)
     }
 
     // Show siblings in the same layout container
-    auto parent = _widget->getParent();
-    if (parent && dynamic_cast<CEGUI::LayoutContainer*>(parent))
+    if (isInLayoutContainer())
         for (auto item : parentItem()->childItems())
             if (item != this && dynamic_cast<CEGUIManipulator*>(item))
                 item->setVisible(true);

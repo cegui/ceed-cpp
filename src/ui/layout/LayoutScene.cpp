@@ -662,8 +662,7 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
     Application* app = qobject_cast<Application*>(qApp);
     bool showAnchors = (_anchorTarget != nullptr && app->getAction("layout/show_anchors")->isChecked());
 
-    auto parentManipulator = _anchorTarget ? dynamic_cast<LayoutManipulator*>(_anchorTarget->parentItem()) : nullptr;
-    const bool showPosAnchors = showAnchors && (!parentManipulator || !parentManipulator->isLayoutContainer());
+    const bool showPosAnchors = showAnchors && (!_anchorTarget->isInLayoutContainer());
     const bool showSizeAnchors = showAnchors && !_anchorTarget->isLayoutContainer();
 
     // If no particular anchors are shown, we effectively don't show anchors at all

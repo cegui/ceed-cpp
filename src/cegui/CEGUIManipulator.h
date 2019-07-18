@@ -30,6 +30,7 @@ public:
     virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;
 
     bool isLayoutContainer() const;
+    bool isInLayoutContainer() const;
 
     virtual QSizeF getMinSize() const override;
     virtual QSizeF getMaxSize() const override;

@@ -184,16 +184,13 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
         }
     }
 
+    // It makes no sense to resize LCs, they will just snap back when they relayout
     if (isLayoutContainer())
-    {
-        // It makes no sense to resize LCs, they will just snap back when they relayout
         _resizeable = false;
-    }
 
-    // FIXME LC: drag inside sequential layouts at least
-    // Only size handles (right, bottom) and anchors
     // If the widget is parented inside a layout container we don't want any drag moving to be possible
-    if (dynamic_cast<CEGUI::LayoutContainer*>(_widget->getParent()))
+    // TODO: can add drag reordering inside layout containers
+    if (isInLayoutContainer())
         currFlags &= ~ItemIsMovable;
 
     setFlags(currFlags);
