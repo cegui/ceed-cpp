@@ -458,6 +458,8 @@ bool LayoutVisualMode::moveWidgetsInHierarchy(QStringList&& paths, LayoutManipul
         records.push_back(std::move(rec));
     }
 
+    if (records.empty()) return false;
+
     // FIXME: better to calculate addedChildCount, then do this check, then suggest renaming
     if (!newParentManipulator->canAcceptChildren(addedChildCount, true)) return false;
 
