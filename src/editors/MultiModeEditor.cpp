@@ -1,4 +1,5 @@
 #include "src/editors/MultiModeEditor.h"
+#include "src/Application.h"
 
 IEditMode::~IEditMode()
 {
@@ -32,8 +33,6 @@ MultiModeEditor::MultiModeEditor(/*compatibilityManager, */ const QString& fileP
 
     tabs.setTabPosition(QTabWidget::South);
     tabs.setTabShape(QTabWidget::Triangular);
-
-    connect(&tabs, &QTabWidget::currentChanged, this, &MultiModeEditor::slot_currentChanged);
 }
 
 void MultiModeEditor::initialize()
@@ -43,6 +42,26 @@ void MultiModeEditor::initialize()
     // Used as a previous index in slot_currentChanged
     currentTabIndex = tabs.currentIndex();
     assert(currentTabIndex >= 0);
+}
+
+void MultiModeEditor::activate(MainWindow& mainWindow)
+{
+    EditorBase::activate(mainWindow);
+
+    if (auto mode = dynamic_cast<IEditMode*>(tabs.currentWidget()))
+        mode->activate(mainWindow);
+
+    connect(&tabs, &QTabWidget::currentChanged, this, &MultiModeEditor::slot_currentChanged);
+}
+
+void MultiModeEditor::deactivate(MainWindow& mainWindow)
+{
+    disconnect(&tabs, &QTabWidget::currentChanged, this, &MultiModeEditor::slot_currentChanged);
+
+    if (auto mode = dynamic_cast<IEditMode*>(tabs.currentWidget()))
+        mode->deactivate(mainWindow);
+
+    EditorBase::deactivate(mainWindow);
 }
 
 void MultiModeEditor::setTabWithoutUndoHistory(int tabIndex)
@@ -62,7 +81,9 @@ void MultiModeEditor::slot_currentChanged(int newTabIndex)
     auto prevTabMode = dynamic_cast<IEditMode*>(prevTabWidget);
     auto currTabMode = dynamic_cast<IEditMode*>(tabs.widget(newTabIndex));
 
-    if (prevTabMode && !prevTabMode->deactivate())
+    auto& mainWindow = *qobject_cast<Application*>(qApp)->getMainWindow();
+
+    if (prevTabMode && !prevTabMode->deactivate(mainWindow))
     {
         ignoreCurrentChanged = true;
         tabs.setCurrentWidget(prevTabWidget);
@@ -70,7 +91,7 @@ void MultiModeEditor::slot_currentChanged(int newTabIndex)
         return;
     }
 
-    if (currTabMode) currTabMode->activate();
+    if (currTabMode) currTabMode->activate(mainWindow);
 
     if (!ignoreCurrentChangedForUndo)
         undoStack->push(new ModeSwitchCommand(*this, currentTabIndex, newTabIndex));

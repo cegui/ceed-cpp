@@ -125,6 +125,47 @@ size_t LayoutScene::getMultiSelectionChangeId() const
     return (_multiSet && propertyWidget->propertySet() == _multiSet) ? _multiChangeId : 0;
 }
 
+void LayoutScene::updatePropertySet(const std::set<LayoutManipulator*>& selectedWidgets)
+{
+    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
+    auto propertyDockWidget = mainWindow->getPropertyDockWidget();
+    auto propertyWidget = static_cast<QtnPropertyWidget*>(propertyDockWidget->widget());
+
+    disconnect(propertyWidget->propertyView(), &QtnPropertyView::beforePropertyEdited, this, &LayoutScene::onBeforePropertyEdited);
+
+    if (selectedWidgets.size() == 1)
+    {
+        auto selectedWidget = *selectedWidgets.begin();
+        propertyWidget->setPropertySet(selectedWidget->getPropertySet());
+        propertyDockWidget->setWindowTitle("Properties: " + selectedWidget->getWidgetName());
+        // TODO: selectedWidget->getWidgetPath() in the header tooltip (not for the whole propertyWidget tooltip!)
+    }
+    else if (selectedWidgets.size() > 1)
+    {
+        connect(propertyWidget->propertyView(), &QtnPropertyView::beforePropertyEdited, this, &LayoutScene::onBeforePropertyEdited);
+
+        if (_multiSet)
+        {
+            // Unset our multiset from the widget to avoid freeze due to contents change
+            propertyWidget->setPropertySet(nullptr);
+            _multiSet->clearChildProperties();
+        }
+        else
+            _multiSet = new QtnPropertySet(this);
+
+        for (LayoutManipulator* manipulator : selectedWidgets)
+            qtnPropertiesToMultiSet(_multiSet, manipulator->getPropertySet(), false);
+
+        propertyWidget->setPropertySet(_multiSet);
+        propertyDockWidget->setWindowTitle(QString("Properties: %1 widgets").arg(selectedWidgets.size()));
+    }
+    else
+    {
+        propertyWidget->setPropertySet(nullptr);
+        propertyDockWidget->setWindowTitle("Properties");
+    }
+}
+
 void LayoutScene::normalizePositionOfSelectedWidgets()
 {
     std::set<LayoutManipulator*> selectedWidgets;
@@ -476,42 +517,7 @@ void LayoutScene::onSelectionChanged()
 
     // Update property view for our selection
 
-    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
-    auto propertyWidget = static_cast<QtnPropertyWidget*>(mainWindow->getPropertyDockWidget()->widget());
-
-    disconnect(propertyWidget->propertyView(), &QtnPropertyView::beforePropertyEdited, this, &LayoutScene::onBeforePropertyEdited);
-
-    if (selectedWidgets.size() == 1)
-    {
-        auto selectedWidget = *selectedWidgets.begin();
-        propertyWidget->setPropertySet(selectedWidget->getPropertySet());
-        mainWindow->getPropertyDockWidget()->setWindowTitle("Properties: " + selectedWidget->getWidgetName());
-        // TODO: full path to the header tooltip (not for the whole widget tooltip!)
-    }
-    else if (selectedWidgets.size() > 1)
-    {
-        connect(propertyWidget->propertyView(), &QtnPropertyView::beforePropertyEdited, this, &LayoutScene::onBeforePropertyEdited);
-
-        if (_multiSet)
-        {
-            // Unset our multiset from the widget to avoid freeze due to contents change
-            propertyWidget->setPropertySet(nullptr);
-            _multiSet->clearChildProperties();
-        }
-        else
-            _multiSet = new QtnPropertySet(this);
-
-        for (LayoutManipulator* manipulator : selectedWidgets)
-            qtnPropertiesToMultiSet(_multiSet, manipulator->getPropertySet(), false);
-
-        propertyWidget->setPropertySet(_multiSet);
-        mainWindow->getPropertyDockWidget()->setWindowTitle(QString("Properties: %1 widgets").arg(selectedWidgets.size()));
-    }
-    else
-    {
-        propertyWidget->setPropertySet(nullptr);
-        mainWindow->getPropertyDockWidget()->setWindowTitle("Properties");
-    }
+    updatePropertySet(selectedWidgets);
 
     // Show selection in a hierarchy tree
 

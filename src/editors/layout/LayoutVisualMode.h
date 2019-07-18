@@ -33,6 +33,9 @@ public:
     LayoutVisualMode(LayoutEditor& editor);
     virtual ~LayoutVisualMode() override;
 
+    virtual void activate(MainWindow& mainWindow) override;
+    virtual bool deactivate(MainWindow& mainWindow) override;
+
     void setRootWidgetManipulator(LayoutManipulator* manipulator);
     CEGUI::Window* getRootWidget() const;
     void rebuildEditorMenu(QMenu* editorMenu);
@@ -66,9 +69,6 @@ protected:
     void createActiveStateConnections();
     void focusPropertyInspectorFilterBox();
 
-    virtual void showEvent(QShowEvent* event) override;
-    virtual void hideEvent(QHideEvent* event) override;
-
     mutable QBrush snapGridBrush;
     mutable bool snapGridBrushValid = false;
 
@@ -76,7 +76,6 @@ protected:
     CEGUIWidget* ceguiWidget = nullptr;
     CreateWidgetDockWidget* createWidgetDockWidget = nullptr;
     WidgetHierarchyDockWidget* hierarchyDockWidget = nullptr;
-    QMenu* _editorMenu = nullptr; // Not owned, just stored when we have control over its content
     QMenu* contextMenu = nullptr;
 
     QAction* actionShowAnchors = nullptr;

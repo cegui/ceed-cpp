@@ -125,9 +125,9 @@ public:
 
 protected:
 
-    void refreshText();
-
+    void setProperty(const QString& widgetPath, const CEGUI::String& value, const QStringList& propertiesToUpdate);
     void fillInfluencedPropertyList(QStringList& list);
+    void refreshText();
 
     LayoutVisualMode& _visualMode;
     std::vector<Record> _records;

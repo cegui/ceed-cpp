@@ -143,6 +143,44 @@ LayoutVisualMode::~LayoutVisualMode()
     delete createWidgetDockWidget;
 }
 
+void LayoutVisualMode::activate(MainWindow& mainWindow)
+{
+    IEditMode::activate(mainWindow);
+
+    hierarchyDockWidget->setEnabled(true);
+
+    std::set<LayoutManipulator*> selectedWidgets;
+    scene->collectSelectedWidgets(selectedWidgets);
+    scene->updatePropertySet(selectedWidgets);
+    mainWindow.getPropertyDockWidget()->setEnabled(true);
+
+    createWidgetDockWidget->setEnabled(true);
+    mainWindow.getToolbar("Layout")->setEnabled(true);
+
+    mainWindow.setEditorMenuEnabled(true);
+
+    // Make sure all the manipulators are in sync to matter what
+    // this is there mainly for the situation when you switch to live preview, then change resolution, then switch
+    // back to visual editing and all manipulators are of different size than they should be
+    scene->updateFromWidgets();
+
+    createActiveStateConnections();
+}
+
+bool LayoutVisualMode::deactivate(MainWindow& mainWindow)
+{
+    disconnectActiveStateConnections();
+
+    hierarchyDockWidget->setEnabled(false);
+    mainWindow.getPropertyDockWidget()->setEnabled(false);
+    createWidgetDockWidget->setEnabled(false);
+    mainWindow.getToolbar("Layout")->setEnabled(false);
+
+    mainWindow.setEditorMenuEnabled(false);
+
+    return IEditMode::deactivate(mainWindow);
+}
+
 void LayoutVisualMode::setRootWidgetManipulator(LayoutManipulator* manipulator)
 {
     auto oldRoot = getRootWidget();
@@ -190,7 +228,6 @@ void LayoutVisualMode::rebuildEditorMenu(QMenu* editorMenu)
 /*
         editorMenu.addAction(self.focusPropertyInspectorFilterBoxAction)
 */
-    _editorMenu = editorMenu;
 }
 
 void LayoutVisualMode::createActiveStateConnections()
@@ -568,43 +605,4 @@ void LayoutVisualMode::takeScreenshot()
     }
 
     QApplication::clipboard()->setMimeData(data);
-}
-
-void LayoutVisualMode::showEvent(QShowEvent* event)
-{
-    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
-
-    hierarchyDockWidget->setEnabled(true);
-    mainWindow->getPropertyDockWidget()->setEnabled(true);
-    createWidgetDockWidget->setEnabled(true);
-    mainWindow->getToolbar("Layout")->setEnabled(true);
-
-    //???signal from editor to main window instead of storing ptr here?
-    if (_editorMenu) _editorMenu->menuAction()->setEnabled(true);
-
-    // Make sure all the manipulators are in sync to matter what
-    // this is there mainly for the situation when you switch to live preview, then change resolution, then switch
-    // back to visual editing and all manipulators are of different size than they should be
-    scene->updateFromWidgets();
-
-    createActiveStateConnections();
-
-    QWidget::showEvent(event);
-}
-
-void LayoutVisualMode::hideEvent(QHideEvent* event)
-{
-    disconnectActiveStateConnections();
-
-    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
-
-    hierarchyDockWidget->setEnabled(false);
-    mainWindow->getPropertyDockWidget()->setEnabled(false);
-    createWidgetDockWidget->setEnabled(false);
-    mainWindow->getToolbar("Layout")->setEnabled(false);
-
-    //???signal from editor to main window instead of storing ptr here?
-    if (_editorMenu) _editorMenu->menuAction()->setEnabled(false);
-
-    QWidget::hideEvent(event);
 }

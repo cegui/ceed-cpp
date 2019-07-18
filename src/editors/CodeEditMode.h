@@ -13,8 +13,8 @@ public:
 
     CodeEditMode(MultiModeEditor& editor);
 
-    virtual void activate() override;
-    virtual bool deactivate() override;
+    virtual void activate(MainWindow& mainWindow) override;
+    virtual bool deactivate(MainWindow& mainWindow) override;
 
     // Returns native source code from your editor implementation
     virtual QString getNativeCode() = 0;

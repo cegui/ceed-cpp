@@ -184,6 +184,11 @@ QMenu *MainWindow::getEditorMenu() const
     return ui->menuEditor;
 }
 
+void MainWindow::setEditorMenuEnabled(bool enabled)
+{
+    ui->menuEditor->menuAction()->setEnabled(enabled);
+}
+
 void MainWindow::setupToolbars()
 {
     setupToolbar(ui->toolBarStandard);
@@ -757,12 +762,7 @@ void MainWindow::closeEditorTab(EditorBase* editor)
     editor->finalize();
     editor->destroy();
 
-    if (tabIndex >= 0)
-    {
-        // TODO: if this never asserts it can be safely removed
-        assert(ui->tabs->widget(tabIndex) == editor->getWidget());
-        ui->tabs->removeTab(tabIndex);
-    }
+    if (tabIndex >= 0) ui->tabs->removeTab(tabIndex);
 
     activeEditors.erase(it);
 }

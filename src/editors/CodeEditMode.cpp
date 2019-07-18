@@ -16,13 +16,13 @@ CodeEditMode::CodeEditMode(MultiModeEditor& editor)
     document()->setDefaultFont(font);
 }
 
-void CodeEditMode::activate()
+void CodeEditMode::activate(MainWindow& /*mainWindow*/)
 {
-    //IEditMode::activate();
+    //IEditMode::activate(mainWindow);
     refreshFromVisual();
 }
 
-bool CodeEditMode::deactivate()
+bool CodeEditMode::deactivate(MainWindow& /*mainWindow*/)
 {
     bool ret = propagateToVisual();
     if (!ret)
@@ -42,7 +42,7 @@ bool CodeEditMode::deactivate()
             ret = true; // The visual element wasn't touched (the error is thrown before that)
     }
 
-    return ret; // && IEditMode::deactivate();
+    return ret; // && IEditMode::deactivate(mainWindow);
 }
 
 void CodeEditMode::refreshFromVisual()

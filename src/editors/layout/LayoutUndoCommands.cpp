@@ -8,7 +8,8 @@
 #include <CEGUI/widgets/LayoutContainer.h>
 #include <CEGUI/WindowManager.h>
 #include <CEGUI/CoordConverter.h>
-#include "qtreeview.h"
+#include <qtreeview.h>
+#include <qmessagebox.h>
 
 static LayoutManipulator* CreateManipulatorFromDataStream(LayoutVisualMode& visualMode, LayoutManipulator* parent, QDataStream& stream)
 {
@@ -370,19 +371,7 @@ void LayoutPropertyEditCommand::undo()
     fillInfluencedPropertyList(properties);
 
     for (const auto& rec : _records)
-    {
-        auto manipulator = _visualMode.getScene()->getManipulatorByPath(rec.path);
-        assert(manipulator);
-        manipulator->getWidget()->setProperty(_propertyName, rec.oldValue);
-        manipulator->updateFromWidget(false, true);
-        manipulator->update();
-        manipulator->updatePropertiesFromWidget(properties);
-    }
-
-    //_firstCall = false;
-
-    // Make sure to redraw the scene so the changes are visible
-    //_visualMode.getScene()->update();
+        setProperty(rec.path, rec.oldValue, properties);
 }
 
 void LayoutPropertyEditCommand::redo()
@@ -391,17 +380,7 @@ void LayoutPropertyEditCommand::redo()
     fillInfluencedPropertyList(properties);
 
     for (const auto& rec : _records)
-    {
-        auto manipulator = _visualMode.getScene()->getManipulatorByPath(rec.path);
-        assert(manipulator);
-        if (manipulator->getWidget()->getProperty(_propertyName) != rec.newValue)
-        {
-            manipulator->getWidget()->setProperty(_propertyName, rec.newValue);
-            manipulator->updateFromWidget(false, true);
-            manipulator->update();
-            manipulator->updatePropertiesFromWidget(properties);
-        }
-    }
+        setProperty(rec.path, rec.newValue, properties);
 
     QUndoCommand::redo();
 }
@@ -435,23 +414,31 @@ bool LayoutPropertyEditCommand::mergeWith(const QUndoCommand* other)
     return false;
 }
 
-void LayoutPropertyEditCommand::refreshText()
+void LayoutPropertyEditCommand::setProperty(const QString& widgetPath, const CEGUI::String& value, const QStringList& propertiesToUpdate)
 {
-    const QString propertyName = CEGUIUtils::stringToQString(_propertyName);
-    if (_records.size() == 1)
-        setText(QString("Change '%1' in '%2'").arg(propertyName, _records[0].path));
-    else
-        setText(QString("Change '%1' in %2 widgets").arg(propertyName).arg(_records.size()));
+    auto manipulator = _visualMode.getScene()->getManipulatorByPath(widgetPath);
+    assert(manipulator);
+
+    if (!manipulator || manipulator->getWidget()->getProperty(_propertyName) == value) return;
+
+    try
+    {
+        manipulator->getWidget()->setProperty(_propertyName, value);
+        manipulator->updateFromWidget(false, true);
+        manipulator->update();
+        manipulator->updatePropertiesFromWidget(propertiesToUpdate);
+    }
+    catch (const std::exception& e)
+    {
+        QMessageBox::warning(nullptr, "Can't set property", e.what());
+    }
 }
 
 // Some properties are related to others so that when one changes, the others change too.
 // The following ensures that notifications are sent about the related properties as well.
 void LayoutPropertyEditCommand::fillInfluencedPropertyList(QStringList& list)
 {
-    //???to CEGUIManipulator? call its onPropertyChanged?
-    //???is critical not to update changed property value? will send onPropertyDidChange?
-    if (true) //!_firstCall)
-        list.append(CEGUIUtils::stringToQString(_propertyName));
+    list.append(CEGUIUtils::stringToQString(_propertyName));
 
     if (_propertyName == "Size" || _propertyName == "Position")
         list.append("Area");
@@ -461,6 +448,15 @@ void LayoutPropertyEditCommand::fillInfluencedPropertyList(QStringList& list)
         list.append("NamePath");
     else if (_propertyName == "NamePath")
         list.append("Name");
+}
+
+void LayoutPropertyEditCommand::refreshText()
+{
+    const QString propertyName = CEGUIUtils::stringToQString(_propertyName);
+    if (_records.size() == 1)
+        setText(QString("Change '%1' in '%2'").arg(propertyName, _records[0].path));
+    else
+        setText(QString("Change '%1' in %2 widgets").arg(propertyName).arg(_records.size()));
 }
 
 //---------------------------------------------------------------------

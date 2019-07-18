@@ -22,9 +22,9 @@ LayoutPreviewerMode::LayoutPreviewerMode(LayoutEditor& editor, QWidget* parent)
     ceguiWidget->setInputEnabled(true);
 }
 
-void LayoutPreviewerMode::activate()
+void LayoutPreviewerMode::activate(MainWindow& mainWindow)
 {
-    IEditMode::activate();
+    IEditMode::activate(mainWindow);
 
     assert(!rootWidget);
 
@@ -34,7 +34,7 @@ void LayoutPreviewerMode::activate()
     ceguiWidget->getScene()->getCEGUIContext()->setRootWindow(rootWidget);
 }
 
-bool LayoutPreviewerMode::deactivate()
+bool LayoutPreviewerMode::deactivate(MainWindow& mainWindow)
 {
     if (rootWidget)
     {
@@ -42,5 +42,5 @@ bool LayoutPreviewerMode::deactivate()
         rootWidget = nullptr;
     }
 
-    return IEditMode::deactivate();
+    return IEditMode::deactivate(mainWindow);
 }

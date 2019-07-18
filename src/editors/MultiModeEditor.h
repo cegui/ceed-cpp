@@ -15,8 +15,8 @@ public:
     IEditMode(MultiModeEditor& editor) : _editor(editor) {}
     virtual ~IEditMode();
 
-    virtual void activate() {}
-    virtual bool deactivate() { return true; } // If this returns false, the action is terminated and the mode stays in place
+    virtual void activate(MainWindow& /*mainWindow*/) {}
+    virtual bool deactivate(MainWindow& /*mainWindow*/) { return true; } // If this returns false, the action is terminated and the mode stays in place
 
     void disconnectActiveStateConnections();
     void disconnectAllConnections();
@@ -45,6 +45,8 @@ public:
     MultiModeEditor(/*compatibilityManager, */ const QString& filePath);
 
     virtual void initialize() override;
+    virtual void activate(MainWindow& mainWindow) override;
+    virtual void deactivate(MainWindow& mainWindow) override;
 
     QString getTabText(int tabIndex) const { return tabs.tabText(tabIndex); }
     void setTabWithoutUndoHistory(int tabIndex);

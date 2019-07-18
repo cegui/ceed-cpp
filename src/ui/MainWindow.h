@@ -31,6 +31,7 @@ public:
     QDockWidget* getPropertyDockWidget() const { return propertyDockWidget; }
     EditorBase* getCurrentEditor() const { return currentEditor; }
     QMenu* getEditorMenu() const;
+    void setEditorMenuEnabled(bool enabled);
     QToolBar* createToolbar(const QString& name);
     QToolBar* getToolbar(const QString& name) const;
 
