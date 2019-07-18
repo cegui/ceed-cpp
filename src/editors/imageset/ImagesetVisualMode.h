@@ -19,6 +19,9 @@ public:
     ImagesetVisualMode(MultiModeEditor& editor);
     virtual ~ImagesetVisualMode() override;
 
+    virtual void activate(MainWindow& mainWindow) override;
+    virtual bool deactivate(MainWindow& mainWindow) override;
+
     void loadImagesetEntryFromElement(const QDomElement& xmlRoot);
     void rebuildEditorMenu(QMenu* editorMenu);
 
@@ -49,8 +52,6 @@ protected slots:
 
 protected:
 
-    virtual void showEvent(QShowEvent* event) override;
-    virtual void hideEvent(QHideEvent* event) override;
     virtual void mouseMoveEvent(QMouseEvent* event) override;
     virtual void mousePressEvent(QMouseEvent* event) override;
     virtual void mouseReleaseEvent(QMouseEvent* event) override;
@@ -62,7 +63,6 @@ protected:
     QPointF lastCursorPosition;
     ImagesetEntry* imagesetEntry = nullptr;
     ImagesetEditorDockWidget* dockWidget = nullptr;
-    QMenu* _editorMenu = nullptr; // Not owned, just stored when we have control over its content
     QMenu* contextMenu = nullptr;
 
     QAction* editOffsetsAction = nullptr;

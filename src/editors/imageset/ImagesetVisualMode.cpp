@@ -95,6 +95,33 @@ ImagesetVisualMode::~ImagesetVisualMode()
     delete dockWidget;
 }
 
+void ImagesetVisualMode::activate(MainWindow& mainWindow)
+{
+    IEditMode::activate(mainWindow);
+
+    dockWidget->setEnabled(true);
+    mainWindow.getToolbar("Imageset")->setEnabled(true);
+
+    mainWindow.setEditorMenuEnabled(true);
+
+    createActiveStateConnections();
+
+    // Call this every time the visual editing is shown to sync all entries up
+    slot_toggleEditOffsets(editOffsetsAction->isChecked());
+}
+
+bool ImagesetVisualMode::deactivate(MainWindow& mainWindow)
+{
+    disconnectActiveStateConnections();
+
+    mainWindow.setEditorMenuEnabled(false);
+
+    dockWidget->setEnabled(false);
+    mainWindow.getToolbar("Imageset")->setEnabled(false);
+
+    return IEditMode::deactivate(mainWindow);
+}
+
 void ImagesetVisualMode::createActiveStateConnections()
 {
     _activeStateConnections.push_back(connect(editOffsetsAction, &QAction::toggled, this, &ImagesetVisualMode::slot_toggleEditOffsets));
@@ -129,7 +156,6 @@ void ImagesetVisualMode::rebuildEditorMenu(QMenu* editorMenu)
     editorMenu->addAction(editOffsetsAction);
     editorMenu->addSeparator();
     editorMenu->addAction(focusImageListFilterBoxAction);
-    _editorMenu = editorMenu;
 }
 
 void ImagesetVisualMode::refreshSceneRect()
@@ -423,39 +449,6 @@ void ImagesetVisualMode::slot_toggleEditOffsets(bool enabled)
 void ImagesetVisualMode::slot_customContextMenu(QPoint point)
 {
     contextMenu->exec(mapToGlobal(point));
-}
-
-void ImagesetVisualMode::showEvent(QShowEvent* event)
-{
-    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
-
-    dockWidget->setEnabled(true);
-    mainWindow->getToolbar("Imageset")->setEnabled(true);
-
-    //???signal from editor to main window instead of storing ptr here?
-    if (_editorMenu) _editorMenu->menuAction()->setEnabled(true);
-
-    createActiveStateConnections();
-
-    // Call this every time the visual editing is shown to sync all entries up
-    slot_toggleEditOffsets(editOffsetsAction->isChecked());
-
-    ResizableGraphicsView::showEvent(event);
-}
-
-void ImagesetVisualMode::hideEvent(QHideEvent* event)
-{
-    disconnectActiveStateConnections();
-
-    //???signal from editor to main window instead of storing ptr here?
-    if (_editorMenu) _editorMenu->menuAction()->setEnabled(false);
-
-    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
-
-    dockWidget->setEnabled(false);
-    mainWindow->getToolbar("Imageset")->setEnabled(false);
-
-    ResizableGraphicsView::hideEvent(event);
 }
 
 void ImagesetVisualMode::mouseMoveEvent(QMouseEvent* event)
