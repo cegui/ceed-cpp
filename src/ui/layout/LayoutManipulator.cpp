@@ -7,7 +7,7 @@
 #include "src/cegui/CEGUIUtils.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
-#include <CEGUI/widgets/LayoutContainer.h>
+#include <CEGUI/widgets/GridLayoutContainer.h>
 #include "QtnProperty/PropertySet.h"
 #include "qpen.h"
 #include "qpainter.h"
@@ -16,6 +16,7 @@
 #include "qaction.h"
 #include "qmessagebox.h"
 #include <qdrag.h>
+#include <qtimer.h>
 
 LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, CEGUI::Window* widget)
     : CEGUIManipulator(parent, widget)
@@ -447,35 +448,66 @@ QVariant LayoutManipulator::itemChange(QGraphicsItem::GraphicsItemChange change,
 void LayoutManipulator::onPropertyChanged(const QtnPropertyBase* property, CEGUI::Property* ceguiProperty)
 {
     QString value;
-    if (property->toStr(value))
+    if (!property->toStr(value)) return;
+
+    const auto& propertyName = ceguiProperty->getName();
+
+    // Special case: when we edit the name, widget path changes and LayoutPropertyEditCommand
+    // will fail to find the widget. Use LayoutRenameCommand here. Also it is more consistent.
+    if (propertyName == "Name")
     {
-        if (ceguiProperty->getName() == "Name")
+        QString newName = value;
+        if (!renameWidget(newName))
+            newName = getWidgetName();
+
+        // Set actual name back to the property
+        if (newName != value)
+            updatePropertiesFromWidget({"Name", "NamePath"});
+
+        return;
+    }
+
+    const bool isGridWidth = (propertyName == "GridWidth");
+    if (isGridWidth || propertyName == "GridHeight")
+    {
+        auto glc = dynamic_cast<CEGUI::GridLayoutContainer*>(_widget);
+        if (glc)
         {
-            // Special case: when we edit the name, widget path changes and LayoutPropertyEditCommand
-            // will fail to find the widget. Use LayoutRenameCommand here. Also it is more consistent.
-            QString newName = value;
-            if (!renameWidget(newName))
-                newName = getWidgetName();
+            size_t minWidth, minHeight;
+            glc->getMinimalSizeInCells(minWidth, minHeight);
+            const auto newCells = static_cast<size_t>(property->valueAsVariant().toULongLong());
+            const auto minCells = isGridWidth ? minWidth : minHeight;
 
-            // Set actual name back to the property
-            if (newName != value)
-                updatePropertiesFromWidget({"Name", "NamePath"});
-        }
-        else
-        {
-            std::vector<LayoutPropertyEditCommand::Record> records;
+            if (newCells < minCells)
+            {
+                // Set actual value back to the property
+                updatePropertiesFromWidget({property->name()});
 
-            LayoutPropertyEditCommand::Record rec;
-            rec.path = getWidgetPath();
-            rec.oldValue = ceguiProperty->get(_widget);
-            rec.newValue = CEGUIUtils::qStringToString(value);
-            records.push_back(std::move(rec));
+                // Synchronous message box leads to a crash here
+                QTimer::singleShot(0, [isGridWidth, minCells]()
+                {
+                    QMessageBox::warning(nullptr, "Can't reduce grid size",
+                                         QString("Grid %1 can't be set below %2 because of grid contents.\n"
+                                                 "Delete excess children manually and try again.")
+                                         .arg(isGridWidth ? "width" : "height").arg(minCells));
+                });
 
-            // Handle multiproperty merge in a command itself
-            const size_t groupId = _visualMode.getScene()->getMultiSelectionChangeId();
-            _visualMode.getEditor().getUndoStack()->push(new LayoutPropertyEditCommand(_visualMode, std::move(records), property->name(), groupId));
+                return;
+            }
         }
     }
+
+    std::vector<LayoutPropertyEditCommand::Record> records;
+
+    LayoutPropertyEditCommand::Record rec;
+    rec.path = getWidgetPath();
+    rec.oldValue = ceguiProperty->get(_widget);
+    rec.newValue = CEGUIUtils::qStringToString(value);
+    records.push_back(std::move(rec));
+
+    // Handle multiproperty merge in a command itself
+    const size_t groupId = _visualMode.getScene()->getMultiSelectionChangeId();
+    _visualMode.getEditor().getUndoStack()->push(new LayoutPropertyEditCommand(_visualMode, std::move(records), property->name(), groupId));
 }
 
 void LayoutManipulator::onWidgetNameChanged()
