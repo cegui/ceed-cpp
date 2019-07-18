@@ -654,6 +654,23 @@ QGraphicsItem* LayoutScene::getCurrentAnchorItem() const
     return nullptr;
 }
 
+void LayoutScene::deselectAllAnchorItems()
+{
+    // Too early call, items aren't created yet
+    if (!_anchorMinX) return;
+
+    _anchorMinX->setSelected(false);
+    _anchorMinY->setSelected(false);
+    _anchorMaxX->setSelected(false);
+    _anchorMaxY->setSelected(false);
+    _anchorMinXMinY->setSelected(false);
+    _anchorMaxXMinY->setSelected(false);
+    _anchorMinXMaxY->setSelected(false);
+    _anchorMaxXMaxY->setSelected(false);
+    _anchorTextX->setSelected(false);
+    _anchorTextY->setSelected(false);
+}
+
 void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
 {
     // Too early call, items aren't created yet
@@ -687,10 +704,10 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
 
     if (showAnchors)
     {
-        _anchorParentRect->setRect(_anchorTarget->getParentRect().adjusted(-1.0, -1.0, 1.0, 1.0));
+        _anchorParentRect->setRect(_anchorTarget->getParentSceneRect().adjusted(-1.0, -1.0, 1.0, 1.0));
 
         // Set handle positions without firing move events
-        const QRectF anchorsRect = _anchorTarget->getAnchorsRect();
+        const QRectF anchorsRect = _anchorTarget->getAnchorsSceneRect();
         if (showPosAnchors)
         {
             if (movedItem != _anchorMinX) _anchorMinX->setPosSilent(anchorsRect.left(), 0.0);
@@ -713,17 +730,7 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
     {
         _anchorTextX->setVisible(false);
         _anchorTextY->setVisible(false);
-
-        _anchorMinX->setSelected(false);
-        _anchorMinY->setSelected(false);
-        _anchorMaxX->setSelected(false);
-        _anchorMaxY->setSelected(false);
-        _anchorMinXMinY->setSelected(false);
-        _anchorMaxXMinY->setSelected(false);
-        _anchorMinXMaxY->setSelected(false);
-        _anchorMaxXMaxY->setSelected(false);
-        _anchorTextX->setSelected(false);
-        _anchorTextY->setSelected(false);
+        deselectAllAnchorItems();
     }
 }
 
@@ -798,16 +805,12 @@ void LayoutScene::setAnchorValues(float minX, float maxX, float minY, float maxY
     updateAnchorValueItems();
 }
 
+// TODO: snap to the parent rect? as setting?
 // FIXME: when snapping to edge of self with Shift, handle dragging is not smooth
 void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool moveOpposite)
 {
-    if (!_anchorTarget || !item) return;
-
-    CEGUI::Window* widget = _anchorTarget->getWidget();
-    if (!widget) return;
-
-    if (!_anchorTarget->resizeInProgress())
-        _anchorTarget->beginResizing(*item);
+    float minX, maxX, minY, maxY;
+    if (!item || !getAnchorValues(minX, maxX, minY, maxY)) return;
 
     // Snap to siblings (before limiting to ensure that limits are respected)
 
@@ -826,7 +829,7 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool m
             if (!siblingManipulator) continue;
 
             const auto siblingRect = siblingManipulator->sceneBoundingRect();
-            const auto siblingAnchorsRect = siblingManipulator->getAnchorsRect();
+            const auto siblingAnchorsRect = siblingManipulator->getAnchorsSceneRect();
             auto anchorPos = newPos;
 
             if (item == _anchorMinX || item == _anchorMaxX)
@@ -890,11 +893,6 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool m
 
     const QPointF newAnchor = _anchorTarget->scenePixelToAnchor(newPos);
 
-    float minX = _anchorTarget->getAnchorMinX();
-    float maxX = _anchorTarget->getAnchorMaxX();
-    float minY = _anchorTarget->getAnchorMinY();
-    float maxY = _anchorTarget->getAnchorMaxY();
-
     if (item == _anchorMinX || item == _anchorMinXMinY || item == _anchorMinXMaxY)
     {
         minX = static_cast<float>(newAnchor.x());
@@ -949,8 +947,11 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool m
         }
     }
 
-    // Perform actual changes. Don't use setAnchorValues() because we don't want
+    // Perform actual changes. We don't use setAnchorValues() because we don't want
     // to create undo commands for each change. They are created once at mouse up.
+
+    if (!_anchorTarget->resizeInProgress())
+        _anchorTarget->beginResizing(*item);
 
     const bool preserveEffectiveSize = !(QApplication::keyboardModifiers() & Qt::ShiftModifier);
     _anchorTarget->setAnchors(minX, maxX, minY, maxY, preserveEffectiveSize);

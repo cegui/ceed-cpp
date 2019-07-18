@@ -337,7 +337,7 @@ void AnchorPopupMenu::showEvent(QShowEvent* event)
     float minX, maxX, minY, maxY;
     if (!_scene.getAnchorValues(minX, maxX, minY, maxY)) return;
 
-    const QRectF parentRect = _scene.getAnchorTarget()->getParentRect();
+    const QRectF parentRect = _scene.getAnchorTarget()->getParentSceneRect();
     const float toleranceX = 1.f / static_cast<float>(parentRect.width()) - std::numeric_limits<float>().epsilon();
     const float toleranceY = 1.f / static_cast<float>(parentRect.height()) - std::numeric_limits<float>().epsilon();
 

@@ -381,10 +381,30 @@ void LayoutManipulator::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
         {
             setCursor(Qt::ClosedHandCursor);
 
+            // FIXME: DRAG ANCHOR
+            // Prevent moving anchors
+            /*
+            _visualMode.getScene()->deselectAllAnchorItems();
+            auto anchorTarget = _visualMode.getScene()->getAnchorTarget();
+            if (anchorTarget) anchorTarget->setSelected(false);
+            */
+
             std::set<LayoutManipulator*> selectedWidgets;
             _visualMode.getScene()->collectSelectedWidgets(selectedWidgets);
-            selectedWidgets.insert(this);
-            LayoutVisualMode::removeNestedManipulators(selectedWidgets);
+
+            /* UX: not sure what is better, move all selection or only a Ctrl-dragged item
+            if (selectedWidgets.find(this) == selectedWidgets.end())
+            {
+                _visualMode.getScene()->clearSelection();
+                selectedWidgets.clear();
+                selectedWidgets.insert(this);
+            }
+            else
+            */
+            {
+                selectedWidgets.insert(this);
+                LayoutVisualMode::removeNestedManipulators(selectedWidgets);
+            }
 
             QByteArray bytes;
             QDataStream stream(&bytes, QIODevice::WriteOnly);

@@ -54,6 +54,7 @@ public:
 
     bool isAnchorItem(QGraphicsItem* item) const;
     QGraphicsItem* getCurrentAnchorItem() const;
+    void deselectAllAnchorItems();
     void updateAnchorItems(QGraphicsItem* movedItem = nullptr);
     void updateAnchorValueItems();
 

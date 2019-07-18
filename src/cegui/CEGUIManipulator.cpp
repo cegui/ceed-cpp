@@ -250,7 +250,7 @@ CEGUI::Sizef CEGUIManipulator::getBaseSize() const
 }
 
 // Returns an effective parent rect in a scene coord system
-QRectF CEGUIManipulator::getParentRect() const
+QRectF CEGUIManipulator::getParentSceneRect() const
 {
     if (!_widget || !scene()) return QRectF();
 
@@ -270,9 +270,9 @@ QRectF CEGUIManipulator::getParentRect() const
 }
 
 // Calculates a rect composed of anchor limits (relative parts of the widget area) in a scene coord system
-QRectF CEGUIManipulator::getAnchorsRect() const
+QRectF CEGUIManipulator::getAnchorsSceneRect() const
 {
-    const QRectF parentRect = getParentRect();
+    const QRectF parentRect = getParentSceneRect();
     const auto& widgetPos = getWidget()->getPosition();
     const auto& widgetSize = getWidget()->getSize();
     return QRectF(parentRect.x() + parentRect.width() * static_cast<qreal>(widgetPos.d_x.d_scale),
@@ -303,7 +303,7 @@ float CEGUIManipulator::getAnchorMaxY() const
 
 QPointF CEGUIManipulator::scenePixelToAnchor(QPointF scenePixel) const
 {
-    const QRectF parentRect = getParentRect();
+    const QRectF parentRect = getParentSceneRect();
     return QPointF(qFuzzyIsNull(parentRect.width()) ? 0.0 : (scenePixel.x() - parentRect.x()) / parentRect.width(),
                    qFuzzyIsNull(parentRect.height()) ? 0.0 : (scenePixel.y() - parentRect.y()) / parentRect.height());
 }
