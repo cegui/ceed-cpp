@@ -232,9 +232,10 @@ void Application::createSettingsEntries()
     secScreenshots->addEntry(std::move(entry));
 
     entry.reset(new SettingsEntry(*secScreenshots, "use_qt_setimage", true, "Add Qt image to clipboard",
-                                  "Adds Qt's 'application/x-qt-image' to a clipboard, which expands to "
-                                  "multiple platform and common formats.\nOn Windows it's known to enable "
-                                  "pasting to Paint & Slack, but to break pasting to Word.",
+                                  "Adds Qt's 'application/x-qt-image' to a clipboard, which\n"
+                                  "expands to multiple platform and cross-platform formats.\n"
+                                  "On Windows it's known to enable pasting to Paint & Slack,\n"
+                                  "but to break pasting to Word.",
                                   "checkbox", false, 4));
 
     secScreenshots->addEntry(std::move(entry));

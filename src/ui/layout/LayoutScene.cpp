@@ -467,8 +467,6 @@ void LayoutScene::onSelectionChanged()
     {
         // Show anchors for the only selected widget, except layout containers
         _anchorTarget = *selectedWidgets.begin();
-        if (_anchorTarget->isLayoutContainer())
-            _anchorTarget = nullptr;
     }
 
     if (_anchorTextX) _anchorTextX->setVisible(false);
@@ -659,29 +657,57 @@ QGraphicsItem* LayoutScene::getCurrentAnchorItem() const
 void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
 {
     // Too early call, items aren't created yet
-    if (!_anchorTextX) return;
+    if (!_anchorParentRect) return;
 
     Application* app = qobject_cast<Application*>(qApp);
     const bool showAnchors = (_anchorTarget != nullptr && app->getAction("layout/show_anchors")->isChecked());
 
-    if (_anchorParentRect)
+    auto parentManipulator = _anchorTarget ? dynamic_cast<LayoutManipulator*>(_anchorTarget->parentItem()) : nullptr;
+    const bool showPosAnchors = showAnchors && (!parentManipulator || !parentManipulator->isLayoutContainer());
+    const bool showSizeAnchors = showAnchors && !_anchorTarget->isLayoutContainer();
+
+    _anchorParentRect->setVisible(showAnchors);
+    _anchorMinX->setVisible(showPosAnchors);
+    _anchorMinY->setVisible(showPosAnchors);
+    _anchorMaxX->setVisible(showSizeAnchors);
+    _anchorMaxY->setVisible(showSizeAnchors);
+    _anchorMinXMinY->setVisible(showPosAnchors);
+    _anchorMaxXMinY->setVisible(showPosAnchors && showSizeAnchors);
+    _anchorMinXMaxY->setVisible(showPosAnchors && showSizeAnchors);
+    _anchorMaxXMaxY->setVisible(showSizeAnchors);
+
+    // Stop the current operation if the dragged item became invisible.
+    // NB: movedItem may be nullptr here but dragging can still occur.
+    const bool stop = !showAnchors || (movedItem && !movedItem->isVisible());
+    if (stop && _anchorTarget && _anchorTarget->resizeInProgress())
+        _anchorTarget->endResizing();
+
+    if (showAnchors)
     {
-        _anchorParentRect->setVisible(showAnchors);
-        _anchorMinX->setVisible(showAnchors);
-        _anchorMinY->setVisible(showAnchors);
-        _anchorMaxX->setVisible(showAnchors);
-        _anchorMaxY->setVisible(showAnchors);
-        _anchorMinXMinY->setVisible(showAnchors);
-        _anchorMaxXMinY->setVisible(showAnchors);
-        _anchorMinXMaxY->setVisible(showAnchors);
-        _anchorMaxXMaxY->setVisible(showAnchors);
+        _anchorParentRect->setRect(_anchorTarget->getParentRect().adjusted(-1.0, -1.0, 1.0, 1.0));
+
+        // Set handle positions without firing move events
+        const QRectF anchorsRect = _anchorTarget->getAnchorsRect();
+        if (showPosAnchors)
+        {
+            if (movedItem != _anchorMinX) _anchorMinX->setPosSilent(anchorsRect.left(), 0.0);
+            if (movedItem != _anchorMinY) _anchorMinY->setPosSilent(0.0, anchorsRect.top());
+            if (movedItem != _anchorMinXMinY) _anchorMinXMinY->setPosSilent(anchorsRect.left(), anchorsRect.top());
+        }
+        if (showSizeAnchors)
+        {
+            if (movedItem != _anchorMaxX) _anchorMaxX->setPosSilent(anchorsRect.right(), 0.0);
+            if (movedItem != _anchorMaxY) _anchorMaxY->setPosSilent(0.0, anchorsRect.bottom());
+            if (movedItem != _anchorMaxXMaxY) _anchorMaxXMaxY->setPosSilent(anchorsRect.right(), anchorsRect.bottom());
+        }
+        if (showPosAnchors && showSizeAnchors)
+        {
+            if (movedItem != _anchorMaxXMinY) _anchorMaxXMinY->setPosSilent(anchorsRect.right(), anchorsRect.top());
+            if (movedItem != _anchorMinXMaxY) _anchorMinXMaxY->setPosSilent(anchorsRect.left(), anchorsRect.bottom());
+        }
     }
-
-    if (!showAnchors || !_anchorParentRect)
+    else
     {
-        if (_anchorTarget && _anchorTarget->resizeInProgress())
-            _anchorTarget->endResizing();
-
         _anchorTextX->setVisible(false);
         _anchorTextY->setVisible(false);
 
@@ -695,24 +721,7 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
         _anchorMaxXMaxY->setSelected(false);
         _anchorTextX->setSelected(false);
         _anchorTextY->setSelected(false);
-
-        return;
     }
-
-    const QRectF parentRect = _anchorTarget->getParentRect();
-    const QRectF anchorsRect = _anchorTarget->getAnchorsRect();
-
-    _anchorParentRect->setRect(parentRect.adjusted(-1.0, -1.0, 1.0, 1.0));
-
-    // Position handles without firing move events
-    if (movedItem != _anchorMinX) _anchorMinX->setPosSilent(anchorsRect.left(), 0.0);
-    if (movedItem != _anchorMaxX) _anchorMaxX->setPosSilent(anchorsRect.right(), 0.0);
-    if (movedItem != _anchorMinY) _anchorMinY->setPosSilent(0.0, anchorsRect.top());
-    if (movedItem != _anchorMaxY) _anchorMaxY->setPosSilent(0.0, anchorsRect.bottom());
-    if (movedItem != _anchorMinXMinY) _anchorMinXMinY->setPosSilent(anchorsRect.left(), anchorsRect.top());
-    if (movedItem != _anchorMaxXMinY) _anchorMaxXMinY->setPosSilent(anchorsRect.right(), anchorsRect.top());
-    if (movedItem != _anchorMinXMaxY) _anchorMinXMaxY->setPosSilent(anchorsRect.left(), anchorsRect.bottom());
-    if (movedItem != _anchorMaxXMaxY) _anchorMaxXMaxY->setPosSilent(anchorsRect.right(), anchorsRect.bottom());
 }
 
 // Updates position and value of anchor texts corresponding to the anchor item passed
@@ -888,7 +897,7 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool m
         minX = static_cast<float>(newAnchor.x());
         if (maxX < minX)
         {
-            if (moveOpposite) maxX = minX;
+            if (moveOpposite || !_anchorMaxX->isVisible()) maxX = minX;
             else
             {
                 minX = maxX;
@@ -901,7 +910,7 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool m
         maxX = static_cast<float>(newAnchor.x());
         if (maxX < minX)
         {
-            if (moveOpposite) minX = maxX;
+            if (moveOpposite || !_anchorMinX->isVisible()) minX = maxX;
             else
             {
                 maxX = minX;
@@ -915,7 +924,7 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool m
         minY = static_cast<float>(newAnchor.y());
         if (maxY < minY)
         {
-            if (moveOpposite) maxY = minY;
+            if (moveOpposite || !_anchorMaxY->isVisible()) maxY = minY;
             else
             {
                 minY = maxY;
@@ -928,7 +937,7 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool m
         maxY = static_cast<float>(newAnchor.y());
         if (maxY < minY)
         {
-            if (moveOpposite) minY = maxY;
+            if (moveOpposite || !_anchorMinY->isVisible()) minY = maxY;
             else
             {
                 maxY = minY;
