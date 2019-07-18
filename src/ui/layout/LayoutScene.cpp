@@ -956,6 +956,14 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool m
     // Perform actual changes. We don't use setAnchorValues() because we don't want
     // to create undo commands for each change. They are created once at mouse up.
 
+    // When draggind with Ctrl pressed, target is reselected for some internal Qt reason.
+    // Deselecting it prevents its moving, which otherwise would break resizing.
+    if (_anchorTarget->isSelected())
+    {
+        item->setSelected(true);
+        _anchorTarget->setSelected(false);
+    }
+
     if (!_anchorTarget->resizeInProgress())
         _anchorTarget->beginResizing(*item);
 
@@ -989,6 +997,11 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
         _anchorTextY->setVisible(false);
         return;
     }
+
+    // If anchor handle is selected, target must not be selected
+    // to avoid simultaneous move problems
+    if (item && _anchorTarget->isSelected())
+        _anchorTarget->setSelected(false);
 
     // TODO: preserveEffectiveSize - need hotkey or option!
 

@@ -370,9 +370,15 @@ QVariant ResizableRectItem::itemChange(GraphicsItemChange change, const QVariant
     if (change == ItemSelectedHasChanged)
     {
         if (value.toBool())
+        {
             deselectAllHandles();
+        }
         else
+        {
             hideAllHandles();
+            endMoving();
+            endResizing();
+        }
     }
     else if (change == ItemPositionChange)
     {
