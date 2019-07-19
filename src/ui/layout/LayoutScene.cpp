@@ -451,6 +451,11 @@ void LayoutScene::selectParent()
     }
 }
 
+void LayoutScene::onManipulatorRemoved(LayoutManipulator* manipulator)
+{
+    if (_anchorTarget == manipulator) _anchorTarget = nullptr;
+}
+
 void LayoutScene::onManipulatorUpdatedFromWidget(LayoutManipulator* manipulator)
 {
     if (!manipulator) return;
@@ -515,13 +520,6 @@ void LayoutScene::onSelectionChanged()
     QGraphicsItem* selectedAnchorItem = getCurrentAnchorItem();
 
     // Update anchors state
-
-    if (_anchorTarget && _anchorTarget->scene() != this)
-    {
-        // Possibly was detached
-        // FIXME: proper handling of anchor target deletion!
-        _anchorTarget = nullptr;
-    }
 
     if (selectedWidgets.size() > 1)
     {

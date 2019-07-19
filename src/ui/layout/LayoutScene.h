@@ -44,6 +44,7 @@ public:
 
     void ignoreSelectionChanges(bool ignore) { _ignoreSelectionChanges = ignore; }
 
+    void onManipulatorRemoved(LayoutManipulator* manipulator);
     void onManipulatorUpdatedFromWidget(LayoutManipulator* manipulator);
     void anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool moveOpposite);
     void anchorHandleSelected(QGraphicsItem* item);

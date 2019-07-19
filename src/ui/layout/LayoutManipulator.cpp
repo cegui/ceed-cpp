@@ -448,6 +448,10 @@ QVariant LayoutManipulator::itemChange(QGraphicsItem::GraphicsItemChange change,
     {
         if (_lcHandle) _lcHandle->updateLook();
     }
+    else if (change == ItemSceneChange)
+    {
+        _visualMode.getScene()->onManipulatorRemoved(this);
+    }
 
     return CEGUIManipulator::itemChange(change, value);
 }
