@@ -66,7 +66,7 @@ public:
 
 signals:
 
-    void labelChanged();
+    void filePathChanged(const QString& oldPath, const QString& newPath);
     void contentsChanged(bool isModified);
     void fileChangedExternally();
     void undoAvailable(bool available, const QString& text);

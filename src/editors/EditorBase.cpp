@@ -242,8 +242,10 @@ bool EditorBase::hasChanges() const
 // targetPath should be absolute file path.
 bool EditorBase::saveAs(const QString& targetPath)
 {
+    const QString prevFilePath = _filePath;
+
     QString actualPath;
-    if (targetPath.isEmpty())
+    if (prevFilePath.isEmpty())
     {
         // Editor target is new, ask for a file location and name
 
@@ -299,7 +301,7 @@ bool EditorBase::saveAs(const QString& targetPath)
     markAsUnchanged();
 
     _labelText = QFileInfo(_filePath).fileName();
-    emit labelChanged();
+    emit filePathChanged(prevFilePath, _filePath);
 
     return true;
 }

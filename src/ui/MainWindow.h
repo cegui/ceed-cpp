@@ -52,7 +52,7 @@ private slots:
 
     void onUndoAvailable(bool available, const QString& text);
     void onRedoAvailable(bool available, const QString& text);
-    void onEditorLabelChanged();
+    void onEditorFilePathChanged(const QString& oldPath, const QString& newPath);
     void onEditorContentsChanged(bool isModified);
     void onEditorFileChangedExternally();
 

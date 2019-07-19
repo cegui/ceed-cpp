@@ -584,7 +584,7 @@ void MainWindow::on_tabs_currentChanged(int index)
     {
         disconnect(currentEditor, &EditorBase::undoAvailable, this, &MainWindow::onUndoAvailable);
         disconnect(currentEditor, &EditorBase::redoAvailable, this, &MainWindow::onRedoAvailable);
-        disconnect(currentEditor, &EditorBase::labelChanged, this, &MainWindow::onEditorLabelChanged);
+        disconnect(currentEditor, &EditorBase::filePathChanged, this, &MainWindow::onEditorFilePathChanged);
         disconnect(currentEditor, &EditorBase::contentsChanged, this, &MainWindow::onEditorContentsChanged);
         disconnect(currentEditor, &EditorBase::fileChangedExternally, this, &MainWindow::onEditorFileChangedExternally);
 
@@ -637,7 +637,7 @@ void MainWindow::on_tabs_currentChanged(int index)
 
         connect(currentEditor, &EditorBase::undoAvailable, this, &MainWindow::onUndoAvailable);
         connect(currentEditor, &EditorBase::redoAvailable, this, &MainWindow::onRedoAvailable);
-        connect(currentEditor, &EditorBase::labelChanged, this, &MainWindow::onEditorLabelChanged);
+        connect(currentEditor, &EditorBase::filePathChanged, this, &MainWindow::onEditorFilePathChanged);
         connect(currentEditor, &EditorBase::contentsChanged, this, &MainWindow::onEditorContentsChanged);
         connect(currentEditor, &EditorBase::fileChangedExternally, this, &MainWindow::onEditorFileChangedExternally);
     }
@@ -979,11 +979,14 @@ void MainWindow::onRedoAvailable(bool available, const QString& text)
     ui->actionRedo->setText(text.isEmpty() ? "Redo" : "Redo " + text);
 }
 
-void MainWindow::onEditorLabelChanged()
+void MainWindow::onEditorFilePathChanged(const QString& oldPath, const QString& newPath)
 {
     EditorBase* editor = qobject_cast<EditorBase*>(sender());
     assert(editor);
     if (!editor) return;
+
+    // File is created
+    if (oldPath.isEmpty()) recentlyUsedFiles->addRecentlyUsed(newPath);
 
     const int tabIndex = ui->tabs->indexOf(editor->getWidget());
     ui->tabs->setTabText(tabIndex, editor->getLabelText());
@@ -1217,9 +1220,11 @@ void MainWindow::openNewEditor(EditorBasePtr editor)
 {
     if (!editor) return;
 
+    const auto& filePath = editor->getFilePath();
+
     if (!CEGUIManager::Instance().isProjectLoaded() && editor->requiresProject())
     {
-        editor.reset(new NoEditor(editor->getFilePath(),
+        editor.reset(new NoEditor(filePath,
             "Opening this file requires you to have a project opened!"));
     }
 
@@ -1231,6 +1236,9 @@ void MainWindow::openNewEditor(EditorBasePtr editor)
     activeEditors.push_back(std::move(editor));
 
     const int newTabIdx = ui->tabs->addTab(editorPtr->getWidget(), editorPtr->getLabelText());
-    ui->tabs->setTabToolTip(newTabIdx, editorPtr->getFilePath());
+    ui->tabs->setTabToolTip(newTabIdx, filePath);
     ui->tabs->setCurrentWidget(editorPtr->getWidget());
+
+    // File exists
+    if (!filePath.isEmpty()) recentlyUsedFiles->addRecentlyUsed(filePath);
 }
