@@ -206,38 +206,55 @@ bool LayoutResizeCommand::mergeWith(const QUndoCommand* other)
 
 LayoutDeleteCommand::LayoutDeleteCommand(LayoutVisualMode& visualMode, QStringList&& paths)
     : _visualMode(visualMode)
-    , _paths(std::move(paths))
 {
-    CEGUIUtils::removeNestedPaths(_paths);
+    CEGUIUtils::removeNestedPaths(paths);
 
-    // Serialize deleted hierarchies for undo
-    QDataStream stream(&_data, QIODevice::WriteOnly);
-    for (const QString& path : _paths)
+    for (const QString& path : paths)
     {
         auto manipulator = _visualMode.getScene()->getManipulatorByPath(path);
-        assert(manipulator);
+        if (!manipulator)
+        {
+            assert(false);
+            continue;
+        }
+
+        Record rec;
+        rec.path = path;
+        rec.indexInParent = manipulator->getWidgetIndexInParent();
+
+        // Serialize deleted hierarchy for undo
+        QDataStream stream(&rec.data, QIODevice::WriteOnly);
         CEGUIUtils::serializeWidget(*manipulator->getWidget(), stream, true);
+
+        _records.push_back(std::move(rec));
     }
 
-    if (_paths.size() == 1)
-        setText(QString("Delete '%1'").arg(_paths[0]));
+    // Sort by indexInParent asc for insertion in undo
+    std::sort(_records.begin(), _records.end(), [](const Record& a, const Record& b)
+    {
+        return a.indexInParent < b.indexInParent;
+    });
+
+    if (paths.size() == 1)
+        setText(QString("Delete '%1'").arg(paths[0]));
     else
-        setText(QString("Delete %1 widgets'").arg(_paths.size()));
+        setText(QString("Delete %1 widgets'").arg(paths.size()));
 }
 
 void LayoutDeleteCommand::undo()
 {
     QUndoCommand::undo();
 
-    int i = 0;
-    QDataStream stream(&_data, QIODevice::ReadOnly);
-    while (!stream.atEnd())
+    for (auto& rec : _records)
     {
-        const QString& path = _paths[i++];
-        const int sepPos = path.lastIndexOf('/');
-        LayoutManipulator* parent = (sepPos < 0) ? nullptr : _visualMode.getScene()->getManipulatorByPath(path.left(sepPos));
+        const int sepPos = rec.path.lastIndexOf('/');
+        LayoutManipulator* parent = (sepPos < 0) ? nullptr : _visualMode.getScene()->getManipulatorByPath(rec.path.left(sepPos));
 
-        CreateManipulatorFromDataStream(_visualMode, parent, stream);
+        QDataStream stream(&rec.data, QIODevice::ReadOnly);
+        LayoutManipulator* manipulator = CreateManipulatorFromDataStream(_visualMode, parent, stream);
+
+        if (auto lc = dynamic_cast<CEGUI::LayoutContainer*>(parent->getWidget()))
+            lc->moveChildToIndex(manipulator->getWidget(), rec.indexInParent);
     }
 
     _visualMode.getHierarchyDockWidget()->refresh();
@@ -245,8 +262,8 @@ void LayoutDeleteCommand::undo()
 
 void LayoutDeleteCommand::redo()
 {
-    for (const QString& path : _paths)
-        _visualMode.getScene()->deleteWidgetByPath(path);
+    for (const auto& rec : _records)
+        _visualMode.getScene()->deleteWidgetByPath(rec.path);
 
     _visualMode.getScene()->updatePropertySet();
 

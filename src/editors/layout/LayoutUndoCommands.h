@@ -79,9 +79,15 @@ public:
 
 protected:
 
+    struct Record
+    {
+        QString path;
+        size_t indexInParent;
+        QByteArray data;
+    };
+
     LayoutVisualMode& _visualMode;
-    QStringList _paths;
-    QByteArray _data;
+    std::vector<Record> _records;
 };
 
 // This command creates one widget
