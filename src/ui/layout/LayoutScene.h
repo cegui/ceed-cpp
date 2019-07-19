@@ -33,7 +33,9 @@ public:
     void setRootWidgetManipulator(LayoutManipulator* manipulator);
     LayoutManipulator* getRootWidgetManipulator() const { return rootManipulator; }
     LayoutManipulator* getManipulatorByPath(const QString& widgetPath) const;
+    bool deleteWidgetByPath(const QString& widgetPath);
     size_t getMultiSelectionChangeId() const;
+    void updatePropertySet();
     void updatePropertySet(const std::set<LayoutManipulator*>& selectedWidgets);
 
     void alignSelectionHorizontally(CEGUI::HorizontalAlignment alignment);

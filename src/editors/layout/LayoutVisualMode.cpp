@@ -149,9 +149,7 @@ void LayoutVisualMode::activate(MainWindow& mainWindow)
 
     hierarchyDockWidget->setEnabled(true);
 
-    std::set<LayoutManipulator*> selectedWidgets;
-    scene->collectSelectedWidgets(selectedWidgets);
-    scene->updatePropertySet(selectedWidgets);
+    scene->updatePropertySet();
     mainWindow.getPropertyDockWidget()->setEnabled(true);
 
     createWidgetDockWidget->setEnabled(true);

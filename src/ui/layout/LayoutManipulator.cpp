@@ -206,6 +206,13 @@ void LayoutManipulator::detach(bool detachWidget, bool destroyWidget, bool recur
 
     CEGUIManipulator::detach(detachWidget, destroyWidget, recursive);
 
+    if (_treeItem)
+    {
+        auto index = _treeItem->index();
+        _treeItem->model()->removeRow(index.row(), index.parent());
+        _treeItem = nullptr;
+    }
+
     // If this was root we have to inform the scene accordingly!
     if (isRoot) _visualMode.setRootWidgetManipulator(nullptr);
 }

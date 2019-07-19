@@ -12,7 +12,7 @@
 #include "src/editors/layout/LayoutUndoCommands.h"
 #include <CEGUI/CoordConverter.h>
 #include <CEGUI/GUIContext.h>
-#include <CEGUI/widgets/LayoutContainer.h>
+#include <CEGUI/widgets/GridLayoutContainer.h>
 #include "qgraphicssceneevent.h"
 #include "qevent.h"
 #include "qmimedata.h"
@@ -118,11 +118,49 @@ LayoutManipulator* LayoutScene::getManipulatorByPath(const QString& widgetPath) 
     }
 }
 
+bool LayoutScene::deleteWidgetByPath(const QString& widgetPath)
+{
+    LayoutManipulator* manipulator = getManipulatorByPath(widgetPath);
+    if (!manipulator) return false;
+
+    auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
+    auto propertyWidget = static_cast<QtnPropertyWidget*>(mainWindow->getPropertyDockWidget()->widget());
+    if (propertyWidget->propertySet() == manipulator->getPropertySet())
+        propertyWidget->setPropertySet(nullptr);
+    if (_multiSet)
+        _multiSet->clearChildProperties();
+
+    auto parentManipulator = dynamic_cast<LayoutManipulator*>(manipulator->parentItem());
+
+    manipulator->detach();
+    delete manipulator;
+
+    // Mostly for the LC case, its area depends on the children
+    if (parentManipulator)
+    {
+        // Update grid layout auto positioning index, it may accept more
+        // auto-positioned children after the current child deletion
+        if (auto glc = dynamic_cast<CEGUI::GridLayoutContainer*>(parentManipulator->getWidget()))
+            glc->setNextAutoPositioningIdx(glc->getLastBusyAutoPositioningIndex() + 1);
+
+        parentManipulator->updateFromWidget(true, true);
+    }
+
+    return true;
+}
+
 size_t LayoutScene::getMultiSelectionChangeId() const
 {
     auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
     auto propertyWidget = static_cast<QtnPropertyWidget*>(mainWindow->getPropertyDockWidget()->widget());
     return (_multiSet && propertyWidget->propertySet() == _multiSet) ? _multiChangeId : 0;
+}
+
+void LayoutScene::updatePropertySet()
+{
+    std::set<LayoutManipulator*> selectedWidgets;
+    collectSelectedWidgets(selectedWidgets);
+    updatePropertySet(selectedWidgets);
 }
 
 void LayoutScene::updatePropertySet(const std::set<LayoutManipulator*>& selectedWidgets)
@@ -529,13 +567,13 @@ void LayoutScene::onSelectionChanged()
         treeView->clearSelection();
 
         QStandardItem* lastTreeItem = nullptr;
-        for (LayoutManipulator* manip : selectedWidgets)
+        for (LayoutManipulator* manipulator : selectedWidgets)
         {
-            if (manip->getTreeItem())
+            if (auto treeItem = manipulator->getTreeItem())
             {
-                treeView->selectionModel()->select(manip->getTreeItem()->index(), QItemSelectionModel::Select);
-                ensureParentIsExpanded(treeView, manip->getTreeItem());
-                lastTreeItem = manip->getTreeItem();
+                treeView->selectionModel()->select(treeItem->index(), QItemSelectionModel::Select);
+                ensureParentIsExpanded(treeView, treeItem);
+                lastTreeItem = treeItem;
             }
         }
 

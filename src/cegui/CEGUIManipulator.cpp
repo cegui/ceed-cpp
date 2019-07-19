@@ -645,7 +645,11 @@ void CEGUIManipulator::detach(bool detachWidget, bool destroyWidget, bool recurs
         for (QGraphicsItem* childItem : childItems())
         {
             CEGUIManipulator* child = dynamic_cast<CEGUIManipulator*>(childItem);
-            if (child) child->detach(detachWidget, destroyWidget, true);
+            if (child)
+            {
+                child->detach(detachWidget, destroyWidget, true);
+                delete child;
+            }
         }
     }
 

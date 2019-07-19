@@ -246,18 +246,9 @@ void LayoutDeleteCommand::undo()
 void LayoutDeleteCommand::redo()
 {
     for (const QString& path : _paths)
-    {
-        auto manipulator = _visualMode.getScene()->getManipulatorByPath(path);
-        if (!manipulator)
-        {
-            assert(false && "LayoutDeleteCommand::redo() > manipulator not found!");
-            continue;
-        }
+        _visualMode.getScene()->deleteWidgetByPath(path);
 
-        manipulator->detach();
-    }
-
-    _visualMode.getHierarchyDockWidget()->refresh();
+    _visualMode.getScene()->updatePropertySet();
 
     QUndoCommand::redo();
 }
@@ -279,14 +270,8 @@ void LayoutCreateCommand::undo()
     QUndoCommand::undo();
 
     const QString fullPath = _parentPath.isEmpty() ? _name : _parentPath + '/' + _name;
-    auto manipulator = _visualMode.getScene()->getManipulatorByPath(fullPath);
-    auto parentManipulator = dynamic_cast<LayoutManipulator*>(manipulator->parentItem());
-    manipulator->detach();
-
-    // Mostly for the LC case, its area depends on the children
-    if (parentManipulator) parentManipulator->updateFromWidget(true, true);
-
-    _visualMode.getHierarchyDockWidget()->refresh();
+    _visualMode.getScene()->deleteWidgetByPath(fullPath);
+    _visualMode.getScene()->updatePropertySet();
 }
 
 void LayoutCreateCommand::redo()
@@ -803,11 +788,10 @@ void LayoutPasteCommand::undo()
 {
     QUndoCommand::undo();
 
-    LayoutScene* scene = _visualMode.getScene();
     for (const QString& path : _createdWidgets)
-        scene->getManipulatorByPath(path)->detach();
+        _visualMode.getScene()->deleteWidgetByPath(path);
 
-    _visualMode.getHierarchyDockWidget()->refresh();
+    _visualMode.getScene()->updatePropertySet();
 
     _createdWidgets.clear();
 }
