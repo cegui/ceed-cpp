@@ -73,8 +73,16 @@ void CEGUIWidget::setViewFeatures(bool wheelZoom, bool middleButtonScroll, bool 
 
 void CEGUIWidget::setResolution(int width, int height)
 {
-    const QString resolutionStr = QString("%1x%2").arg(width).arg(height);
-    ui->resolutionBox->setCurrentText(resolutionStr);
+    if (!width && !height)
+    {
+        ui->resolutionBox->setCurrentText("Project default");
+    }
+    else
+    {
+        const QString resolutionStr = QString("%1x%2").arg(width).arg(height);
+        ui->resolutionBox->setCurrentText(resolutionStr);
+    }
+    onResolutionTextChanged();
 }
 
 // If you have already activated this container, you can call this to enable CEGUI input propagation
@@ -95,6 +103,8 @@ void CEGUIWidget::onResolutionTextChanged()
     int width = 0;
     int height = 0;
 
+    auto scene = getScene();
+
     auto text = ui->resolutionBox->currentText();
     if (text != "Project default") // Special case, leave zeroes for default
     {
@@ -108,8 +118,9 @@ void CEGUIWidget::onResolutionTextChanged()
         height = std::max(1, std::min(4096, text.midRef(sepPos + 1).toInt(&ok)));
         if (!ok) return;
 
-        if (qFuzzyCompare(getScene()->getContextWidth(), static_cast<float>(width)) &&
-            qFuzzyCompare(getScene()->getContextHeight(), static_cast<float>(height)))
+        if (scene &&
+            qFuzzyCompare(scene->getContextWidth(), static_cast<float>(width)) &&
+            qFuzzyCompare(scene->getContextHeight(), static_cast<float>(height)))
         {
             // Nothing changed
             return;
@@ -124,5 +135,5 @@ void CEGUIWidget::onResolutionTextChanged()
         }
     }
 
-    getScene()->setCEGUIDisplaySize(width, height);
+    if (scene) scene->setCEGUIDisplaySize(width, height);
 }
