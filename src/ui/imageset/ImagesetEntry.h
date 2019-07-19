@@ -41,7 +41,7 @@ public:
     bool showOffsets() const { return _showOffsets; }
     void setShowOffsets(bool value) { _showOffsets = value; }
 
-    const QString& getImageFile() const { return imageAbsPath; }
+    const QString& getImageFile() const { return _imageAbsPath; }
 
 protected slots:
 
@@ -52,7 +52,7 @@ protected:
     ImagesetVisualMode& _visualMode;
 
     QString _name = "Unknown";
-    QString imageAbsPath;
+    QString _imageAbsPath;
     QString autoScaled = "false";
     int nativeHorzRes = 800;
     int nativeVertRes = 600;

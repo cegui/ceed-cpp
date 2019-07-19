@@ -64,6 +64,9 @@ public:
     QString getFilePath() const { return _filePath; }
     QString getLabelText() const { return _labelText /* + (hasChanges() ? " *" : "")*/; }
 
+    virtual QString getFileTypesDescription() const = 0;
+    virtual QStringList getFileExtensions() const = 0;
+
 signals:
 
     void filePathChanged(const QString& oldPath, const QString& newPath);
@@ -77,9 +80,6 @@ protected:
     void onFileChangedByExternalProgram();
 
     void enableFileMonitoring(bool enable);
-
-    virtual QString getFileTypesDescription() const = 0;
-    virtual QStringList getFileExtensions() const = 0;
 
     virtual void getRawData(QByteArray& /*outRawData*/) {}
     virtual void markAsUnchanged();

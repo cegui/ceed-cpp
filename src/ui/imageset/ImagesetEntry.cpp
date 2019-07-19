@@ -35,7 +35,10 @@ void ImagesetEntry::loadFromElement(const QDomElement& xml)
     _name = xml.attribute("name", "Unknown");
 
     const QString imageRelPath = xml.attribute("imagefile", "");
-    loadImage(QFileInfo(_visualMode.getEditor().getFilePath()).dir().absoluteFilePath(imageRelPath));
+    const QString imageAbsPath = imageRelPath.isEmpty() ?
+                "" :
+                QFileInfo(_visualMode.getEditor().getFilePath()).dir().absoluteFilePath(imageRelPath);
+    loadImage(imageAbsPath);
 
     nativeHorzRes = xml.attribute("nativeHorzRes", "800").toInt();
     nativeVertRes = xml.attribute("nativeVertRes", "600").toInt();
@@ -59,7 +62,7 @@ void ImagesetEntry::saveToElement(QDomElement& xml)
     xml.setAttribute("version", "2");
 
     xml.setAttribute("name", _name);
-    xml.setAttribute("imagefile", QDir::cleanPath(QFileInfo(_visualMode.getEditor().getFilePath()).dir().relativeFilePath(imageAbsPath)));
+    xml.setAttribute("imagefile", QDir::cleanPath(QFileInfo(_visualMode.getEditor().getFilePath()).dir().relativeFilePath(_imageAbsPath)));
 
     xml.setAttribute("nativeHorzRes", QString::number(nativeHorzRes));
     xml.setAttribute("nativeVertRes", QString::number(nativeVertRes));
@@ -122,14 +125,14 @@ void ImagesetEntry::onImageChangedByExternalProgram()
     displayingReloadAlert = true;
 
     auto ret = QMessageBox::question(qobject_cast<Application*>(qApp)->getMainWindow(),
-                                     QString("Underlying image '%1' has been modified externally!").arg(imageAbsPath),
+                                     QString("Underlying image '%1' has been modified externally!").arg(_imageAbsPath),
                                      "The file has been modified outside the CEGUI Unified Editor.\n\nReload the file?\n\n"
                                      "If you select Yes, UNDO HISTORY MIGHT BE PARTIALLY BROKEN UNLESS THE NEW SIZE IS THE "
                                      "SAME OR LARGER THAN THE OLD!",
                                      QMessageBox::No | QMessageBox::Yes,
                                      QMessageBox::No); // defaulting to No is safer IMO
 
-    if (ret == QMessageBox::Yes) loadImage(imageAbsPath);
+    if (ret == QMessageBox::Yes) loadImage(_imageAbsPath);
 
     displayingReloadAlert = false;
 }
@@ -143,9 +146,9 @@ void ImagesetEntry::loadImage(const QString& absPath)
     // editor is first being opened up
     // Otherwise, the image is being changed or switched, and the monitor
     // should update itself accordingly
-    if (imageMonitor) imageMonitor->removePath(imageAbsPath);
+    if (imageMonitor) imageMonitor->removePath(_imageAbsPath);
 
-    imageAbsPath = absPath;
+    _imageAbsPath = absPath;
     setPixmap(QPixmap(absPath));
     transparencyBackground->setRect(boundingRect());
 

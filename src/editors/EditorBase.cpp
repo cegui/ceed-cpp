@@ -300,8 +300,11 @@ bool EditorBase::saveAs(const QString& targetPath)
     enableFileMonitoring(true);
     markAsUnchanged();
 
-    _labelText = QFileInfo(_filePath).fileName();
-    emit filePathChanged(prevFilePath, _filePath);
+    if (prevFilePath != _filePath)
+    {
+        _labelText = QFileInfo(_filePath).fileName();
+        emit filePathChanged(prevFilePath, _filePath);
+    }
 
     return true;
 }

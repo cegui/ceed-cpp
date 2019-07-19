@@ -979,14 +979,15 @@ void MainWindow::onRedoAvailable(bool available, const QString& text)
     ui->actionRedo->setText(text.isEmpty() ? "Redo" : "Redo " + text);
 }
 
-void MainWindow::onEditorFilePathChanged(const QString& oldPath, const QString& newPath)
+void MainWindow::onEditorFilePathChanged(const QString& /*oldPath*/, const QString& newPath)
 {
     EditorBase* editor = qobject_cast<EditorBase*>(sender());
     assert(editor);
     if (!editor) return;
 
-    // File is created
-    if (oldPath.isEmpty()) recentlyUsedFiles->addRecentlyUsed(newPath);
+    // File is created or name is changed
+    //if (!oldPath.isEmpty()) recentlyUsedFiles->removeRecentlyUsed(oldPath);
+    recentlyUsedFiles->addRecentlyUsed(newPath);
 
     const int tabIndex = ui->tabs->indexOf(editor->getWidget());
     ui->tabs->setTabText(tabIndex, editor->getLabelText());
@@ -1107,8 +1108,17 @@ void MainWindow::on_actionSaveAs_triggered()
 {
     if (!currentEditor) return;
 
-    QString filePath = QFileDialog::getSaveFileName(this, "Save as", QFileInfo(currentEditor->getFilePath()).dir().path());
-    if (!filePath.isEmpty()) currentEditor->saveAs(filePath);
+    QStringList ext = currentEditor->getFileExtensions();
+
+    QStringList filters;
+    filters.append(QString("%1 files (%2)").arg(currentEditor->getFileTypesDescription(), "*." + ext.join(" *.")));
+    filters.append("All files (*)");
+
+    QFileDialog dialog(this, "Save as", QFileInfo(currentEditor->getFilePath()).dir().path(), filters.join(";;"));
+    dialog.setDefaultSuffix(ext[0]);
+
+    if (dialog.exec())
+        currentEditor->saveAs(dialog.selectedFiles()[0]);
 }
 
 // Saves all opened tabbed editors and opened project (if any)
