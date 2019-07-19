@@ -28,13 +28,14 @@ public:
     CEGUIGraphicsView* getView() const;
 
     void setViewFeatures(bool wheelZoom = false, bool middleButtonScroll = false, bool continuousRendering = true);
+    void setResolution(int width, int height);
     void setInputEnabled(bool enable);
 
 private slots:
 
     void on_debugInfoButton_clicked();
 
-    void on_resolutionBox_editTextChanged(const QString& arg1);
+    void onResolutionTextChanged();
 
 private:
 

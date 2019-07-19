@@ -2,7 +2,7 @@
 #include "src/ui/CEGUIGraphicsScene.h"
 #include "src/cegui/CEGUIManager.h"
 #include "ui_CEGUIWidget.h"
-#include "qscrollbar.h"
+#include <qlineedit.h>
 
 CEGUIWidget::CEGUIWidget(QWidget *parent) :
     QWidget(parent),
@@ -25,6 +25,9 @@ CEGUIWidget::CEGUIWidget(QWidget *parent) :
         QString text("Zoom: %1%");
         ui->lblZoom->setText(text.arg(static_cast<int>(factor * 100.0)));
     });
+
+    connect(ui->resolutionBox->lineEdit(), &QLineEdit::editingFinished, this, &CEGUIWidget::onResolutionTextChanged);
+    connect(ui->resolutionBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &CEGUIWidget::onResolutionTextChanged);
 }
 
 CEGUIWidget::~CEGUIWidget()
@@ -37,7 +40,7 @@ void CEGUIWidget::setScene(CEGUIGraphicsScene* scene)
     ui->view->setScene(scene);
 
     // Make sure the resolution is set right for the given scene
-    on_resolutionBox_editTextChanged(ui->resolutionBox->currentText());
+    onResolutionTextChanged();
 
     // And mark the view as dirty to force Qt to redraw it
     ui->view->update();
@@ -68,6 +71,12 @@ void CEGUIWidget::setViewFeatures(bool wheelZoom, bool middleButtonScroll, bool 
     ui->view->setContinuousRendering(continuousRendering);
 }
 
+void CEGUIWidget::setResolution(int width, int height)
+{
+    const QString resolutionStr = QString("%1x%2").arg(width).arg(height);
+    ui->resolutionBox->setCurrentText(resolutionStr);
+}
+
 // If you have already activated this container, you can call this to enable CEGUI input propagation
 // (The CEGUI instance associated will get mouse and keyboard events if the widget has focus)
 void CEGUIWidget::setInputEnabled(bool enable)
@@ -81,7 +90,7 @@ void CEGUIWidget::on_debugInfoButton_clicked()
     CEGUIManager::Instance().showDebugInfo();
 }
 
-void CEGUIWidget::on_resolutionBox_editTextChanged(const QString&)
+void CEGUIWidget::onResolutionTextChanged()
 {
     int width = 0;
     int height = 0;
@@ -98,6 +107,21 @@ void CEGUIWidget::on_resolutionBox_editTextChanged(const QString&)
         if (!ok) return;
         height = std::max(1, std::min(4096, text.midRef(sepPos + 1).toInt(&ok)));
         if (!ok) return;
+
+        if (qFuzzyCompare(getScene()->getContextWidth(), static_cast<float>(width)) &&
+            qFuzzyCompare(getScene()->getContextHeight(), static_cast<float>(height)))
+        {
+            // Nothing changed
+            return;
+        }
+
+        const QString resolutionStr = QString("%1x%2").arg(width).arg(height);
+        if (ui->resolutionBox->findText(resolutionStr) < 0)
+        {
+            ui->resolutionBox->insertItem(0, resolutionStr);
+            ui->resolutionBox->setCurrentIndex(0);
+            return;
+        }
     }
 
     getScene()->setCEGUIDisplaySize(width, height);
