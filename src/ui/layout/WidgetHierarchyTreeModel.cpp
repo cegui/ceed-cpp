@@ -53,6 +53,8 @@ QStringList WidgetHierarchyTreeModel::mimeTypes() const
 
 bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* mimeData, Qt::DropAction action, int row, int /*column*/, const QModelIndex& parent)
 {
+    size_t childIndex = (row > 0) ? static_cast<size_t>(data(index(row - 1, 0, parent), Qt::UserRole + 1).toULongLong()) + 1 : 0;
+
     if (mimeData->hasFormat("application/x-ceed-widget-paths"))
     {
         QStringList widgetPaths;
@@ -67,11 +69,10 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* mimeData, Qt::DropA
 
         const QString newParentPath = data(parent, Qt::UserRole).toString();
         auto newParentManipulator = _visualMode.getScene()->getManipulatorByPath(newParentPath);
-        size_t newChildIndex = (row > 0) ? static_cast<size_t>(data(index(row - 1, 0, parent), Qt::UserRole + 1).toULongLong()) + 1 : 0;
 
         if (action == Qt::MoveAction)
         {
-            return _visualMode.moveWidgetsInHierarchy(std::move(widgetPaths), newParentManipulator, newChildIndex);
+            return _visualMode.moveWidgetsInHierarchy(std::move(widgetPaths), newParentManipulator, childIndex);
         }
         else if (action == Qt::CopyAction)
         {
@@ -98,7 +99,7 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* mimeData, Qt::DropA
         if (parentManipulator)
             uniqueName = CEGUIUtils::getUniqueChildWidgetName(*parentManipulator->getWidget(), uniqueName);
 
-        _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, parentItemPath, widgetType, uniqueName, QPointF()));
+        _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, parentItemPath, widgetType, uniqueName, QPointF(), childIndex));
 
         return true;
     }

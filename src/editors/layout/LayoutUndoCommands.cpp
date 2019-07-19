@@ -254,7 +254,8 @@ void LayoutDeleteCommand::undo()
         LayoutManipulator* manipulator = CreateManipulatorFromDataStream(_visualMode, parent, stream);
 
         if (auto lc = dynamic_cast<CEGUI::LayoutContainer*>(parent->getWidget()))
-            lc->moveChildToIndex(manipulator->getWidget(), rec.indexInParent);
+            if (rec.indexInParent < lc->getActualChildCount())
+                lc->moveChildToIndex(manipulator->getWidget(), rec.indexInParent);
     }
 
     _visualMode.getHierarchyDockWidget()->refresh();
@@ -272,12 +273,14 @@ void LayoutDeleteCommand::redo()
 
 //---------------------------------------------------------------------
 
-LayoutCreateCommand::LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath, const QString& type, const QString& name, QPointF scenePos)
+LayoutCreateCommand::LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath,
+                                         const QString& type, const QString& name, QPointF scenePos, size_t indexInParent)
     : _visualMode(visualMode)
     , _parentPath(parentPath)
     , _type(type)
     , _name(name)
     , _scenePos(scenePos)
+    , _indexInParent(indexInParent)
 {
     setText(QString("Create '%1' of type '%2'").arg(name, type));
 }
@@ -330,6 +333,10 @@ void LayoutCreateCommand::redo()
     {
         manipulator = parent->createChildManipulator(widget);
         parent->getWidget()->addChild(widget);
+
+        if (auto lc = dynamic_cast<CEGUI::LayoutContainer*>(parent->getWidget()))
+            if (_indexInParent < lc->getActualChildCount())
+                lc->moveChildToIndex(manipulator->getWidget(), _indexInParent);
     }
     else
     {

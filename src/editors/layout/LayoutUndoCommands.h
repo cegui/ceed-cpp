@@ -95,7 +95,8 @@ class LayoutCreateCommand : public QUndoCommand
 {
 public:
 
-    LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath, const QString& type, const QString& name, QPointF scenePos);
+    LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath, const QString& type, const QString& name,
+                        QPointF scenePos, size_t indexInParent = std::numeric_limits<size_t>().max());
 
     virtual void undo() override;
     virtual void redo() override;
@@ -108,6 +109,7 @@ protected:
     QString _type;
     QString _name;
     QPointF _scenePos;
+    size_t _indexInParent;
 };
 
 // This command changes a property of a widget
