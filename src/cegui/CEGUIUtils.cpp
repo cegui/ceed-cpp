@@ -209,7 +209,11 @@ bool insertIntoGridLayoutContainer(CEGUI::GridLayoutContainer* glc, CEGUI::Windo
 
     if (index >= glc->getChildCount())
     {
-        // Insert with the default logic (auto-position or to the end)
+        // Insert with the default logic (auto-position or to the end).
+        // It is now very fragile inside CEGUI, so we insert into the first free cell instead.
+        index = glc->getFirstFreeAutoPositioningIndex();
+        if (index >= glc->getChildCount()) return false;
+        glc->setNextAutoPositioningIdx(index);
         glc->addChild(widget);
         return true;
     }
