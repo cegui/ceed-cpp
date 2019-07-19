@@ -54,6 +54,7 @@ public:
 
     virtual QString getFileTypesDescription() const override { return lnfFileTypesDescription(); }
     virtual QStringList getFileExtensions() const override { return lnfFileExtensions(); }
+    virtual bool requiresProject() const override { return true; }
     virtual EditorBasePtr create(const QString& filePath) const override;
 };
 

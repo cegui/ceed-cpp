@@ -1,7 +1,8 @@
 #include "src/util/RecentlyUsed.h"
 #include "src/Application.h"
 #include "src/util/Settings.h"
-#include "qsettings.h"
+#include <qsettings.h>
+#include <qdir.h>
 
 RecentlyUsed::RecentlyUsed(const QString& sectionID, QObject* parent)
     : QObject(parent)
@@ -14,8 +15,9 @@ void RecentlyUsed::addRecentlyUsed(const QString& name)
     QStringList items;
     getRecentlyUsed(items);
 
-    if (!items.contains(name))
-        items.insert(0, name);
+    auto fixedName = QDir::fromNativeSeparators(QDir::cleanPath(name));
+    items.removeAll(fixedName);
+    items.insert(0, fixedName);
 
     while (items.size() > _maxItems)
         items.pop_back();
@@ -30,9 +32,9 @@ bool RecentlyUsed::removeRecentlyUsed(const QString& name)
     QStringList items;
     getRecentlyUsed(items);
 
-    if (!items.contains(name)) return false;
+    auto fixedName = QDir::fromNativeSeparators(QDir::cleanPath(name));
+    if (!items.removeAll(fixedName)) return false;
 
-    items.removeAll(name);
     auto settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
     settings->setValue(_sectionID, items);
     return true;

@@ -29,6 +29,7 @@ public:
 
     virtual QString getFileTypesDescription() const override { return animationFileTypesDescription(); }
     virtual QStringList getFileExtensions() const override { return animationFileExtensions(); }
+    virtual bool requiresProject() const override { return true; }
     virtual EditorBasePtr create(const QString& filePath) const override;
 };
 

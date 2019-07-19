@@ -895,11 +895,23 @@ EditorBasePtr MainWindow::createEditorForFile(const QString& absolutePath)
             }
 
             if (factory)
-                ret = factory->create(absolutePath);
+            {
+                if (!CEGUIManager::Instance().isProjectLoaded() && factory->requiresProject())
+                {
+                    ret.reset(new NoEditor(absolutePath,
+                        "Opening this file requires you to have a project opened!"));
+                }
+                else
+                {
+                    ret = factory->create(absolutePath);
+                }
+            }
             else
+            {
                 ret.reset(new NoEditor(absolutePath,
                                        tr("You failed to choose an editor to open '%s' with (project relative path: '%s')."
                                           ).arg(absolutePath).arg(projectRelativePath)));
+            }
         }
     }
 
@@ -1231,12 +1243,6 @@ void MainWindow::openNewEditor(EditorBasePtr editor)
     if (!editor) return;
 
     const auto& filePath = editor->getFilePath();
-
-    if (!CEGUIManager::Instance().isProjectLoaded() && editor->requiresProject())
-    {
-        editor.reset(new NoEditor(filePath,
-            "Opening this file requires you to have a project opened!"));
-    }
 
     // Will cleanup itself inside if something went wrong
     editor->initialize();

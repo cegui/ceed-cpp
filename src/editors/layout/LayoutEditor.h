@@ -60,6 +60,7 @@ public:
 
     virtual QString getFileTypesDescription() const override { return layoutFileTypesDescription(); }
     virtual QStringList getFileExtensions() const override { return layoutFileExtensions(); }
+    virtual bool requiresProject() const override { return true; }
     virtual EditorBasePtr create(const QString& filePath) const override;
 };
 
