@@ -11,19 +11,26 @@
 #include <qtreeview.h>
 #include <qmessagebox.h>
 
-static LayoutManipulator* CreateManipulatorFromDataStream(LayoutVisualMode& visualMode, LayoutManipulator* parent, QDataStream& stream)
+static LayoutManipulator* CreateManipulatorFromDataStream(LayoutVisualMode& visualMode, LayoutManipulator* parent,
+                                                          QDataStream& stream, size_t index = std::numeric_limits<size_t>().max())
 {
     LayoutManipulator* manipulator;
 
     if (parent)
     {
-        CEGUI::Window* widget = CEGUIUtils::deserializeWidget(stream, parent->getWidget());
+        CEGUI::Window* widget = CEGUIUtils::deserializeWidget(stream, parent->getWidget(), index);
+        assert(widget);
+        if (!widget) return nullptr;
+
         manipulator = parent->createChildManipulator(widget);
     }
     else
     {
         // No parent, root widget
         CEGUI::Window* widget = CEGUIUtils::deserializeWidget(stream, nullptr);
+        assert(widget);
+        if (!widget) return nullptr;
+
         manipulator = new LayoutManipulator(visualMode, nullptr, widget);
         visualMode.setRootWidgetManipulator(manipulator);
     }
@@ -251,11 +258,7 @@ void LayoutDeleteCommand::undo()
         LayoutManipulator* parent = (sepPos < 0) ? nullptr : _visualMode.getScene()->getManipulatorByPath(rec.path.left(sepPos));
 
         QDataStream stream(&rec.data, QIODevice::ReadOnly);
-        LayoutManipulator* manipulator = CreateManipulatorFromDataStream(_visualMode, parent, stream);
-
-        if (auto lc = dynamic_cast<CEGUI::LayoutContainer*>(parent->getWidget()))
-            if (rec.indexInParent < lc->getActualChildCount())
-                lc->moveChildToIndex(manipulator->getWidget(), rec.indexInParent);
+        CreateManipulatorFromDataStream(_visualMode, parent, stream, rec.indexInParent);
     }
 
     _visualMode.getHierarchyDockWidget()->refresh();
@@ -332,11 +335,7 @@ void LayoutCreateCommand::redo()
     if (parent)
     {
         manipulator = parent->createChildManipulator(widget);
-        parent->getWidget()->addChild(widget);
-
-        if (auto lc = dynamic_cast<CEGUI::LayoutContainer*>(parent->getWidget()))
-            if (_indexInParent < lc->getActualChildCount())
-                lc->moveChildToIndex(manipulator->getWidget(), _indexInParent);
+        CEGUIUtils::insertChild(parent->getWidget(), widget, _indexInParent);
     }
     else
     {
@@ -837,7 +836,8 @@ void LayoutPasteCommand::redo()
         }
 
         LayoutManipulator* manipulator = CreateManipulatorFromDataStream(_visualMode, target, stream);
-        _createdWidgets.push_back(manipulator->getWidgetPath());
+        if (manipulator)
+            _createdWidgets.push_back(manipulator->getWidgetPath());
     }
 
     // Update the topmost parent widget recursively to get possible resize or

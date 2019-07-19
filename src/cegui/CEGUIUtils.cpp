@@ -1,5 +1,5 @@
 #include "src/cegui/CEGUIUtils.h"
-#include <CEGUI/Window.h>
+#include <CEGUI/widgets/GridLayoutContainer.h>
 #include <CEGUI/WindowManager.h>
 #include "qdatastream.h"
 
@@ -112,7 +112,7 @@ bool serializeWidget(const CEGUI::Window& widget, QDataStream& stream, bool recu
     return true;
 }
 
-CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent)
+CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent, size_t index)
 {
     QString name, type;
     stream >> name;
@@ -145,7 +145,10 @@ CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent)
         CEGUI::String widgetName = qStringToString(name);
         if (parent) widgetName = getUniqueChildWidgetName(*parent, widgetName);
         widget = CEGUI::WindowManager::getSingleton().createWindow(qStringToString(type), widgetName);
-        if (parent) parent->addChild(widget);
+        if (parent)
+        {
+            if (!insertChild(parent, widget, index)) return nullptr;
+        }
     }
 
     qint16 propertyCount = 0;
@@ -164,6 +167,69 @@ CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent)
         deserializeWidget(stream, widget);
 
     return widget;
+}
+
+bool insertChild(CEGUI::Window* parent, CEGUI::Window* widget, size_t index)
+{
+    if (!parent || !widget) return false;
+
+    if (auto glc = dynamic_cast<CEGUI::GridLayoutContainer*>(parent))
+    {
+        if (!insertIntoGridLayoutContainer(glc, widget, index))
+        {
+            // widget is probably already deleted, GLC does it sometimes
+            assert(false);
+            return false;
+        }
+    }
+    else if (auto lc = dynamic_cast<CEGUI::LayoutContainer*>(parent))
+    {
+        if (index < lc->getChildCount())
+            lc->addChildToIndex(widget, index);
+        else
+            lc->addChild(widget);
+    }
+    else
+    {
+        parent->addChild(widget);
+    }
+
+    return true;
+}
+
+// TODO: CEGUI::GridLayoutContainer::canInsert(index)!
+bool insertIntoGridLayoutContainer(CEGUI::GridLayoutContainer* glc, CEGUI::Window* widget, size_t index)
+{
+    const size_t capacity = glc->getGridWidth() * glc->getGridHeight();
+    if (capacity < glc->getActualChildCount() + 1)
+    {
+        // No room for a new child
+        return false;
+    }
+
+    if (index >= glc->getChildCount())
+    {
+        // Insert with the default logic (auto-position or to the end)
+        glc->addChild(widget);
+        return true;
+    }
+
+    // Special insertion for GLC, keeps auto-positioning settings
+
+    auto apMode = glc->getAutoPositioning();
+    glc->setAutoPositioning(CEGUI::GridLayoutContainer::AutoPositioning::Disabled);
+
+    size_t x, y;
+    glc->mapIndexToCell(index, x, y);
+    glc->addChildToCell(widget, x, y);
+
+    if (apMode != CEGUI::GridLayoutContainer::AutoPositioning::Disabled)
+    {
+        glc->setAutoPositioning(apMode);
+        glc->setNextAutoPositioningIdx(glc->getLastBusyAutoPositioningIndex() + 1);
+    }
+
+    return true;
 }
 
 CEGUI::MouseButton qtMouseButtonToMouseButton(Qt::MouseButton button)
