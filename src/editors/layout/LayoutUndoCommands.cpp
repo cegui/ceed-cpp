@@ -36,7 +36,7 @@ static LayoutManipulator* CreateManipulatorFromDataStream(LayoutVisualMode& visu
     }
 
     manipulator->createChildManipulators(true, false);
-    manipulator->updateFromWidget();
+    manipulator->updateFromWidget(false, true);
     manipulator->setSelected(true);
 
     return manipulator;
