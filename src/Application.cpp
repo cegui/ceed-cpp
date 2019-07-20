@@ -221,13 +221,14 @@ void Application::createSettingsEntries()
     secScreenshots->addEntry(std::move(entry));
 
     entry.reset(new SettingsEntry(*secScreenshots, "after_save_action", 0, "After save",
-                                  "Sets the size of the toolbar icons",
+                                  "What to do after saving a screenshot to the file",
                                   "combobox", false, 2, { {0, "Open folder"}, {1, "Open file"}, {2, "Do nothing"} }));
     secScreenshots->addEntry(std::move(entry));
 
     entry.reset(new SettingsEntry(*secScreenshots, "bg_checker", false, "Checkered background in clipboard",
-                                  "Fill screenshot background with a checkerboard (if no, transparency is kept "
-                                  "and MIME type in a clipboard becomes 'PNG')",
+                                  "Fill screenshot background with a checkerboard (otherwise\n"
+                                  "transparency is kept when pasting to applications that\n"
+                                  "support transparent images)",
                                   "checkbox", false, 3));
     secScreenshots->addEntry(std::move(entry));
 
