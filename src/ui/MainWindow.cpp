@@ -71,6 +71,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
+    setWindowTitle(windowTitle() + " " + qApp->applicationVersion());
     _title = windowTitle();
 
     ui->tabs->tabBar()->setContextMenuPolicy(Qt::CustomContextMenu);
