@@ -198,7 +198,6 @@ void CEGUIManager::ensureCEGUIInitialized()
 
     if (Q_UNLIKELY(!makeOpenGLContextCurrent()))
     {
-        //qWarning("QOpenGLWidget: Failed to make context current");
         assert(false);
         return;
     }

@@ -44,6 +44,10 @@ public:
     QAction* getActionZoomOut() const;
     QAction* getActionZoomReset() const;
 
+    // FIXME QTBUG: Qt 5.13.0 text rendering in OpenGL breaks on QOpenGLWidget delete
+    QWidget* allocateOpenGLWidget();
+    void freeOpenGLWidget(QWidget* widget);
+
 private slots:
 
     void openEditorTab(const QString& absolutePath);
@@ -139,6 +143,9 @@ private:
     QStringList editorFactoryFileFilters;
     std::vector<EditorBasePtr> activeEditors;
     EditorBase* currentEditor = nullptr;
+
+    // FIXME QTBUG: Qt 5.13.0 text rendering in OpenGL breaks on QOpenGLWidget delete
+    std::vector<QWidget*> _oglPool;
 };
 
 #endif // MAINWINDOW_H

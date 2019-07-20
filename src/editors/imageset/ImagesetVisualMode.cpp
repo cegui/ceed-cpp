@@ -9,7 +9,6 @@
 #include "src/ui/ResizingHandle.h"
 #include "src/ui/MainWindow.h"
 #include "src/Application.h"
-#include "qopenglwidget.h"
 #include "qclipboard.h"
 #include "qmimedata.h"
 #include "qtoolbar.h"
@@ -31,6 +30,8 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
     setFocusPolicy(Qt::ClickFocus);
     setFrameStyle(QFrame::NoFrame);
 
+    //setRenderHint(QPainter::TextAntialiasing, true);
+
     auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
     if (settings->getEntryValue("imageset/visual/partial_updates").toBool())
     {
@@ -49,7 +50,11 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
     {
         // use OpenGL for view redrawing
         // depending on the platform and hardware this may be faster or slower
-        setViewport(new QOpenGLWidget());
+
+        // FIXME QTBUG: Qt 5.13.0 text rendering in OpenGL breaks on QOpenGLWidget delete
+        setViewport(qobject_cast<Application*>(qApp)->getMainWindow()->allocateOpenGLWidget());
+
+        //setViewport(new QOpenGLWidget());
         setViewportUpdateMode(FullViewportUpdate);
     }
 
@@ -90,6 +95,9 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
 
 ImagesetVisualMode::~ImagesetVisualMode()
 {
+    // FIXME QTBUG: Qt 5.13.0 text rendering in OpenGL breaks on QOpenGLWidget delete
+    qobject_cast<Application*>(qApp)->getMainWindow()->freeOpenGLWidget(viewport());
+
     // Order matters!
     delete imagesetEntry;
     delete dockWidget;

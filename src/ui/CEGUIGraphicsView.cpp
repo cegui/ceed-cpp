@@ -20,7 +20,10 @@
 CEGUIGraphicsView::CEGUIGraphicsView(QWidget *parent) :
     ResizableGraphicsView(parent)
 {
-    setViewport(new QOpenGLWidget(this));
+    // FIXME QTBUG: Qt 5.13.0 text rendering in OpenGL breaks on QOpenGLWidget delete
+    setViewport(qobject_cast<Application*>(qApp)->getMainWindow()->allocateOpenGLWidget());
+
+    //setViewport(new QOpenGLWidget());
     setViewportUpdateMode(FullViewportUpdate);
 
     setOptimizationFlags(DontClipPainter | DontAdjustForAntialiasing);
@@ -48,6 +51,9 @@ CEGUIGraphicsView::~CEGUIGraphicsView()
     vp->makeCurrent();
     delete blitter;
     vp->doneCurrent();
+
+    // FIXME QTBUG: Qt 5.13.0 text rendering in OpenGL breaks on QOpenGLWidget delete
+    qobject_cast<Application*>(qApp)->getMainWindow()->freeOpenGLWidget(viewport());
 }
 
 // FIXME: works only for the current scene because we can't catch scene change event

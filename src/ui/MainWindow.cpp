@@ -34,6 +34,9 @@
 #include "src/ui/UndoViewer.h"
 #include "QtnProperty/PropertyWidget.h"
 
+// FIXME QTBUG: Qt 5.13.0 text rendering in OpenGL breaks on QOpenGLWidget delete
+#include <qopenglwidget.h>
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -177,6 +180,26 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+// FIXME QTBUG: Qt 5.13.0 text rendering in OpenGL breaks on QOpenGLWidget delete
+QWidget* MainWindow::allocateOpenGLWidget()
+{
+    if (!_oglPool.empty())
+    {
+        auto ret = _oglPool.back();
+        _oglPool.pop_back();
+        return ret;
+    }
+
+    return new QOpenGLWidget();
+}
+
+// FIXME QTBUG: Qt 5.13.0 text rendering in OpenGL breaks on QOpenGLWidget delete
+void MainWindow::freeOpenGLWidget(QWidget* widget)
+{
+    widget->setParent(this);
+    _oglPool.push_back(widget);
 }
 
 QMenu *MainWindow::getEditorMenu() const
