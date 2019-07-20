@@ -146,10 +146,12 @@ void ImagesetEntry::loadImage(const QString& absPath)
     // editor is first being opened up
     // Otherwise, the image is being changed or switched, and the monitor
     // should update itself accordingly
-    if (imageMonitor) imageMonitor->removePath(_imageAbsPath);
+    if (imageMonitor && !_imageAbsPath.isEmpty())
+        imageMonitor->removePath(_imageAbsPath);
 
     _imageAbsPath = absPath;
-    setPixmap(QPixmap(absPath));
+
+    setPixmap(_imageAbsPath.isEmpty() ? QPixmap() : QPixmap(absPath));
     transparencyBackground->setRect(boundingRect());
 
     // Go over all image entries and set their position to force them to be constrained
@@ -167,5 +169,6 @@ void ImagesetEntry::loadImage(const QString& absPath)
         imageMonitor = new QFileSystemWatcher();
         connect(imageMonitor, &QFileSystemWatcher::fileChanged, this, &ImagesetEntry::onImageChangedByExternalProgram);
     }
-    imageMonitor->addPath(absPath);
+    if (!_imageAbsPath.isEmpty())
+        imageMonitor->addPath(absPath);
 }

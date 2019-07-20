@@ -997,8 +997,8 @@ void MainWindow::onEditorFilePathChanged(const QString& /*oldPath*/, const QStri
     assert(editor);
     if (!editor) return;
 
-    // File is created or name is changed
-    //if (!oldPath.isEmpty()) recentlyUsedFiles->removeRecentlyUsed(oldPath);
+    // File is created or name is changed. Since saveAs doesn't delete
+    // a previous file, it is not removed from recent files here.
     recentlyUsedFiles->addRecentlyUsed(newPath);
 
     const int tabIndex = ui->tabs->indexOf(editor->getWidget());
@@ -1255,6 +1255,5 @@ void MainWindow::openNewEditor(EditorBasePtr editor)
     ui->tabs->setTabToolTip(newTabIdx, filePath);
     ui->tabs->setCurrentWidget(editorPtr->getWidget());
 
-    // File exists
     if (!filePath.isEmpty()) recentlyUsedFiles->addRecentlyUsed(filePath);
 }

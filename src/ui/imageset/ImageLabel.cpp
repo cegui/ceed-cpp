@@ -18,8 +18,7 @@ ImageLabel::ImageLabel(QGraphicsItem* parent)
 
 void ImageLabel::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
-    const auto& palette = qApp->palette();
-    painter->fillRect(boundingRect(), palette.color(QPalette::Normal, QPalette::Base));
+    painter->fillRect(boundingRect(), qApp->palette().color(QPalette::Normal, QPalette::Base));
     painter->drawRect(boundingRect());
     QGraphicsTextItem::paint(painter, option, widget);
 }

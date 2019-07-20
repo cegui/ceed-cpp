@@ -180,7 +180,7 @@ void ImagesetVisualMode::createImageEntry(QPointF pos)
     {
         ImageEntry* imageEntry = imagesetEntry->getImageEntry(name);
         if (!imageEntry) break;
-        name = QString("NewImage_%i").arg(index++);
+        name = QString("NewImage_%1").arg(index++);
     }
 
     QPointF imgPos = pos - QPointF(newImageHalfSize, newImageHalfSize);

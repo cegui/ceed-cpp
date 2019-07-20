@@ -131,18 +131,26 @@ void ImageEntry::updateListItem()
 
     listItem->setText(name());
 
-    constexpr int previewWidth = 24;
-    constexpr int previewHeight = 24;
+    QPixmap pixmap = getPixmap();
+    if (pixmap.isNull())
+    {
+        listItem->setIcon(QIcon());
+    }
+    else
+    {
+        constexpr int previewWidth = 24;
+        constexpr int previewHeight = 24;
 
-    QPixmap preview(previewWidth, previewHeight);
-    QPainter painter(&preview);
-    painter.setBrush(Utils::getCheckerboardBrush());
-    painter.drawRect(0, 0, previewWidth, previewHeight);
-    QPixmap scaledPixmap = getPixmap().scaled(QSize(previewWidth, previewHeight), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    painter.drawPixmap((previewWidth - scaledPixmap.width()) / 2, (previewHeight - scaledPixmap.height()) / 2, scaledPixmap);
-    painter.end();
+        QPixmap preview(previewWidth, previewHeight);
+        QPainter painter(&preview);
+        painter.setBrush(Utils::getCheckerboardBrush());
+        painter.drawRect(0, 0, previewWidth, previewHeight);
+        QPixmap scaledPixmap = getPixmap().scaled(QSize(previewWidth, previewHeight), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        painter.drawPixmap((previewWidth - scaledPixmap.width()) / 2, (previewHeight - scaledPixmap.height()) / 2, scaledPixmap);
+        painter.end();
 
-    listItem->setIcon(QIcon(preview));
+        listItem->setIcon(QIcon(preview));
+    }
 }
 
 void ImageEntry::showLabel(bool show)
@@ -340,6 +348,10 @@ void ImageEntry::onPotentialMove(bool move)
 QPixmap ImageEntry::getPixmap()
 {
     ImagesetEntry* imagesetEntry = static_cast<ImagesetEntry*>(parentItem());
+
+    if (!imagesetEntry || imagesetEntry->pixmap().isNull())
+        return QPixmap();
+
     return imagesetEntry->pixmap().copy(
                 static_cast<int>(pos().x()),
                 static_cast<int>(pos().y()),
