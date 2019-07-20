@@ -728,8 +728,9 @@ void LayoutMoveInHierarchyCommand::undo()
         if (parentLC)
         {
             const size_t currIndex = widgetManipulator->getWidgetIndexInParent();
-            const size_t destIndex = rec.oldChildIndex;
-            parentLC->moveChildToIndex(currIndex, destIndex > currIndex ? destIndex + 1 : destIndex);
+            const size_t destIndex = rec.oldChildIndex > currIndex ? rec.oldChildIndex + 1 : rec.oldChildIndex;
+            if (destIndex < parentLC->getChildCount())
+                parentLC->moveChildToIndex(currIndex, destIndex);
         }
 
         // Update widget and its previous parent (the second is mostly for the layout container case)
@@ -780,10 +781,13 @@ void LayoutMoveInHierarchyCommand::redo()
             widgetManipulator->setParentItem(newParentManipulator);
         }
 
+        // FIXME: there is a known bug with moving existing widgets to the GridLayoutContainer,
+        // then undo, then redo again. It will be fixed through writing a brand new GLC.
+
         // FIXME: allow reordering in any window? Needs CEGUI change.
         // http://cegui.org.uk/forum/viewtopic.php?f=3&t=7542
         auto parentLC = dynamic_cast<CEGUI::LayoutContainer*>(newParentManipulator->getWidget());
-        if (parentLC)
+        if (parentLC && rec.newChildIndex < parentLC->getChildCount())
             parentLC->moveChildToIndex(widgetManipulator->getWidget(), rec.newChildIndex);
 
         // Update widget and its previous parent (the second is mostly for the layout container case)
