@@ -1,5 +1,7 @@
 #include "src/cegui/CEGUIUtils.h"
 #include <CEGUI/widgets/GridLayoutContainer.h>
+#include <CEGUI/widgets/ScrollablePane.h>
+#include <CEGUI/CoordConverter.h>
 #include <CEGUI/WindowManager.h>
 #include "qdatastream.h"
 
@@ -188,6 +190,16 @@ bool insertChild(CEGUI::Window* parent, CEGUI::Window* widget, size_t index)
             lc->addChildToIndex(widget, index);
         else
             lc->addChild(widget);
+    }
+    else if (auto sp = dynamic_cast<CEGUI::ScrollablePane*>(parent))
+    {
+        if (sp->isContentPaneAutoSized())
+        {
+            auto abs = CEGUI::CoordConverter::asAbsolute(widget->getArea(), widget->getParentPixelSize());
+            CEGUI::URect r(cegui_absdim(abs.left()), cegui_absdim(abs.top()), cegui_absdim(abs.right()), cegui_absdim(abs.bottom()));
+            widget->setArea(r);
+        }
+        sp->addChild(widget);
     }
     else
     {

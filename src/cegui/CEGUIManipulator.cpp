@@ -993,6 +993,16 @@ void CEGUIManipulator::createPropertySet()
             prop = new QtnPropertyURect(parentSet);
         else if (propertyDataType == "UBox")
             prop = new QtnPropertyUBox(parentSet);
+        else if (propertyDataType == "vec2")
+        {
+            // TODO: implement
+            prop = new QtnPropertyQString(parentSet);
+        }
+        else if (propertyDataType == "Rectf")
+        {
+            // TODO: implement
+            prop = new QtnPropertyQString(parentSet);
+        }
         else if (propertyDataType == "quat")
         {
             // TODO: implement
@@ -1005,9 +1015,17 @@ void CEGUIManipulator::createPropertySet()
             //!!!Preview rect. OpenGL triangles rendering? Or QPainter handles gradient?
             prop = new QtnPropertyQString(parentSet);
         }
+        else if (propertyDataType == "NumOfTextLinesToShow")
+        {
+            // TODO: implement
+            prop = new QtnPropertyQString(parentSet);
+        }
         else // "String" and any other
         {
-            assert(propertyDataType == "String");
+            if (propertyDataType != "String")
+            {
+                assert(false && "propertyDataType unknown");
+            }
             prop = new QtnPropertyQString(parentSet);
         }
 
