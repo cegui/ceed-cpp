@@ -714,38 +714,26 @@ void CEGUIManipulator::getChildManipulators(std::vector<CEGUIManipulator*>& outL
 // Retrieves a manipulator relative to this manipulator by given widget path
 CEGUIManipulator* CEGUIManipulator::getManipulatorByPath(const QString& widgetPath) const
 {
-    if (dynamic_cast<CEGUI::TabControl*>(_widget) || dynamic_cast<CEGUI::ScrollablePane*>(_widget))
+    auto sepPos = widgetPath.indexOf('/');
+    QString baseName;
+    if (sepPos >= 0 && (dynamic_cast<CEGUI::TabControl*>(_widget) || dynamic_cast<CEGUI::ScrollablePane*>(_widget)))
     {
-        auto manipulator = getManipulatorFromChildContainerByPath(widgetPath);
-        if (manipulator) return manipulator;
+        // These widgets store their children in auto container, but CEED treats them as
+        // immediate children. Autocontainer therefore is skipped here.
+        const auto startPos = sepPos + 1;
+        sepPos = widgetPath.indexOf('/', startPos);
+        baseName = widgetPath.mid(startPos, sepPos - startPos);
+    }
+    else
+    {
+        baseName = (sepPos >= 0) ? widgetPath.left(sepPos) : widgetPath;
     }
 
-    const auto sepPos = widgetPath.indexOf('/');
-    QString baseName = (sepPos >= 0) ? widgetPath.left(sepPos) : widgetPath;
-    QString remainder = (sepPos >= 0) ? widgetPath.mid(sepPos + 1) : "";
     for (QGraphicsItem* item : childItems())
     {
         if (auto manipulator = dynamic_cast<CEGUIManipulator*>(item))
             if (manipulator->getWidgetName() == baseName)
-                return (sepPos < 0) ? manipulator : manipulator->getManipulatorByPath(widgetPath.mid(sepPos + 1));
-    }
-
-    return nullptr;
-}
-
-// Retrieves a manipulator relative to this manipulator by given widget path for widgets that use
-// autoWindow containers, such as ScrollablePanes and TabControl. The children in these case should
-// be treated as if they were attached to the window directly, whereas in reality they use a container
-// widget, which forces us to handle these cases using this function.
-CEGUIManipulator* CEGUIManipulator::getManipulatorFromChildContainerByPath(const QString& widgetPath) const
-{
-    const auto sepPos = widgetPath.indexOf('/');
-    QString directChildPath = (sepPos >= 0) ? widgetPath.mid(sepPos + 1) : "";
-    for (QGraphicsItem* item : childItems())
-    {
-        CEGUIManipulator* manipulator = dynamic_cast<CEGUIManipulator*>(item);
-        if (manipulator && manipulator->getWidgetName() == directChildPath)
-            return manipulator;
+                return (sepPos >= 0) ? manipulator->getManipulatorByPath(widgetPath.mid(sepPos + 1)) : manipulator;
     }
 
     return nullptr;

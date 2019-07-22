@@ -70,7 +70,6 @@ public:
     virtual CEGUIManipulator* createChildManipulator(CEGUI::Window* childWidget);
     void getChildManipulators(std::vector<CEGUIManipulator*>& outList, bool recursive);
     CEGUIManipulator* getManipulatorByPath(const QString& widgetPath) const;
-    CEGUIManipulator* getManipulatorFromChildContainerByPath(const QString& widgetPath) const;
     void forEachChildWidget(std::function<void (CEGUI::Window*)> callback) const;
 
     void createChildManipulators(bool recursive, bool skipAutoWidgets, bool checkExisting = true);
