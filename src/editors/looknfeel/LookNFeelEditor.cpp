@@ -119,7 +119,7 @@ void LookNFeelEditor::getWidgetLookFeelNames(std::unordered_set<CEGUI::String>& 
 }
 
 // Unmaps all occurances of mapped WidgetLookFeel name references in an XML string by removing the prepended editor ID number
-QString LookNFeelEditor::unmapWidgetLookReferences(const CEGUI::String& lookNFeelString)
+QString LookNFeelEditor::unmapWidgetLookReferences(const CEGUI::String& /*lookNFeelString*/)
 {
     /*
             // Modifying the string using regex
@@ -349,7 +349,7 @@ void LookNFeelEditor::getRawData(QByteArray& outRawData)
             self.visual.scene.views()[0].zoomOriginal()
 */
 
-void LookNFeelEditor::createSettings(Settings& mgr)
+void LookNFeelEditor::createSettings(Settings& /*mgr*/)
 {
     /*
     category = settings.createCategory(name = "looknfeel", label = "Look n' Feel editing")

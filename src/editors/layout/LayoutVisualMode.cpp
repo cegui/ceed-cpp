@@ -367,14 +367,6 @@ bool LayoutVisualMode::moveWidgetsInHierarchy(QStringList&& paths, LayoutManipul
 
         if (newParentManipulator == oldParentManipulator)
         {
-            // FIXME: allow reordering in any window? Needs CEGUI change.
-            // http://cegui.org.uk/forum/viewtopic.php?f=3&t=7542
-            if (!newParentManipulator->isLayoutContainer())
-            {
-                // Reordering inside a parent is supported only for layout containers for now
-                continue;
-            }
-
             // Already at the destination
             if (newChildIndex == oldChildIndex) continue;
         }

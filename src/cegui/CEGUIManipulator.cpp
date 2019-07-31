@@ -216,7 +216,7 @@ bool CEGUIManipulator::isLayoutContainer() const
 
 bool CEGUIManipulator::isInLayoutContainer() const
 {
-    return _widget->getParent() && dynamic_cast<CEGUI::LayoutContainer*>(_widget->getParent());
+    return dynamic_cast<CEGUI::LayoutContainer*>(_widget->getParent());
 }
 
 QSizeF CEGUIManipulator::getMinSize() const
@@ -755,13 +755,13 @@ void CEGUIManipulator::forEachChildWidget(std::function<void (CEGUI::Window*)> c
     {
         const size_t count = scrollablePane->getContentPane()->getChildCount();
         for (size_t i = 0; i < count; ++i)
-            callback(scrollablePane->getContentPane()->getChildAtIdx(i));
+            callback(scrollablePane->getContentPane()->getChildAtIndex(i));
     }
     else
     {
         const size_t count = _widget->getChildCount();
         for (size_t i = 0; i < count; ++i)
-            callback(_widget->getChildAtIdx(i));
+            callback(_widget->getChildAtIndex(i));
     }
 }
 
@@ -945,12 +945,6 @@ void CEGUIManipulator::createPropertySet()
             enumProp->setEnumInfo(&CEGUIManager::Instance().enumHorizontalTextFormatting());
             prop = enumProp;
         }
-        else if (propertyDataType == "AutoPositioning")
-        {
-            auto enumProp = new QtnPropertyEnum(parentSet);
-            enumProp->setEnumInfo(&CEGUIManager::Instance().enumAutoPositioning());
-            prop = enumProp;
-        }
         else if (propertyDataType == "Font")
         {
             prop = new QtnPropertyQString(parentSet);
@@ -1125,10 +1119,9 @@ static bool impl_hasNonAutoWidgetDescendants(CEGUI::Window* widget)
 
     const size_t count = widget->getChildCount();
     for (size_t i = 0; i < count; ++i)
-    {
-        if (impl_hasNonAutoWidgetDescendants(widget->getChildAtIdx(i)))
+        if (impl_hasNonAutoWidgetDescendants(widget->getChildAtIndex(i)))
             return true;
-    }
+
     return false;
 }
 
@@ -1143,10 +1136,9 @@ bool CEGUIManipulator::canAcceptChildren(size_t count, bool showErrorMessages) c
 {
     if (!count) return true;
 
-    // Grid layout accepts fixed number of children.
-    // TODO: it is possible to add auto-extension in the CEGUI::GridLayoutContainer class.
+    // Grid layout accepts fixed number of children
     auto glc = dynamic_cast<CEGUI::GridLayoutContainer*>(_widget);
-    if (glc)
+    if (glc && !glc->isAutoGrowing())
     {
         const size_t capacity = glc->getGridWidth() * glc->getGridHeight();
         if (!capacity)

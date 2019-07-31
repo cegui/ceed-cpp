@@ -12,7 +12,7 @@
 #include "src/editors/layout/LayoutUndoCommands.h"
 #include <CEGUI/CoordConverter.h>
 #include <CEGUI/GUIContext.h>
-#include <CEGUI/widgets/GridLayoutContainer.h>
+#include <CEGUI/Window.h>
 #include "qgraphicssceneevent.h"
 #include "qevent.h"
 #include "qmimedata.h"
@@ -137,14 +137,7 @@ bool LayoutScene::deleteWidgetByPath(const QString& widgetPath)
 
     // Mostly for the LC case, its area depends on the children
     if (parentManipulator)
-    {
-        // Update grid layout auto positioning index, it may accept more
-        // auto-positioned children after the current child deletion
-        if (auto glc = dynamic_cast<CEGUI::GridLayoutContainer*>(parentManipulator->getWidget()))
-            glc->setNextAutoPositioningIdx(glc->getLastBusyAutoPositioningIndex() + 1);
-
         parentManipulator->updateFromWidget(true, true);
-    }
 
     return true;
 }
@@ -401,11 +394,10 @@ void LayoutScene::moveSelectedWidgetsInParentWidgetLists(int delta)
         auto parentManipulator = dynamic_cast<LayoutManipulator*>(manipulator->parentItem());
         if (!parentManipulator) continue;
 
-        auto container = dynamic_cast<CEGUI::LayoutContainer*>(parentManipulator->getWidget());
-        if (!container) continue;
+        auto parent = parentManipulator->getWidget();
 
-        const int potentialPos = static_cast<int>(container->getChildIndex(manipulator->getWidget())) + delta;
-        if (potentialPos < 0 || potentialPos >= static_cast<int>(container->getChildCount())) continue;
+        const int potentialPos = static_cast<int>(parent->getChildIndex(manipulator->getWidget())) + delta;
+        if (potentialPos < 0 || potentialPos >= static_cast<int>(parent->getChildCount())) continue;
 
         paths.append(manipulator->getWidgetPath());
     }

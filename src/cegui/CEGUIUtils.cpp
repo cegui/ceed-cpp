@@ -1,6 +1,5 @@
 #include "src/cegui/CEGUIUtils.h"
 #include <CEGUI/widgets/GridLayoutContainer.h>
-#include <CEGUI/widgets/ScrollablePane.h>
 #include <CEGUI/CoordConverter.h>
 #include <CEGUI/WindowManager.h>
 #include "qdatastream.h"
@@ -101,7 +100,7 @@ bool serializeWidget(const CEGUI::Window& widget, QDataStream& stream, bool recu
         stream << static_cast<qint16>(widget.getChildCount());
         for (size_t i = 0; i < widget.getChildCount(); ++i)
         {
-            const CEGUI::Window* child = widget.getChildAtIdx(i);
+            const CEGUI::Window* child = widget.getChildAtIndex(i);
             if (child) // && (!skipAutoWidgets || !child->isAutoWindow()))
                 serializeWidget(*child, stream, true);
         }
@@ -175,75 +174,21 @@ bool insertChild(CEGUI::Window* parent, CEGUI::Window* widget, size_t index)
 {
     if (!parent || !widget) return false;
 
+    // Check grid layout capacity limitation
     if (auto glc = dynamic_cast<CEGUI::GridLayoutContainer*>(parent))
     {
-        if (!insertIntoGridLayoutContainer(glc, widget, index))
+        if (!glc->isAutoGrowing())
         {
-            // widget is probably already deleted, GLC does it sometimes
-            assert(false);
-            return false;
+            const size_t capacity = glc->getGridWidth() * glc->getGridHeight();
+            if (capacity <= glc->getActualChildCount())
+                return false;
         }
     }
-    else if (auto lc = dynamic_cast<CEGUI::LayoutContainer*>(parent))
-    {
-        if (index < lc->getChildCount())
-            lc->addChildToIndex(widget, index);
-        else
-            lc->addChild(widget);
-    }
-    else if (auto sp = dynamic_cast<CEGUI::ScrollablePane*>(parent))
-    {
-        if (sp->isContentPaneAutoSized())
-        {
-            auto abs = CEGUI::CoordConverter::asAbsolute(widget->getArea(), widget->getParentPixelSize());
-            CEGUI::URect r(cegui_absdim(abs.left()), cegui_absdim(abs.top()), cegui_absdim(abs.right()), cegui_absdim(abs.bottom()));
-            widget->setArea(r);
-        }
-        sp->addChild(widget);
-    }
+
+    if (index < parent->getChildCount())
+        parent->addChildToIndex(widget, index);
     else
-    {
         parent->addChild(widget);
-    }
-
-    return true;
-}
-
-// TODO: CEGUI::GridLayoutContainer::canInsert(index)!
-bool insertIntoGridLayoutContainer(CEGUI::GridLayoutContainer* glc, CEGUI::Window* widget, size_t index)
-{
-    const size_t capacity = glc->getGridWidth() * glc->getGridHeight();
-    if (capacity < glc->getActualChildCount() + 1)
-    {
-        // No room for a new child
-        return false;
-    }
-
-    if (index >= glc->getChildCount())
-    {
-        // Insert with the default logic (auto-position or to the end).
-        // It is now very fragile inside CEGUI, so we insert into the first free cell instead.
-        index = glc->getFirstFreeAutoPositioningIndex();
-        if (index >= glc->getChildCount()) return false;
-        glc->setNextAutoPositioningIdx(index);
-        glc->addChild(widget);
-        return true;
-    }
-
-    // Special insertion for GLC, keeps auto-positioning settings
-
-    auto apMode = glc->getAutoPositioning();
-    glc->setAutoPositioning(CEGUI::GridLayoutContainer::AutoPositioning::Disabled);
-
-    size_t x, y;
-    glc->mapIndexToCell(index, x, y);
-    glc->addChildToCell(widget, x, y);
-
-    if (apMode != CEGUI::GridLayoutContainer::AutoPositioning::Disabled)
-    {
-        glc->setAutoPositioning(apMode);
-        glc->setNextAutoPositioningIdx(glc->getLastBusyAutoPositioningIndex() + 1);
-    }
 
     return true;
 }

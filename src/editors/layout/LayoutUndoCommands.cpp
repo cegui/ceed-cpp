@@ -5,7 +5,7 @@
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
 #include "src/ui/layout/WidgetHierarchyItem.h"
 #include "src/cegui/CEGUIUtils.h"
-#include <CEGUI/widgets/LayoutContainer.h>
+#include <CEGUI/widgets/GridLayoutContainer.h>
 #include <CEGUI/WindowManager.h>
 #include <CEGUI/CoordConverter.h>
 #include <qtreeview.h>
@@ -21,6 +21,13 @@ static LayoutManipulator* CreateManipulatorFromDataStream(LayoutVisualMode& visu
         CEGUI::Window* widget = CEGUIUtils::deserializeWidget(stream, parent->getWidget(), index);
         assert(widget);
         if (!widget) return nullptr;
+
+        // Insertion of the new child into GLC might result in its growing
+        if (auto glc = dynamic_cast<CEGUI::GridLayoutContainer*>(parent->getWidget()))
+        {
+            if (glc->isAutoGrowing())
+                parent->updatePropertiesFromWidget({"GridWidth", "GridHeight"});
+        }
 
         manipulator = parent->createChildManipulator(widget);
     }
@@ -336,6 +343,13 @@ void LayoutCreateCommand::redo()
     {
         manipulator = parent->createChildManipulator(widget);
         CEGUIUtils::insertChild(parent->getWidget(), widget, _indexInParent);
+
+        // Insertion of the new child into GLC might result in its growing
+        if (auto glc = dynamic_cast<CEGUI::GridLayoutContainer*>(parent->getWidget()))
+        {
+            if (glc->isAutoGrowing())
+                parent->updatePropertiesFromWidget({"GridWidth", "GridHeight"});
+        }
     }
     else
     {
@@ -684,14 +698,6 @@ void LayoutMoveInHierarchyCommand::undo()
         auto oldParentManipulator = _visualMode.getScene()->getManipulatorByPath(rec.oldParentPath);
         auto newParentManipulator = dynamic_cast<LayoutManipulator*>(widgetManipulator->parentItem());
 
-        // FIXME: allow reordering in any window? Needs CEGUI change.
-        if (newParentManipulator == oldParentManipulator && !newParentManipulator->isLayoutContainer())
-        {
-            // Reordering inside a parent is supported only for layout containers for now
-            assert(false);
-            continue;
-        }
-
         // Remove it from the current CEGUI parent widget
         if (oldParentManipulator != newParentManipulator)
         {
@@ -722,16 +728,10 @@ void LayoutMoveInHierarchyCommand::undo()
             widgetManipulator->setParentItem(oldParentManipulator);
         }
 
-        // FIXME: allow reordering in any window? Needs CEGUI change.
-        // http://cegui.org.uk/forum/viewtopic.php?f=3&t=7542
-        auto parentLC = dynamic_cast<CEGUI::LayoutContainer*>(oldParentManipulator->getWidget());
-        if (parentLC)
-        {
-            const size_t currIndex = widgetManipulator->getWidgetIndexInParent();
-            const size_t destIndex = rec.oldChildIndex > currIndex ? rec.oldChildIndex + 1 : rec.oldChildIndex;
-            if (destIndex < parentLC->getChildCount())
-                parentLC->moveChildToIndex(currIndex, destIndex);
-        }
+        const size_t currIndex = widgetManipulator->getWidgetIndexInParent();
+        const size_t destIndex = rec.oldChildIndex > currIndex ? rec.oldChildIndex + 1 : rec.oldChildIndex;
+        if (destIndex < oldParentManipulator->getWidget()->getChildCount())
+            oldParentManipulator->getWidget()->moveChildToIndex(currIndex, destIndex);
 
         // Update widget and its previous parent (the second is mostly for the layout container case)
         widgetManipulator->updateFromWidget(true, true);
@@ -752,14 +752,6 @@ void LayoutMoveInHierarchyCommand::redo()
         auto newParentManipulator = _visualMode.getScene()->getManipulatorByPath(_newParentPath);
         auto oldParentManipulator = dynamic_cast<LayoutManipulator*>(widgetManipulator->parentItem());
 
-        // FIXME: allow reordering in any window? Needs CEGUI change.
-        if (newParentManipulator == oldParentManipulator && !newParentManipulator->isLayoutContainer())
-        {
-            // Reordering inside a parent is supported only for layout containers for now
-            assert(false);
-            continue;
-        }
-
         // Remove it from the current CEGUI parent widget
         if (oldParentManipulator != newParentManipulator)
         {
@@ -779,16 +771,17 @@ void LayoutMoveInHierarchyCommand::redo()
             // Add it to the new CEGUI parent widget and sort out the manipulators
             newParentManipulator->getWidget()->addChild(widgetManipulator->getWidget());
             widgetManipulator->setParentItem(newParentManipulator);
+
+            // Insertion of the new child into GLC might result in its growing
+            if (auto glc = dynamic_cast<CEGUI::GridLayoutContainer*>(newParentManipulator->getWidget()))
+            {
+                if (glc->isAutoGrowing())
+                    newParentManipulator->updatePropertiesFromWidget({"GridWidth", "GridHeight"});
+            }
         }
 
-        // FIXME: there is a known bug with moving existing widgets to the GridLayoutContainer,
-        // then undo, then redo again. It will be fixed through writing a brand new GLC.
-
-        // FIXME: allow reordering in any window? Needs CEGUI change.
-        // http://cegui.org.uk/forum/viewtopic.php?f=3&t=7542
-        auto parentLC = dynamic_cast<CEGUI::LayoutContainer*>(newParentManipulator->getWidget());
-        if (parentLC && rec.newChildIndex < parentLC->getChildCount())
-            parentLC->moveChildToIndex(widgetManipulator->getWidget(), rec.newChildIndex);
+        if (rec.newChildIndex < newParentManipulator->getWidget()->getChildCount())
+            newParentManipulator->getWidget()->moveChildToIndex(widgetManipulator->getWidget(), rec.newChildIndex);
 
         // Update widget and its previous parent (the second is mostly for the layout container case)
         widgetManipulator->updateFromWidget(true, true);
@@ -922,12 +915,11 @@ void MoveInParentWidgetListCommand::undo()
     {
         auto manipulator = _visualMode.getScene()->getManipulatorByPath(path);
         auto parentManipulator = static_cast<LayoutManipulator*>(manipulator->parentItem());
-        auto container = static_cast<CEGUI::LayoutContainer*>(parentManipulator->getWidget());
 
-        size_t oldPos = container->getChildIndex(manipulator->getWidget());
+        size_t oldPos = parentManipulator->getWidget()->getChildIndex(manipulator->getWidget());
         size_t newPos = static_cast<size_t>(static_cast<int>(oldPos) - _delta);
-        container->swapChildren(oldPos, newPos);
-        assert(newPos == container->getChildIndex(manipulator->getWidget()));
+        parentManipulator->getWidget()->swapChildren(oldPos, newPos);
+        assert(newPos == parentManipulator->getWidget()->getChildIndex(manipulator->getWidget()));
 
         parentManipulator->updateFromWidget(true, true);
         parentManipulator->getTreeItem()->refreshOrderingData();
@@ -942,12 +934,11 @@ void MoveInParentWidgetListCommand::redo()
     {
         auto manipulator = _visualMode.getScene()->getManipulatorByPath(path);
         auto parentManipulator = static_cast<LayoutManipulator*>(manipulator->parentItem());
-        auto container = static_cast<CEGUI::LayoutContainer*>(parentManipulator->getWidget());
 
-        size_t oldPos = container->getChildIndex(manipulator->getWidget());
+        size_t oldPos = parentManipulator->getWidget()->getChildIndex(manipulator->getWidget());
         size_t newPos = static_cast<size_t>(static_cast<int>(oldPos) + _delta);
-        container->swapChildren(oldPos, newPos);
-        assert(newPos == container->getChildIndex(manipulator->getWidget()));
+        parentManipulator->getWidget()->swapChildren(oldPos, newPos);
+        assert(newPos == parentManipulator->getWidget()->getChildIndex(manipulator->getWidget()));
 
         parentManipulator->updateFromWidget(true, true);
         parentManipulator->getTreeItem()->refreshOrderingData();

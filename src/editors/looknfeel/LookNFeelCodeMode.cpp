@@ -24,9 +24,9 @@ QString LookNFeelCodeMode::getNativeCode()
     return editor.unmapWidgetLookReferences(lookAndFeelString);
 }
 
-bool LookNFeelCodeMode::propagateNativeCode(const QString& code)
+bool LookNFeelCodeMode::propagateNativeCode(const QString& /*code*/)
 {
-    LookNFeelEditor& editor = static_cast<LookNFeelEditor&>(_editor);
+    //LookNFeelEditor& editor = static_cast<LookNFeelEditor&>(_editor);
 
 /*
         # we have to make the context the current context to ensure textures are fine

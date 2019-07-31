@@ -905,16 +905,3 @@ const QtnEnumInfo& CEGUIManager::enumVerticalTextFormatting()
     }
     return *_enumVerticalTextFormatting;
 }
-
-const QtnEnumInfo& CEGUIManager::enumAutoPositioning()
-{
-    if (!_enumAutoPositioning)
-    {
-        QVector<QtnEnumValueInfo> values;
-        values.push_back({static_cast<QtnEnumValueType>(CEGUI::GridLayoutContainer::AutoPositioning::Disabled), "Disabled", "Disabled"});
-        values.push_back({static_cast<QtnEnumValueType>(CEGUI::GridLayoutContainer::AutoPositioning::LeftToRight), "Left to Right", "Left to Right"});
-        values.push_back({static_cast<QtnEnumValueType>(CEGUI::GridLayoutContainer::AutoPositioning::TopToBottom), "Top to Bottom", "Top to Bottom"});
-        _enumAutoPositioning = new QtnEnumInfo("AutoPositioning", values);
-    }
-    return *_enumAutoPositioning;
-}

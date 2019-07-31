@@ -338,11 +338,11 @@ void LayoutEditor::createActions(Application& app)
                        QIcon(":/icons/layout_editing/round_size.png"), QKeySequence(Qt::Key_N));
 
     app.registerAction("layout", "move_backward_in_parent_list", "Move widget -1 step in the parent's widget list",
-                       "Moves selected widget(s) one step backward in their parent's widget list (Only applicable to LayoutContainer widgets)",
+                       "Moves selected widget(s) one step backward in their parent's widget list",
                        QIcon(":/icons/layout_editing/move_backward_in_parent_list.png"));
 
     app.registerAction("layout", "move_forward_in_parent_list", "Move widget +1 step in the parent's widget list",
-                       "Moves selected widget(s) one step forward in their parent's widget list (Only applicable to LayoutContainer widgets)",
+                       "Moves selected widget(s) one step forward in their parent's widget list",
                        QIcon(":/icons/layout_editing/move_forward_in_parent_list.png"));
 
     app.registerAction("layout", "copy_widget_path", "C&opy Widget Paths",

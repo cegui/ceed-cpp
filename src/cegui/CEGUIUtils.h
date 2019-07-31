@@ -27,7 +27,6 @@ namespace CEGUIUtils
     CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent = nullptr, size_t index = std::numeric_limits<size_t>().max());
 
     bool insertChild(CEGUI::Window* parent, CEGUI::Window* widget, size_t index);
-    bool insertIntoGridLayoutContainer(CEGUI::GridLayoutContainer* glc, CEGUI::Window* widget, size_t index);
 
     CEGUI::MouseButton qtMouseButtonToMouseButton(Qt::MouseButton button);
     CEGUI::Key::Scan qtKeyToKey(int key);
