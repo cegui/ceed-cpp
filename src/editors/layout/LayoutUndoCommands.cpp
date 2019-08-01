@@ -875,14 +875,16 @@ void LayoutRenameCommand::undo()
 {
     QUndoCommand::undo();
 
-    auto manipulator = _visualMode.getScene()->getManipulatorByPath(_parentPath + '/' + _newName);
+    const QString fullPath = _parentPath.isEmpty() ? _newName : _parentPath + '/' + _newName;
+    auto manipulator = _visualMode.getScene()->getManipulatorByPath(fullPath);
     manipulator->getWidget()->setName(CEGUIUtils::qStringToString(_oldName));
     manipulator->updatePropertiesFromWidget({"Name", "NamePath"});
 }
 
 void LayoutRenameCommand::redo()
 {
-    auto manipulator = _visualMode.getScene()->getManipulatorByPath(_parentPath + '/' + _oldName);
+    const QString fullPath = _parentPath.isEmpty() ? _oldName : _parentPath + '/' + _oldName;
+    auto manipulator = _visualMode.getScene()->getManipulatorByPath(fullPath);
     manipulator->getWidget()->setName(CEGUIUtils::qStringToString(_newName));
     manipulator->updatePropertiesFromWidget({"Name", "NamePath"});
 
