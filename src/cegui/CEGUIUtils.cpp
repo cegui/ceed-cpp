@@ -186,7 +186,7 @@ bool insertChild(CEGUI::Window* parent, CEGUI::Window* widget, size_t index)
     }
 
     if (index < parent->getChildCount())
-        parent->addChildToIndex(widget, index);
+        parent->addChildAtIndex(widget, index);
     else
         parent->addChild(widget);
 
