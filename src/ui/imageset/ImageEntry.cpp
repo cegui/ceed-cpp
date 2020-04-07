@@ -102,8 +102,8 @@ void ImageEntry::saveToElement(QDomElement& xml)
     const int ofsY = offsetY();
     if (ofsX || ofsY)
     {
-        xml.setAttribute("xPos", QString::number(ofsX));
-        xml.setAttribute("yPos", QString::number(ofsY));
+        xml.setAttribute("xOffset", QString::number(ofsX));
+        xml.setAttribute("yOffset", QString::number(ofsY));
     }
 
     if (nativeHorzRes) xml.setAttribute("nativeHorzRes", QString::number(nativeHorzRes));
