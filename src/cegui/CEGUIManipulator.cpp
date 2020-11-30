@@ -979,6 +979,11 @@ void CEGUIManipulator::createPropertySet()
             prop = new QtnPropertyURect(parentSet);
         else if (propertyDataType == "UBox")
             prop = new QtnPropertyUBox(parentSet);
+        else if (propertyDataType == "UDim")
+        {
+            // TODO: implement
+            prop = new QtnPropertyQString(parentSet);
+        }
         else if (propertyDataType == "vec2")
         {
             // TODO: implement
