@@ -536,12 +536,13 @@ void MainWindow::on_actionWikiPage_triggered()
 
 void MainWindow::on_actionSendFeedback_triggered()
 {
+    // TODO: add somewhere https://discord.gg/pjEmpXmhXe
     QDesktopServices::openUrl(QUrl("http://www.cegui.org.uk/phpBB2/viewforum.php?f=15", QUrl::TolerantMode));
 }
 
 void MainWindow::on_actionReportBug_triggered()
 {
-    QDesktopServices::openUrl(QUrl("http://www.cegui.org.uk/mantis/bug_report_page.php", QUrl::TolerantMode));
+    QDesktopServices::openUrl(QUrl("https://github.com/cegui/ceed-cpp/issues/new", QUrl::TolerantMode));
 }
 
 void MainWindow::on_actionCEGUIDebugInfo_triggered()

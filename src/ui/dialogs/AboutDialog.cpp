@@ -12,7 +12,7 @@ AboutDialog::AboutDialog(QWidget *parent) :
     // Background, see the data/images directory for SVG source
     ui->aboutImage->setPixmap(QPixmap(":/images/splashscreen.png"));
 
-    ui->CEEDDescription->setText("Please <a href=\"https://github.com/niello/ceed-cpp/issues/new\">report any issues</a> to help this project.");
+    ui->CEEDDescription->setText("Please <a href=\"https://github.com/cegui/ceed-cpp/issues/new\">report any issues</a> to help this project.");
     ui->CEEDDescription->setTextFormat(Qt::RichText);
     ui->CEEDDescription->setTextInteractionFlags(Qt::TextBrowserInteraction);
     ui->CEEDDescription->setOpenExternalLinks(true);
