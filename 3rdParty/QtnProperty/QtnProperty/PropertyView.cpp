@@ -1,6 +1,6 @@
 /*******************************************************************************
 Copyright (c) 2012-2016 Alex Zhondin <lexxmark.dev@gmail.com>
-Copyright (c) 2015-2019 Alexandra Cherdantseva <neluhus.vagus@gmail.com>
+Copyright (c) 2015-2020 Alexandra Cherdantseva <neluhus.vagus@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -116,23 +116,48 @@ void QtnPropertyView::onActivePropertyDestroyed()
 void QtnPropertyView::onEditedPropertyWillChange(
 	QtnPropertyChangeReason reason, QtnPropertyValuePtr newValue, int typeId)
 {
-	if (reason & QtnPropertyChangeReasonEditValue)
+	if (!(reason & QtnPropertyChangeReasonEdit))
 	{
-		Q_ASSERT(nullptr != qobject_cast<QtnPropertyBase *>(sender()));
+		return;
+	}
+
+	Q_ASSERT(nullptr != qobject_cast<QtnPropertyBase *>(sender()));
+
+	if (reason & QtnPropertyChangeReasonValue)
+	{
 		auto property = static_cast<QtnPropertyBase *>(sender());
 
 		emit beforePropertyEdited(property, newValue, typeId);
+	}
+
+	if (reason & QtnPropertyChangeReasonLockToggled)
+	{
+		auto property = static_cast<QtnPropertyBase *>(sender());
+		emit beforePropertyLockToggled(property);
 	}
 }
 
 void QtnPropertyView::onEditedPropertyDidChange(QtnPropertyChangeReason reason)
 {
-	if (0 != (reason & QtnPropertyChangeReasonEditValue))
+	if (!(reason & QtnPropertyChangeReasonEdit))
 	{
-		Q_ASSERT(nullptr != qobject_cast<QtnPropertyBase *>(sender()));
+		return;
+	}
+
+	Q_ASSERT(nullptr != qobject_cast<QtnPropertyBase *>(sender()));
+
+	if (reason & QtnPropertyChangeReasonValue)
+	{
 		auto property = static_cast<QtnPropertyBase *>(sender());
 
 		emit propertyEdited(property);
+	}
+
+	if (reason & QtnPropertyChangeReasonLockToggled)
+	{
+		auto property = static_cast<QtnPropertyBase *>(sender());
+
+		emit propertyLockToggled(property);
 	}
 }
 
@@ -299,28 +324,55 @@ void QtnPropertyView::paintEvent(QPaintEvent *e)
 			1,
 		(m_visibleItems.size() - 1));
 
-	QRect itemRect = viewport()->rect();
+	auto viewPortRect = viewport()->rect();
+	QRect itemRect = viewPortRect;
 	itemRect.setTop(
 		firstVisibleItemIndex * m_itemHeight - verticalScrollBar()->value());
 	itemRect.setBottom(itemRect.top() + m_itemHeight);
 
 	QStylePainter painter(viewport());
 
-	for (int i = firstVisibleItemIndex; i <= lastVisibleItemIndex; ++i)
+	int splitLineY1 = itemRect.top();
+	int splitLineY2 = splitLineY1;
+	int splitLineX = splitPosition();
+
+	int lastIndex = lastVisibleItemIndex + 1;
+	QPen splitLinePen;
+	splitLinePen.setColor(this->palette().color(QPalette::Mid));
+	splitLinePen.setStyle(Qt::DotLine);
+	for (int i = firstVisibleItemIndex; i <= lastIndex; ++i)
 	{
-		const VisibleItem &vItem = m_visibleItems[i];
-		drawItem(painter, itemRect, vItem);
+		QtnPropertyDelegate *delegate = nullptr;
+		if (i <= lastVisibleItemIndex)
+		{
+			const VisibleItem &vItem = m_visibleItems[i];
+
+			drawItem(painter, itemRect, vItem);
+			delegate = vItem.item->delegate.get();
+			Q_ASSERT(delegate); // cannot be null
+		}
 		itemRect.translate(0, m_itemHeight);
+		if (!delegate || !delegate->isSplittable())
+		{
+			if (splitLineY2 > splitLineY1)
+			{
+				painter.save();
+				painter.setPen(splitLinePen);
+				painter.drawLine(
+					splitLineX, splitLineY1, splitLineX, splitLineY2);
+				painter.restore();
+			}
+			splitLineY1 = itemRect.top();
+		}
+		splitLineY2 = itemRect.top();
 	}
 }
 
 void QtnPropertyView::drawItem(
 	QStylePainter &painter, const QRect &rect, const VisibleItem &vItem) const
 {
-	if (!vItem.item->delegate.get())
-	{
-		return;
-	}
+	auto delegate = vItem.item->delegate.get();
+	Q_ASSERT(delegate); // cannot be null
 
 	QMargins margins(m_valueLeftMargin + rect.height() * vItem.level, 0, 0, 0);
 	bool isActive = (m_activeProperty == vItem.item->property);
@@ -332,7 +384,7 @@ void QtnPropertyView::drawItem(
 	if (!vItem.subItemsValid)
 	{
 		Q_ASSERT(vItem.subItems.isEmpty());
-		vItem.item->delegate->createSubItems(drawContext, vItem.subItems);
+		delegate->createSubItems(drawContext, vItem.subItems);
 		vItem.subItemsValid = true;
 	}
 
@@ -441,7 +493,25 @@ static const int TOLERANCE = 3;
 
 void QtnPropertyView::mousePressEvent(QMouseEvent *e)
 {
-	if (qAbs(e->x() - splitPosition()) < TOLERANCE)
+	if (e->button() == Qt::RightButton)
+	{
+		auto property = getPropertyAt(e->pos());
+		setActiveProperty(property, true);
+		QAbstractScrollArea::mousePressEvent(e);
+		return;
+	}
+
+	if (e->button() != Qt::LeftButton)
+	{
+		QAbstractScrollArea::mousePressEvent(e);
+		return;
+	}
+
+	int index = visibleItemIndexByPoint(e->pos());
+	bool isSplittableItem = index >= 0
+		? m_visibleItems.at(index).item->delegate->isSplittable()
+		: false;
+	if (isSplittableItem && qAbs(e->x() - splitPosition()) < TOLERANCE)
 	{
 		Q_ASSERT(!m_rubberBand);
 		m_rubberBand = new QRubberBand(QRubberBand::Line, this);
@@ -453,19 +523,23 @@ void QtnPropertyView::mousePressEvent(QMouseEvent *e)
 		m_rubberBand->show();
 	} else
 	{
-		int index = visibleItemIndexByPoint(e->pos());
 		if (index >= 0)
 		{
 			changeActivePropertyByIndex(index);
 			handleMouseEvent(index, e, e->pos());
 		}
-
-		QAbstractScrollArea::mousePressEvent(e);
 	}
+	QAbstractScrollArea::mousePressEvent(e);
 }
 
 void QtnPropertyView::mouseReleaseEvent(QMouseEvent *e)
 {
+	if (e->button() != Qt::LeftButton)
+	{
+		QAbstractScrollArea::mouseReleaseEvent(e);
+		return;
+	}
+
 	if (m_rubberBand)
 	{
 		delete m_rubberBand;
@@ -479,46 +553,58 @@ void QtnPropertyView::mouseReleaseEvent(QMouseEvent *e)
 		handleMouseEvent(visibleItemIndexByPoint(e->pos()), e, e->pos());
 		emit mouseReleased(e);
 	}
+
+	QAbstractScrollArea::mouseReleaseEvent(e);
 }
 
 void QtnPropertyView::mouseMoveEvent(QMouseEvent *e)
 {
 	if (m_rubberBand)
 	{
-		QRect rect = viewport()->rect();
-		rect.setLeft(e->x());
-		rect.setRight(e->x());
-		m_rubberBand->setGeometry(rect);
-
-		if (m_style & QtnPropertyViewStyleLiveSplit)
+		if (e->buttons() == Qt::LeftButton)
 		{
-			// update split ratio
 			QRect rect = viewport()->rect();
-			updateSplitRatio(
-				(float) (e->x() - rect.left()) / (float) rect.width());
-		}
-	} else if (qAbs(e->x() - splitPosition()) < TOLERANCE)
-	{
-		if (!m_mouseAtSplitter)
-		{
-			m_mouseAtSplitter = true;
-			m_oldCursor = cursor();
-			setCursor(Qt::SplitHCursor);
+			rect.setLeft(e->x());
+			rect.setRight(e->x());
+			m_rubberBand->setGeometry(rect);
+
+			if (m_style & QtnPropertyViewStyleLiveSplit)
+			{
+				// update split ratio
+				QRect rect = viewport()->rect();
+				updateSplitRatio(
+					(float) (e->x() - rect.left()) / (float) rect.width());
+			}
 		}
 	} else
 	{
-		if (m_mouseAtSplitter)
+		int index = visibleItemIndexByPoint(e->pos());
+		bool isSplittable = index >= 0
+			? m_visibleItems.at(index).item->delegate->isSplittable()
+			: false;
+		bool atSplitterPos =
+			isSplittable && qAbs(e->x() - splitPosition()) < TOLERANCE;
+		if (!handleMouseEvent(index, e, e->pos()))
+		{
+			if (atSplitterPos)
+			{
+				if (!m_mouseAtSplitter)
+				{
+					m_mouseAtSplitter = true;
+					setCursor(Qt::SplitHCursor);
+				}
+			}
+
+			if (e->buttons() & Qt::LeftButton)
+				changeActivePropertyByIndex(index);
+		}
+		if (!atSplitterPos && m_mouseAtSplitter)
 		{
 			m_mouseAtSplitter = false;
-			setCursor(m_oldCursor);
+			unsetCursor();
 		}
-
-		int index = visibleItemIndexByPoint(e->pos());
-		if (e->buttons() & Qt::LeftButton)
-			changeActivePropertyByIndex(index);
-		//else
-		handleMouseEvent(index, e, e->pos());
 	}
+	QAbstractScrollArea::mouseMoveEvent(e);
 }
 
 void QtnPropertyView::mouseDoubleClickEvent(QMouseEvent *e)
@@ -856,31 +942,11 @@ QtnPropertyView::Item *QtnPropertyView::createItemsTree(
 
 	connections.push_back(
 		QObject::connect(rootProperty, &QtnPropertyBase::propertyDidChange,
-			this, &QtnPropertyView::onPropertyDidChange));
+			this, [item, this](QtnPropertyChangeReason reason) {
+				onPropertyDidChange(reason, item);
+			}));
 
-	auto delegate = m_delegateFactory.createDelegate(*rootProperty);
-	item->delegate.reset(delegate);
-
-	if (delegate)
-	{
-		// apply attributes
-		auto delegateInfo = rootProperty->delegateInfo();
-		if (delegateInfo)
-		{
-			delegate->applyAttributes(*delegateInfo);
-		}
-
-		// process delegate subproperties
-		for (int i = 0, n = delegate->subPropertyCount(); i < n; ++i)
-		{
-			auto child = delegate->subProperty(i);
-			Q_ASSERT(child);
-
-			auto childItem = createItemsTree(child);
-			childItem->parent = item;
-			item->children.emplace_back(childItem);
-		}
-	}
+	setupItemDelegate(item);
 
 	return item;
 }
@@ -1000,7 +1066,7 @@ void QtnPropertyView::updateStyleStuff()
 	m_propertySetBackdroundColor = m_linesColor =
 		palette().color(QPalette::Button);
 
-	m_valueLeftMargin = style()->pixelMetric(QStyle::PM_CheckBoxLabelSpacing);
+	m_valueLeftMargin = style()->pixelMetric(QStyle::PM_ButtonMargin);
 }
 
 bool QtnPropertyView::ensureVisibleItemByIndex(int index)
@@ -1084,10 +1150,16 @@ void QtnPropertyView::disconnectActiveProperty()
 	}
 }
 
-void QtnPropertyView::onPropertyDidChange(QtnPropertyChangeReason reason)
+void QtnPropertyView::onPropertyDidChange(
+	QtnPropertyChangeReason reason, Item *item)
 {
 	if (!reason)
 		return;
+
+	if (reason & QtnPropertyChangeReasonUpdateDelegate)
+	{
+		setupItemDelegate(item);
+	}
 
 	if (m_stopInvalidate)
 	{
@@ -1120,6 +1192,34 @@ QtnPropertyView::Item *QtnPropertyView::findItem(
 	return nullptr;
 }
 
+void QtnPropertyView::setupItemDelegate(Item *item)
+{
+	auto property = item->property;
+	auto delegate = m_delegateFactory.createDelegate(*property);
+	Q_ASSERT(delegate); // should always return non-null
+
+	item->delegate.reset(delegate);
+	item->children.clear();
+
+	// apply attributes
+	auto delegateInfo = property->delegateInfo();
+	if (delegateInfo)
+	{
+		delegate->applyAttributes(*delegateInfo);
+	}
+
+	// process delegate subproperties
+	for (int i = 0, n = delegate->subPropertyCount(); i < n; ++i)
+	{
+		auto child = delegate->subProperty(i);
+		Q_ASSERT(child);
+
+		auto childItem = createItemsTree(child);
+		childItem->parent = item;
+		item->children.emplace_back(childItem);
+	}
+}
+
 QtnPropertyView::VisibleItem::VisibleItem()
 	: item(nullptr)
 	, level(0)
@@ -1139,7 +1239,8 @@ void QtnPropertyView::updateWithReason(QtnPropertyChangeReason reason)
 	if (reason & QtnPropertyChangeReasonChildren)
 	{
 		updateItemsTree();
-	} else if (reason & QtnPropertyChangeReasonState)
+	} else if (reason &
+		(QtnPropertyChangeReasonState | QtnPropertyChangeReasonUpdateDelegate))
 	{
 		invalidateVisibleItems();
 	} else

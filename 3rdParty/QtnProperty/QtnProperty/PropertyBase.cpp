@@ -299,15 +299,45 @@ bool QtnPropertyBase::isExpanded() const
 
 void QtnPropertyBase::setState(QtnPropertyState stateToSet, bool force)
 {
+	setStateInternal(stateToSet, force);
+}
+
+void QtnPropertyBase::updatePropertyState()
+{
+	auto connector = getConnector();
+	if (connector)
+	{
+		connector->updatePropertyState();
+	}
+}
+
+void QtnPropertyBase::setStateInternal(
+	QtnPropertyState stateToSet, bool force, QtnPropertyChangeReason reason)
+{
 	if (!force && (m_stateLocal == stateToSet))
 		return;
 
-	emit propertyWillChange(QtnPropertyChangeReasonStateLocal,
-		QtnPropertyValuePtr(&stateToSet), qMetaTypeId<QtnPropertyState>());
+	reason |= QtnPropertyChangeReasonStateLocal;
+	reason &= ~QtnPropertyChangeReasonLockToggled;
+
+	if (m_stateLocal.testFlag(QtnPropertyStateUnlockable) &&
+		stateToSet.testFlag(QtnPropertyStateUnlockable))
+	{
+		if (m_stateLocal.testFlag(QtnPropertyStateImmutable) !=
+			stateToSet.testFlag(QtnPropertyStateImmutable))
+		{
+			reason |= QtnPropertyChangeReasonLockToggled;
+		}
+	}
+
+	emit propertyWillChange(reason, QtnPropertyValuePtr(&stateToSet),
+		qMetaTypeId<QtnPropertyState>());
 
 	m_stateLocal = stateToSet;
 
-	emit propertyDidChange(QtnPropertyChangeReasonStateLocal);
+	updatePropertyState();
+
+	emit propertyDidChange(reason);
 
 	updateStateInherited(force);
 }
@@ -359,6 +389,11 @@ bool QtnPropertyBase::valueIsDefault() const
 bool QtnPropertyBase::isSimple() const
 {
 	return !m_stateLocal.testFlag(QtnPropertyStateNonSimple);
+}
+
+bool QtnPropertyBase::isLocked() const
+{
+	return m_stateLocal.testFlag(QtnPropertyStateImmutable);
 }
 
 bool QtnPropertyBase::load(QDataStream &stream)
@@ -818,6 +853,26 @@ void QtnPropertyBase::doReset(QtnPropertyChangeReason reason)
 bool QtnPropertyBase::isWritable() const
 {
 	return (0 == (state() & QtnPropertyStateImmutable));
+}
+
+bool QtnPropertyBase::isUnlockable() const
+{
+	return !m_stateInherited.testFlag(QtnPropertyStateImmutable) &&
+		m_stateLocal.testFlag(QtnPropertyStateUnlockable);
+}
+
+void QtnPropertyBase::setLocked(bool locked, QtnPropertyChangeReason reason)
+{
+	Q_ASSERT(m_stateLocal & QtnPropertyStateUnlockable);
+
+	auto state = m_stateLocal;
+	state.setFlag(QtnPropertyStateImmutable, locked);
+	setStateInternal(state, false, reason);
+}
+
+void QtnPropertyBase::toggleLock(QtnPropertyChangeReason reason)
+{
+	setLocked(!isLocked(), reason);
 }
 
 bool QtnPropertyBase::isCollapsed() const

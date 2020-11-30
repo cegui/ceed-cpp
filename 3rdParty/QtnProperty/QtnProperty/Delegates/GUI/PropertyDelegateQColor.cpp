@@ -109,21 +109,25 @@ void QtnPropertyDelegateQColor::drawValueImpl(
 
 		if (m_shape == QtnColorDelegateShapeSquare)
 		{
-			painter.fillRect(colorRect, Qt::black);
+			painter.fillRect(colorRect,
+				painter.style()->standardPalette().color(
+					stateProperty()->isEditableByUser() ? QPalette::Active
+														: QPalette::Disabled,
+					QPalette::Text));
 			colorRect.adjust(1, 1, -1, -1);
 			painter.fillRect(colorRect, value);
 		} else if (m_shape == QtnColorDelegateShapeCircle)
 		{
+			auto oldBrush = painter.brush();
 			bool oldAntiAliasing =
 				painter.testRenderHint(QPainter::Antialiasing);
 			painter.setRenderHint(QPainter::Antialiasing);
 
-			QPainterPath path;
-			path.addEllipse(colorRect);
-			painter.fillPath(path, value);
+			painter.setBrush(value);
 			painter.drawEllipse(colorRect);
 
 			painter.setRenderHint(QPainter::Antialiasing, oldAntiAliasing);
+			painter.setBrush(oldBrush);
 		}
 
 		textRect.setLeft(colorRect.right() + 3);

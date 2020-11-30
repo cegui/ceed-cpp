@@ -126,10 +126,12 @@ VarProperty::Type VarProperty::GetTypeFromValue(const QVariant &value)
 
 	switch (value.type())
 	{
+		case QVariant::Hash:
 		case QVariant::Map:
 			type = Map;
 			break;
 
+		case QVariant::StringList:
 		case QVariant::List:
 			type = List;
 			break;
@@ -327,12 +329,14 @@ QtnPropertyBase *VarProperty::NewExtraProperty(QtnPropertySet *set,
 
 	switch (type)
 	{
+		case QVariant::Hash:
 		case QVariant::Map:
 		{
 			return NewExtraPropertySet(
 				set, value.toMap(), mapParent, name, index, registerProperty);
 		}
 
+		case QVariant::StringList:
 		case QVariant::List:
 		{
 			return NewExtraPropertyList(
@@ -399,7 +403,10 @@ QtnPropertyBase *VarProperty::NewExtraProperty(QtnPropertySet *set,
 
 	if (nullptr != prop)
 	{
-		set->addChildProperty(prop);
+		if (set)
+		{
+			set->addChildProperty(prop);
+		}
 		auto varprop =
 			new VarProperty(prop, VarProperty::Value, name, index, value);
 
@@ -480,7 +487,10 @@ QtnPropertySet *VarProperty::NewExtraPropertySet(QtnPropertySet *parent,
 	int index, const RegisterPropertyCallback &registerProperty)
 {
 	auto set = new QtnPropertySet(parent);
-	parent->addChildProperty(set);
+	if (parent)
+	{
+		parent->addChildProperty(set);
+	}
 
 	auto varprop =
 		new VarProperty(set, VarProperty::Map, name, index, QVariant());
@@ -509,7 +519,10 @@ QtnPropertySet *VarProperty::NewExtraPropertyList(QtnPropertySet *parent,
 	int index, const RegisterPropertyCallback &registerProperty)
 {
 	auto set = new QtnPropertySet(parent);
-	parent->addChildProperty(set);
+	if (parent)
+	{
+		parent->addChildProperty(set);
+	}
 
 	auto varprop =
 		new VarProperty(set, VarProperty::List, name, index, QVariant());

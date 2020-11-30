@@ -1036,7 +1036,7 @@ void CEGUIManipulator::createPropertySet()
 
         QObject::connect(prop, &QtnProperty::propertyDidChange, [this, prop, ceguiProp](QtnPropertyChangeReason reason)
         {
-            if (reason & QtnPropertyChangeReasonEditValue)
+            if (reason & QtnPropertyChangeReasonEdit)
                 onPropertyChanged(prop, ceguiProp);
         });
 

@@ -41,6 +41,8 @@ public:
 	virtual ~QtnPropertyDelegate();
 	virtual void init();
 
+	static QIcon resetIcon();
+
 	QtnPropertyChangeReason editReason() const;
 
 	inline QtnPropertyBase *stateProperty() const;
@@ -62,11 +64,21 @@ public:
 	inline void createSubItems(
 		QtnDrawContext &context, QList<QtnSubItem> &subItems);
 
+	void addSubItemBranchNode(
+		QtnDrawContext &context, QList<QtnSubItem> &subItems);
+
 	void applySubPropertyInfo(
 		const QtnPropertyDelegateInfo &info, const QtnSubPropertyInfo &subInfo);
+	void applySubPropertyInfos(const QtnPropertyDelegateInfo &info,
+		const QtnSubPropertyInfo *subInfo, int count);
+
+	virtual bool isSplittable() const;
 
 protected:
 	QtnPropertyDelegate(QtnPropertyBase &ownerProperty);
+
+	void drawButton(const QtnDrawContext &context, const QtnSubItem &item,
+		const QIcon &icon, const QString &text);
 
 	virtual int subPropertyCountImpl() const;
 	virtual QtnPropertyBase *subPropertyImpl(int index);
@@ -78,6 +90,10 @@ protected:
 
 	// helper functions
 	QStyle::State state(bool isActive, const QtnSubItem &subItem) const;
+
+	void addSubItemLock(QtnDrawContext &context, QList<QtnSubItem> &subItems);
+
+	static QColor disabledTextColor(const QStylePainter &painter);
 
 protected:
 	QtnPropertyBase *m_ownerProperty;

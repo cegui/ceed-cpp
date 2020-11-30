@@ -1,5 +1,5 @@
 /*******************************************************************************
-Copyright (c) 2015-2019 Alexandra Cherdantseva <neluhus.vagus@gmail.com>
+Copyright (c) 2015-2020 Alexandra Cherdantseva <neluhus.vagus@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,19 +29,39 @@ QString QtnDoubleSpinBox::textFromValue(double val) const
 QString QtnDoubleSpinBox::valueToText(
 	double value, const QLocale &locale, int decimals, bool groupSeparatorShown)
 {
-	auto result = locale.toString(value, 'g', decimals);
+	if (!qIsFinite(value))
+	{
+		return locale.toString(value);
+	}
 
+	auto str = QByteArray::number(quint64(qAbs(value)));
+
+	int i = str.length();
+	if (!str.startsWith('0'))
+	{
+		i++;
+	}
+
+	int maxDecimals = std::numeric_limits<double>::digits10 - i;
+	decimals = std::max(0, std::min(maxDecimals, decimals));
+
+	str = QByteArray::number(value, 'f', decimals);
+	if (decimals >= 2 && decimals == maxDecimals &&
+		(str.endsWith("99") || str.endsWith("01")))
+	{
+		decimals--;
+	}
+
+	auto result = locale.toString(value, 'f', decimals);
+	auto decimalPoint = locale.decimalPoint();
 	auto groupSeparator = locale.groupSeparator();
-
 	if (!groupSeparatorShown)
 		result.remove(groupSeparator);
 
-	auto decimalPoint = locale.decimalPoint();
-	auto zeroDigit = locale.zeroDigit();
-	int i = result.indexOf(decimalPoint);
-
+	i = result.indexOf(decimalPoint);
 	if (i >= 0)
 	{
+		auto zeroDigit = locale.zeroDigit();
 		auto begin = result.constData();
 		auto data = &begin[result.length() - 1];
 		auto decBegin = &begin[i];

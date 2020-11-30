@@ -19,8 +19,8 @@ limitations under the License.
 #include "Config.h"
 #include "Auxiliary/PropertyAux.h"
 
-#include <QObject>
 #include <QMetaProperty>
+#include <QObject>
 
 class QtnPropertyBase;
 class QtnPropertySet;
@@ -33,6 +33,7 @@ public:
 	explicit QtnPropertyConnector(QtnPropertyBase *property);
 
 	void connectProperty(QObject *object, const QMetaProperty &metaProperty);
+	void updatePropertyState();
 
 	bool isResettablePropertyValue() const;
 	void resetPropertyValue(QtnPropertyChangeReason reason);
@@ -43,11 +44,13 @@ public:
 private slots:
 	void onValueChanged();
 	void onModifiedSetChanged();
+	void onPropertyStateChanged(const QMetaProperty &metaProperty);
 
 private:
 	QtnPropertyBase *property;
 	QObject *object;
 	QMetaProperty metaProperty;
+	unsigned ignoreStateChangeCounter;
 };
 
 QObject *QtnPropertyConnector::getObject() const

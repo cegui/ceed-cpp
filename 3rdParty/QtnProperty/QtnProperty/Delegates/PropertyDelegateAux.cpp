@@ -52,7 +52,11 @@ void QtnSubItem::setPropertyDescriptionAsTooltip(
 {
 	tooltipHandler = [&property](
 						 QtnEventContext &, const QtnSubItem &) -> QString {
-		return property.description();
+		auto descr = property.description();
+		if (descr.isEmpty())
+			return property.displayName();
+
+		return descr;
 	};
 }
 
@@ -243,6 +247,41 @@ QPalette::ColorGroup QtnDrawContext::colorGroup() const
 	return palette().currentColorGroup();
 }
 
+QColor QtnDrawContext::alternateColor() const
+{
+	auto color = palette().color(QPalette::Button);
+	if (color == palette().color(QPalette::Window))
+	{
+		color = color.darker(120);
+	}
+	return color;
+}
+
+QColor QtnDrawContext::textColorFor(bool normalText) const
+{
+	QPalette::ColorRole role;
+	QPalette::ColorGroup group =
+		normalText ? palette().currentColorGroup() : QPalette::Disabled;
+	if (isActive)
+	{
+		role = QPalette::HighlightedText;
+	} else if (normalText)
+	{
+		role = QPalette::Text;
+	} else
+	{
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+		group = QPalette::Active;
+		role = QPalette::PlaceholderText;
+#else
+		group = QPalette::Disabled;
+		role = QPalette::Text;
+#endif
+	}
+
+	return palette().color(group, role);
+}
+
 void QtnEventContext::updateWidget()
 {
 	widget->viewport()->update();
@@ -276,13 +315,20 @@ QString qtnElidedText(const QPainter &painter, const QString &text,
 	return newText;
 }
 
-void qtnDrawValueText(const QString &text, QPainter &painter, const QRect &rect)
+void qtnDrawValueText(
+	const QString &text, QPainter &painter, const QRect &rect, QStyle *style)
 {
 	if (text.isEmpty())
 		return;
 
-	painter.drawText(rect, Qt::AlignLeading | Qt::AlignVCenter,
-		qtnElidedText(painter, text, rect, nullptr));
+	auto textRect = rect;
+	if (style)
+	{
+		textRect.adjust(style->pixelMetric(QStyle::PM_ButtonMargin), 0, 0, 0);
+	}
+
+	painter.drawText(textRect, Qt::AlignLeading | Qt::AlignVCenter,
+		qtnElidedText(painter, text, textRect, nullptr));
 }
 
 QtnPropertyToEdit::QtnPropertyToEdit()

@@ -23,6 +23,7 @@ limitations under the License.
 #include "QtnProperty/MultiProperty.h"
 #include "QtnProperty/Utils/MultilineTextDialog.h"
 #include "QtnProperty/Utils/InplaceEditing.h"
+#include "QtnProperty/Utils/QtnCompleterLineEdit.h"
 #include "QtnProperty/PropertyView.h"
 
 #include <QLineEdit>
@@ -33,6 +34,9 @@ limitations under the License.
 #include <QCompleter>
 #include <QTimer>
 #include <QDebug>
+#include <QStringListModel>
+#include <QAbstractItemView>
+#include <QListView>
 
 static QString toSingleLine(const QString &str)
 {
@@ -50,6 +54,11 @@ QByteArray qtnMultiLineEditAttr()
 QByteArray qtnMaxLengthAttr()
 {
 	return QByteArrayLiteral("max_length");
+}
+
+QByteArray qtnPlaceholderAttr()
+{
+	return QByteArrayLiteral("placeholder");
 }
 
 QByteArray qtnItemsAttr()
@@ -122,9 +131,14 @@ QByteArray qtnCreateCandidateFnAttr()
 	return QByteArrayLiteral("CreateCandidateFn");
 }
 
-QByteArray qtnCreateCandidateLabelAttr()
+QByteArray qtnCreateCandidateIconAttr()
 {
-	return QByteArrayLiteral("CreateCandidateLabel");
+	return QByteArrayLiteral("CreateCandidateIcon");
+}
+
+QByteArray qtnCreateCandidateToolTipAttr()
+{
+	return QByteArrayLiteral("CreateCandidateToolTip");
 }
 
 QByteArray qtnLineEditDelegate()
@@ -146,12 +160,15 @@ class QtnPropertyQStringLineEditHandler
 	: public QtnPropertyEditorHandler<QtnPropertyQStringBase, QLineEdit>
 {
 public:
-	QtnPropertyQStringLineEditHandler(
-		QtnPropertyDelegate *delegate, QLineEdit &editor);
+	QtnPropertyQStringLineEditHandler(QtnPropertyDelegate *delegate,
+		QLineEdit &editor, const QString &placeholder);
 
 protected:
 	virtual void updateEditor() override;
 	void updateValue();
+
+private:
+	QString placeholder;
 };
 
 class QtnPropertyQStringMultilineEditBttnHandler
@@ -159,8 +176,8 @@ class QtnPropertyQStringMultilineEditBttnHandler
 		  QtnLineEditBttn>
 {
 public:
-	QtnPropertyQStringMultilineEditBttnHandler(
-		QtnPropertyDelegate *delegate, QtnLineEditBttn &editor);
+	QtnPropertyQStringMultilineEditBttnHandler(QtnPropertyDelegate *delegate,
+		QtnLineEditBttn &editor, const QString &placeholder);
 
 protected:
 	virtual void updateEditor() override;
@@ -174,6 +191,7 @@ private:
 	MultilineTextDialog *dialog;
 	DialogContainerPtr dialogContainer;
 	bool multiline;
+	QString placeholder;
 };
 
 QtnPropertyDelegateQString::QtnPropertyDelegateQString(
@@ -196,6 +214,7 @@ void QtnPropertyDelegateQString::applyAttributesImpl(
 {
 	info.loadAttribute(qtnMultiLineEditAttr(), m_multiline);
 	info.loadAttribute(qtnMaxLengthAttr(), m_maxLength);
+	info.loadAttribute(qtnPlaceholderAttr(), m_placeholder);
 }
 
 bool QtnPropertyDelegateQString::acceptKeyPressedForInplaceEditImpl(
@@ -218,8 +237,10 @@ QWidget *QtnPropertyDelegateQString::createValueEditorImpl(
 		editor->setGeometry(rect);
 
 		editor->lineEdit->setMaxLength(m_maxLength);
+		editor->lineEdit->setPlaceholderText(m_placeholder);
 
-		new QtnPropertyQStringMultilineEditBttnHandler(this, *editor);
+		new QtnPropertyQStringMultilineEditBttnHandler(
+			this, *editor, m_placeholder);
 
 		qtnInitLineEdit(editor->lineEdit, inplaceInfo);
 		return editor;
@@ -227,10 +248,10 @@ QWidget *QtnPropertyDelegateQString::createValueEditorImpl(
 
 	QLineEdit *lineEdit = new QLineEdit(parent);
 	lineEdit->setMaxLength(m_maxLength);
-
+	lineEdit->setPlaceholderText(m_placeholder);
 	lineEdit->setGeometry(rect);
 
-	new QtnPropertyQStringLineEditHandler(this, *lineEdit);
+	new QtnPropertyQStringLineEditHandler(this, *lineEdit, m_placeholder);
 
 	qtnInitLineEdit(lineEdit, inplaceInfo);
 
@@ -240,8 +261,10 @@ QWidget *QtnPropertyDelegateQString::createValueEditorImpl(
 bool QtnPropertyDelegateQString::propertyValueToStrImpl(QString &strValue) const
 {
 	strValue = owner().value();
-	auto placeholder =
-		QtnPropertyQString::getPlaceholderStr(strValue, m_multiline);
+
+	auto placeholder = strValue.isEmpty() && !m_placeholder.isEmpty()
+		? m_placeholder
+		: QtnPropertyQString::getPlaceholderStr(strValue, m_multiline);
 
 	if (!placeholder.isEmpty())
 		strValue.swap(placeholder);
@@ -249,37 +272,15 @@ bool QtnPropertyDelegateQString::propertyValueToStrImpl(QString &strValue) const
 	return true;
 }
 
-void QtnPropertyDelegateQString::drawValueImpl(
-	QStylePainter &painter, const QRect &rect) const
-{
-	if (stateProperty()->isMultiValue())
-	{
-		QtnPropertyDelegateTyped::drawValueImpl(painter, rect);
-		return;
-	}
-
-	QPen oldPen = painter.pen();
-
-	if (isPlaceholderColor())
-	{
-		auto palette = painter.style()->standardPalette();
-		if (palette.currentColorGroup() != QPalette::Disabled &&
-			oldPen.color() != palette.color(QPalette::HighlightedText))
-		{
-			painter.setPen(palette.color(QPalette::Disabled, QPalette::Text));
-		}
-	}
-
-	Inherited::drawValueImpl(painter, rect);
-	painter.setPen(oldPen);
-}
-
 bool QtnPropertyDelegateQString::isPlaceholderColor() const
 {
-	return stateProperty()->isEditableByUser() &&
-		(stateProperty()->isMultiValue() ||
-			!QtnPropertyQString::getPlaceholderStr(owner().value(), m_multiline)
-				 .isEmpty());
+	auto text = owner().value();
+	if (text.isEmpty() && !m_placeholder.isEmpty())
+	{
+		return true;
+	}
+
+	return !QtnPropertyQString::getPlaceholderStr(text, m_multiline).isEmpty();
 }
 
 class QtnPropertyQStringFileLineEditBttnHandler
@@ -323,15 +324,11 @@ void QtnPropertyDelegateQStringInvalidBase::drawValueImpl(
 {
 	QPen oldPen = painter.pen();
 
-	if ((m_invalidColor.alpha() != 0) && !isPlaceholderColor() &&
-		!isPropertyValid() && stateProperty()->isEditableByUser())
+	if ((m_invalidColor.alpha() != 0) && isNormalPainterState(painter) &&
+		!isPlaceholderColor() && !isPropertyValid() &&
+		stateProperty()->isEditableByUser())
 	{
-		auto palette = painter.style()->standardPalette();
-		if (palette.currentColorGroup() != QPalette::Disabled &&
-			oldPen.color() != palette.color(QPalette::HighlightedText))
-		{
-			painter.setPen(m_invalidColor.rgb());
-		}
+		painter.setPen(m_invalidColor.rgb());
 	}
 
 	QtnPropertyDelegateQString::drawValueImpl(painter, rect);
@@ -703,11 +700,12 @@ void QtnPropertyQStringFileLineEditBttnHandler::onEditingFinished()
 }
 
 QtnPropertyQStringMultilineEditBttnHandler::
-	QtnPropertyQStringMultilineEditBttnHandler(
-		QtnPropertyDelegate *delegate, QtnLineEditBttn &editor)
+	QtnPropertyQStringMultilineEditBttnHandler(QtnPropertyDelegate *delegate,
+		QtnLineEditBttn &editor, const QString &placeholder)
 	: QtnPropertyEditorHandlerType(delegate, editor)
 	, dialog(new MultilineTextDialog(&editor))
 	, multiline(false)
+	, placeholder(placeholder)
 {
 	dialogContainer = connectDialog(dialog);
 	updateEditor();
@@ -744,8 +742,14 @@ void QtnPropertyQStringMultilineEditBttnHandler::updateEditor()
 			edit->setText(text);
 		}
 
-		edit->setPlaceholderText(
-			QtnPropertyQString::getPlaceholderStr(text, true));
+		if (text.isEmpty() && !placeholder.isEmpty())
+		{
+			edit->setPlaceholderText(placeholder);
+		} else
+		{
+			edit->setPlaceholderText(
+				QtnPropertyQString::getPlaceholderStr(text, true));
+		}
 		edit->selectAll();
 	}
 }
@@ -822,8 +826,10 @@ void QtnPropertyQStringMultilineEditBttnHandler::onToolButtonClicked(bool)
 }
 
 QtnPropertyQStringLineEditHandler::QtnPropertyQStringLineEditHandler(
-	QtnPropertyDelegate *delegate, QLineEdit &editor)
+	QtnPropertyDelegate *delegate, QLineEdit &editor,
+	const QString &placeholder)
 	: QtnPropertyEditorHandler(delegate, editor)
+	, placeholder(placeholder)
 {
 	updateEditor();
 
@@ -843,9 +849,11 @@ void QtnPropertyQStringLineEditHandler::updateEditor()
 			QtnMultiProperty::getMultiValuePlaceholder());
 	} else
 	{
-		editor().setText(property().value());
-		editor().setPlaceholderText(
-			QtnPropertyQString::getPlaceholderStr(editor().text(), false));
+		auto text = property().value();
+		editor().setText(text);
+		editor().setPlaceholderText(text.isEmpty() && !placeholder.isEmpty()
+				? placeholder
+				: QtnPropertyQString::getPlaceholderStr(text, false));
 		editor().selectAll();
 	}
 }
@@ -862,29 +870,42 @@ void QtnPropertyQStringLineEditHandler::updateValue()
 }
 
 class QtnPropertyQStringCandidatesComboBoxHandler
-	: public QtnPropertyEditorHandlerVT<QtnPropertyQStringBase, QtnComboBoxBttn>
+	: public QtnPropertyEditorHandlerVT<QtnPropertyQStringBase, QtnLineEditBttn>
 {
 public:
 	QtnPropertyQStringCandidatesComboBoxHandler(
-		QtnPropertyDelegateQStringCallback *delegate, QtnComboBoxBttn &editor,
-		const QtnPropertyDelegateInfo &info);
+		QtnPropertyDelegateQStringCallback *delegate,
+		QtnCompleterLineEdit *lineEdit, QtnLineEditBttn &editor,
+		const QString &placeholder);
+
+	void shouldFinishEdit();
 
 private:
 	void updateCandidates();
+	void updatePlaceholder(const QString &text);
 
-	void updateEditor() override;
+	virtual bool canApply() const override;
+	virtual void updateEditor() override;
+	virtual void revertInput() override;
+	virtual bool eventFilter(QObject *watched, QEvent *event) override;
 
-	void createNewCandidate(QString candidate);
+	void onItemActivated();
 
-	void onToolButtonClicked(bool checked);
+	bool createNewCandidate(QString candidate);
 
 	void onEditingFinished();
+	void onToolButtonClicked();
+
+	void connectLineEdit();
+	void disconnectLineEdit();
 
 private:
 	QtnGetCandidatesFn m_getCandidatesFn;
 	QtnCreateCandidateFn m_createCandidateFn;
+	QtnCompleterLineEdit *mLineEdit;
 
 	QStringList m_candidates;
+	QString m_placeholder;
 };
 
 QtnPropertyDelegateQStringCallback::QtnPropertyDelegateQStringCallback(
@@ -911,52 +932,61 @@ void QtnPropertyDelegateQStringCallback::applyAttributesImpl(
 QWidget *QtnPropertyDelegateQStringCallback::createValueEditorImpl(
 	QWidget *parent, const QRect &rect, QtnInplaceInfo *inplaceInfo)
 {
-	auto editor = new QtnComboBoxBttn(parent);
+	auto lineEdit = new QtnCompleterLineEdit;
+	auto editor = new QtnLineEditBttn(parent, QStringLiteral("*"), lineEdit);
 	editor->setGeometry(rect);
+	editor->lineEdit->setPlaceholderText(m_placeholder);
 
 	new QtnPropertyQStringCandidatesComboBoxHandler(
-		this, *editor, m_editorAttributes);
+		this, lineEdit, *editor, m_placeholder);
 
-	qtnInitLineEdit(editor->comboBox->lineEdit(), inplaceInfo);
+	qtnInitLineEdit(lineEdit, inplaceInfo);
 
 	return editor;
 }
 
 QtnPropertyQStringCandidatesComboBoxHandler::
 	QtnPropertyQStringCandidatesComboBoxHandler(
-		QtnPropertyDelegateQStringCallback *delegate, QtnComboBoxBttn &editor,
-		const QtnPropertyDelegateInfo &info)
+		QtnPropertyDelegateQStringCallback *delegate,
+		QtnCompleterLineEdit *lineEdit, QtnLineEditBttn &editor,
+		const QString &placeholder)
 	: QtnPropertyEditorHandlerVT(delegate, editor)
+	, mLineEdit(lineEdit)
+	, m_placeholder(placeholder)
 {
-	info.loadAttribute(qtnGetCandidatesFnAttr(), m_getCandidatesFn);
-	info.loadAttribute(qtnCreateCandidateFnAttr(), m_createCandidateFn);
+	auto model = new QStringListModel(&editor);
+	auto completer = lineEdit->completer();
+	Q_ASSERT(completer);
+	lineEdit->setCompleterModel(model);
 
+	auto &attributes = delegate->m_editorAttributes;
+	editor.toolButton->setIcon(
+		attributes.getAttribute<QIcon>(qtnCreateCandidateIconAttr()));
+
+	auto text = attributes.getAttribute<QString>(qtnCreateCandidateIconAttr());
+
+	if (!text.isEmpty())
 	{
-		QString createCandidateLabel('*');
-		info.loadAttribute(qtnCreateCandidateLabelAttr(), createCandidateLabel);
-		editor.toolButton->setText(createCandidateLabel);
+		editor.toolButton->setText(text);
 	}
 
-	bool readOnly = !delegate->stateProperty()->isEditableByUser();
+	editor.toolButton->setToolTip(
+		attributes.getAttribute<QString>(qtnCreateCandidateToolTipAttr()));
 
-	editor.comboBox->setEditable(true);
-	editor.comboBox->lineEdit()->setReadOnly(readOnly);
-	editor.installEventFilter(this);
+	attributes.loadAttribute(qtnCreateCandidateFnAttr(), m_createCandidateFn);
+	attributes.loadAttribute(qtnGetCandidatesFnAttr(), m_getCandidatesFn);
 
 	updateCandidates();
-	updateEditor();
+	QtnPropertyQStringCandidatesComboBoxHandler::updateEditor();
 
-	QObject::connect(editor.comboBox->lineEdit(), &QLineEdit::editingFinished,
-		this, &QtnPropertyQStringCandidatesComboBoxHandler::onEditingFinished);
+	mLineEdit->installEventFilter(this);
+	completer->popup()->installEventFilter(this);
+	completer->popup()->viewport()->installEventFilter(this);
 
-	if (m_createCandidateFn)
-	{
-		QObject::connect(editor.toolButton, &QToolButton::clicked, this,
-			&QtnPropertyQStringCandidatesComboBoxHandler::onToolButtonClicked);
-	} else
-	{
-		editor.toolButton->setVisible(false);
-	}
+	QObject::connect(editor.toolButton, &QToolButton::clicked, this,
+		&QtnPropertyQStringCandidatesComboBoxHandler::onToolButtonClicked);
+
+	connectLineEdit();
 }
 
 void QtnPropertyQStringCandidatesComboBoxHandler::updateCandidates()
@@ -966,30 +996,42 @@ void QtnPropertyQStringCandidatesComboBoxHandler::updateCandidates()
 	if (m_getCandidatesFn)
 		m_candidates = m_getCandidatesFn();
 
-	auto comboBox = editor().comboBox;
-
-	auto completer = comboBox->completer();
-	delete completer;
-	completer = nullptr;
-	if (!m_candidates.isEmpty())
-	{
-		completer = new QCompleter(m_candidates, comboBox);
-		completer->setFilterMode(Qt::MatchContains);
-		completer->setCaseSensitivity(Qt::CaseInsensitive);
-	}
-
-	comboBox->setCompleter(completer);
-	comboBox->clear();
-	comboBox->addItems(m_candidates);
-
-	/* FIXME QTBUG: Qt 5.12.3, 5.13.0 - combobox size is wrong on showPopup(), update[Geometry]() & adjustSize don't help
-	if (stateProperty()->isEditableByUser())
-	{
-		comboBox->showPopup();
-	}
-	*/
+	auto completer = editor().lineEdit->completer();
+	Q_ASSERT(completer);
+	Q_ASSERT(qobject_cast<QStringListModel *>(completer->model()));
+	auto model = static_cast<QStringListModel *>(completer->model());
+	model->setStringList(m_candidates);
 
 	updating--;
+}
+
+void QtnPropertyQStringCandidatesComboBoxHandler::updatePlaceholder(
+	const QString &text)
+{
+	QString placeholderStr;
+	if (stateProperty()->isMultiValue())
+	{
+		placeholderStr = QtnMultiProperty::getMultiValuePlaceholder();
+	} else if (text.isEmpty())
+	{
+		if (m_placeholder.isEmpty())
+		{
+			placeholderStr = QtnPropertyQString::getEmptyPlaceholderStr();
+		} else
+		{
+			placeholderStr = m_placeholder;
+		}
+	} else
+	{
+		placeholderStr = QtnPropertyQString::getPlaceholderStr(text, false);
+	}
+	editor().lineEdit->setPlaceholderText(placeholderStr);
+}
+
+bool QtnPropertyQStringCandidatesComboBoxHandler::canApply() const
+{
+	return !reverted && returned && stateProperty() &&
+		stateProperty()->isEditableByUser();
 }
 
 void QtnPropertyQStringCandidatesComboBoxHandler::updateEditor()
@@ -998,72 +1040,162 @@ void QtnPropertyQStringCandidatesComboBoxHandler::updateEditor()
 
 	bool enabled = stateProperty()->isEditableByUser();
 
-	editor().toolButton->setEnabled(enabled);
-
-	auto lineEdit = editor().comboBox->lineEdit();
-	lineEdit->setReadOnly(!enabled);
+	mLineEdit->setReadOnly(!enabled);
 	if (stateProperty()->isMultiValue())
 	{
-		lineEdit->clear();
-		lineEdit->setPlaceholderText(
-			QtnMultiProperty::getMultiValuePlaceholder());
+		mLineEdit->clear();
 	} else
 	{
-		editor().comboBox->setCurrentText(property());
-		lineEdit->setPlaceholderText(QString());
+		mLineEdit->setText(property());
 	}
 
-	if (lineEdit)
-		lineEdit->selectAll();
+	updatePlaceholder(mLineEdit->text());
+
+	QMetaObject::invokeMethod(mLineEdit, "complete", Qt::QueuedConnection);
+	mLineEdit->selectAll();
 
 	updating--;
 }
 
-void QtnPropertyQStringCandidatesComboBoxHandler::createNewCandidate(
+void QtnPropertyQStringCandidatesComboBoxHandler::shouldFinishEdit()
+{
+	QMetaObject::invokeMethod(
+		mLineEdit, "editingFinished", Qt::QueuedConnection);
+}
+
+void QtnPropertyQStringCandidatesComboBoxHandler::revertInput()
+{
+	if (updating)
+		return;
+	reverted = true;
+	shouldFinishEdit();
+}
+
+bool QtnPropertyQStringCandidatesComboBoxHandler::eventFilter(
+	QObject *watched, QEvent *event)
+{
+	switch (event->type())
+	{
+		case QEvent::MouseButtonPress:
+		case QEvent::MouseButtonRelease:
+		case QEvent::MouseMove:
+		case QEvent::MouseButtonDblClick:
+		{
+			auto me = static_cast<QMouseEvent *>(event);
+			auto toolButton = editor().toolButton;
+			auto localPos = toolButton->mapFromGlobal(me->globalPos());
+			if (toolButton->rect().contains(localPos))
+			{
+				QObject *toolButtonObject = toolButton;
+				QMouseEvent buttonEvent(event->type(), localPos,
+					me->windowPos(), me->globalPos(), me->button(),
+					me->buttons(), me->modifiers(), me->source());
+				toolButtonObject->event(&buttonEvent);
+				return true;
+			}
+			break;
+		}
+
+		default:
+			break;
+	}
+
+	return QObject::eventFilter(watched, event);
+}
+
+void QtnPropertyQStringCandidatesComboBoxHandler::onItemActivated()
+{
+	if (updating)
+		return;
+
+	returned = true;
+	shouldFinishEdit();
+}
+
+bool QtnPropertyQStringCandidatesComboBoxHandler::createNewCandidate(
 	QString candidate)
 {
 	if (!m_createCandidateFn || updating)
-		return;
+		return false;
 
 	qtnRetainInplaceEditor();
 	updating++;
 
 	candidate = m_createCandidateFn(&editor(), candidate);
-	if (candidate.isEmpty())
-	{
-		qtnReleaseInplaceEditor();
-		return;
-	}
 
 	updating--;
-	onValueChanged(candidate);
-
-	updateCandidates();
+	if (!candidate.isEmpty())
+	{
+		onValueChanged(candidate);
+		updateCandidates();
+	}
 
 	qtnReleaseInplaceEditor();
-}
-
-void QtnPropertyQStringCandidatesComboBoxHandler::onToolButtonClicked(
-	bool checked)
-{
-	Q_UNUSED(checked);
-	createNewCandidate(QString());
+	return !candidate.isEmpty();
 }
 
 void QtnPropertyQStringCandidatesComboBoxHandler::onEditingFinished()
 {
+	if (updating)
+		return;
+
+	disconnectLineEdit();
 	if (canApply())
 	{
-		auto text = toSingleLine(editor().comboBox->lineEdit()->text());
+		auto text = toSingleLine(mLineEdit->text());
 
-		if (text.isEmpty())
-			return;
-
-		if (m_candidates.indexOf(text) >= 0)
+		if (!m_createCandidateFn || text.isEmpty() ||
+			m_candidates.contains(text, Qt::CaseInsensitive))
+		{
 			property().setValue(text, delegate()->editReason());
-		else
-			createNewCandidate(text);
+		} else
+		{
+			if (!createNewCandidate(text))
+			{
+				applyReset();
+				connectLineEdit();
+				return;
+			}
+		}
 	}
 
 	applyReset();
+	qtnStopInplaceEdit();
+}
+
+void QtnPropertyQStringCandidatesComboBoxHandler::onToolButtonClicked()
+{
+	createNewCandidate(mLineEdit->text());
+	applyReset();
+}
+
+void QtnPropertyQStringCandidatesComboBoxHandler::connectLineEdit()
+{
+	QObject::connect(mLineEdit, &QLineEdit::textChanged, this,
+		&QtnPropertyQStringCandidatesComboBoxHandler::updatePlaceholder);
+	QObject::connect(mLineEdit, &QtnCompleterLineEdit::returnPressed, this,
+		&QtnPropertyQStringCandidatesComboBoxHandler::onItemActivated);
+	QObject::connect(mLineEdit, &QtnCompleterLineEdit::escaped, this,
+		&QtnPropertyQStringCandidatesComboBoxHandler::revertInput);
+	QObject::connect(mLineEdit, &QLineEdit::editingFinished, this,
+		&QtnPropertyQStringCandidatesComboBoxHandler::onEditingFinished,
+		Qt::QueuedConnection);
+	QObject::connect(mLineEdit->completer(),
+		static_cast<void (QCompleter::*)(const QModelIndex &)>(
+			&QCompleter::activated),
+		this, &QtnPropertyQStringCandidatesComboBoxHandler::onItemActivated);
+}
+
+void QtnPropertyQStringCandidatesComboBoxHandler::disconnectLineEdit()
+{
+	QObject::disconnect(mLineEdit, &QtnCompleterLineEdit::returnPressed, this,
+		&QtnPropertyQStringCandidatesComboBoxHandler::onItemActivated);
+	QObject::disconnect(mLineEdit, &QtnCompleterLineEdit::escaped, this,
+		&QtnPropertyQStringCandidatesComboBoxHandler::revertInput);
+	QObject::disconnect(mLineEdit, &QLineEdit::editingFinished, this,
+		&QtnPropertyQStringCandidatesComboBoxHandler::onEditingFinished);
+	QObject::disconnect(mLineEdit->completer(),
+		static_cast<void (QCompleter::*)(const QModelIndex &)>(
+			&QCompleter::activated),
+		this, &QtnPropertyQStringCandidatesComboBoxHandler::onItemActivated);
 }

@@ -33,6 +33,7 @@ limitations under the License.
 QtnPropertyWidgetEx::QtnPropertyWidgetEx(QWidget *parent)
 	: QtnPropertyWidget(parent)
 	, draggedProperty(nullptr)
+	, mDrag(nullptr)
 	, dropAction(Qt::IgnoreAction)
 	, canRemove(false)
 {
@@ -123,8 +124,21 @@ void QtnPropertyWidgetEx::onResetTriggered()
 	{
 		QtnConnections connections;
 		propertyView()->connectPropertyToEdit(activeProperty, connections);
-		QtnPropertyChangeReason reason = QtnPropertyChangeReasonEditValue;
+		QtnPropertyChangeReason reason = QtnPropertyChangeReasonEdit;
 		activeProperty->reset(reason);
+	}
+}
+
+void QtnPropertyWidgetEx::onLockToggleTriggered()
+{
+	auto activeProperty = getActiveProperty();
+	if (activeProperty && activeProperty->isUnlockable() &&
+		activeProperty->isVisible())
+	{
+		QtnConnections connections;
+		propertyView()->connectPropertyToEdit(activeProperty, connections);
+		QtnPropertyChangeReason reason = QtnPropertyChangeReasonEdit;
+		activeProperty->toggleLock(reason);
 	}
 }
 
@@ -175,23 +189,48 @@ void QtnPropertyWidgetEx::pasteFromClipboard()
 void QtnPropertyWidgetEx::contextMenuEvent(QContextMenuEvent *event)
 {
 	auto property = getActiveProperty();
-
-	if (nullptr == property)
+	if (!property)
 		return;
 
-	if (!property->isResettable() || !property->isEditableByUser())
+	auto menu = new QMenu;
+	int actionCount = 0;
+
+	if (property->isResettable() && property->isVisible() &&
+		!property->valueIsDefault() &&
+		(!property->isUnlockable() || !property->isLocked()))
+	{
+		auto action = menu->addAction(tr("Reset to default"));
+		action->setIcon(QtnPropertyDelegate::resetIcon());
+		action->setStatusTip(
+			tr("Reset value of %1 to default").arg(property->displayName()));
+
+		QObject::connect(action, &QAction::triggered, this,
+			&QtnPropertyWidgetEx::onResetTriggered);
+
+		actionCount++;
+	}
+
+	if (property->isUnlockable() && property->isVisible())
+	{
+		auto action = menu->addAction(
+			property->isLocked() ? tr("Unlock property") : tr("Lock property"));
+		auto statusFmt = property->isLocked() ? tr("Unlock %1") : tr("Lock %1");
+		action->setStatusTip(statusFmt.arg(property->displayName()));
+
+		QObject::connect(action, &QAction::triggered, this,
+			&QtnPropertyWidgetEx::onLockToggleTriggered);
+
+		actionCount++;
+	}
+
+	if (actionCount == 0)
+	{
+		delete menu;
 		return;
+	}
 
-	QMenu menu;
-
-	auto action = menu.addAction(tr("Reset to default"));
-	action->setStatusTip(
-		tr("Reset value of %1 to default").arg(property->name()));
-
-	QObject::connect(action, &QAction::triggered, this,
-		&QtnPropertyWidgetEx::onResetTriggered);
-
-	menu.exec(event->globalPos());
+	menu->setAttribute(Qt::WA_DeleteOnClose);
+	menu->popup(event->globalPos());
 }
 
 void QtnPropertyWidgetEx::deleteProperty(QtnPropertyBase *)
@@ -219,7 +258,7 @@ QMimeData *QtnPropertyWidgetEx::getPropertyDataForAction(
 bool QtnPropertyWidgetEx::applyPropertyData(
 	const QMimeData *data, QtnPropertyBase *destination, QtnApplyPosition)
 {
-	if (nullptr != destination)
+	if (nullptr != destination && destination->isWritable())
 	{
 		QtnConnections connections;
 
@@ -253,7 +292,7 @@ bool QtnPropertyWidgetEx::applyPropertyData(
 		{
 			return false;
 		}
-		return destination->fromStr(str, QtnPropertyChangeReasonEditValue);
+		return destination->fromStr(str, QtnPropertyChangeReasonEdit);
 	}
 
 	return false;
@@ -265,6 +304,9 @@ bool QtnPropertyWidgetEx::eventFilter(QObject *obj, QEvent *event)
 	{
 		case QEvent::MouseButtonPress:
 		{
+			if (draggedProperty)
+				break;
+
 			auto mevent = static_cast<QMouseEvent *>(event);
 
 			if (mevent->button() == Qt::LeftButton)
@@ -280,17 +322,18 @@ bool QtnPropertyWidgetEx::eventFilter(QObject *obj, QEvent *event)
 
 		case QEvent::MouseMove:
 		{
+			if (mDrag)
+				break;
+
 			auto mevent = static_cast<QMouseEvent *>(event);
 
 			if (nullptr != draggedProperty &&
 				0 != (mevent->buttons() & Qt::LeftButton))
 			{
-				if ((mevent->pos() - dragStartPos).manhattanLength() <
+				if ((mevent->pos() - dragStartPos).manhattanLength() >=
 					QApplication::startDragDistance())
 				{
-					dropAction = Qt::IgnoreAction;
 					dragAndDrop();
-					draggedProperty = nullptr;
 					return true;
 				}
 			}
@@ -394,25 +437,38 @@ void QtnPropertyWidgetEx::dropEnd()
 	}
 }
 
+void QtnPropertyWidgetEx::onDropFinished(Qt::DropAction)
+{
+	dropEnd();
+	draggedProperty = nullptr;
+	mDrag = nullptr;
+}
+
 bool QtnPropertyWidgetEx::dragAndDrop()
 {
+	dropAction = Qt::IgnoreAction;
 	auto data = getPropertyDataForAction(draggedProperty, Qt::CopyAction);
 
 	if (nullptr != data)
 	{
-		auto drag = new QDrag(this);
+		mDrag = new QDrag(this);
 
-		drag->setMimeData(data);
+		mDrag->setMimeData(data);
 
 		// TODO generate cursor
 
-		drag->exec(Qt::CopyAction | Qt::MoveAction);
-
-		dropEnd();
+#ifdef Q_OS_WASM
+		QObject::connect(mDrag, &QDrag::finished, this,
+			&QtnPropertyWidgetEx::onDropFinished);
+		mDrag->exec(Qt::CopyAction | Qt::MoveAction);
+#else
+		onDropFinished(mDrag->exec(Qt::CopyAction | Qt::MoveAction));
+#endif
 
 		return true;
 	}
 
+	draggedProperty = nullptr;
 	return false;
 }
 

@@ -77,7 +77,11 @@ SOURCES +=\
     $$PWD/Auxiliary/PropertyDelegateInfo.cpp \
     $$PWD/PropertyQKeySequence.cpp \
     $$PWD/PropertyDelegateMetaEnum.cpp \
-    $$PWD/Install.cpp
+    $$PWD/Install.cpp \
+    $$PWD/Utils/QtnCompleterLineEdit.cpp \
+    $$PWD/Utils/QtnCompleterItemDelegate.cpp \
+    $$PWD/GUI/PropertyQVector3D.cpp \
+    $$PWD/Delegates/GUI/PropertyDelegateQVector3D.cpp
 
 HEADERS +=\
     $$PWD/PropertyBase.h \
@@ -165,7 +169,11 @@ HEADERS +=\
     $$PWD/PropertyDelegateMetaEnum.h \
     $$PWD/Install.h \
     $$PWD/Config.h \
-    $$PWD/FunctionalHelpers.h
+    $$PWD/FunctionalHelpers.h \
+    $$PWD/Utils/QtnCompleterLineEdit.h \
+    $$PWD/Utils/QtnCompleterItemDelegate.h \
+    $$PWD/GUI/PropertyQVector3D.h \
+    $$PWD/Delegates/GUI/PropertyDelegateQVector3D.h
 
 TRANSLATIONS += \
     $$PWD/Translations/en.ts \

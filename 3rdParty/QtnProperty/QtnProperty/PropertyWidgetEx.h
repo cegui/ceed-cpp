@@ -20,6 +20,7 @@ limitations under the License.
 
 class QMimeData;
 class QShortcut;
+class QDrag;
 
 enum class QtnApplyPosition
 {
@@ -75,6 +76,7 @@ public:
 private:
 	void onMouseReleased();
 	void onResetTriggered();
+	void onLockToggleTriggered();
 
 public slots:
 	void deleteActiveProperty();
@@ -104,12 +106,14 @@ protected:
 	virtual void dropEnd();
 
 private:
+	void onDropFinished(Qt::DropAction action);
 	bool dragAndDrop();
 	void internalConnect(
 		QAction *dropAction, void (QtnPropertyWidgetEx::*slot)(), bool connect);
 
 	QPoint dragStartPos;
 	QtnPropertyBase *draggedProperty;
+	QDrag *mDrag;
 	Qt::DropAction dropAction;
 	bool canRemove;
 };

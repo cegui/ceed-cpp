@@ -320,48 +320,48 @@ If you press &apos;No&apos;, selected property will be replaced.</source>
 <context>
     <name>QtnCustomPropertyWidget</name>
     <message>
-        <location filename="../CustomPropertyWidget.cpp" line="129"/>
+        <location filename="../CustomPropertyWidget.cpp" line="145"/>
         <source>New Element</source>
         <translation>Новый элемент</translation>
     </message>
     <message>
-        <location filename="../CustomPropertyWidget.cpp" line="136"/>
+        <location filename="../CustomPropertyWidget.cpp" line="152"/>
         <source>New Property</source>
         <translation>Новое свойство</translation>
     </message>
     <message>
-        <location filename="../CustomPropertyWidget.cpp" line="176"/>
+        <location filename="../CustomPropertyWidget.cpp" line="192"/>
         <source>Duplicate Element</source>
         <translation>Дублировать элемент</translation>
     </message>
     <message>
-        <location filename="../CustomPropertyWidget.cpp" line="184"/>
+        <location filename="../CustomPropertyWidget.cpp" line="200"/>
         <source>Duplicate Property</source>
         <translation>Дублировать свойство</translation>
     </message>
     <message>
-        <location filename="../CustomPropertyWidget.cpp" line="216"/>
+        <location filename="../CustomPropertyWidget.cpp" line="232"/>
         <source>Property Options</source>
         <translation>Настройки свойства</translation>
     </message>
     <message>
-        <location filename="../CustomPropertyWidget.cpp" line="227"/>
+        <location filename="../CustomPropertyWidget.cpp" line="243"/>
         <source>Element Options</source>
         <translation>Настройки элемента</translation>
     </message>
     <message>
-        <location filename="../CustomPropertyWidget.cpp" line="477"/>
+        <location filename="../CustomPropertyWidget.cpp" line="493"/>
         <source>Do you want to insert new property from clipboard or to replace the selected one?</source>
         <translation>Хотите вставить новое свойство или заменить выбранное?</translation>
     </message>
     <message>
-        <location filename="../CustomPropertyWidget.cpp" line="482"/>
+        <location filename="../CustomPropertyWidget.cpp" line="498"/>
         <source>Insert</source>
         <comment>Paste</comment>
         <translation>Вставить</translation>
     </message>
     <message>
-        <location filename="../CustomPropertyWidget.cpp" line="484"/>
+        <location filename="../CustomPropertyWidget.cpp" line="500"/>
         <source>Replace</source>
         <comment>Paste</comment>
         <translation>Заменить</translation>
@@ -370,7 +370,7 @@ If you press &apos;No&apos;, selected property will be replaced.</source>
 <context>
     <name>QtnMultiProperty</name>
     <message>
-        <location filename="../MultiProperty.cpp" line="112"/>
+        <location filename="../MultiProperty.cpp" line="115"/>
         <source>(Multiple Values)</source>
         <translation>(Несколько значений)</translation>
     </message>
@@ -497,32 +497,32 @@ If you press &apos;No&apos;, selected property will be replaced.</source>
 <context>
     <name>QtnPropertyQColor</name>
     <message>
-        <location filename="../GUI/PropertyQColor.cpp" line="126"/>
+        <location filename="../GUI/PropertyQColor.cpp" line="124"/>
         <source>Red</source>
         <translation>Красный</translation>
     </message>
     <message>
-        <location filename="../GUI/PropertyQColor.cpp" line="131"/>
+        <location filename="../GUI/PropertyQColor.cpp" line="129"/>
         <source>Red component of %1</source>
         <translation>%1 - красный компонент</translation>
     </message>
     <message>
-        <location filename="../GUI/PropertyQColor.cpp" line="141"/>
+        <location filename="../GUI/PropertyQColor.cpp" line="139"/>
         <source>Green</source>
         <translation>Зелёный</translation>
     </message>
     <message>
-        <location filename="../GUI/PropertyQColor.cpp" line="146"/>
+        <location filename="../GUI/PropertyQColor.cpp" line="144"/>
         <source>Green component of %1</source>
         <translation>%1 - зелёный компонент</translation>
     </message>
     <message>
-        <location filename="../GUI/PropertyQColor.cpp" line="156"/>
+        <location filename="../GUI/PropertyQColor.cpp" line="154"/>
         <source>Blue</source>
         <translation>Синий</translation>
     </message>
     <message>
-        <location filename="../GUI/PropertyQColor.cpp" line="161"/>
+        <location filename="../GUI/PropertyQColor.cpp" line="159"/>
         <source>Blue component of %1</source>
         <translation>%1 - синий компонент</translation>
     </message>
@@ -690,47 +690,47 @@ If you press &apos;No&apos;, selected property will be replaced.</source>
 <context>
     <name>QtnPropertyQPen</name>
     <message>
-        <location filename="../GUI/PropertyQPen.cpp" line="224"/>
+        <location filename="../GUI/PropertyQPen.cpp" line="263"/>
         <source>(Pen)</source>
         <translation>(Карандаш)</translation>
     </message>
     <message>
-        <location filename="../GUI/PropertyQPen.cpp" line="234"/>
+        <location filename="../GUI/PropertyQPen.cpp" line="273"/>
         <source>Color</source>
         <translation>Цвет</translation>
     </message>
     <message>
-        <location filename="../GUI/PropertyQPen.cpp" line="239"/>
+        <location filename="../GUI/PropertyQPen.cpp" line="278"/>
         <source>Color of the %1</source>
         <translation>%1 - цвет</translation>
     </message>
     <message>
-        <location filename="../GUI/PropertyQPen.cpp" line="249"/>
+        <location filename="../GUI/PropertyQPen.cpp" line="288"/>
         <source>Style</source>
         <translation>Стиль</translation>
     </message>
     <message>
-        <location filename="../GUI/PropertyQPen.cpp" line="254"/>
+        <location filename="../GUI/PropertyQPen.cpp" line="293"/>
         <source>Style of the %1</source>
         <translation>%1 - стиль</translation>
     </message>
     <message>
-        <location filename="../GUI/PropertyQPen.cpp" line="264"/>
+        <location filename="../GUI/PropertyQPen.cpp" line="303"/>
         <source>Cap Style</source>
         <translation>Стиль крышки</translation>
     </message>
     <message>
-        <location filename="../GUI/PropertyQPen.cpp" line="269"/>
+        <location filename="../GUI/PropertyQPen.cpp" line="308"/>
         <source>Cap Style of the %1</source>
         <translation>%1 - стиль крышки</translation>
     </message>
     <message>
-        <location filename="../GUI/PropertyQPen.cpp" line="279"/>
+        <location filename="../GUI/PropertyQPen.cpp" line="318"/>
         <source>Join Style</source>
         <translation>Стиль соединения</translation>
     </message>
     <message>
-        <location filename="../GUI/PropertyQPen.cpp" line="284"/>
+        <location filename="../GUI/PropertyQPen.cpp" line="323"/>
         <source>Join Style of the %1</source>
         <translation>%1 - стиль соединения</translation>
     </message>
@@ -745,12 +745,12 @@ If you press &apos;No&apos;, selected property will be replaced.</source>
     <message>
         <location filename="../Core/PropertyQPoint.cpp" line="107"/>
         <source>X of the %1</source>
-        <translation>Координата X точки &quot;%1&quot;</translation>
+        <translation>Координата X от &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="../Core/PropertyQPoint.cpp" line="122"/>
         <source>Y of the %1</source>
-        <translation>Координата Y точки &quot;%1&quot;</translation>
+        <translation>Координата Y от &quot;%1&quot;</translation>
     </message>
     <message>
         <source>X coordinate of the %1</source>
@@ -768,7 +768,7 @@ If you press &apos;No&apos;, selected property will be replaced.</source>
     <message>
         <location filename="../Core/PropertyQPoint.cpp" line="92"/>
         <source>[%1, %2]</source>
-        <translation>[%1;  %2]</translation>
+        <translation>[%1; %2]</translation>
     </message>
     <message>
         <source>%1, %2</source>
@@ -797,7 +797,7 @@ If you press &apos;No&apos;, selected property will be replaced.</source>
 <context>
     <name>QtnPropertyQRect</name>
     <message>
-        <location filename="../Core/PropertyQRect.cpp" line="157"/>
+        <location filename="../Core/PropertyQRect.cpp" line="155"/>
         <source>Left</source>
         <translation>Отступ слева</translation>
     </message>
@@ -806,7 +806,7 @@ If you press &apos;No&apos;, selected property will be replaced.</source>
         <translation type="vanished">Отступ слева для прямоугольника &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../Core/PropertyQRect.cpp" line="187"/>
+        <location filename="../Core/PropertyQRect.cpp" line="185"/>
         <source>Right</source>
         <translation>Отступ справа</translation>
     </message>
@@ -815,7 +815,7 @@ If you press &apos;No&apos;, selected property will be replaced.</source>
         <translation type="vanished">Отступ справа для прямоугольника &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../Core/PropertyQRect.cpp" line="172"/>
+        <location filename="../Core/PropertyQRect.cpp" line="170"/>
         <source>Top</source>
         <translation>Отступ сверху</translation>
     </message>
@@ -824,7 +824,7 @@ If you press &apos;No&apos;, selected property will be replaced.</source>
         <translation type="vanished">Отступ сверху для прямоугольника &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../Core/PropertyQRect.cpp" line="202"/>
+        <location filename="../Core/PropertyQRect.cpp" line="200"/>
         <source>Bottom</source>
         <translation>Отступ снизу</translation>
     </message>
@@ -849,32 +849,32 @@ If you press &apos;No&apos;, selected property will be replaced.</source>
         <translation type="vanished">Высота прямоугольника &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="../Core/PropertyQRect.cpp" line="147"/>
+        <location filename="../Core/PropertyQRect.cpp" line="145"/>
         <source>[(%1, %2), (%3, %4)]</source>
         <translation>[(%1; %2), (%3; %4)]</translation>
     </message>
     <message>
-        <location filename="../Core/PropertyQRect.cpp" line="147"/>
+        <location filename="../Core/PropertyQRect.cpp" line="145"/>
         <source>[(%1, %2) %3 x %4]</source>
         <translation>[(%1; %2) %3 x %4]</translation>
     </message>
     <message>
-        <location filename="../Core/PropertyQRect.cpp" line="162"/>
+        <location filename="../Core/PropertyQRect.cpp" line="160"/>
         <source>Left position of the %1</source>
         <translation>%1: Координата X левой стороны</translation>
     </message>
     <message>
-        <location filename="../Core/PropertyQRect.cpp" line="177"/>
+        <location filename="../Core/PropertyQRect.cpp" line="175"/>
         <source>Top position of the %1</source>
         <translation>%1: Координата Y верхней стороны</translation>
     </message>
     <message>
-        <location filename="../Core/PropertyQRect.cpp" line="192"/>
+        <location filename="../Core/PropertyQRect.cpp" line="190"/>
         <source>Right position of the %1</source>
         <translation>%1: Координата X правой стороны</translation>
     </message>
     <message>
-        <location filename="../Core/PropertyQRect.cpp" line="207"/>
+        <location filename="../Core/PropertyQRect.cpp" line="205"/>
         <source>Bottom position of the %1</source>
         <translation>%1: Координата Y нижней стороны</translation>
     </message>
@@ -945,27 +945,27 @@ If you press &apos;No&apos;, selected property will be replaced.</source>
 <context>
     <name>QtnPropertyQSize</name>
     <message>
-        <location filename="../Core/PropertyQSize.cpp" line="105"/>
+        <location filename="../Core/PropertyQSize.cpp" line="103"/>
         <source>Width</source>
         <translation>Ширина</translation>
     </message>
     <message>
-        <location filename="../Core/PropertyQSize.cpp" line="110"/>
+        <location filename="../Core/PropertyQSize.cpp" line="108"/>
         <source>Width of the %1</source>
         <translation>%1: Ширина</translation>
     </message>
     <message>
-        <location filename="../Core/PropertyQSize.cpp" line="120"/>
+        <location filename="../Core/PropertyQSize.cpp" line="118"/>
         <source>Height</source>
         <translation>Высота</translation>
     </message>
     <message>
-        <location filename="../Core/PropertyQSize.cpp" line="125"/>
+        <location filename="../Core/PropertyQSize.cpp" line="123"/>
         <source>Height of the %1</source>
         <translation>%1: Высота</translation>
     </message>
     <message>
-        <location filename="../Core/PropertyQSize.cpp" line="95"/>
+        <location filename="../Core/PropertyQSize.cpp" line="93"/>
         <source>[%1 x %2]</source>
         <translation>[%1 x %2]</translation>
     </message>
@@ -1014,12 +1014,12 @@ If you press &apos;No&apos;, selected property will be replaced.</source>
 <context>
     <name>QtnPropertyQVariant</name>
     <message>
-        <location filename="../PropertyQVariant.cpp" line="137"/>
+        <location filename="../PropertyQVariant.cpp" line="225"/>
         <source>(Dictionary)</source>
         <translation>(Словарь)</translation>
     </message>
     <message>
-        <location filename="../PropertyQVariant.cpp" line="140"/>
+        <location filename="../PropertyQVariant.cpp" line="229"/>
         <source>(List)</source>
         <translation>(Список)</translation>
     </message>
@@ -1029,24 +1029,58 @@ If you press &apos;No&apos;, selected property will be replaced.</source>
     </message>
 </context>
 <context>
+    <name>QtnPropertyQVector3D</name>
+    <message>
+        <location filename="../GUI/PropertyQVector3D.cpp" line="111"/>
+        <source>Z</source>
+        <translation>Z</translation>
+    </message>
+    <message>
+        <location filename="../GUI/PropertyQVector3D.cpp" line="116"/>
+        <source>Z of the %1</source>
+        <translation>Координата Z от &quot;%1&quot;</translation>
+    </message>
+    <message>
+        <location filename="../GUI/PropertyQVector3D.cpp" line="121"/>
+        <source>[%1, %2, %3]</source>
+        <translation>[%1; %2; %3]</translation>
+    </message>
+</context>
+<context>
     <name>QtnPropertyView</name>
     <message>
-        <location filename="../Delegates/Utils/PropertyDelegateMisc.cpp" line="278"/>
+        <location filename="../Delegates/PropertyDelegate.cpp" line="153"/>
+        <source>Lock</source>
+        <translation>📕Заблокировать</translation>
+    </message>
+    <message>
+        <location filename="../Delegates/PropertyDelegate.cpp" line="152"/>
+        <source>Unlock</source>
+        <translation>📖Разблокировать</translation>
+    </message>
+    <message>
+        <location filename="../Delegates/PropertyDelegate.cpp" line="275"/>
         <source>Click to expand</source>
         <translation>Щёлкните, чтобы развернуть</translation>
     </message>
     <message>
-        <location filename="../Delegates/Utils/PropertyDelegateMisc.cpp" line="279"/>
+        <location filename="../Delegates/PropertyDelegate.cpp" line="276"/>
         <source>Click to collapse</source>
         <translation>Щёлкните, чтобы свернуть</translation>
     </message>
     <message>
-        <location filename="../Delegates/Utils/PropertyDelegateMisc.cpp" line="331"/>
+        <location filename="../Delegates/Utils/PropertyDelegateMisc.cpp" line="250"/>
         <source>Reset to default value</source>
         <translation>Вернуть значение по умолчанию</translation>
     </message>
     <message>
-        <location filename="../Delegates/Utils/PropertyDelegateSliderBox.cpp" line="65"/>
+        <location filename="../Delegates/Utils/PropertyDelegateMisc.cpp" line="256"/>
+        <source>R</source>
+        <comment>Reset button text</comment>
+        <translation>С</translation>
+    </message>
+    <message>
+        <location filename="../Delegates/Utils/PropertyDelegateSliderBox.cpp" line="67"/>
         <source>Drag/Scroll mouse to change value</source>
         <translation>Меняйте значение с помощью колёсика или левой кнопки мыши</translation>
     </message>
@@ -1054,14 +1088,34 @@ If you press &apos;No&apos;, selected property will be replaced.</source>
 <context>
     <name>QtnPropertyWidgetEx</name>
     <message>
-        <location filename="../PropertyWidgetEx.cpp" line="187"/>
+        <location filename="../PropertyWidgetEx.cpp" line="202"/>
         <source>Reset to default</source>
         <translation>Сбросить значение</translation>
     </message>
     <message>
-        <location filename="../PropertyWidgetEx.cpp" line="189"/>
+        <location filename="../PropertyWidgetEx.cpp" line="205"/>
         <source>Reset value of %1 to default</source>
         <translation>%1: Установить значение по умолчанию</translation>
+    </message>
+    <message>
+        <location filename="../PropertyWidgetEx.cpp" line="216"/>
+        <source>Unlock property</source>
+        <translation>📖Разблокировать свойство</translation>
+    </message>
+    <message>
+        <location filename="../PropertyWidgetEx.cpp" line="216"/>
+        <source>Lock property</source>
+        <translation>📕Заблокировать свойство</translation>
+    </message>
+    <message>
+        <location filename="../PropertyWidgetEx.cpp" line="217"/>
+        <source>Unlock %1</source>
+        <translation>Разблокировать %1</translation>
+    </message>
+    <message>
+        <location filename="../PropertyWidgetEx.cpp" line="217"/>
+        <source>Lock %1</source>
+        <translation>Заблокировать %1</translation>
     </message>
 </context>
 </TS>

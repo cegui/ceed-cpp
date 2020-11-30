@@ -235,6 +235,10 @@ FORMS += \
 RESOURCES += \
     data/Resources.qrc
 
+# QtnProperty integration
+# FIXME: not needed, all includes in Qtn must start with <QtnProperty/...>, then including from .pri will work.
+INCLUDEPATH += $$PWD/3rdParty/QtnProperty/QtnProperty
+
 # CEGUI integration
 
 INCLUDEPATH += $$PWD/3rdParty/CEGUI/include $$PWD/3rdParty/CEGUI/dependencies/include

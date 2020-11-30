@@ -32,7 +32,7 @@ QtnPropertyEditorHandlerBase::QtnPropertyEditorHandlerBase(
 	, m_editor(&editor)
 {
 	Q_ASSERT(delegate);
-	Q_ASSERT(!delegate->m_editorHandler);
+	//Q_ASSERT(!delegate->m_editorHandler);
 	delegate->m_editorHandler = this;
 	auto property = delegate->property();
 	Q_ASSERT(property);
@@ -151,6 +151,10 @@ void QtnPropertyEditorHandlerBase::onPropertyDestroyed()
 void QtnPropertyEditorHandlerBase::onPropertyDidChange(
 	QtnPropertyChangeReason reason)
 {
+	if (!sender())
+	{
+		return;
+	}
 	if (reason & (QtnPropertyChangeReasonValue | QtnPropertyChangeReasonState))
 	{
 		if (propertyBase() == sender() || stateProperty() == sender())

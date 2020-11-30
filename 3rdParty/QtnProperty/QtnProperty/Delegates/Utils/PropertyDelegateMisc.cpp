@@ -25,7 +25,7 @@ limitations under the License.
 
 static QIcon qtnResetIcon;
 
-static QIcon resetIcon()
+QIcon QtnPropertyDelegate::resetIcon()
 {
 	if (!qtnResetIcon.isNull())
 		return qtnResetIcon;
@@ -138,9 +138,15 @@ void QtnPropertyDelegateWithValues::createSubItemsImpl(
 	addSubItemBackground(context, subItems);
 	addSubItemSelection(context, subItems);
 	addSubItemBranchNode(context, subItems);
+	addSubItemLock(context, subItems);
 	addSubItemName(context, subItems);
 	addSubItemReset(context, subItems);
 	addSubItemValues(context, subItems);
+}
+
+bool QtnPropertyDelegateWithValues::isSplittable() const
+{
+	return true;
 }
 
 QtnPropertyDelegateWithValues::QtnPropertyDelegateWithValues(
@@ -198,91 +204,6 @@ void QtnPropertyDelegateWithValues::addSubItemSelection(
 	subItems.append(selItem);
 }
 
-void QtnPropertyDelegateWithValues::addSubItemBranchNode(
-	QtnDrawContext &context, QList<QtnSubItem> &subItems)
-{
-	if (!context.hasChildren)
-		return;
-
-	QtnSubItem brItem(context.rect.marginsRemoved(context.margins));
-	brItem.rect.setWidth(brItem.rect.height());
-	context.margins.setLeft(context.margins.left() + brItem.rect.height());
-	brItem.trackState();
-
-	if (!brItem.rect.isValid())
-		return;
-
-	brItem.drawHandler = [this](
-							 QtnDrawContext &context, const QtnSubItem &item) {
-		auto &painter = *context.painter;
-		QRectF branchRect = item.rect;
-		qreal side = branchRect.height() / 3.5f;
-		QColor fillClr = context.palette().color(QPalette::Text);
-		QColor outlineClr = (item.state() != QtnSubItemStateNone)
-			? Qt::blue
-			: context.palette().color(QPalette::Text);
-
-		painter.save();
-		painter.setPen(outlineClr);
-
-		QPainterPath branchPath;
-		if (stateProperty()->isCollapsed())
-		{
-			branchPath.moveTo(
-				branchRect.left() + side, branchRect.top() + side);
-			branchPath.lineTo(branchRect.right() - side - 1,
-				branchRect.top() + branchRect.height() / 2.f);
-			branchPath.lineTo(
-				branchRect.left() + side, branchRect.bottom() - side);
-			branchPath.closeSubpath();
-		} else
-		{
-			branchPath.moveTo(
-				branchRect.left() + side, branchRect.top() + side);
-			branchPath.lineTo(
-				branchRect.right() - side, branchRect.top() + side);
-			branchPath.lineTo(branchRect.left() + branchRect.width() / 2.f,
-				branchRect.bottom() - side - 1);
-			branchPath.closeSubpath();
-		}
-
-		if (painter.testRenderHint(QPainter::Antialiasing))
-		{
-			painter.fillPath(branchPath, fillClr);
-			painter.drawPath(branchPath);
-		} else
-		{
-			painter.setRenderHint(QPainter::Antialiasing, true);
-			painter.fillPath(branchPath, fillClr);
-			painter.drawPath(branchPath);
-			painter.setRenderHint(QPainter::Antialiasing, false);
-		}
-
-		painter.restore();
-	};
-
-	brItem.eventHandler = [this](QtnEventContext &context, const QtnSubItem &,
-							  QtnPropertyToEdit *) -> bool {
-		if ((context.eventType() == QEvent::MouseButtonPress) ||
-			(context.eventType() == QEvent::MouseButtonDblClick))
-		{
-			stateProperty()->toggleState(QtnPropertyStateCollapsed);
-			return true;
-		}
-
-		return false;
-	};
-
-	brItem.tooltipHandler = [this](QtnEventContext &,
-								const QtnSubItem &) -> QString {
-		return (stateProperty()->isCollapsed())
-			? QtnPropertyView::tr("Click to expand")
-			: QtnPropertyView::tr("Click to collapse");
-	};
-
-	subItems.append(brItem);
-}
-
 void QtnPropertyDelegateWithValues::addSubItemName(
 	QtnDrawContext &context, QList<QtnSubItem> &subItems)
 {
@@ -297,11 +218,8 @@ void QtnPropertyDelegateWithValues::addSubItemName(
 							   const QtnSubItem &item) {
 		context.painter->save();
 
-		auto cg = stateProperty()->isEditableByUser() ? context.colorGroup()
-													  : QPalette::Disabled;
-		auto color = context.palette().color(
-			cg, context.isActive ? QPalette::HighlightedText : QPalette::Text);
-		context.painter->setPen(color);
+		context.painter->setPen(
+			context.textColorFor(stateProperty()->isEditableByUser()));
 
 		if (!stateProperty()->valueIsDefault())
 		{
@@ -324,45 +242,23 @@ void QtnPropertyDelegateWithValues::addSubItemName(
 void QtnPropertyDelegateWithValues::addSubItemReset(
 	QtnDrawContext &context, QList<QtnSubItem> &subItems)
 {
-	if (!stateProperty()->isResettable() ||
-		!stateProperty()->isEditableByUser())
+	if (!stateProperty()->isResettable() || stateProperty()->valueIsDefault())
+	{
 		return;
+	}
 
 	QtnSubItem resetItem(context.rect.marginsRemoved(context.margins));
 	resetItem.rect.setLeft(resetItem.rect.right() - resetItem.rect.height());
-	resetItem.setTextAsTooltip(QtnPropertyView::tr("Reset to default value"));
-	resetItem.trackState();
-
 	if (!resetItem.rect.isValid())
 		return;
 
+	resetItem.setTextAsTooltip(QtnPropertyView::tr("Reset to default value"));
+	resetItem.trackState();
+
 	resetItem.drawHandler = [this](QtnDrawContext &context,
 								const QtnSubItem &item) {
-
-		auto style = context.style();
-
-		QStyleOptionButton option;
-		context.initStyleOption(option);
-
-		option.state = state(context.isActive, item);
-
-		// dont initialize styleObject from widget for QWindowsVistaStyle
-		// this disables buggous animations
-		if (style->inherits("QWindowsVistaStyle"))
-			option.styleObject = nullptr;
-
-		option.rect = item.rect;
-		QIcon icon = resetIcon();
-		if (!icon.availableSizes().empty())
-		{
-			option.icon = icon;
-			option.iconSize = icon.actualSize(item.rect.size());
-		} else
-			option.text = "R";
-
-		// draw button
-		style->drawControl(
-			QStyle::CE_PushButton, &option, context.painter, context.widget);
+		drawButton(context, item, resetIcon(),
+			QtnPropertyView::tr("R", "Reset button text"));
 	};
 
 	resetItem.eventHandler = [this](QtnEventContext &context,
@@ -395,9 +291,9 @@ void QtnPropertyDelegateWithValues::addSubItemValues(
 	QtnDrawContext &context, QList<QtnSubItem> &subItems)
 {
 	auto rect = context.rect.marginsRemoved(context.margins);
-	rect.setLeft(context.splitPos + context.widget->valueLeftMargin());
+	rect.setLeft(context.splitPos);
 
-	if (stateProperty()->isResettable() && stateProperty()->isEditableByUser())
+	if (stateProperty()->isResettable() && !stateProperty()->valueIsDefault())
 	{
 		rect.setRight(rect.right() - rect.height());
 	}
@@ -419,6 +315,12 @@ void QtnPropertyDelegateWithValue::createSubItemValuesImpl(
 	QtnSubItem subItem(valueRect);
 	if (createSubItemValueImpl(context, subItem))
 		subItems.append(subItem);
+}
+
+bool QtnPropertyDelegateWithValueEditor::propertyValueToStr(
+	QString &strValue) const
+{
+	return propertyValueToStrImpl(strValue);
 }
 
 QtnPropertyDelegateWithValueEditor::QtnPropertyDelegateWithValueEditor(
@@ -445,16 +347,20 @@ bool QtnPropertyDelegateWithValueEditor::createSubItemValueImpl(
 	subItemValue.drawHandler = [this](QtnDrawContext &context,
 								   const QtnSubItem &item) {
 		// draw property value
+		auto oldBrush = context.painter->brush();
 		auto oldPen = context.painter->pen();
-		auto cg = (stateProperty()->isEditableByUser() &&
-					  !stateProperty()->isMultiValue())
-			? context.colorGroup()
-			: QPalette::Disabled;
-		auto color = context.palette().color(
-			cg, context.isActive ? QPalette::HighlightedText : QPalette::Text);
+		auto isNormalText = stateProperty()->isEditableByUser() &&
+			!stateProperty()->isMultiValue();
+		auto cg = isNormalText ? context.colorGroup() : QPalette::Disabled;
+		auto color = context.textColorFor(isNormalText);
+		auto bgColor = context.isActive
+			? context.palette().color(cg, QPalette::Highlight)
+			: context.alternateColor();
 
+		context.painter->setBrush(bgColor);
 		context.painter->setPen(color);
 		drawValueImpl(*context.painter, item.rect);
+		context.painter->setBrush(oldBrush);
 		context.painter->setPen(oldPen);
 	};
 
@@ -511,20 +417,55 @@ bool QtnPropertyDelegateWithValueEditor::createSubItemValueImpl(
 	return true;
 }
 
+bool QtnPropertyDelegateWithValueEditor::isNormalPainterState(
+	const QStylePainter &painter) const
+{
+	if (!stateProperty())
+	{
+		return false;
+	}
+
+	if (!stateProperty()->isEditableByUser())
+	{
+		return false;
+	}
+
+	auto palette = painter.style()->standardPalette();
+	return palette.currentColorGroup() != QPalette::Disabled &&
+		painter.brush().color() != palette.color(QPalette::Highlight);
+}
+
+bool QtnPropertyDelegateWithValueEditor::isPlaceholderColor() const
+{
+	return false;
+}
+
 void QtnPropertyDelegateWithValueEditor::drawValueImpl(
 	QStylePainter &painter, const QRect &rect) const
 {
 	if (stateProperty()->isMultiValue())
 	{
-		qtnDrawValueText(
-			QtnMultiProperty::getMultiValuePlaceholder(), painter, rect);
+		qtnDrawValueText(QtnMultiProperty::getMultiValuePlaceholder(), painter,
+			rect, painter.style());
 		return;
 	}
 
 	QString strValue;
 	if (propertyValueToStrImpl(strValue))
 	{
-		qtnDrawValueText(strValue, painter, rect);
+		QPen oldPen;
+		bool penChanged = false;
+		if (isNormalPainterState(painter) && isPlaceholderColor())
+		{
+			oldPen = painter.pen();
+			penChanged = true;
+			painter.setPen(disabledTextColor(painter));
+		}
+		qtnDrawValueText(strValue, painter, rect, painter.style());
+		if (penChanged)
+		{
+			painter.setPen(oldPen);
+		}
 	}
 }
 
@@ -573,7 +514,7 @@ bool QtnPropertyDelegateError::createSubItemValueImpl(
 								   const QtnSubItem &item) {
 		QPen oldPen = context.painter->pen();
 		context.painter->setPen(Qt::red);
-		qtnDrawValueText(m_error, *context.painter, item.rect);
+		qtnDrawValueText(m_error, *context.painter, item.rect, context.style());
 		context.painter->setPen(oldPen);
 	};
 
@@ -589,4 +530,45 @@ QtnPropertyDelegate *qtnCreateDelegateError(
 QtnInplaceInfo::QtnInplaceInfo()
 	: activationEvent(0)
 {
+}
+
+void QtnPropertyDelegate::drawButton(const QtnDrawContext &context,
+	const QtnSubItem &item, const QIcon &icon, const QString &text)
+{
+	auto style = context.style();
+
+	QStyleOptionToolButton option;
+	context.initStyleOption(option);
+
+	option.state = state(context.isActive, item);
+	option.state &= ~QStyle::State_HasFocus;
+	if (0 == (option.state & QStyle::State_Sunken))
+	{
+		option.state |= QStyle::State_Raised;
+	}
+	// dont initialize styleObject from widget for QWindowsVistaStyle
+	// this disables buggous animations
+	if (style->inherits("QWindowsVistaStyle"))
+		option.styleObject = nullptr;
+#ifdef Q_OS_MAC
+	option.state &= ~QStyle::State_MouseOver;
+#endif
+	option.features = QStyleOptionToolButton::None;
+	option.subControls = QStyle::SC_ToolButton;
+	option.activeSubControls = QStyle::SC_ToolButton;
+	option.toolButtonStyle = Qt::ToolButtonIconOnly;
+	option.rect = item.rect;
+	option.arrowType = Qt::NoArrow;
+	if (!icon.availableSizes().empty())
+	{
+		option.icon = icon;
+		option.iconSize = icon.actualSize(item.rect.size());
+	} else
+	{
+		option.text = text.isEmpty() ? QStringLiteral("*") : text;
+	}
+
+	// draw button
+	style->drawComplexControl(
+		QStyle::CC_ToolButton, &option, context.painter, context.widget);
 }

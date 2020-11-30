@@ -159,11 +159,12 @@ void QtnMultiProperty::onPropertyDidChange(QtnPropertyChangeReason reason)
 
 	Q_ASSERT(nullptr != qobject_cast<QtnProperty *>(sender()));
 	auto changedProperty = static_cast<QtnProperty *>(sender());
-	if (edited && (reason & QtnPropertyChangeReasonEditValue))
+	if (edited && (reason & QtnPropertyChangeReasonEdit) &&
+		(reason & QtnPropertyChangeReasonValue))
 	{
 		auto value = changedProperty->valueAsVariant();
 
-		auto singleReason = reason & ~QtnPropertyChangeReasonEditMultiValue;
+		auto singleReason = reason & ~QtnPropertyChangeReasonMultiEdit;
 
 		m_subPropertyUpdates++;
 		for (auto property : properties)
@@ -183,6 +184,32 @@ void QtnMultiProperty::onPropertyDidChange(QtnPropertyChangeReason reason)
 	}
 
 	emit propertyDidChange(reason);
+}
+
+void QtnMultiProperty::updatePropertyState()
+{
+	QtnProperty::updatePropertyState();
+
+	if (m_subPropertyUpdates)
+	{
+		return;
+	}
+
+	if (!stateLocal().testFlag(QtnPropertyStateUnlockable))
+	{
+		return;
+	}
+
+	bool isImmutable = stateLocal().testFlag(QtnPropertyStateImmutable);
+	m_subPropertyUpdates++;
+	for (auto property : properties)
+	{
+		if (property->stateLocal().testFlag(QtnPropertyStateUnlockable))
+		{
+			property->switchState(QtnPropertyStateImmutable, isImmutable);
+		}
+	}
+	m_subPropertyUpdates--;
 }
 
 bool QtnMultiProperty::loadImpl(QDataStream &stream)
@@ -345,27 +372,41 @@ void QtnMultiProperty::updateStateFrom(QtnProperty *source)
 	state |= source->stateLocal() & ~unchangedState;
 
 	state &= ~(QtnPropertyStateImmutable | QtnPropertyStateResettable |
-		QtnPropertyStateInvisible);
+		QtnPropertyStateInvisible | QtnPropertyStateUnlockable);
 
+	size_t unlockableCount = 0;
 	for (auto property : properties)
 	{
-		if (!property->isVisible())
+		auto childState = property->stateLocal();
+		if (childState.testFlag(QtnPropertyStateInvisible))
 		{
 			state |= QtnPropertyStateInvisible;
 		}
 
-		if (!property->isWritable())
+		if (childState.testFlag(QtnPropertyStateImmutable))
 		{
 			state |= QtnPropertyStateImmutable;
 		}
 
-		if (property->isResettable())
+		if (childState.testFlag(QtnPropertyStateResettable))
 		{
 			state |= QtnPropertyStateResettable;
 		}
+
+		if (childState.testFlag(QtnPropertyStateUnlockable))
+		{
+			unlockableCount++;
+		}
 	}
 
+	if (unlockableCount == properties.size())
+	{
+		state |= QtnPropertyStateUnlockable;
+	}
+
+	m_subPropertyUpdates++;
 	setState(state);
+	m_subPropertyUpdates--;
 }
 
 void QtnMultiProperty::updateMultipleState(bool force)
@@ -387,7 +428,11 @@ void QtnMultiProperty::updateMultipleState(bool force)
 		}
 	}
 
+	m_subPropertyUpdates++;
+
 	setState(state);
+
+	m_subPropertyUpdates--;
 }
 
 QtnMultiPropertyDelegate::QtnMultiPropertyDelegate(QtnMultiProperty &owner)

@@ -38,6 +38,7 @@ limitations under the License.
 #include "GUI/PropertyDelegateQPen.h"
 #include "GUI/PropertyDelegateQBrush.h"
 #include "GUI/PropertyDelegateQFont.h"
+#include "GUI/PropertyDelegateQVector3D.h"
 #include "GUI/PropertyDelegateButton.h"
 #include "QtnProperty/PropertyQKeySequence.h"
 #include "QtnProperty/PropertyInt64.h"
@@ -48,6 +49,7 @@ limitations under the License.
 
 QtnPropertyDelegateFactory::QtnPropertyDelegateFactory(
 	QtnPropertyDelegateFactory *superFactory)
+	: m_superFactory(nullptr)
 {
 	setSuperFactory(superFactory);
 }
@@ -249,6 +251,7 @@ void QtnPropertyDelegateFactory::registerDefaultDelegates(
 	QtnPropertyDelegateQPen::Register(factory);
 	QtnPropertyDelegateQBrushStyle::Register(factory);
 	QtnPropertyDelegateQKeySequence::Register(factory);
+	QtnPropertyDelegateQVector3D::Register(factory);
 	QtnMultiPropertyDelegate::Register(factory);
 }
 

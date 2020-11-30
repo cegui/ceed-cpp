@@ -34,6 +34,9 @@ class QTN_IMPORT_EXPORT QtnPropertyDelegateWithValues
 {
 	Q_DISABLE_COPY(QtnPropertyDelegateWithValues)
 
+public:
+	virtual bool isSplittable() const override;
+
 protected:
 	QtnPropertyDelegateWithValues(QtnPropertyBase &owner);
 
@@ -48,8 +51,7 @@ protected:
 		QtnDrawContext &context, QList<QtnSubItem> &subItems);
 	void addSubItemSelection(
 		QtnDrawContext &context, QList<QtnSubItem> &subItems);
-	void addSubItemBranchNode(
-		QtnDrawContext &context, QList<QtnSubItem> &subItems);
+
 	void addSubItemName(QtnDrawContext &context, QList<QtnSubItem> &subItems);
 	void addSubItemReset(QtnDrawContext &context, QList<QtnSubItem> &subItems);
 	void addSubItemValues(QtnDrawContext &context, QList<QtnSubItem> &subItems);
@@ -81,6 +83,8 @@ public:
 	inline void drawValue(QStylePainter &painter, const QRect &rect) const;
 	inline bool acceptKeyPressedForInplaceEdit(QKeyEvent *keyEvent) const;
 
+	bool propertyValueToStr(QString &strValue) const;
+
 protected:
 	QtnPropertyDelegateWithValueEditor(QtnPropertyBase &owner);
 
@@ -92,6 +96,8 @@ protected:
 	bool createSubItemValueImpl(
 		QtnDrawContext &context, QtnSubItem &subItemValue) override;
 
+	bool isNormalPainterState(const QStylePainter &painter) const;
+	virtual bool isPlaceholderColor() const;
 	// override to draw property value or override propertyValueToStrImpl to draw value as text
 	virtual void drawValueImpl(QStylePainter &painter, const QRect &rect) const;
 	// override to filter key events that will activate property Editor

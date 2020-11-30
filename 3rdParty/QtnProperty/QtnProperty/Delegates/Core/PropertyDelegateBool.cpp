@@ -21,6 +21,7 @@ limitations under the License.
 #include "QtnProperty/Delegates/PropertyDelegateFactory.h"
 #include "QtnProperty/Delegates/Utils/PropertyEditorHandler.h"
 #include "QtnProperty/PropertyDelegateAttrs.h"
+#include "QtnProperty/PropertyView.h"
 #include "QtnProperty/Delegates/Utils/PropertyEditorAux.h"
 
 #include <QStyleOption>
@@ -70,6 +71,7 @@ bool QtnPropertyDelegateBoolCheck::createSubItemValueImpl(
 	QtnDrawContext &context, QtnSubItem &subItemValue)
 {
 	subItemValue.trackState();
+	subItemValue.rect.adjust(context.widget->valueLeftMargin(), 0, 0, 0);
 	subItemValue.rect.setWidth(
 		context.style()->pixelMetric(QStyle::PM_IndicatorWidth));
 

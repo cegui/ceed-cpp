@@ -56,7 +56,8 @@ QtnPropertyState qtnPropertyStateToAdd(const QMetaProperty &metaProperty)
 	if (!metaProperty.isDesignable())
 		toAdd |= QtnPropertyStateInvisible;
 
-	if (metaProperty.isConstant() || !metaProperty.isWritable())
+	if (metaProperty.isConstant() ||
+		(!metaProperty.isWritable() && !metaProperty.isResettable()))
 	{
 		toAdd |= QtnPropertyStateImmutable;
 	}
@@ -111,7 +112,7 @@ QtnProperty *qtnCreateQObjectProperty(QObject *object,
 
 	qtnUpdatePropertyState(property, metaProperty);
 
-	if (connect && metaProperty.hasNotifySignal())
+	if (connect)
 	{
 		auto connector = new QtnPropertyConnector(property);
 		connector->connectProperty(object, metaProperty);

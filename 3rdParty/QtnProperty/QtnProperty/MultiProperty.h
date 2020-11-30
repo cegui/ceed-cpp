@@ -57,6 +57,7 @@ private:
 	void onPropertyDidChange(QtnPropertyChangeReason reason);
 
 protected:
+	virtual void updatePropertyState() override;
 	virtual void doReset(QtnPropertyChangeReason reason) override;
 	virtual bool loadImpl(QDataStream &stream) override;
 	virtual bool saveImpl(QDataStream &stream) const override;

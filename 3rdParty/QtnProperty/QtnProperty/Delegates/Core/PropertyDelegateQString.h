@@ -45,14 +45,12 @@ protected:
 
 	virtual bool propertyValueToStrImpl(QString &strValue) const override;
 
-	virtual void drawValueImpl(
-		QStylePainter &painter, const QRect &rect) const override;
-
-	bool isPlaceholderColor() const;
+	virtual bool isPlaceholderColor() const override;
 
 protected:
 	int m_maxLength;
 	bool m_multiline;
+	QString m_placeholder;
 };
 
 class QTN_IMPORT_EXPORT QtnPropertyDelegateQStringInvalidBase
@@ -129,6 +127,8 @@ using QtnCreateCandidateFn = std::function<QString(QWidget *, QString)>;
 Q_DECLARE_METATYPE(QtnGetCandidatesFn);
 Q_DECLARE_METATYPE(QtnCreateCandidateFn);
 
+class QtnPropertyQStringCandidatesComboBoxHandler;
+
 class QTN_IMPORT_EXPORT QtnPropertyDelegateQStringCallback
 	: public QtnPropertyDelegateQString
 {
@@ -140,12 +140,14 @@ public:
 	static void Register(QtnPropertyDelegateFactory &factory);
 
 protected:
-	void applyAttributesImpl(const QtnPropertyDelegateInfo &info) override;
-	QWidget *createValueEditorImpl(QWidget *parent, const QRect &rect,
+	virtual void applyAttributesImpl(
+		const QtnPropertyDelegateInfo &info) override;
+	virtual QWidget *createValueEditorImpl(QWidget *parent, const QRect &rect,
 		QtnInplaceInfo *inplaceInfo = nullptr) override;
 
 private:
 	QtnPropertyDelegateInfo m_editorAttributes;
+	friend class QtnPropertyQStringCandidatesComboBoxHandler;
 };
 
 #endif // PROPERTY_DELEGATE_QSTRING_H
