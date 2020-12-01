@@ -125,6 +125,7 @@ CodeEditModeCommand::CodeEditModeCommand(CodeEditMode& owner, const QString& old
     , _newText(newText)
     , _totalChange(totalChange)
 {
+    refreshText();
 }
 
 void CodeEditModeCommand::undo()

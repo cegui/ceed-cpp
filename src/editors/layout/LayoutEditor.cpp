@@ -168,7 +168,7 @@ QStringList LayoutEditor::getFileExtensions() const
 void LayoutEditor::getRawData(QByteArray& outRawData)
 {
     // If user saved in code mode, we process the code by propagating it to visual
-    // (allowing the change propagation to do the code validating and other work for us)
+    // (allowing the change propagation to do the code validation and other work for us)
     if (tabs.currentWidget() == codeMode)
         codeMode->propagateToVisual();
 

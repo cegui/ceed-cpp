@@ -2,3 +2,4 @@
 *.pro.user*
 /3rdParty/CEGUI
 *.qm
+!3rdParty/CEGUI/update_cegui_win_sdk.cmd
