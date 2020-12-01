@@ -7,6 +7,7 @@
 CodeEditMode::CodeEditMode(MultiModeEditor& editor)
     : IEditMode(editor)
 {
+    // FIXME: how to override Ctrl+Z? Tried eventFilter and QShortcut for no luck.
     document()->setUndoRedoEnabled(false);
     connect(document(), &QTextDocument::contentsChange, this, &CodeEditMode::slot_contentsChange);
 
@@ -22,8 +23,10 @@ void CodeEditMode::activate(MainWindow& /*mainWindow*/)
     refreshFromVisual();
 }
 
-bool CodeEditMode::deactivate(MainWindow& /*mainWindow*/)
+bool CodeEditMode::deactivate(MainWindow& /*mainWindow*/, bool editorDeactivated)
 {
+    if (editorDeactivated) return true;
+
     bool ret = propagateToVisual();
     if (!ret)
     {

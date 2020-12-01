@@ -34,7 +34,7 @@ public:
     virtual ~LayoutVisualMode() override;
 
     virtual void activate(MainWindow& mainWindow) override;
-    virtual bool deactivate(MainWindow& mainWindow) override;
+    virtual bool deactivate(MainWindow& mainWindow, bool editorDeactivated) override;
 
     void setRootWidgetManipulator(LayoutManipulator* manipulator);
     CEGUI::Window* getRootWidget() const;

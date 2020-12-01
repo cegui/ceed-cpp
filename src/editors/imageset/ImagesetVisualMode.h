@@ -20,7 +20,7 @@ public:
     virtual ~ImagesetVisualMode() override;
 
     virtual void activate(MainWindow& mainWindow) override;
-    virtual bool deactivate(MainWindow& mainWindow) override;
+    virtual bool deactivate(MainWindow& mainWindow, bool editorDeactivated) override;
 
     void loadImagesetEntryFromElement(const QDomElement& xmlRoot);
     void rebuildEditorMenu(QMenu* editorMenu);

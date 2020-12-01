@@ -34,7 +34,7 @@ void LayoutPreviewerMode::activate(MainWindow& mainWindow)
     ceguiWidget->getScene()->getCEGUIContext()->setRootWindow(rootWidget);
 }
 
-bool LayoutPreviewerMode::deactivate(MainWindow& mainWindow)
+bool LayoutPreviewerMode::deactivate(MainWindow& mainWindow, bool editorDeactivated)
 {
     if (rootWidget)
     {
@@ -42,5 +42,5 @@ bool LayoutPreviewerMode::deactivate(MainWindow& mainWindow)
         rootWidget = nullptr;
     }
 
-    return IEditMode::deactivate(mainWindow);
+    return IEditMode::deactivate(mainWindow, editorDeactivated);
 }

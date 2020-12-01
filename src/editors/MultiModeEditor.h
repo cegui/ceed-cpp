@@ -16,7 +16,7 @@ public:
     virtual ~IEditMode();
 
     virtual void activate(MainWindow& /*mainWindow*/) {}
-    virtual bool deactivate(MainWindow& /*mainWindow*/) { return true; } // If this returns false, the action is terminated and the mode stays in place
+    virtual bool deactivate(MainWindow& /*mainWindow*/, bool /*editorDeactivated*/) { return true; } // If this returns false, the action is terminated and the mode stays in place
 
     void disconnectActiveStateConnections();
     void disconnectAllConnections();

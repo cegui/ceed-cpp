@@ -118,7 +118,7 @@ void ImagesetVisualMode::activate(MainWindow& mainWindow)
     slot_toggleEditOffsets(editOffsetsAction->isChecked());
 }
 
-bool ImagesetVisualMode::deactivate(MainWindow& mainWindow)
+bool ImagesetVisualMode::deactivate(MainWindow& mainWindow, bool editorDeactivated)
 {
     disconnectActiveStateConnections();
 
@@ -127,7 +127,7 @@ bool ImagesetVisualMode::deactivate(MainWindow& mainWindow)
     dockWidget->setEnabled(false);
     mainWindow.getToolbar("Imageset")->setEnabled(false);
 
-    return IEditMode::deactivate(mainWindow);
+    return IEditMode::deactivate(mainWindow, editorDeactivated);
 }
 
 void ImagesetVisualMode::createActiveStateConnections()

@@ -165,7 +165,7 @@ void LayoutVisualMode::activate(MainWindow& mainWindow)
     createActiveStateConnections();
 }
 
-bool LayoutVisualMode::deactivate(MainWindow& mainWindow)
+bool LayoutVisualMode::deactivate(MainWindow& mainWindow, bool editorDeactivated)
 {
     disconnectActiveStateConnections();
 
@@ -176,7 +176,7 @@ bool LayoutVisualMode::deactivate(MainWindow& mainWindow)
 
     mainWindow.setEditorMenuEnabled(false);
 
-    return IEditMode::deactivate(mainWindow);
+    return IEditMode::deactivate(mainWindow, editorDeactivated);
 }
 
 void LayoutVisualMode::setRootWidgetManipulator(LayoutManipulator* manipulator)

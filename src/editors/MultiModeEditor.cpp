@@ -59,7 +59,7 @@ void MultiModeEditor::deactivate(MainWindow& mainWindow)
     disconnect(&tabs, &QTabWidget::currentChanged, this, &MultiModeEditor::slot_currentChanged);
 
     if (auto mode = dynamic_cast<IEditMode*>(tabs.currentWidget()))
-        mode->deactivate(mainWindow);
+        mode->deactivate(mainWindow, true);
 
     EditorBase::deactivate(mainWindow);
 }
@@ -83,7 +83,7 @@ void MultiModeEditor::slot_currentChanged(int newTabIndex)
 
     auto& mainWindow = *qobject_cast<Application*>(qApp)->getMainWindow();
 
-    if (prevTabMode && !prevTabMode->deactivate(mainWindow))
+    if (prevTabMode && !prevTabMode->deactivate(mainWindow, false))
     {
         ignoreCurrentChanged = true;
         tabs.setCurrentWidget(prevTabWidget);
