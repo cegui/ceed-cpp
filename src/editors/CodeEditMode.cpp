@@ -17,10 +17,12 @@ CodeEditMode::CodeEditMode(MultiModeEditor& editor)
     document()->setDefaultFont(font);
 }
 
-void CodeEditMode::activate(MainWindow& /*mainWindow*/)
+void CodeEditMode::activate(MainWindow& /*mainWindow*/, bool editorActivated)
 {
     //IEditMode::activate(mainWindow);
-    refreshFromVisual();
+
+    // Update text only when first opened or when an editor mode is switched
+    if (!editorActivated) refreshFromVisual();
 }
 
 bool CodeEditMode::deactivate(MainWindow& /*mainWindow*/, bool editorDeactivated)

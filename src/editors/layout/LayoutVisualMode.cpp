@@ -143,9 +143,9 @@ LayoutVisualMode::~LayoutVisualMode()
     delete createWidgetDockWidget;
 }
 
-void LayoutVisualMode::activate(MainWindow& mainWindow)
+void LayoutVisualMode::activate(MainWindow& mainWindow, bool editorActivated)
 {
-    IEditMode::activate(mainWindow);
+    IEditMode::activate(mainWindow, editorActivated);
 
     hierarchyDockWidget->setEnabled(true);
 

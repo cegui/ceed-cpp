@@ -15,7 +15,7 @@ public:
     IEditMode(MultiModeEditor& editor) : _editor(editor) {}
     virtual ~IEditMode();
 
-    virtual void activate(MainWindow& /*mainWindow*/) {}
+    virtual void activate(MainWindow& /*mainWindow*/, bool /*editorActivated*/) {}
     virtual bool deactivate(MainWindow& /*mainWindow*/, bool /*editorDeactivated*/) { return true; } // If this returns false, the action is terminated and the mode stays in place
 
     void disconnectActiveStateConnections();

@@ -23,7 +23,7 @@ public:
 
     explicit LayoutPreviewerMode(LayoutEditor& editor, QWidget *parent = nullptr);
 
-    virtual void activate(MainWindow& mainWindow) override;
+    virtual void activate(MainWindow& mainWindow, bool editorActivated) override;
     virtual bool deactivate(MainWindow& mainWindow, bool editorDeactivated) override;
 
 protected:

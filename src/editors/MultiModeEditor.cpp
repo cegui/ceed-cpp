@@ -49,7 +49,7 @@ void MultiModeEditor::activate(MainWindow& mainWindow)
     EditorBase::activate(mainWindow);
 
     if (auto mode = dynamic_cast<IEditMode*>(tabs.currentWidget()))
-        mode->activate(mainWindow);
+        mode->activate(mainWindow, true);
 
     connect(&tabs, &QTabWidget::currentChanged, this, &MultiModeEditor::slot_currentChanged);
 }
@@ -91,7 +91,7 @@ void MultiModeEditor::slot_currentChanged(int newTabIndex)
         return;
     }
 
-    if (currTabMode) currTabMode->activate(mainWindow);
+    if (currTabMode) currTabMode->activate(mainWindow, false);
 
     if (!ignoreCurrentChangedForUndo)
         undoStack->push(new ModeSwitchCommand(*this, currentTabIndex, newTabIndex));

@@ -103,9 +103,9 @@ ImagesetVisualMode::~ImagesetVisualMode()
     delete dockWidget;
 }
 
-void ImagesetVisualMode::activate(MainWindow& mainWindow)
+void ImagesetVisualMode::activate(MainWindow& mainWindow, bool editorActivated)
 {
-    IEditMode::activate(mainWindow);
+    IEditMode::activate(mainWindow, editorActivated);
 
     dockWidget->setEnabled(true);
     mainWindow.getToolbar("Imageset")->setEnabled(true);

@@ -22,9 +22,9 @@ LayoutPreviewerMode::LayoutPreviewerMode(LayoutEditor& editor, QWidget* parent)
     ceguiWidget->setInputEnabled(true);
 }
 
-void LayoutPreviewerMode::activate(MainWindow& mainWindow)
+void LayoutPreviewerMode::activate(MainWindow& mainWindow, bool editorActivated)
 {
-    IEditMode::activate(mainWindow);
+    IEditMode::activate(mainWindow, editorActivated);
 
     assert(!rootWidget);
 

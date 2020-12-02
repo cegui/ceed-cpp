@@ -19,7 +19,7 @@ public:
     ImagesetVisualMode(MultiModeEditor& editor);
     virtual ~ImagesetVisualMode() override;
 
-    virtual void activate(MainWindow& mainWindow) override;
+    virtual void activate(MainWindow& mainWindow, bool editorActivated) override;
     virtual bool deactivate(MainWindow& mainWindow, bool editorDeactivated) override;
 
     void loadImagesetEntryFromElement(const QDomElement& xmlRoot);
