@@ -1,13 +1,13 @@
 #include "src/editors/CodeEditMode.h"
 #include "qmessagebox.h"
 #include "qscrollbar.h"
+#include <qevent.h>
 
 // TODO: Some highlighting and other aids
 
 CodeEditMode::CodeEditMode(MultiModeEditor& editor)
     : IEditMode(editor)
 {
-    // FIXME: how to override Ctrl+Z? Tried eventFilter and QShortcut for no luck.
     document()->setUndoRedoEnabled(false);
     connect(document(), &QTextDocument::contentsChange, this, &CodeEditMode::slot_contentsChange);
 
@@ -15,6 +15,24 @@ CodeEditMode::CodeEditMode(MultiModeEditor& editor)
     QFont font("Courier New", 10);
     font.setStyleHint(QFont::Monospace);
     document()->setDefaultFont(font);
+}
+
+void CodeEditMode::keyPressEvent(QKeyEvent* event)
+{
+    if (event == QKeySequence::Undo)
+    {
+        _editor.getUndoStack()->undo();
+        event->accept();
+        return;
+    }
+    else if (event == QKeySequence::Redo)
+    {
+        _editor.getUndoStack()->redo();
+        event->accept();
+        return;
+    }
+
+    QTextEdit::keyPressEvent(event);
 }
 
 void CodeEditMode::activate(MainWindow& /*mainWindow*/, bool editorActivated)
@@ -154,13 +172,14 @@ int CodeEditModeCommand::id() const
     return 1000 + 1;
 }
 
+// FIXME: need compact undo/redo, not the whole text saving. See QTextEdit source code. For 1.x release?
 bool CodeEditModeCommand::mergeWith(const QUndoCommand* other)
 {
     const CodeEditModeCommand* otherCmd = dynamic_cast<const CodeEditModeCommand*>(other);
     assert(&_owner == &otherCmd->_owner);
 
-    // TODO: 10 chars for now for testing
-    if (_totalChange + otherCmd->_totalChange < 10)
+    // Slice changes by 64 chars for now, can change
+    if (_totalChange + otherCmd->_totalChange < 64)
     {
         _totalChange += otherCmd->_totalChange;
         _newText = otherCmd->_newText;

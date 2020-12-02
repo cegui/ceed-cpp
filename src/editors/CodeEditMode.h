@@ -13,6 +13,9 @@ public:
 
     CodeEditMode(MultiModeEditor& editor);
 
+    // QTextEdit
+    virtual void keyPressEvent(QKeyEvent* event) override;
+
     // IEditMode
     virtual void activate(MainWindow& mainWindow, bool editorActivated) override;
     virtual bool deactivate(MainWindow& mainWindow, bool editorDeactivated) override;
