@@ -43,6 +43,7 @@ public:
     void moveSelectedWidgetsInParentWidgetLists(int delta);
 
     void ignoreSelectionChanges(bool ignore) { _ignoreSelectionChanges = ignore; }
+    void batchSelection(bool active) { _batchSelection = active; }
 
     void onManipulatorRemoved(LayoutManipulator* manipulator);
     void onManipulatorUpdatedFromWidget(LayoutManipulator* manipulator);
@@ -116,6 +117,7 @@ protected:
     NumericValueItem* _anchorTextY = nullptr;
 
     bool _ignoreSelectionChanges = false;
+    bool _batchSelection = false;
 };
 
 #endif // LAYOUTSCENE_H

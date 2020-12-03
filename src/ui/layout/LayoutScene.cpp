@@ -65,7 +65,10 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
 
     if (_multiSet) _multiSet->clearChildProperties();
 
+    // Clear scene without reacting on selection changes. Will update once at the end when items recreated.
+    disconnect(this, &LayoutScene::selectionChanged, this, &LayoutScene::onSelectionChanged);
     clear();
+    connect(this, &LayoutScene::selectionChanged, this, &LayoutScene::onSelectionChanged);
 
     rootManipulator = manipulator;
 
@@ -99,6 +102,9 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
         _anchorTextX = nullptr;
         _anchorTextY = nullptr;
     }
+
+    // Finally update the selection to reflect that there is nothing selected
+    emit selectionChanged();
 }
 
 LayoutManipulator* LayoutScene::getManipulatorByPath(const QString& widgetPath) const
@@ -505,6 +511,8 @@ static void ensureParentIsExpanded(QTreeView* view, QStandardItem* treeItem)
 
 void LayoutScene::onSelectionChanged()
 {
+    if (_batchSelection) return;
+
     std::set<LayoutManipulator*> selectedWidgets;
     collectSelectedWidgets(selectedWidgets);
 

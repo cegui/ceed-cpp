@@ -181,8 +181,6 @@ bool LayoutVisualMode::deactivate(MainWindow& mainWindow, bool editorDeactivated
 
 void LayoutVisualMode::setRootWidgetManipulator(LayoutManipulator* manipulator)
 {
-    auto oldRoot = getRootWidget();
-
     // Remember selection
     std::set<QString> selectedPaths;
     std::set<LayoutManipulator*> selectedWidgets;
@@ -191,22 +189,21 @@ void LayoutVisualMode::setRootWidgetManipulator(LayoutManipulator* manipulator)
         selectedPaths.insert(manipulator->getWidgetPath());
 
     // Set new root
+    auto oldRoot = getRootWidget();
     scene->setRootWidgetManipulator(manipulator);
     hierarchyDockWidget->setRootWidgetManipulator(manipulator);
+    if (oldRoot) CEGUI::WindowManager::getSingleton().destroyWindow(oldRoot);
 
     // Restore selection
     if (!selectedPaths.empty())
     {
-        scene->ignoreSelectionChanges(true);
+        scene->batchSelection(true);
         for (const QString& path : selectedPaths)
             if (auto manipulator = scene->getManipulatorByPath(path))
                 manipulator->setSelected(true);
-        scene->ignoreSelectionChanges(false);
+        scene->batchSelection(false);
         emit scene->selectionChanged();
     }
-
-    if (oldRoot)
-        CEGUI::WindowManager::getSingleton().destroyWindow(oldRoot);
 }
 
 CEGUI::Window* LayoutVisualMode::getRootWidget() const
