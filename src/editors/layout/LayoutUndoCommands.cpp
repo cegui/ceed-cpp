@@ -338,6 +338,14 @@ void LayoutCreateCommand::redo()
     // Default maximum size to the whole screen
     widget->setMaxSize(CEGUI::USize(CEGUI::UDim(1.f, 0.f), CEGUI::UDim(1.f, 0.f)));
 
+    // Create GLC capable to accept children
+    if (auto glc = dynamic_cast<CEGUI::GridLayoutContainer*>(widget))
+    {
+        glc->setAutoGrowing(true);
+        glc->setRowMajor(true);
+        glc->setGridWidth(2);
+    }
+
     LayoutManipulator* manipulator;
     if (parent)
     {
