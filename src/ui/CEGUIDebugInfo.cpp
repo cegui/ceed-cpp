@@ -51,28 +51,8 @@ font-size: 10px;\
 </table>\
 </html>");
 
-/*
-//???need at all? it is a per-view data and it has no much significance in an editor,
-//especially when continuous rendering is disabled
-        self.updateFPSTick()
-*/
-
     QDialog::show();
 }
-
-/*
-    def updateFPSTick(self):
-        if not self.isVisible():
-            return
-
-        lastRenderDelta = self.containerWidget.ceguiInstance.lastRenderTimeDelta
-        if lastRenderDelta <= 0:
-            lastRenderDelta = 1
-
-        self.currentFPSBox.setText("%0.6f" % (1.0 / lastRenderDelta))
-
-        QtCore.QTimer.singleShot(500, self.updateFPSTick)
-*/
 
 void CEGUIDebugInfo::logEvent(const CEGUI::String& message, CEGUI::LoggingLevel level)
 {

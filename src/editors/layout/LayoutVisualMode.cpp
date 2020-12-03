@@ -183,8 +183,27 @@ void LayoutVisualMode::setRootWidgetManipulator(LayoutManipulator* manipulator)
 {
     auto oldRoot = getRootWidget();
 
+    // Remember selection
+    std::set<QString> selectedPaths;
+    std::set<LayoutManipulator*> selectedWidgets;
+    scene->collectSelectedWidgets(selectedWidgets);
+    for (LayoutManipulator* manipulator : selectedWidgets)
+        selectedPaths.insert(manipulator->getWidgetPath());
+
+    // Set new root
     scene->setRootWidgetManipulator(manipulator);
     hierarchyDockWidget->setRootWidgetManipulator(manipulator);
+
+    // Restore selection
+    if (!selectedPaths.empty())
+    {
+        scene->ignoreSelectionChanges(true);
+        for (const QString& path : selectedPaths)
+            if (auto manipulator = scene->getManipulatorByPath(path))
+                manipulator->setSelected(true);
+        scene->ignoreSelectionChanges(false);
+        emit scene->selectionChanged();
+    }
 
     if (oldRoot)
         CEGUI::WindowManager::getSingleton().destroyWindow(oldRoot);
