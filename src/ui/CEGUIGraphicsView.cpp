@@ -1,6 +1,7 @@
 #include "src/ui/CEGUIGraphicsView.h"
 #include "src/ui/CEGUIGraphicsScene.h"
 #include "src/util/Settings.h"
+#include "src/util/SettingsEntry.h"
 #include "src/util/Utils.h"
 #include "src/cegui/CEGUIUtils.h"
 #include "src/Application.h"
@@ -32,15 +33,15 @@ CEGUIGraphicsView::CEGUIGraphicsView(QWidget *parent) :
     setMouseTracking(true);
     setFocusPolicy(Qt::ClickFocus);
 
-    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
-    const auto checkerWidth = settings->getEntryValue("cegui/background/checker_width").toInt();
-    const auto checkerHeight = settings->getEntryValue("cegui/background/checker_height").toInt();
-    const auto checkerFirstColour = settings->getEntryValue("cegui/background/first_colour").value<QColor>();
-    const auto checkerSecondColour = settings->getEntryValue("cegui/background/second_colour").value<QColor>();
-
-    checkerboardBrush = Utils::getCheckerboardBrush(checkerWidth, checkerHeight, checkerFirstColour, checkerSecondColour);
-
     blitter = new QOpenGLTextureBlitter();
+
+    updateCheckerboardBrush();
+
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    connect(settings->getEntry("cegui/background/checker_width"), &SettingsEntry::valueChanged, this, &CEGUIGraphicsView::updateCheckerboardBrush);
+    connect(settings->getEntry("cegui/background/checker_height"), &SettingsEntry::valueChanged, this, &CEGUIGraphicsView::updateCheckerboardBrush);
+    connect(settings->getEntry("cegui/background/first_colour"), &SettingsEntry::valueChanged, this, &CEGUIGraphicsView::updateCheckerboardBrush);
+    connect(settings->getEntry("cegui/background/second_colour"), &SettingsEntry::valueChanged, this, &CEGUIGraphicsView::updateCheckerboardBrush);
 }
 
 CEGUIGraphicsView::~CEGUIGraphicsView()
@@ -149,6 +150,19 @@ void CEGUIGraphicsView::drawBackground(QPainter* painter, const QRectF& rect)
                 scene()->update();
         });
     }
+}
+
+void CEGUIGraphicsView::updateCheckerboardBrush()
+{
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    const auto checkerWidth = settings->getEntryValue("cegui/background/checker_width").toInt();
+    const auto checkerHeight = settings->getEntryValue("cegui/background/checker_height").toInt();
+    const auto checkerFirstColour = settings->getEntryValue("cegui/background/first_colour").value<QColor>();
+    const auto checkerSecondColour = settings->getEntryValue("cegui/background/second_colour").value<QColor>();
+
+    checkerboardBrush = Utils::getCheckerboardBrush(checkerWidth, checkerHeight, checkerFirstColour, checkerSecondColour);
+
+    if (scene()) scene()->update();
 }
 
 void CEGUIGraphicsView::wheelEvent(QWheelEvent* event)
