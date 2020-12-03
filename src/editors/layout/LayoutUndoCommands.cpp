@@ -717,7 +717,7 @@ void LayoutMoveInHierarchyCommand::undo()
         if (rec.oldName != rec.newName)
         {
             widgetManipulator->getWidget()->setName(CEGUIUtils::qStringToString(rec.oldName));
-            widgetManipulator->updatePropertiesFromWidget({"Name", "NamePath"});
+            widgetManipulator->updatePropertiesFromWidget({"Name"});
         }
 
         // Restore initial position and size if necessary
@@ -771,7 +771,7 @@ void LayoutMoveInHierarchyCommand::redo()
         if (rec.oldName != rec.newName)
         {
             widgetManipulator->getWidget()->setName(CEGUIUtils::qStringToString(rec.newName));
-            widgetManipulator->updatePropertiesFromWidget({"Name", "NamePath"});
+            widgetManipulator->updatePropertiesFromWidget({"Name"});
         }
 
         if (oldParentManipulator != newParentManipulator)
@@ -886,7 +886,7 @@ void LayoutRenameCommand::undo()
     const QString fullPath = _parentPath.isEmpty() ? _newName : _parentPath + '/' + _newName;
     auto manipulator = _visualMode.getScene()->getManipulatorByPath(fullPath);
     manipulator->getWidget()->setName(CEGUIUtils::qStringToString(_oldName));
-    manipulator->updatePropertiesFromWidget({"Name", "NamePath"});
+    manipulator->updatePropertiesFromWidget({"Name"});
 }
 
 void LayoutRenameCommand::redo()
@@ -894,7 +894,7 @@ void LayoutRenameCommand::redo()
     const QString fullPath = _parentPath.isEmpty() ? _oldName : _parentPath + '/' + _oldName;
     auto manipulator = _visualMode.getScene()->getManipulatorByPath(fullPath);
     manipulator->getWidget()->setName(CEGUIUtils::qStringToString(_newName));
-    manipulator->updatePropertiesFromWidget({"Name", "NamePath"});
+    manipulator->updatePropertiesFromWidget({"Name"});
 
     QUndoCommand::redo();
 }

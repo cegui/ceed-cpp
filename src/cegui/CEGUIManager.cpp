@@ -905,3 +905,16 @@ const QtnEnumInfo& CEGUIManager::enumVerticalTextFormatting()
     }
     return *_enumVerticalTextFormatting;
 }
+
+const QtnEnumInfo& CEGUIManager::enumItemListBaseSortMode()
+{
+    if (!_enumItemListBaseSortMode)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::ItemListBase::SortMode::Ascending), "Ascending", "Ascending"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::ItemListBase::SortMode::Descending), "Descending", "Descending"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::ItemListBase::SortMode::UserSort), "UserSort", "User defined"});
+        _enumItemListBaseSortMode = new QtnEnumInfo("ItemListBase::SortMode", values);
+    }
+    return *_enumItemListBaseSortMode;
+}

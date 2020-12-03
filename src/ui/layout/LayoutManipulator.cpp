@@ -473,7 +473,7 @@ void LayoutManipulator::onPropertyChanged(const QtnPropertyBase* property, CEGUI
 
         // Set actual name back to the property
         if (newName != value)
-            updatePropertiesFromWidget({"Name", "NamePath"});
+            updatePropertiesFromWidget({"Name"});
 
         return;
     }

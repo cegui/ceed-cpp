@@ -803,6 +803,20 @@ void CEGUIManipulator::moveToFront()
     static_cast<CEGUIManipulator*>(parentItem())->moveToFront();
 }
 
+static void updatePropertyFromWidget(CEGUI::Window& widget, const CEGUI::Property& ceguiProp, QtnProperty& prop)
+{
+    // FIXME: Qtn doesn't allow to update immutable property even if it is changed in object.
+    // For now we hack this by temporarily enable writing.
+    if (!ceguiProp.isWritable())
+        prop.removeState(QtnPropertyStateImmutable);
+
+    prop.fromStr(CEGUIUtils::stringToQString(ceguiProp.get(&widget)));
+
+    // FIXME: see above
+    if (!ceguiProp.isWritable())
+        prop.addState(QtnPropertyStateImmutable);
+}
+
 // Notify the property manager that the values of the given properties have changed for this widget
 void CEGUIManipulator::updatePropertiesFromWidget(const QStringList& propertyNames)
 {
@@ -811,12 +825,9 @@ void CEGUIManipulator::updatePropertiesFromWidget(const QStringList& propertyNam
         auto it = _propertyMap.find(propertyName);
         if (it != _propertyMap.end())
         {
-            const CEGUI::Property* ceguiProp = it->second.first;
-            QtnProperty* prop = it->second.second;
-            prop->fromStr(CEGUIUtils::stringToQString(ceguiProp->get(_widget)));
+            updatePropertyFromWidget(*_widget, *it->second.first, *it->second.second);
 
-            if (propertyName == "Name")
-                onWidgetNameChanged();
+            if (propertyName == "Name") onWidgetNameChanged();
         }
     }
 }
@@ -824,11 +835,7 @@ void CEGUIManipulator::updatePropertiesFromWidget(const QStringList& propertyNam
 void CEGUIManipulator::updateAllPropertiesFromWidget()
 {
     for (const auto& pair : _propertyMap)
-    {
-        const CEGUI::Property* ceguiProp = pair.second.first;
-        QtnProperty* prop = pair.second.second;
-        prop->fromStr(CEGUIUtils::stringToQString(ceguiProp->get(_widget)));
-    }
+        updatePropertyFromWidget(*_widget, *pair.second.first, *pair.second.second);
 
     onWidgetNameChanged();
 }
@@ -860,6 +867,7 @@ void CEGUIManipulator::createPropertySet()
 
         // Categorize properties by CEGUI property origin
         QtnPropertySet* parentSet = _propertySet;
+        QString propName = CEGUIUtils::stringToQString(ceguiProp->getName());
         QString category = CEGUIUtils::stringToQString(ceguiProp->getOrigin());
         if (category.startsWith("CEGUI/")) category = category.mid(6);
         if (!category.isEmpty())
@@ -945,6 +953,12 @@ void CEGUIManipulator::createPropertySet()
             enumProp->setEnumInfo(&CEGUIManager::Instance().enumHorizontalTextFormatting());
             prop = enumProp;
         }
+        else if (propertyDataType == "SortMode")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumItemListBaseSortMode());
+            prop = enumProp;
+        }
         else if (propertyDataType == "Font")
         {
             prop = new QtnPropertyQString(parentSet);
@@ -1011,21 +1025,28 @@ void CEGUIManipulator::createPropertySet()
             // TODO: implement
             prop = new QtnPropertyQString(parentSet);
         }
+        else if (propertyDataType == "Colour")
+        {
+            // TODO: implement
+            prop = new QtnPropertyQString(parentSet);//???use delegate for Qt type? The same for GLM vec2, vec3?
+        }
         else // "String" and any other
         {
+            prop = new QtnPropertyQString(parentSet);
+
             if (propertyDataType != "String")
             {
                 assert(false && "propertyDataType unknown");
             }
-            prop = new QtnPropertyQString(parentSet);
+            else
+            {
+                // TODO: some properties may want multiline support, add them to the condition
+                const bool multiline = false;
+                prop->setDelegateAttribute(qtnMultiLineEditAttr(), multiline);
+            }
         }
 
-        /*
-        "SortMode": ceguitypes.SortMode,
-        "Colour": ceguitypes.Colour,
-        */
-
-        prop->setName(CEGUIUtils::stringToQString(ceguiProp->getName()));
+        prop->setName(propName);
         prop->setDescription(CEGUIUtils::stringToQString(ceguiProp->getHelp()));
         prop->fromStr(CEGUIUtils::stringToQString(ceguiProp->get(_widget)));
         prop->addState(QtnPropertyStateCollapsed);
@@ -1097,6 +1118,7 @@ void CEGUIManipulator::adjustPositionDeltaOnResize(CEGUI::UVector2& deltaPos, co
 void CEGUIManipulator::onWidgetNameChanged()
 {
     setToolTip(getWidgetName());
+    updatePropertiesFromWidget({"NamePath"});
 }
 
 void CEGUIManipulator::onPropertyChanged(const QtnPropertyBase* property, CEGUI::Property* ceguiProperty)
