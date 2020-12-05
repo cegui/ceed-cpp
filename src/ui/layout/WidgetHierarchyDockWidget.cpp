@@ -3,6 +3,7 @@
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/ui/layout/WidgetHierarchyTreeModel.h"
 #include "src/ui/layout/LayoutScene.h"
+#include <qlineedit.h>
 #include "qevent.h"
 
 WidgetHierarchyDockWidget::WidgetHierarchyDockWidget(LayoutVisualMode& visualMode)
@@ -39,7 +40,7 @@ void WidgetHierarchyDockWidget::refresh()
     _visualMode.getScene()->onSelectionChanged();
 }
 
-QTreeView*WidgetHierarchyDockWidget::getTreeView() const
+QTreeView* WidgetHierarchyDockWidget::getTreeView() const
 {
     return ui->treeView;
 }
@@ -51,7 +52,8 @@ void WidgetHierarchyDockWidget::ignoreSelectionChangesInScene(bool ignore)
 
 void WidgetHierarchyDockWidget::keyReleaseEvent(QKeyEvent* event)
 {
-    if (event->key() == Qt::Key_Delete)
+    // TODO: another way to check editing state in QTreeView?
+    if (event->key() == Qt::Key_Delete && !dynamic_cast<QLineEdit*>(qApp->focusWidget()))
     {
         emit deleteRequested();
         return;
