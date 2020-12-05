@@ -36,6 +36,9 @@
 
 // FIXME QTBUG: Qt 5.13.0 text rendering in OpenGL breaks on QOpenGLWidget delete
 #include <qopenglwidget.h>
+// FIXME: read-only QLineEdit passes by Backspace and Delete, so shortcuts work when they must not
+// https://bugreports.qt.io/browse/QTBUG-89138
+#include <qlineedit.h>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -176,11 +179,28 @@ MainWindow::MainWindow(QWidget *parent) :
         restoreGeometry(settings->value("window-geometry").toByteArray());
     if (settings->contains("window-state"))
         restoreState(settings->value("window-state").toByteArray());
+
+    installEventFilter(this); // See eventFilter below
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+// FIXME: read-only QLineEdit passes by Backspace and Delete, so shortcuts work when they must not
+// https://bugreports.qt.io/browse/QTBUG-89138
+bool MainWindow::eventFilter(QObject* obj, QEvent* ev)
+{
+    if (auto edit = dynamic_cast<QLineEdit*>(qApp->focusWidget()))
+    {
+        if (edit->isReadOnly() && ev->type() == QEvent::ShortcutOverride)
+        {
+            ev->accept();
+            return true;
+        }
+    }
+    return QMainWindow::eventFilter(obj, ev);
 }
 
 // FIXME QTBUG: Qt 5.13.0 text rendering in OpenGL breaks on QOpenGLWidget delete

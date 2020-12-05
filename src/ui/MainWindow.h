@@ -107,6 +107,10 @@ private slots:
 
 private:
 
+    // FIXME: read-only QLineEdit passes by Backspace and Delete, so shortcuts work when they must not
+    // https://bugreports.qt.io/browse/QTBUG-89138
+    virtual bool eventFilter(QObject* obj, QEvent* ev) override;
+
     virtual void closeEvent(QCloseEvent* event) override;
 
     void setupToolbars();
