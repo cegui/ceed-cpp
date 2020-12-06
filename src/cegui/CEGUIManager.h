@@ -75,6 +75,7 @@ protected:
     RedirectingCEGUILogger* logger = nullptr;
     CEGUIDebugInfo* debugInfo = nullptr;
 
+    // TODO: invalidate cached previews when reload (e.g. edit) imagesets, lnfs and schemes
     std::map<QString, QImage> _widgetPreviewCache;
 
     QtnEnumInfo* _enumHorizontalAlignment = nullptr;

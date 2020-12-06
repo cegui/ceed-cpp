@@ -166,13 +166,15 @@ void CEGUIManager::loadProject(const QString& filePath)
     syncProjectToCEGUIInstance();
 }
 
-// Closes currently opened project. Assumes one is opened at the point this is called.
+// Closes currently opened project. Assumes the one is opened at the point this is called.
 void CEGUIManager::unloadProject()
 {
     if (!currentProject) return;
 
     // Clean resources that were potentially used with this project
     cleanCEGUIResources();
+
+    _widgetPreviewCache.clear();
 
     currentProject->unload();
     currentProject.reset();
@@ -720,12 +722,32 @@ const QImage& CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int
     widgetInstance->setSize(CEGUI::USize(CEGUI::UDim(0.f, previewWidthF), CEGUI::UDim(0.f, previewHeightF)));
 
     // Window is not attached to a context so it has no default font. Set default.
-    // TODO: if project has no fonts, create CEED-internal default font.
     if (!widgetInstance->getFont())
     {
-        const auto& fontRegistry = CEGUI::FontManager::getSingleton().getRegisteredFonts();
+        auto& fontManager = CEGUI::FontManager::getSingleton();
+        const auto& fontRegistry = fontManager.getRegisteredFonts();
+
+        // If project has no fonts, create CEED-internal default font
+        if (fontRegistry.empty())
+        {
+            if (auto resProvider = dynamic_cast<CEGUI::DefaultResourceProvider*>(CEGUI::System::getSingleton().getResourceProvider()))
+                resProvider->setResourceGroupDirectory("__ceed_internal__", CEGUIUtils::qStringToString(QDir::current().path()));
+
+            const QSizeF resolution = currentProject ? currentProject->getDefaultResolution() : QSizeF(1280.0, 720.0);
+
+            fontManager.createFreeTypeFont("DejaVuSans-14", 14.f, CEGUI::FontSizeUnit::Pixels,
+                true, "data/fonts/DejaVuSans.ttf", "__ceed_internal__",
+                CEGUI::AutoScaledMode::Disabled,
+                CEGUI::Sizef(static_cast<float>(resolution.width()), static_cast<float>(resolution.height())));
+        }
+
         CEGUI::Font* defaultFont = fontRegistry.empty() ? nullptr : fontRegistry.begin()->second;
         widgetInstance->setFont(defaultFont);
+
+        // FIXME: FrameWindow has a Titlebar which uses own font. Teach it to get default from the parent FrameWindow?
+        if (auto frameWnd = dynamic_cast<CEGUI::FrameWindow*>(widgetInstance))
+            if (frameWnd->getTitlebar())
+                frameWnd->getTitlebar()->setFont(defaultFont);
     }
 
     CEGUI::Spinner* spinner = dynamic_cast<CEGUI::Spinner*>(widgetInstance);

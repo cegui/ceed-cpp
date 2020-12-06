@@ -41,10 +41,6 @@ bool WidgetTypeTreeWidget::viewportEvent(QEvent* event)
 {
     if (event->type() == QEvent::ToolTip)
     {
-        // TODO: The big question is whether to reuse cached previews or always render them again.
-        //       I always render them again for now to avoid all sorts of caching issues
-        //       (when scheme/looknfeel editing is in place, etc...)
-
         auto item = itemAt(static_cast<QHelpEvent*>(event)->pos());
         if (item && !item->childCount())
         {

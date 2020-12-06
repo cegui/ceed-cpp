@@ -283,6 +283,10 @@ DEPLOY_TARGET = $$shell_quote($$shell_path($$DESTDIR))
 
 !isEmpty(DEPLOY_COMMAND): QMAKE_POST_LINK += $$DEPLOY_COMMAND $$DEPLOY_TARGET$$escape_expand(\n\t)
 
+fonts.path = $$DESTDIR/data/fonts
+fonts.files = $$PWD/data/fonts/*
+INSTALLS += fonts
+
 win32 {
     cegui_dlls.path = $$DESTDIR
     cegui_dlls.files = $$CEGUI_BIN_DIR/*.dll
