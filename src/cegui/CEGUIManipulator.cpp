@@ -959,6 +959,18 @@ void CEGUIManipulator::createPropertySet()
             enumProp->setEnumInfo(&CEGUIManager::Instance().enumItemListBaseSortMode());
             prop = enumProp;
         }
+        else if (propertyDataType == "ViewSortMode")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumViewSortMode());
+            prop = enumProp;
+        }
+        else if (propertyDataType == "ScrollbarDisplayMode")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumScrollbarDisplayMode());
+            prop = enumProp;
+        }
         else if (propertyDataType == "Font")
         {
             prop = new QtnPropertyQString(parentSet);

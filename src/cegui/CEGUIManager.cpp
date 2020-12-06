@@ -733,6 +733,11 @@ void CEGUIManager::initializePreviewWidgetSpecific(CEGUI::Window* widgetInstance
             CEGUI::ImageManager::getSingleton().addBitmapImageFromFile("__CEEDDefaultImage__", "data/images/ceed.png", "__ceed_internal__");
         widgetInstance->setProperty("NormalImage", "__CEEDDefaultImage__");
     }
+    else if (auto comboBox = dynamic_cast<CEGUI::Combobox*>(widgetInstance))
+    {
+        comboBox->getDropList()->show();
+        comboBox->getDropList()->setModel(&_listItemModel);
+    }
     else if (auto listView = dynamic_cast<CEGUI::ListView*>(widgetInstance))
     {
         listView->setModel(&_listItemModel);
@@ -803,6 +808,7 @@ const QImage& CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int
     ensureCEGUIInitialized();
 
     auto widgetInstance = CEGUI::WindowManager::getSingleton().createWindow(CEGUIUtils::qStringToString(widgetType), "preview");
+    widgetInstance->setVisible(true);
 
     // Setup default size
     {
@@ -1053,4 +1059,30 @@ const QtnEnumInfo& CEGUIManager::enumItemListBaseSortMode()
         _enumItemListBaseSortMode = new QtnEnumInfo("ItemListBase::SortMode", values);
     }
     return *_enumItemListBaseSortMode;
+}
+
+const QtnEnumInfo& CEGUIManager::enumViewSortMode()
+{
+    if (!_enumViewSortMode)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::ViewSortMode::NoSorting), "NoSorting", "No sorting"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::ViewSortMode::Ascending), "Ascending", "Ascending"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::ViewSortMode::Descending), "Descending", "Descending"});
+        _enumViewSortMode = new QtnEnumInfo("ItemListBase::SortMode", values);
+    }
+    return *_enumViewSortMode;
+}
+
+const QtnEnumInfo& CEGUIManager::enumScrollbarDisplayMode()
+{
+    if (!_enumScrollbarDisplayMode)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::ScrollbarDisplayMode::Shown), "Shown", "Shown"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::ScrollbarDisplayMode::Hidden), "Hidden", "Hidden"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::ScrollbarDisplayMode::WhenNeeded), "WhenNeeded", "When needed"});
+        _enumScrollbarDisplayMode = new QtnEnumInfo("ItemListBase::SortMode", values);
+    }
+    return *_enumScrollbarDisplayMode;
 }

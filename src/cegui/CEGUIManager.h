@@ -66,6 +66,8 @@ public:
     const QtnEnumInfo& enumHorizontalTextFormatting();
     const QtnEnumInfo& enumVerticalTextFormatting();
     const QtnEnumInfo& enumItemListBaseSortMode();
+    const QtnEnumInfo& enumViewSortMode();
+    const QtnEnumInfo& enumScrollbarDisplayMode();
 
 protected:
 
@@ -91,6 +93,8 @@ protected:
     QtnEnumInfo* _enumHorizontalTextFormatting = nullptr;
     QtnEnumInfo* _enumVerticalTextFormatting = nullptr;
     QtnEnumInfo* _enumItemListBaseSortMode = nullptr;
+    QtnEnumInfo* _enumViewSortMode = nullptr;
+    QtnEnumInfo* _enumScrollbarDisplayMode = nullptr;
 
     std::unique_ptr<CEGUIProject> currentProject;
     bool initialized = false;
