@@ -254,6 +254,7 @@ void CEGUIManager::ensureCEGUIInitialized()
         resProvider->setResourceGroupDirectory("looknfeels", CEGUIUtils::qStringToString(defaultBaseDirectory.filePath("looknfeel")));
         resProvider->setResourceGroupDirectory("layouts", CEGUIUtils::qStringToString(defaultBaseDirectory.filePath("layouts")));
         resProvider->setResourceGroupDirectory("xml_schemas", CEGUIUtils::qStringToString(defaultBaseDirectory.filePath("xml_schemas")));
+        resProvider->setResourceGroupDirectory("__ceed_internal__", CEGUIUtils::qStringToString(QDir::current().path()));
     }
 
     // All this will never be set to anything else again
@@ -370,6 +371,7 @@ bool CEGUIManager::syncProjectToCEGUIInstance()
         resProvider->setResourceGroupDirectory("looknfeels", CEGUIUtils::qStringToString(currentProject->getAbsolutePathOf(currentProject->looknfeelsPath)));
         resProvider->setResourceGroupDirectory("layouts", CEGUIUtils::qStringToString(currentProject->getAbsolutePathOf(currentProject->layoutsPath)));
         resProvider->setResourceGroupDirectory("xml_schemas", CEGUIUtils::qStringToString(currentProject->getAbsolutePathOf(currentProject->xmlSchemasPath)));
+        resProvider->setResourceGroupDirectory("__ceed_internal__", CEGUIUtils::qStringToString(QDir::current().path()));
     }
 
     progress.setLabelText("Recreating all schemes...");
@@ -635,9 +637,8 @@ QStringList CEGUIManager::getAvailableFonts() const
 
     auto& fontRegistry = CEGUI::FontManager::getSingleton().getRegisteredFonts();
     for (const auto& pair : fontRegistry)
-    {
-        fonts.append(CEGUIUtils::stringToQString(pair.first));
-    }
+        if (pair.first != "__CEEDDefaultFont__")
+            fonts.append(CEGUIUtils::stringToQString(pair.first));
 
     std::sort(fonts.begin(), fonts.end());
     return fonts;
@@ -652,7 +653,8 @@ QStringList CEGUIManager::getAvailableImages() const
     auto it = CEGUI::ImageManager::getSingleton().getIterator();
     while (!it.isAtEnd())
     {
-        images.append(CEGUIUtils::stringToQString(it.getCurrentKey()));
+        if (it.getCurrentKey() != "__CEEDDefaultImage__")
+            images.append(CEGUIUtils::stringToQString(it.getCurrentKey()));
         ++it;
     }
 
@@ -694,6 +696,47 @@ void CEGUIManager::getAvailableWidgetsBySkin(std::map<QString, QStringList>& out
         pair.second.sort();
 }
 
+static void initializePreviewWidgetSpecific(CEGUI::Window* widgetInstance, const QString& widgetType)
+{
+    if (auto spinner = dynamic_cast<CEGUI::Spinner*>(widgetInstance))
+        widgetInstance->setText("123");
+    else if (dynamic_cast<CEGUI::MultiLineEditbox*>(widgetInstance) || widgetType.endsWith("StaticText"))
+        widgetInstance->setText(CEGUIUtils::qStringToString(widgetType + "\nMultiline multiline multiline multiline"));
+    else
+        widgetInstance->setText(CEGUIUtils::qStringToString(widgetType));
+
+    if (widgetType.endsWith("StaticText"))
+    {
+        if (widgetInstance->isPropertyPresent("VertScrollbar"))
+            widgetInstance->setProperty("VertScrollbar", "true");
+
+        if (widgetInstance->isPropertyPresent("HorzFormatting"))
+            widgetInstance->setProperty("HorzFormatting", "WordWrapLeftAligned");
+    }
+    else if (widgetType.endsWith("StaticImage"))
+    {
+        if (!CEGUI::ImageManager::getSingleton().isDefined("__CEEDDefaultImage__"))
+            CEGUI::ImageManager::getSingleton().addBitmapImageFromFile("__CEEDDefaultImage__", "data/images/ceed.png", "__ceed_internal__");
+        widgetInstance->setProperty("Image", "__CEEDDefaultImage__");
+    }
+    else if (auto listView = dynamic_cast<CEGUI::ListView*>(widgetInstance))
+    {
+        //initListView(list_view);
+    }
+    else if (auto comboDroplist = dynamic_cast<CEGUI::ComboDropList*>(widgetInstance))
+    {
+        //initListWidget(combodroplist);
+    }
+    else if (auto multiColumnList = dynamic_cast<CEGUI::MultiColumnList*>(widgetInstance))
+    {
+        //initMultiColumnList(multilineColumnList);
+    }
+    else if (auto menuBar = dynamic_cast<CEGUI::Menubar*>(widgetInstance))
+    {
+        //initMenubar(menuBar);
+    }
+}
+
 // Renders and retrieves a widget preview QImage. This is useful for various widget selection lists as a preview.
 const QImage& CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int previewWidth, int previewHeight)
 {
@@ -729,12 +772,8 @@ const QImage& CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int
         // If project has no fonts, create CEED-internal default font
         if (fontRegistry.empty())
         {
-            if (auto resProvider = dynamic_cast<CEGUI::DefaultResourceProvider*>(CEGUI::System::getSingleton().getResourceProvider()))
-                resProvider->setResourceGroupDirectory("__ceed_internal__", CEGUIUtils::qStringToString(QDir::current().path()));
-
             const QSizeF resolution = currentProject ? currentProject->getDefaultResolution() : QSizeF(1280.0, 720.0);
-
-            fontManager.createFreeTypeFont("DejaVuSans-14", 14.f, CEGUI::FontSizeUnit::Pixels,
+            fontManager.createFreeTypeFont("__CEEDDefaultFont__", 14.f, CEGUI::FontSizeUnit::Pixels,
                 true, "data/fonts/DejaVuSans.ttf", "__ceed_internal__",
                 CEGUI::AutoScaledMode::Disabled,
                 CEGUI::Sizef(static_cast<float>(resolution.width()), static_cast<float>(resolution.height())));
@@ -749,8 +788,8 @@ const QImage& CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int
                 frameWnd->getTitlebar()->setFont(defaultFont);
     }
 
-    CEGUI::Spinner* spinner = dynamic_cast<CEGUI::Spinner*>(widgetInstance);
-    widgetInstance->setText(spinner ? "0" : CEGUIUtils::qStringToString(widgetType));
+    // Some widgets look better after some initial setup
+    initializePreviewWidgetSpecific(widgetInstance, widgetType);
 
     // Fake update to ensure everything is set
     widgetInstance->update(1.f);

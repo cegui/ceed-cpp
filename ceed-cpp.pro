@@ -287,6 +287,10 @@ fonts.path = $$DESTDIR/data/fonts
 fonts.files = $$PWD/data/fonts/*
 INSTALLS += fonts
 
+images.path = $$DESTDIR/data/images
+images.files = $$PWD/data/icons/ceed.png
+INSTALLS += images
+
 win32 {
     cegui_dlls.path = $$DESTDIR
     cegui_dlls.files = $$CEGUI_BIN_DIR/*.dll
