@@ -31,13 +31,15 @@ public:
     void setResolution(int width, int height);
     void setInputEnabled(bool enable);
 
-private slots:
+protected slots:
 
     void on_debugInfoButton_clicked();
 
     void onResolutionTextChanged();
 
-private:
+protected:
+
+    virtual bool eventFilter(QObject* obj, QEvent* ev) override;
 
     Ui::CEGUIWidget *ui;
 };

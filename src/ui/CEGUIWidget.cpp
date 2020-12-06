@@ -3,6 +3,7 @@
 #include "src/cegui/CEGUIManager.h"
 #include "ui_CEGUIWidget.h"
 #include <qlineedit.h>
+#include <qtimer.h>
 
 CEGUIWidget::CEGUIWidget(QWidget *parent) :
     QWidget(parent),
@@ -26,6 +27,7 @@ CEGUIWidget::CEGUIWidget(QWidget *parent) :
         ui->lblZoom->setText(text.arg(static_cast<int>(factor * 100.0)));
     });
 
+    ui->resolutionBox->installEventFilter(this);
     connect(ui->resolutionBox->lineEdit(), &QLineEdit::editingFinished, this, &CEGUIWidget::onResolutionTextChanged);
     connect(ui->resolutionBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &CEGUIWidget::onResolutionTextChanged);
 }
@@ -135,5 +137,13 @@ void CEGUIWidget::onResolutionTextChanged()
         }
     }
 
-    if (scene) scene->setCEGUIDisplaySize(width, height);
+    if (scene) scene->setCEGUIDisplaySize(static_cast<float>(width), static_cast<float>(height));
+}
+
+bool CEGUIWidget::eventFilter(QObject* obj, QEvent* ev)
+{
+    // It seems that sync selectAll() happens before setting a cursor when focused, so we have to delay it
+    if (obj == ui->resolutionBox && ev->type() == QEvent::FocusIn)
+        QTimer::singleShot(0, ui->resolutionBox->lineEdit(), &QLineEdit::selectAll);
+    return false;
 }
