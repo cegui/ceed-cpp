@@ -131,6 +131,8 @@ public:
     virtual int id() const override { return LayoutUndoCommandBase + 5; }
     virtual bool mergeWith(const QUndoCommand* other) override;
 
+    bool isValueInvalid() const { return _invalidValue; }
+
 protected:
 
     void setProperty(const QString& widgetPath, const CEGUI::String& value, const QStringList& propertiesToUpdate);
@@ -141,6 +143,7 @@ protected:
     std::vector<Record> _records;
     CEGUI::String _propertyName;
     size_t _multiChangeId;
+    bool _invalidValue; // Becomes known after the first redo()
 };
 
 // This command aligns selected widgets accordingly

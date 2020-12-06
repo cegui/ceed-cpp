@@ -390,6 +390,7 @@ LayoutPropertyEditCommand::LayoutPropertyEditCommand(LayoutVisualMode& visualMod
     , _records(std::move(records))
     , _propertyName(CEGUIUtils::qStringToString(propertyName))
     , _multiChangeId(multiChangeId)
+    , _invalidValue(false)
 {
     refreshText();
 }
@@ -458,9 +459,12 @@ void LayoutPropertyEditCommand::setProperty(const QString& widgetPath, const CEG
         manipulator->updateFromWidget(false, true);
         manipulator->update();
         manipulator->updatePropertiesFromWidget(propertiesToUpdate);
+        _invalidValue = false;
     }
     catch (const std::exception& e)
     {
+        _invalidValue = true;
+
         // Restore previous value
         manipulator->updatePropertiesFromWidget({ CEGUIUtils::stringToQString(_propertyName) });
 

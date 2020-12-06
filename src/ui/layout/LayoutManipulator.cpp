@@ -518,7 +518,15 @@ void LayoutManipulator::onPropertyChanged(const QtnPropertyBase* property, CEGUI
 
     // Handle multiproperty merge in a command itself
     const size_t groupId = _visualMode.getScene()->getMultiSelectionChangeId();
-    _visualMode.getEditor().getUndoStack()->push(new LayoutPropertyEditCommand(_visualMode, std::move(records), property->name(), groupId));
+    auto cmd = new LayoutPropertyEditCommand(_visualMode, std::move(records), property->name(), groupId);
+    _visualMode.getEditor().getUndoStack()->push(cmd);
+
+    // TODO: we could avoid that if CEGUI allowed us to check validity of a property value without setting it
+    if (cmd->isValueInvalid())
+    {
+        cmd->setObsolete(true);
+        _visualMode.getEditor().getUndoStack()->undo();
+    }
 }
 
 void LayoutManipulator::onWidgetNameChanged()
