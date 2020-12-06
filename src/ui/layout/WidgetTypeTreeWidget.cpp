@@ -44,12 +44,12 @@ bool WidgetTypeTreeWidget::viewportEvent(QEvent* event)
         auto item = itemAt(static_cast<QHelpEvent*>(event)->pos());
         if (item && !item->childCount())
         {
-            QString skin = item->parent() ? item->parent()->text(0) : "__no_skin__";
-            QString widgetType = item->text(0);
+            const QString skin = item->parent() ? item->parent()->text(0) : "__no_skin__";
+            const QString widgetType = item->text(0);
 
             const bool hasSkin = (skin != "__no_skin__");
 
-            QString fullWidgetType = hasSkin ? (skin + "/" + widgetType) : widgetType;
+            const QString fullWidgetType = hasSkin ? (skin + "/" + widgetType) : widgetType;
 
             QString tooltipText;
             if (!hasSkin)
@@ -63,7 +63,7 @@ bool WidgetTypeTreeWidget::viewportEvent(QEvent* event)
                     QByteArray bytes;
                     QBuffer buffer(&bytes);
                     buffer.open(QIODevice::WriteOnly);
-                    CEGUIManager::Instance().getWidgetPreviewImage(fullWidgetType, 256, 128).save(&buffer, "PNG");
+                    CEGUIManager::Instance().getWidgetPreviewImage(fullWidgetType).save(&buffer, "PNG");
                     buffer.close();
 
                     tooltipText = QString("<img src=\"data:image/png;base64,%1\" />").arg(QString(bytes.toBase64()));

@@ -24,7 +24,7 @@
     <item>
      <widget class="WidgetTypeTreeWidget" name="tree">
       <property name="toolTip">
-       <string>Drag to the layout to create</string>
+       <string/>
       </property>
       <column>
        <property name="text">

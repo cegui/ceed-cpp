@@ -702,22 +702,21 @@ const QImage& CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int
 
     ensureCEGUIInitialized();
 
-    const float previewWidthF = static_cast<float>(previewWidth);
-    const float previewHeightF = static_cast<float>(previewHeight);
-
-    //???allocate previews once?
-    // TODO: renderer->get/createViewportTarget!
-    auto renderer = static_cast<CEGUI::OpenGLRendererBase*>(CEGUI::System::getSingleton().getRenderer());
-    auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer, CEGUI::Rectf(0.f, 0.f, previewWidthF, previewHeightF));
-
-    auto renderingSurface = new CEGUI::RenderingSurface(*renderTarget);
-
     auto widgetInstance = CEGUI::WindowManager::getSingleton().createWindow(CEGUIUtils::qStringToString(widgetType), "preview");
 
-    widgetInstance->setRenderingSurface(renderingSurface);
+    const auto size = widgetInstance->calculatePixelSize();
+    float previewWidthF = previewWidth ? static_cast<float>(previewWidth) : size.d_width;
+    float previewHeightF = previewHeight ? static_cast<float>(previewHeight) : size.d_height;
 
-    // Set it's size and position so that it shows up
-    // TODO: per-widget-type size! See WidgetsSample!
+    if (previewWidthF < 1.f) previewWidthF = 256.f;
+    if (previewHeightF < 1.f) previewHeightF = 128.f;
+
+    if (previewWidthF < 100.f || previewHeightF < 50.f)
+    {
+        previewWidthF *= 1.5f;
+        previewHeightF *= 1.5f;
+    }
+
     widgetInstance->setPosition(CEGUI::UVector2(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)));
     widgetInstance->setSize(CEGUI::USize(CEGUI::UDim(0.f, previewWidthF), CEGUI::UDim(0.f, previewHeightF)));
 
@@ -756,10 +755,17 @@ const QImage& CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int
     // Fake update to ensure everything is set
     widgetInstance->update(1.f);
 
+    //???allocate previews once?
+    // TODO: renderer->get/createViewportTarget!
+    auto renderer = static_cast<CEGUI::OpenGLRendererBase*>(CEGUI::System::getSingleton().getRenderer());
+    auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer, CEGUI::Rectf(0.f, 0.f, previewWidthF, previewHeightF));
+    auto renderingSurface = new CEGUI::RenderingSurface(*renderTarget);
+    widgetInstance->setRenderingSurface(renderingSurface);
+
     makeOpenGLContextCurrent();
 
-    //???allocate once?
-    auto temporaryFBO = new QOpenGLFramebufferObject(previewWidth, previewHeight);
+    // Create FBO of an actual object size
+    auto temporaryFBO = new QOpenGLFramebufferObject(static_cast<int>(previewWidthF), static_cast<int>(previewHeightF));
     temporaryFBO->bind();
 
     glContext->functions()->glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
