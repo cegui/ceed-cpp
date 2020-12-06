@@ -32,6 +32,7 @@ CEGUIGraphicsView::CEGUIGraphicsView(QWidget *parent) :
     // Prepare to receive input
     setMouseTracking(true);
     setFocusPolicy(Qt::ClickFocus);
+    setDragMode(RubberBandDrag);
 
     blitter = new QOpenGLTextureBlitter();
 
@@ -182,7 +183,7 @@ void CEGUIGraphicsView::mouseMoveEvent(QMouseEvent* event)
     bool handled = false;
 
     QPointF point = mapToScene(event->pos());
-    emit cursorPositionChanged(static_cast<int>(point.x()), static_cast<int>(point.y()));
+    emit cursorPositionChanged(static_cast<float>(point.x()), static_cast<float>(point.y()));
 
     if (_injectInput && ceguiInput)
     {
@@ -195,36 +196,49 @@ void CEGUIGraphicsView::mouseMoveEvent(QMouseEvent* event)
 // FIXME: Somehow, if you drag on the Live preview in layout editing on Linux, it drag moves the whole window
 void CEGUIGraphicsView::mousePressEvent(QMouseEvent* event)
 {
-    bool handled = false;
-
+    // Process CEGUI input
     if (_injectInput && ceguiInput)
     {
         auto button = CEGUIUtils::qtMouseButtonToMouseButton(event->button());
-        handled = ceguiInput->injectMouseButtonDown(button);
+        if (ceguiInput->injectMouseButtonDown(button)) return;
     }
 
-    if (!handled) ResizableGraphicsView::mousePressEvent(event);
+    // Process middle button drag-scrolling
+    if (event->button() == Qt::MiddleButton)
+    {
+        setDragMode(ScrollHandDrag);
+        setInteractive(false);
+    }
+
+    ResizableGraphicsView::mousePressEvent(event);
 }
 
 void CEGUIGraphicsView::mouseReleaseEvent(QMouseEvent* event)
 {
-    bool handled = false;
-
+    // Process CEGUI input
     if (_injectInput && ceguiInput)
     {
         auto button = CEGUIUtils::qtMouseButtonToMouseButton(event->button());
-        handled = ceguiInput->injectMouseButtonUp(button);
+        if (ceguiInput->injectMouseButtonUp(button)) return;
     }
 
-    if (!handled) ResizableGraphicsView::mouseReleaseEvent(event);
+    // Process middle button drag-scrolling
+    if (event->button() == Qt::MiddleButton)
+    {
+        setInteractive(true);
+        setDragMode(RubberBandDrag);
+    }
+
+    ResizableGraphicsView::mouseReleaseEvent(event);
 }
 
 void CEGUIGraphicsView::keyPressEvent(QKeyEvent* event)
 {
-    bool handled = false;
-
+    // Process CEGUI input
     if (_injectInput && ceguiInput)
     {
+        bool handled = false;
+
         auto key = CEGUIUtils::qtKeyToKey(event->key());
         if (key != CEGUI::Key::Scan::Unknown)
             handled = ceguiInput->injectKeyDown(key);
@@ -232,21 +246,21 @@ void CEGUIGraphicsView::keyPressEvent(QKeyEvent* event)
         auto text = event->text();
         if (!text.isEmpty())
             handled |= ceguiInput->injectChar(text[0].unicode());
+
+        if (handled) return;
     }
 
-    if (!handled) ResizableGraphicsView::keyPressEvent(event);
+    ResizableGraphicsView::keyPressEvent(event);
 }
 
 void CEGUIGraphicsView::keyReleaseEvent(QKeyEvent* event)
 {
-    bool handled = false;
-
+    // Process CEGUI input
     if (_injectInput && ceguiInput)
     {
         auto key = CEGUIUtils::qtKeyToKey(event->key());
-        if (key != CEGUI::Key::Scan::Unknown)
-            handled = ceguiInput->injectKeyUp(key);
+        if (key != CEGUI::Key::Scan::Unknown && ceguiInput->injectKeyUp(key)) return;
     }
 
-    if (!handled) ResizableGraphicsView::keyReleaseEvent(event);
+    ResizableGraphicsView::keyReleaseEvent(event);
 }

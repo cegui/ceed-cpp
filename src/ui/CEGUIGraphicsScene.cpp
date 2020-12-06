@@ -7,6 +7,7 @@
 #include <CEGUI/GUIContext.h>
 #include <qdatetime.h>
 #include <qgraphicsitem.h>
+#include <qgraphicssceneevent.h>
 #include <qopenglcontext.h>
 #include <qopenglfunctions.h>
 #include <qopenglframebufferobject.h>
@@ -97,8 +98,8 @@ void CEGUIGraphicsScene::drawCEGUIContextOffscreen()
     timeOfLastRender = currTime;
 
     // Inject the time passed since the last render all at once
-    CEGUI::System::getSingleton().injectTimePulse(lastDelta);
-    ceguiContext->injectTimePulse(lastDelta);
+    CEGUI::System::getSingleton().injectTimePulse(static_cast<float>(lastDelta));
+    ceguiContext->injectTimePulse(static_cast<float>(lastDelta));
 
     drawCEGUIContextInternal();
     CEGUIManager::Instance().doneOpenGLContextCurrent();
@@ -127,6 +128,18 @@ QList<QGraphicsItem*> CEGUIGraphicsScene::topLevelItems() const
     }
 
     return ret;
+}
+
+void CEGUIGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent* event)
+{
+    // Ignore item interaction for rubber band selection in a CEGUIGraphicsView
+    if (event->modifiers().testFlag(Qt::KeyboardModifier::ShiftModifier))
+    {
+        event->ignore();
+        return;
+    }
+
+    QGraphicsScene::mousePressEvent(event);
 }
 
 // NB: it doesn't disable context, callers may need it for further operations

@@ -34,6 +34,8 @@ public:
 
 protected:
 
+    virtual void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
+
     void drawCEGUIContextInternal();
 
     CEGUI::GUIContext* ceguiContext = nullptr;
