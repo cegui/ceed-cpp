@@ -10,6 +10,7 @@
 #include <CEGUI/CoordConverter.h>
 #include <qtreeview.h>
 #include <qmessagebox.h>
+#include <qtimer.h>
 
 static LayoutManipulator* CreateManipulatorFromDataStream(LayoutVisualMode& visualMode, LayoutManipulator* parent,
                                                           QDataStream& stream, size_t index = std::numeric_limits<size_t>().max())
@@ -460,7 +461,15 @@ void LayoutPropertyEditCommand::setProperty(const QString& widgetPath, const CEG
     }
     catch (const std::exception& e)
     {
-        QMessageBox::warning(nullptr, "Can't set property", e.what());
+        // Restore previous value
+        manipulator->updatePropertiesFromWidget({ CEGUIUtils::stringToQString(_propertyName) });
+
+        // Synchronous message box leads to a crash here
+        QString reason = e.what();
+        QTimer::singleShot(0, [reason]()
+        {
+            QMessageBox::warning(nullptr, "Can't set property", reason);
+        });
     }
 }
 
