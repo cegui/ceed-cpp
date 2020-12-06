@@ -16,11 +16,9 @@
 #include <CEGUI/GUIContext.h>
 #include <CEGUI/WindowManager.h>
 #include "qboxlayout.h"
-#include "qgraphicsview.h"
 #include "qtoolbar.h"
 #include "qmenu.h"
 #include "qmimedata.h"
-#include "qclipboard.h"
 #include <qdatetime.h>
 #include <qstandardpaths.h>
 #include <qfileinfo.h>
@@ -29,8 +27,8 @@
 #include <qurl.h>
 #include <qclipboard.h>
 #include <qbuffer.h>
-#include <unordered_set>
 #include <qinputdialog.h>
+#include <unordered_set>
 
 void LayoutVisualMode::removeNestedManipulators(std::set<LayoutManipulator*>& manipulators)
 {

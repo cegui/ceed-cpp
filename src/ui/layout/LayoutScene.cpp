@@ -1169,6 +1169,82 @@ void LayoutScene::dropEvent(QGraphicsSceneDragDropEvent* event)
     }
 }
 
+void LayoutScene::keyPressEvent(QKeyEvent* event)
+{
+    switch (event->key())
+    {
+        case Qt::Key_Left:
+        case Qt::Key_Right:
+        case Qt::Key_Up:
+        case Qt::Key_Down:
+        {
+            std::set<LayoutManipulator*> selectedWidgets;
+            collectSelectedWidgets(selectedWidgets);
+
+            if (!selectedWidgets.empty())
+            {
+                QPointF delta(0.0, 0.0);
+                switch (event->key())
+                {
+                    case Qt::Key_Left: delta.setX(-1.0); break;
+                    case Qt::Key_Right: delta.setX(1.0); break;
+                    case Qt::Key_Up: delta.setY(-1.0); break;
+                    case Qt::Key_Down: delta.setY(1.0); break;
+                }
+
+                if (delta.manhattanLength() > 0.0)
+                {
+                    if (event->modifiers() & Qt::ControlModifier) delta *= 10.0;
+
+                    if (event->modifiers() & Qt::ShiftModifier)
+                    {
+                        const CEGUI::USize ceguiDelta(
+                                    CEGUI::UDim(0.0, static_cast<float>(delta.x())),
+                                    CEGUI::UDim(0.0, static_cast<float>(delta.y())));
+                        std::vector<LayoutResizeCommand::Record> resize;
+                        for (LayoutManipulator* item : selectedWidgets)
+                        {
+                            item->resetMove();
+                            item->resetResize();
+                            LayoutResizeCommand::Record rec;
+                            rec.path = item->getWidgetPath();
+                            rec.oldPos = item->getWidget()->getPosition();
+                            rec.newPos = item->getWidget()->getPosition();
+                            rec.oldSize = item->getWidget()->getSize();
+                            rec.newSize = item->getWidget()->getSize() + ceguiDelta;
+                            resize.push_back(std::move(rec));
+                        }
+                        _visualMode.getEditor().getUndoStack()->push(new LayoutResizeCommand(_visualMode, std::move(resize)));
+                    }
+                    else
+                    {
+                        const CEGUI::UVector2 ceguiDelta(
+                                    CEGUI::UDim(0.0, static_cast<float>(delta.x())),
+                                    CEGUI::UDim(0.0, static_cast<float>(delta.y())));
+                        std::vector<LayoutMoveCommand::Record> move;
+                        for (LayoutManipulator* item : selectedWidgets)
+                        {
+                            item->resetMove();
+                            item->resetResize();
+                            LayoutMoveCommand::Record rec;
+                            rec.path = item->getWidgetPath();
+                            rec.oldPos = item->getWidget()->getPosition();
+                            rec.newPos = item->getWidget()->getPosition() + ceguiDelta;
+                            move.push_back(std::move(rec));
+                        }
+                        _visualMode.getEditor().getUndoStack()->push(new LayoutMoveCommand(_visualMode, std::move(move)));
+                    }
+
+                    event->accept();
+                    return;
+                }
+            }
+        }
+    }
+
+    CEGUIGraphicsScene::keyPressEvent(event);
+}
+
 void LayoutScene::keyReleaseEvent(QKeyEvent* event)
 {
     bool handled = false;
