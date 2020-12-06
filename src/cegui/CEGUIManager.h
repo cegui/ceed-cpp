@@ -46,7 +46,7 @@ public:
     QStringList getAvailableFonts() const;
     QStringList getAvailableImages() const;
     void getAvailableWidgetsBySkin(std::map<QString, QStringList>& out) const;
-    QImage getWidgetPreviewImage(const QString& widgetType, int previewWidth = 128, int previewHeight = 64);
+    const QImage& getWidgetPreviewImage(const QString& widgetType, int previewWidth = 128, int previewHeight = 64);
 
     bool syncProjectToCEGUIInstance();
     void ensureCEGUIInitialized();
@@ -74,6 +74,8 @@ protected:
     QOffscreenSurface* surface = nullptr;
     RedirectingCEGUILogger* logger = nullptr;
     CEGUIDebugInfo* debugInfo = nullptr;
+
+    std::map<QString, QImage> _widgetPreviewCache;
 
     QtnEnumInfo* _enumHorizontalAlignment = nullptr;
     QtnEnumInfo* _enumVerticalAlignment = nullptr;

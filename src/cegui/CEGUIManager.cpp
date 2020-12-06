@@ -9,6 +9,7 @@
 #include "src/cegui/QtnPropertyUBox.h"
 #include "src/ui/CEGUIDebugInfo.h"
 #include "src/util/DismissableMessage.h"
+#include "src/util/Utils.h"
 #include "src/Application.h"
 #include <CEGUI/CEGUI.h>
 #include <CEGUI/RendererModules/OpenGL/GLRenderer.h>
@@ -692,8 +693,11 @@ void CEGUIManager::getAvailableWidgetsBySkin(std::map<QString, QStringList>& out
 }
 
 // Renders and retrieves a widget preview QImage. This is useful for various widget selection lists as a preview.
-QImage CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int previewWidth, int previewHeight)
+const QImage& CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int previewWidth, int previewHeight)
 {
+    auto it = _widgetPreviewCache.find(widgetType);
+    if (it != _widgetPreviewCache.cend()) return it->second;
+
     ensureCEGUIInitialized();
 
     const float previewWidthF = static_cast<float>(previewWidth);
@@ -736,7 +740,7 @@ QImage CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int previe
     auto temporaryFBO = new QOpenGLFramebufferObject(previewWidth, previewHeight);
     temporaryFBO->bind();
 
-    glContext->functions()->glClearColor(0.9f, 0.9f, 0.9f, 1.f);
+    glContext->functions()->glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glContext->functions()->glClear(GL_COLOR_BUFFER_BIT);
 
     renderer->beginRendering();
@@ -766,7 +770,9 @@ QImage CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int previe
     if (!error.isEmpty())
         throw error;
 
-    return result;
+    Utils::fillTransparencyWithChecker(result);
+
+    return _widgetPreviewCache.emplace(widgetType, std::move(result)).first->second;
 }
 
 const QtnEnumInfo& CEGUIManager::enumHorizontalAlignment()
