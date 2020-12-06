@@ -60,6 +60,10 @@ private:
 
 CEGUIManager::CEGUIManager()
 {
+    _listItemModel.addItem("item 1");
+    _listItemModel.addItem("item 2");
+    _listItemModel.addItem("item 3");
+    _listItemModel.addItem("item 4");
 }
 
 CEGUIManager::~CEGUIManager()
@@ -696,7 +700,8 @@ void CEGUIManager::getAvailableWidgetsBySkin(std::map<QString, QStringList>& out
         pair.second.sort();
 }
 
-static void initializePreviewWidgetSpecific(CEGUI::Window* widgetInstance, const QString& widgetType)
+// See Widgets example from CEGUI
+void CEGUIManager::initializePreviewWidgetSpecific(CEGUI::Window* widgetInstance, const QString& widgetType)
 {
     if (auto spinner = dynamic_cast<CEGUI::Spinner*>(widgetInstance))
         widgetInstance->setText("123");
@@ -712,6 +717,9 @@ static void initializePreviewWidgetSpecific(CEGUI::Window* widgetInstance, const
 
         if (widgetInstance->isPropertyPresent("HorzFormatting"))
             widgetInstance->setProperty("HorzFormatting", "WordWrapLeftAligned");
+
+        if (widgetType.endsWith("CaptionedStaticText"))
+            widgetInstance->setProperty("Text", "Caption");
     }
     else if (widgetType.endsWith("StaticImage"))
     {
@@ -719,21 +727,70 @@ static void initializePreviewWidgetSpecific(CEGUI::Window* widgetInstance, const
             CEGUI::ImageManager::getSingleton().addBitmapImageFromFile("__CEEDDefaultImage__", "data/images/ceed.png", "__ceed_internal__");
         widgetInstance->setProperty("Image", "__CEEDDefaultImage__");
     }
+    else if (widgetType.endsWith("ImageButton"))
+    {
+        if (!CEGUI::ImageManager::getSingleton().isDefined("__CEEDDefaultImage__"))
+            CEGUI::ImageManager::getSingleton().addBitmapImageFromFile("__CEEDDefaultImage__", "data/images/ceed.png", "__ceed_internal__");
+        widgetInstance->setProperty("NormalImage", "__CEEDDefaultImage__");
+    }
     else if (auto listView = dynamic_cast<CEGUI::ListView*>(widgetInstance))
     {
-        //initListView(list_view);
+        listView->setModel(&_listItemModel);
+        if (listView->getType().find("WindowsLook/List") == 0)
+            listView->setTextColour(CEGUI::Colour(0.0f, 0.0f, 0.0f, 1.0f));
     }
-    else if (auto comboDroplist = dynamic_cast<CEGUI::ComboDropList*>(widgetInstance))
+    else if (auto listWidget = dynamic_cast<CEGUI::ListWidget*>(widgetInstance))
     {
-        //initListWidget(combodroplist);
+        listWidget->addItem("ListWidget Item 1");
+        listWidget->addItem("ListWidget Item 2");
+        listWidget->addItem("ListWidget Item 3");
+        listWidget->addItem("ListWidget Item 4");
+        if (listWidget->getType().compare("WindowsLook/ListWidget") == 0)
+            listWidget->setTextColour(CEGUI::Colour(0.0f, 0.0f, 0.0f, 1.0f));
     }
     else if (auto multiColumnList = dynamic_cast<CEGUI::MultiColumnList*>(widgetInstance))
     {
-        //initMultiColumnList(multilineColumnList);
+        widgetInstance->setSize(CEGUI::USize(CEGUI::UDim(0.f, 400.f), CEGUI::UDim(0.f, 160.f)));
+
+        multiColumnList->addColumn("Server Name", 0, cegui_reldim(0.38f));
+        multiColumnList->addColumn("Address ", 1, cegui_reldim(0.44f));
+        multiColumnList->addColumn("Ping", 2, cegui_reldim(0.15f));
+
+        multiColumnList->addRow();
+        multiColumnList->addRow();
+
+        multiColumnList->setItem(new CEGUI::ListboxTextItem("Laggers World"), 0, 0);
+        multiColumnList->setItem(new CEGUI::ListboxTextItem("yourgame.some-server.com"), 1, 0);
+        auto item = new CEGUI::ListboxTextItem("[colour='FFFF0000']1000ms");
+        item->setTextParsingEnabled(true);
+        multiColumnList->setItem(item, 2, 0);
+
+        multiColumnList->setItem(new CEGUI::ListboxTextItem("Super-Server"), 0, 1);
+        multiColumnList->setItem(new CEGUI::ListboxTextItem("whizzy.fakenames.net"), 1, 1);
+        item = new CEGUI::ListboxTextItem("[colour='FF00FF00']8ms");
+        item->setTextParsingEnabled(true);
+        multiColumnList->setItem(item, 2, 1);
     }
     else if (auto menuBar = dynamic_cast<CEGUI::Menubar*>(widgetInstance))
     {
-        //initMenubar(menuBar);
+        CEGUI::String skin = menuBar->getType();
+        skin = skin.substr(0, skin.find_first_of('/'));
+        CEGUI::String menuItemMapping = skin + "/MenuItem";
+
+        CEGUI::WindowManager& windowManager = CEGUI::WindowManager::getSingleton();
+        CEGUI::MenuItem* fileMenuItem = static_cast<CEGUI::MenuItem*>(windowManager.createWindow(menuItemMapping, "__CEED_FileMenuItem__"));
+        fileMenuItem->setFont(menuBar->getFont());
+        fileMenuItem->setText("File");
+        menuBar->addChild(fileMenuItem);
+
+        CEGUI::MenuItem* viewMenuItem = static_cast<CEGUI::MenuItem*>(windowManager.createWindow(menuItemMapping, "__CEED_ViewMenuItem__"));
+        viewMenuItem->setFont(menuBar->getFont());
+        viewMenuItem->setText("View");
+        menuBar->addChild(viewMenuItem);
+    }
+    else if (auto progressBar = dynamic_cast<CEGUI::ProgressBar*>(widgetInstance))
+    {
+        progressBar->setProgress(0.5f);
     }
 }
 
@@ -747,21 +804,24 @@ const QImage& CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int
 
     auto widgetInstance = CEGUI::WindowManager::getSingleton().createWindow(CEGUIUtils::qStringToString(widgetType), "preview");
 
-    const auto size = widgetInstance->calculatePixelSize();
-    float previewWidthF = previewWidth ? static_cast<float>(previewWidth) : size.d_width;
-    float previewHeightF = previewHeight ? static_cast<float>(previewHeight) : size.d_height;
-
-    if (previewWidthF < 1.f) previewWidthF = 256.f;
-    if (previewHeightF < 1.f) previewHeightF = 128.f;
-
-    if (previewWidthF < 100.f || previewHeightF < 50.f)
+    // Setup default size
     {
-        previewWidthF *= 1.5f;
-        previewHeightF *= 1.5f;
-    }
+        const auto size = widgetInstance->calculatePixelSize();
+        float previewWidthF = previewWidth ? static_cast<float>(previewWidth) : size.d_width;
+        float previewHeightF = previewHeight ? static_cast<float>(previewHeight) : size.d_height;
 
-    widgetInstance->setPosition(CEGUI::UVector2(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)));
-    widgetInstance->setSize(CEGUI::USize(CEGUI::UDim(0.f, previewWidthF), CEGUI::UDim(0.f, previewHeightF)));
+        if (previewWidthF < 1.f) previewWidthF = 256.f;
+        if (previewHeightF < 1.f) previewHeightF = 128.f;
+
+        if (previewWidthF < 100.f || previewHeightF < 50.f)
+        {
+            previewWidthF *= 1.5f;
+            previewHeightF *= 1.5f;
+        }
+
+        widgetInstance->setPosition(CEGUI::UVector2(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)));
+        widgetInstance->setSize(CEGUI::USize(CEGUI::UDim(0.f, previewWidthF), CEGUI::UDim(0.f, previewHeightF)));
+    }
 
     // Window is not attached to a context so it has no default font. Set default.
     if (!widgetInstance->getFont())
@@ -794,17 +854,20 @@ const QImage& CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int
     // Fake update to ensure everything is set
     widgetInstance->update(1.f);
 
+    // Size could change, use an actual one
+    const auto size = widgetInstance->calculatePixelSize();
+
     //???allocate previews once?
     // TODO: renderer->get/createViewportTarget!
     auto renderer = static_cast<CEGUI::OpenGLRendererBase*>(CEGUI::System::getSingleton().getRenderer());
-    auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer, CEGUI::Rectf(0.f, 0.f, previewWidthF, previewHeightF));
+    auto renderTarget = new CEGUI::OpenGLViewportTarget(*renderer, CEGUI::Rectf(0.f, 0.f, size.d_width, size.d_height));
     auto renderingSurface = new CEGUI::RenderingSurface(*renderTarget);
     widgetInstance->setRenderingSurface(renderingSurface);
 
     makeOpenGLContextCurrent();
 
     // Create FBO of an actual object size
-    auto temporaryFBO = new QOpenGLFramebufferObject(static_cast<int>(previewWidthF), static_cast<int>(previewHeightF));
+    auto temporaryFBO = new QOpenGLFramebufferObject(static_cast<int>(size.d_width), static_cast<int>(size.d_height));
     temporaryFBO->bind();
 
     glContext->functions()->glClearColor(0.0f, 0.0f, 0.0f, 0.0f);

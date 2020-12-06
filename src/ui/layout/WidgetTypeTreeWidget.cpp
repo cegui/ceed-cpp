@@ -55,7 +55,7 @@ bool WidgetTypeTreeWidget::viewportEvent(QEvent* event)
             if (!hasSkin)
                 tooltipText = "Unskinned widgetType";
             else if (widgetType == "TabButton")
-                tooltipText = "Can't render a preview as this is an auto widgetType, requires parent to be rendered.";
+                tooltipText = "Can't render a preview as this is an autowidget, it requires a parent to be rendered.";
             else
             {
                 try

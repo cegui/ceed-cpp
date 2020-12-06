@@ -4,6 +4,7 @@
 #include "qimage.h"
 #include <memory>
 #include <functional>
+#include <CEGUI/views/StandardItemModel.h>
 
 // A singleton CEGUI manager class controls the loaded project and encapsulates a running CEGUI instance.
 // Right now CEGUI can only be instantiated once because it's full of singletons. This might change in the
@@ -69,6 +70,7 @@ public:
 protected:
 
     void cleanCEGUIResources();
+    void initializePreviewWidgetSpecific(CEGUI::Window* widgetInstance, const QString& widgetType);
 
     QOpenGLContext* glContext = nullptr;
     QOffscreenSurface* surface = nullptr;
@@ -77,6 +79,7 @@ protected:
 
     // TODO: invalidate cached previews when reload (e.g. edit) imagesets, lnfs and schemes
     std::map<QString, QImage> _widgetPreviewCache;
+    CEGUI::StandardItemModel _listItemModel;
 
     QtnEnumInfo* _enumHorizontalAlignment = nullptr;
     QtnEnumInfo* _enumVerticalAlignment = nullptr;
