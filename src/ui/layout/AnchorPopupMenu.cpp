@@ -1,7 +1,9 @@
-#include "src/ui/layout/AnchorPopupMenu.h"
+#include "AnchorPopupMenu.h"
 #include "ui_AnchorPopupMenu.h"
 #include "src/ui/layout/LayoutScene.h"
 #include "src/ui/layout/LayoutManipulator.h"
+#include "src/Application.h"
+#include "src/util/Settings.h"
 #include <CEGUI/CoordConverter.h>
 #include <CEGUI/Window.h>
 
@@ -62,7 +64,7 @@ void AnchorPopupMenu::on_actionParentLeft_triggered()
     float minX, maxX, minY, maxY;
     if (_scene.getAnchorValues(minX, maxX, minY, maxY))
         _scene.setAnchorValues(0.f, 0.f, minY, maxY, true);
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_actionParentTop_triggered()
@@ -70,13 +72,13 @@ void AnchorPopupMenu::on_actionParentTop_triggered()
     float minX, maxX, minY, maxY;
     if (_scene.getAnchorValues(minX, maxX, minY, maxY))
         _scene.setAnchorValues(minX, maxX, 0.f, 0.f, true);
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_btnParentLeftTop_clicked()
 {
     _scene.setAnchorValues(0.f, 0.f, 0.f, 0.f, true);
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_actionSelfLeft_triggered()
@@ -89,7 +91,7 @@ void AnchorPopupMenu::on_actionSelfLeft_triggered()
         const float anchorValue = CEGUI::CoordConverter::asRelative(target->getWidget()->getPosition().d_x, baseSize.d_width);
         _scene.setAnchorValues(anchorValue, anchorValue, minY, maxY, true);
     }
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_actionSelfTop_triggered()
@@ -102,7 +104,7 @@ void AnchorPopupMenu::on_actionSelfTop_triggered()
         const float anchorValue = CEGUI::CoordConverter::asRelative(target->getWidget()->getPosition().d_y, baseSize.d_height);
         _scene.setAnchorValues(minX, maxX, anchorValue, anchorValue, true);
     }
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_btnSelfLeftTop_clicked()
@@ -115,7 +117,7 @@ void AnchorPopupMenu::on_btnSelfLeftTop_clicked()
         const auto anchorValue = CEGUI::CoordConverter::asRelative(target->getWidget()->getPosition(), baseSize);
         _scene.setAnchorValues(anchorValue.x, anchorValue.x, anchorValue.y, anchorValue.y, true);
     }
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_actionParentHCenter_triggered()
@@ -123,7 +125,7 @@ void AnchorPopupMenu::on_actionParentHCenter_triggered()
     float minX, maxX, minY, maxY;
     if (_scene.getAnchorValues(minX, maxX, minY, maxY))
         _scene.setAnchorValues(0.5f, 0.5f, minY, maxY, true);
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_actionParentVCenter_triggered()
@@ -131,13 +133,13 @@ void AnchorPopupMenu::on_actionParentVCenter_triggered()
     float minX, maxX, minY, maxY;
     if (_scene.getAnchorValues(minX, maxX, minY, maxY))
         _scene.setAnchorValues(minX, maxX, 0.5f, 0.5f, true);
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_btnParentCenter_clicked()
 {
     _scene.setAnchorValues(0.5f, 0.5f, 0.5f, 0.5f, true);
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_actionSelfHCenter_triggered()
@@ -151,7 +153,7 @@ void AnchorPopupMenu::on_actionSelfHCenter_triggered()
         const float anchorValue = CEGUI::CoordConverter::asRelative(pt, baseSize.d_width);
         _scene.setAnchorValues(anchorValue, anchorValue, minY, maxY, true);
     }
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_actionSelfVCenter_triggered()
@@ -165,7 +167,7 @@ void AnchorPopupMenu::on_actionSelfVCenter_triggered()
         const float anchorValue = CEGUI::CoordConverter::asRelative(pt, baseSize.d_height);
         _scene.setAnchorValues(minX, maxX, anchorValue, anchorValue, true);
     }
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_btnSelfCenter_clicked()
@@ -180,7 +182,7 @@ void AnchorPopupMenu::on_btnSelfCenter_clicked()
         const auto anchorValue = CEGUI::CoordConverter::asRelative(pt, baseSize);
         _scene.setAnchorValues(anchorValue.x, anchorValue.x, anchorValue.y, anchorValue.y, true);
     }
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_actionParentRight_triggered()
@@ -188,7 +190,7 @@ void AnchorPopupMenu::on_actionParentRight_triggered()
     float minX, maxX, minY, maxY;
     if (_scene.getAnchorValues(minX, maxX, minY, maxY))
         _scene.setAnchorValues(1.f, 1.f, minY, maxY, true);
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_actionParentBottom_triggered()
@@ -196,13 +198,13 @@ void AnchorPopupMenu::on_actionParentBottom_triggered()
     float minX, maxX, minY, maxY;
     if (_scene.getAnchorValues(minX, maxX, minY, maxY))
         _scene.setAnchorValues(minX, maxX, 1.f, 1.f, true);
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_btnParentRightBottom_clicked()
 {
     _scene.setAnchorValues(1.f, 1.f, 1.f, 1.f, true);
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_actionSelfRight_triggered()
@@ -216,7 +218,7 @@ void AnchorPopupMenu::on_actionSelfRight_triggered()
         const float anchorValue = CEGUI::CoordConverter::asRelative(pt, baseSize.d_width);
         _scene.setAnchorValues(anchorValue, anchorValue, minY, maxY, true);
     }
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_actionSelfBottom_triggered()
@@ -230,7 +232,7 @@ void AnchorPopupMenu::on_actionSelfBottom_triggered()
         const float anchorValue = CEGUI::CoordConverter::asRelative(pt, baseSize.d_height);
         _scene.setAnchorValues(minX, maxX, anchorValue, anchorValue, true);
     }
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_btnSelfRightBottom_clicked()
@@ -245,7 +247,7 @@ void AnchorPopupMenu::on_btnSelfRightBottom_clicked()
         const auto anchorValue = CEGUI::CoordConverter::asRelative(pt, baseSize);
         _scene.setAnchorValues(anchorValue.x, anchorValue.x, anchorValue.y, anchorValue.y, true);
     }
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_actionParentHStretch_triggered()
@@ -253,7 +255,7 @@ void AnchorPopupMenu::on_actionParentHStretch_triggered()
     float minX, maxX, minY, maxY;
     if (_scene.getAnchorValues(minX, maxX, minY, maxY))
         _scene.setAnchorValues(0.f, 1.f, minY, maxY, true);
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_actionParentVStretch_triggered()
@@ -261,13 +263,13 @@ void AnchorPopupMenu::on_actionParentVStretch_triggered()
     float minX, maxX, minY, maxY;
     if (_scene.getAnchorValues(minX, maxX, minY, maxY))
         _scene.setAnchorValues(minX, maxX, 0.f, 1.f, true);
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_btnParentStretch_clicked()
 {
     _scene.setAnchorValues(0.f, 1.f, 0.f, 1.f, true);
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_actionSelfHStretch_triggered()
@@ -283,7 +285,7 @@ void AnchorPopupMenu::on_actionSelfHStretch_triggered()
         const float maxAnchorValue = CEGUI::CoordConverter::asRelative(maxPt, baseSize.d_width);
         _scene.setAnchorValues(minAnchorValue, maxAnchorValue, minY, maxY, true);
     }
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_actionSelfVStretch_triggered()
@@ -299,7 +301,7 @@ void AnchorPopupMenu::on_actionSelfVStretch_triggered()
         const float maxAnchorValue = CEGUI::CoordConverter::asRelative(maxPt, baseSize.d_height);
         _scene.setAnchorValues(minX, maxX, minAnchorValue, maxAnchorValue, true);
     }
-    close();
+    closeIfNeeded();
 }
 
 void AnchorPopupMenu::on_btnSelfStretch_clicked()
@@ -316,7 +318,14 @@ void AnchorPopupMenu::on_btnSelfStretch_clicked()
         const auto maxAnchorValue = CEGUI::CoordConverter::asRelative(maxPt, baseSize);
         _scene.setAnchorValues(minAnchorValue.x, maxAnchorValue.x, minAnchorValue.y, maxAnchorValue.y, true);
     }
-    close();
+    closeIfNeeded();
+}
+
+void AnchorPopupMenu::closeIfNeeded()
+{
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    if (settings->getEntryValue("layout/visual/close_anchor_presets").toBool())
+        close();
 }
 
 static inline bool compareFloat(float a, float b, float tolerance)

@@ -201,6 +201,11 @@ void LayoutEditor::createSettings(Settings& mgr)
                                   "checkbox", false, 0));
     secVisual->addEntry(std::move(entry));
 
+    entry.reset(new SettingsEntry(*secVisual, "close_anchor_presets", false, "Close anchor presets after select",
+                                  "Choose whether to close an anchor presets menu when any option is selected or keep it opened",
+                                  "checkbox", false, 0));
+    secVisual->addEntry(std::move(entry));
+
     entry.reset(new SettingsEntry(*secVisual, "normal_outline", QPen(QColor(255, 255, 0, 255)), "Normal outline",
                                   "Pen for normal outline.",
                                   "pen", false, 1));

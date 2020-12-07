@@ -52,6 +52,8 @@ private slots:
 
 private:
 
+    void closeIfNeeded();
+
     virtual void showEvent(QShowEvent* event) override;
 
     Ui::AnchorPopupMenu *ui;
