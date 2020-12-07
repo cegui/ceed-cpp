@@ -369,10 +369,7 @@ void LayoutCreateCommand::redo()
     manipulator->updateFromWidget(true, true);
     manipulator->createChildManipulators(true, false);
 
-    // Ensure this isn't obscured by it's parent
-    manipulator->moveToFront();
-
-    // Make only the new widget selected
+    // Make only the new widget selected. It is moved to front inside setSelected().
     _visualMode.getScene()->clearSelection();
     _visualMode.getHierarchyDockWidget()->getTreeView()->clearSelection();
     manipulator->setSelected(true);

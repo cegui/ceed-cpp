@@ -69,8 +69,7 @@ QPointF LayoutManipulator::constrainMovePoint(QPointF value)
         auto parent = parentItem();
         if (!parent) parent = this; // Ad hoc snapping for root widget, it snaps to itself
 
-        auto parentManip = dynamic_cast<LayoutManipulator*>(parent);
-        if (parentManip)
+        if (auto parentManip = dynamic_cast<LayoutManipulator*>(parent))
             value = QPointF(parentManip->snapXCoordToGrid(value.x()), parentManip->snapYCoordToGrid(value.y()));
     }
 
@@ -89,8 +88,7 @@ QRectF LayoutManipulator::constrainResizeRect(QRectF rect, QRectF oldRect)
         auto parent = parentItem();
         if (!parent) parent = this; // Ad hoc snapping for root widget, it snaps to itself
 
-        auto parentManip = dynamic_cast<LayoutManipulator*>(parent);
-        if (parentManip)
+        if (auto parentManip = dynamic_cast<LayoutManipulator*>(parent))
         {
             // We only snap the coordinates that have changed
             // because for example when you drag the left edge you don't want the right edge to snap!
@@ -447,6 +445,24 @@ QVariant LayoutManipulator::itemChange(QGraphicsItem::GraphicsItemChange change,
     if (change == ItemSelectedHasChanged)
     {
         if (_lcHandle) _lcHandle->updateLook();
+        else
+        {
+            // If we are inside a layout container, its handle must be on top of
+            // all other LCs in the same hierarchy for better user interaction
+            auto parent = parentItem();
+            while (parent)
+            {
+                if (auto parentManipulator = dynamic_cast<LayoutManipulator*>(parent))
+                {
+                    if (parentManipulator->isLayoutContainer())
+                    {
+                        parentManipulator->_lcHandle->updateLook();
+                        break;
+                    }
+                }
+                parent = parent->parentItem();
+            }
+        }
     }
     else if (change == ItemSceneChange)
     {

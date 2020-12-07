@@ -35,7 +35,25 @@ LayoutContainerHandle::LayoutContainerHandle(LayoutManipulator& host)
 
 void LayoutContainerHandle::updateLook()
 {
-    const bool active = _mouseOver || isSelected() || parentItem()->isSelected();
+    bool active = _mouseOver || isSelected() || parentItem()->isSelected();
+
+    // Also render as active if any of our immediate non-LC children is selected
+    if (!active)
+    {
+        const LayoutManipulator& host = *static_cast<LayoutManipulator*>(parentItem());
+        for (auto childItem : host.childItems())
+        {
+            if (auto child = dynamic_cast<LayoutManipulator*>(childItem))
+            {
+                if (!child->isLayoutContainer() && (child->isSelected() || child->isAnyHandleSelected()))
+                {
+                    active = true;
+                    break;
+                }
+            }
+        }
+    }
+
     setOpacity(active ? 1.0 : 0.5);
     setZValue(active ? 1.0 : 0.0);
 }
