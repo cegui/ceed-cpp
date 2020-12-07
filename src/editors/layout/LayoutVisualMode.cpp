@@ -116,6 +116,11 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     contextMenu->addAction(mainWindow->getActionCopy());
     contextMenu->addAction(mainWindow->getActionPaste());
     contextMenu->addSeparator();
+    contextMenu->addAction(app->getAction("layout/lock_widget"));
+    contextMenu->addAction(app->getAction("layout/unlock_widget"));
+    contextMenu->addAction(app->getAction("layout/recursively_lock_widget"));
+    contextMenu->addAction(app->getAction("layout/recursively_unlock_widget"));
+    contextMenu->addSeparator();
     contextMenu->addAction(actionScreenshot);
     contextMenu->addSeparator();
     contextMenu->addAction(actionAnchorPresets);
