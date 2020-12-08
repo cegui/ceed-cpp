@@ -14,6 +14,7 @@
 #include "src/util/Settings.h"
 #include "src/util/SettingsEntry.h"
 #include "src/util/RecentlyUsed.h"
+#include "src/util/Utils.h"
 #include "src/cegui/CEGUIManager.h"
 #include "src/cegui/CEGUIProject.h"
 #include "src/editors/NoEditor.h"
@@ -85,7 +86,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(projectManager, &ProjectManager::itemOpenRequested, this, &MainWindow::openEditorTab);
     addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, projectManager);
 
-    FileSystemBrowser::createActions(*qobject_cast<Application*>(qApp));
     fsBrowser = new FileSystemBrowser(this);
     //fsBrowser->setVisible(false);
     connect(fsBrowser, &FileSystemBrowser::fileOpenRequested, this, &MainWindow::openEditorTab);
@@ -603,6 +603,8 @@ void MainWindow::slot_tabBarCustomContextMenuRequested(const QPoint& pos)
     menu->addSeparator();
     menu->addAction(ui->actionCloseOtherTabs);
     menu->addAction(ui->actionCloseAllTabs);
+    menu->addSeparator();
+    menu->addAction(ui->actionOpenContainingFolder);
 
     /*
     if (tabIdx >= 0)
@@ -660,6 +662,7 @@ void MainWindow::on_tabs_currentChanged(int index)
     ui->actionSaveAs->setEnabled(hasEditor);
     ui->actionCloseTab->setEnabled(hasEditor);
     ui->actionCloseOtherTabs->setEnabled(hasEditor);
+    ui->actionOpenContainingFolder->setEnabled(hasEditor);
 
     if (currentEditor)
     {
@@ -765,6 +768,12 @@ void MainWindow::on_actionCloseAllTabs_triggered()
         if (!on_tabs_tabCloseRequested(i))
             ++i;
     }
+}
+
+void MainWindow::on_actionOpenContainingFolder_triggered()
+{
+    if (auto editor = getEditorForTab(ui->tabs->currentWidget()))
+        Utils::showInGraphicalShell(editor->getFilePath());
 }
 
 void MainWindow::on_actionPreviousTab_triggered()

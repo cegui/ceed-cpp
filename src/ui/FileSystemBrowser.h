@@ -14,7 +14,6 @@ class FileSystemBrowser;
 
 class QToolButton;
 class QMenu;
-class Application;
 
 class FileSystemBrowser : public QDockWidget
 {
@@ -22,10 +21,8 @@ class FileSystemBrowser : public QDockWidget
 
 public:
 
-    static void createActions(Application& app);
-
     explicit FileSystemBrowser(QWidget *parent = nullptr);
-    ~FileSystemBrowser();
+    virtual ~FileSystemBrowser() override;
 
     void setDirectory(const QString& dir);
 
@@ -55,7 +52,7 @@ private:
     virtual void contextMenuEvent(QContextMenuEvent* event) override;
 
     void setupContextMenu();
-    void showFileInOS();
+    void openContainingFolderForSelection();
 
     Ui::FileSystemBrowser *ui;
     QMenu* contextMenu = nullptr;

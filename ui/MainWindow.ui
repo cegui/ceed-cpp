@@ -200,6 +200,8 @@
     <addaction name="separator"/>
     <addaction name="actionCloseOtherTabs"/>
     <addaction name="actionCloseAllTabs"/>
+    <addaction name="separator"/>
+    <addaction name="actionOpenContainingFolder"/>
    </widget>
    <widget class="QMenu" name="menuEditor">
     <property name="enabled">
@@ -306,7 +308,10 @@
      <normaloff>:/icons/actions/close_other_tabs.png</normaloff>:/icons/actions/close_other_tabs.png</iconset>
    </property>
    <property name="text">
-    <string>Close Other</string>
+    <string>Close Other Tabs</string>
+   </property>
+   <property name="toolTip">
+    <string>Close Other Tabs</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+F4</string>
@@ -318,7 +323,10 @@
      <normaloff>:/icons/actions/close_all_tabs.png</normaloff>:/icons/actions/close_all_tabs.png</iconset>
    </property>
    <property name="text">
-    <string>Close All</string>
+    <string>Close All Tabs</string>
+   </property>
+   <property name="toolTip">
+    <string>Close All Tabs</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+F4</string>
@@ -699,6 +707,25 @@
    </property>
    <property name="text">
     <string>CEGUI Debug Info</string>
+   </property>
+  </action>
+  <action name="actionOpenContainingFolder">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Open Containing Folder</string>
+   </property>
+   <property name="toolTip">
+    <string>Opens a file folder in an OS file manager</string>
+   </property>
+  </action>
+  <action name="actionTabCopyFullPath">
+   <property name="text">
+    <string>Copy Full Path</string>
+   </property>
+   <property name="toolTip">
+    <string>Copy the full file path to the clipboard</string>
    </property>
   </action>
  </widget>

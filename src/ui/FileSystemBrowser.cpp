@@ -5,7 +5,6 @@
 #include "src/ui/MainWindow.h"
 #include "src/util/Utils.h"
 #include "src/editors/EditorBase.h"
-#include "src/Application.h"
 #include <qaction.h>
 #include <qmenu.h>
 #include <qevent.h>
@@ -35,33 +34,18 @@ FileSystemBrowser::~FileSystemBrowser()
     delete ui;
 }
 
-void FileSystemBrowser::createActions(Application& app)
-{
-    app.getOrCreateShortcutSettingsSection("global", "Global");
-
-#ifdef Q_OS_WIN
-    const QString showInOSName = "Open in Explorer";
-#elif Q_OS_MAC
-    const QString showInOSName = "Reveal in Finder";
-#else
-    const QString showInOSName = "Open in a file manager";
-#endif
-    app.registerAction("global", "show_in_os", showInOSName,
-                       "Opens a file folder in an OS file manager",
-                       QIcon(), QKeySequence(), false);
-}
-
 void FileSystemBrowser::setupContextMenu()
 {
     setContextMenuPolicy(Qt::DefaultContextMenu);
 
-    Application* app = qobject_cast<Application*>(qApp);
-
-    auto actionShowInOS = app->getAction("global/show_in_os");
-    connect(actionShowInOS, &QAction::triggered, this, &FileSystemBrowser::showFileInOS);
+    QAction* actionOpenContainingFolder = new QAction(this);
+    actionOpenContainingFolder->setText("Open Containing Folder");
+    actionOpenContainingFolder->setToolTip("Opens a file folder in an OS file manager");
+    actionOpenContainingFolder->setStatusTip("Opens a file folder in an OS file manager");
+    connect(actionOpenContainingFolder, &QAction::triggered, this, &FileSystemBrowser::openContainingFolderForSelection);
 
     contextMenu = new QMenu(this);
-    contextMenu->addAction(actionShowInOS);
+    contextMenu->addAction(actionOpenContainingFolder);
 }
 
 void FileSystemBrowser::contextMenuEvent(QContextMenuEvent* event)
@@ -71,7 +55,7 @@ void FileSystemBrowser::contextMenuEvent(QContextMenuEvent* event)
     contextMenu->exec(event->globalPos());
 }
 
-void FileSystemBrowser::showFileInOS()
+void FileSystemBrowser::openContainingFolderForSelection()
 {
     auto selection = ui->view->selectionModel()->selectedIndexes();
     for (auto modelIndex : selection)
