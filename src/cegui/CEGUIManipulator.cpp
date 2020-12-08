@@ -589,7 +589,7 @@ void CEGUIManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs)
 
     if (callUpdate) _widget->update(0.f);
 
-    // Just in case widget or widget name changed
+    // Just in case widget or widget name changed. Also updates a tooltip.
     onWidgetNameChanged();
 
     if (updateAncestorLCs)
@@ -667,7 +667,7 @@ void CEGUIManipulator::detach(bool detachWidget, bool destroyWidget, bool recurs
     {
         CEGUI::WindowManager::getSingleton().destroyWindow(_widget);
         _widget = nullptr;
-        setToolTip("");
+        updateTooltip();
     }
 }
 
@@ -1129,8 +1129,18 @@ void CEGUIManipulator::adjustPositionDeltaOnResize(CEGUI::UVector2& deltaPos, co
 
 void CEGUIManipulator::onWidgetNameChanged()
 {
-    setToolTip(getWidgetName());
+    updateTooltip();
     updatePropertiesFromWidget({"NamePath"});
+}
+
+void CEGUIManipulator::updateTooltip()
+{
+    if (_widget)
+    {
+        auto pxSize = _widget->calculatePixelSize();
+        setToolTip(QString(getWidgetName() + "<br><i>%1 x %2 px</i>").arg(pxSize.d_width).arg(pxSize.d_height));
+    }
+    else setToolTip("");
 }
 
 void CEGUIManipulator::onPropertyChanged(const QtnPropertyBase* property, CEGUI::Property* ceguiProperty)

@@ -96,6 +96,7 @@ protected:
     void adjustPositionDeltaOnResize(CEGUI::UVector2& deltaPos, const CEGUI::USize& deltaSize);
 
     virtual void onWidgetNameChanged();
+    void updateTooltip();
 
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
     virtual void onPropertyChanged(const QtnPropertyBase* property, CEGUI::Property* ceguiProperty);
