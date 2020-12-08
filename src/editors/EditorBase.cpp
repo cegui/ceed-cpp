@@ -274,39 +274,67 @@ bool EditorBase::saveAs(const QString& targetPath)
     // watching it, so re-enabling monitor is necessary.
     enableFileMonitoring(false);
 
+    // If the file already exists, rename it to avoid data losing due to save error
+    const bool tmpUsed = QFileInfo(actualPath).exists();
+    if (tmpUsed)
+    {
+        QFile prevFile(actualPath);
+        if (!prevFile.rename(actualPath + ".bak"))
+        {
+            QMessageBox::critical(qobject_cast<Application*>(qApp)->getMainWindow(),
+                                  "Error saving file!",
+                                  "CEED encountered an error trying to save the file " + actualPath);
+            return false;
+        }
+    }
+
     QFile file(actualPath);
-    if (!file.open(QIODevice::WriteOnly))
+    if (file.open(QIODevice::WriteOnly))
     {
-        QMessageBox::critical(qobject_cast<Application*>(qApp)->getMainWindow(),
-                              "Error saving file!",
-                              "CEED encountered an error trying to save the file " + actualPath);
-        enableFileMonitoring(true);
-        return false;
+        // Do it before obtaining raw data since it may contain relative pathes.
+        // For example imageset XML contains a relative path to underlying image.
+        _filePath = actualPath;
+
+        QByteArray rawData;
+        getRawData(rawData);
+        /*
+            if self.compatibilityManager is not None:
+                outputData = self.compatibilityManager.transform(self.compatibilityManager.EditorNativeType, self.desiredSavingDataType, self.nativeData)
+        */
+
+        const auto written = file.write(rawData);
+        file.close();
+
+        if (written == rawData.size())
+        {
+            if (tmpUsed) QFile(actualPath + ".bak").remove();
+            enableFileMonitoring(true);
+
+            markAsUnchanged();
+
+            if (prevFilePath != _filePath)
+            {
+                _labelText = QFileInfo(_filePath).fileName();
+                emit filePathChanged(prevFilePath, _filePath);
+            }
+
+            return true;
+        }
     }
 
-    // Do it before obtaining raw data since it may contain relative pathes.
-    // For example imageset XML contains a relative path to underlying image.
-    _filePath = actualPath;
+    // Something went wrong, show error and restore backup
+    QMessageBox::critical(qobject_cast<Application*>(qApp)->getMainWindow(),
+                          "Error saving file!",
+                          "CEED encountered an error trying to save the file " + actualPath);
 
-    QByteArray rawData;
-    getRawData(rawData);
-/*
-    if self.compatibilityManager is not None:
-        outputData = self.compatibilityManager.transform(self.compatibilityManager.EditorNativeType, self.desiredSavingDataType, self.nativeData)
-*/
-    file.write(rawData);
-    file.close();
-
+    if (tmpUsed)
+    {
+        QFile(actualPath).remove();
+        QFile(actualPath + ".bak").rename(actualPath);
+    }
     enableFileMonitoring(true);
-    markAsUnchanged();
 
-    if (prevFilePath != _filePath)
-    {
-        _labelText = QFileInfo(_filePath).fileName();
-        emit filePathChanged(prevFilePath, _filePath);
-    }
-
-    return true;
+    return false;
 }
 
 // Either reload file from disk or confirm desynchronization

@@ -1,9 +1,11 @@
 #include "src/cegui/CEGUIProject.h"
 #include "src/cegui/CEGUIProjectItem.h"
+#include "src/Application.h"
 #include "qfile.h"
 #include "qdir.h"
 #include "qdom.h"
 #include "qtextstream.h"
+#include <qmessagebox.h>
 
 const QString CEGUIProject::EditorEmbeddedCEGUIVersion("1.0");
 const QStringList CEGUIProject::CEGUIVersions = { "0.6", "0.7", "0.8", "1.0" };
@@ -128,18 +130,43 @@ bool CEGUIProject::save(const QString& newFilePath)
     xmlRoot.appendChild(xmlItems);
     doc.appendChild(xmlRoot);
 
-    // Save to file
-
-    QFile file(filePath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    // If the file already exists, rename it to avoid data losing due to save error
+    const bool tmpUsed = QFileInfo(filePath).exists();
+    if (tmpUsed)
     {
-        qDebug(QString("CEGUIProject::save() > can't open the file for writing: %1").arg(filePath).toLocal8Bit().data());
-        return false;
+        QFile prevFile(filePath);
+        if (!prevFile.rename(filePath + ".bak"))
+        {
+            QMessageBox::critical(qobject_cast<Application*>(qApp)->getMainWindow(),
+                                  "Error saving project!",
+                                  "CEED encountered an error trying to save the project file " + filePath);
+            return false;
+        }
     }
 
-    QTextStream stream(&file);
-    doc.save(stream, 4);
-    return true;
+    // Save to file
+    QFile file(filePath);
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        QTextStream stream(&file);
+        doc.save(stream, 4);
+        file.close();
+        if (tmpUsed) QFile(filePath + ".bak").remove();
+        return true;
+    }
+
+    // Something went wrong, show error and restore backup
+    QMessageBox::critical(qobject_cast<Application*>(qApp)->getMainWindow(),
+                          "Error saving project!",
+                          "CEED encountered an error trying to save the project file " + filePath);
+
+    if (tmpUsed)
+    {
+        QFile(filePath).remove();
+        QFile(filePath + ".bak").rename(filePath);
+    }
+
+    return false;
 }
 
 void CEGUIProject::unload()

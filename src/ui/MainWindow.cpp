@@ -660,7 +660,7 @@ void MainWindow::on_tabs_currentChanged(int index)
     const bool hasEditor = (currentEditor != nullptr);
     fsBrowser->activeFileDirectoryButton()->setEnabled(hasEditor);
     ui->actionRevert->setEnabled(hasEditor);
-    ui->actionSave->setEnabled(hasEditor);
+    ui->actionSave->setEnabled(hasEditor && currentEditor->hasChanges());
     ui->actionSaveAs->setEnabled(hasEditor);
     ui->actionCloseTab->setEnabled(hasEditor);
     ui->actionCloseOtherTabs->setEnabled(hasEditor);
@@ -680,7 +680,6 @@ void MainWindow::on_tabs_currentChanged(int index)
         {
             undoViewer->setUndoStack(undoStack);
 
-            ui->actionSave->setEnabled(undoStack->isClean());
             ui->actionUndo->setEnabled(undoStack->canUndo());
             ui->actionRedo->setEnabled(undoStack->canRedo());
             ui->actionUndo->setText("Undo " + undoStack->undoText());
