@@ -28,7 +28,7 @@ EditorBase::EditorBase(/*compatibilityManager, */ const QString& filePath, bool 
         auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
 
         undoStack = new QUndoStack(this);
-        undoStack->setUndoLimit(settings->getEntryValue("global/undo/limit").toInt());
+        undoStack->setUndoLimit(settings->getEntryValue("global/app/undo_limit").toInt());
         undoStack->setClean();
 
         connect(undoStack, &QUndoStack::canUndoChanged, [this](bool available)

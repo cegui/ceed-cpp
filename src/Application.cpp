@@ -55,6 +55,14 @@ Application::Application(int& argc, char** argv)
         splash->finish(_mainWindow);
         delete splash;
     }
+
+    // Perform a startup action
+    const auto action = _settings->getEntryValue("global/app/startup_action").toInt();
+    switch (action)
+    {
+        case 1: _mainWindow->openMostRecentProject(); break;
+        default: break; // 0: empty environment
+    }
 }
 
 Application::~Application()
@@ -154,17 +162,26 @@ void Application::createSettingsEntries()
     // General settings
 
     auto catGlobal = _settings->createCategory("global", "Global");
-    auto secUndoRedo = catGlobal->createSection("undo", "Undo and Redo");
+    auto secApp = catGlobal->createSection("app", "Application");
+
+    SettingsEntryPtr entry(new SettingsEntry(*secApp, "startup_action", 1, "On startup, load",
+                                "What to show when an application started",
+                                "combobox", false, 1, { {0, "Empty environment"}, {1, "Most recent project"} }));
+    secApp->addEntry(std::move(entry));
 
     // By default we limit the undo stack to 500 undo commands, should be enough and should
-    // avoid memory drainage. keep in mind that every tabbed editor has it's own undo stack,
+    // avoid memory drainage. Keep in mind that every tabbed editor has it's own undo stack,
     // so the overall command limit is number_of_tabs * 500!
-    SettingsEntryPtr entry(new SettingsEntry(*secUndoRedo, "limit", 500, "Limit (number of steps)",
-                                             "Puts a limit on every tabbed editor's undo stack. You can undo at most the number of times specified here.",
-                                             "int", true, 1));
-    secUndoRedo->addEntry(std::move(entry));
+    entry.reset(new SettingsEntry(*secApp, "undo_limit", 500, "Undo history size",
+                                 "Puts a limit on every tabbed editor's undo stack. You can undo at most the number of times specified here.",
+                                 "int", true, 1));
+    secApp->addEntry(std::move(entry));
 
-    auto secApp = catGlobal->createSection("app", "Application");
+    entry.reset(new SettingsEntry(*secApp, "copy_path_os_separators", true, "Copy path with OS-specific separators",
+                                  "When copy a file path to clipboard, will convert forward slashes (/) to OS-specific separators",
+                                  "checkbox", false, 1));
+    secApp->addEntry(std::move(entry));
+
     entry.reset(new SettingsEntry(*secApp, "show_splash", true, "Show splash screen",
                                   "Show the splash screen on startup",
                                   "checkbox", false, 1));

@@ -34,6 +34,7 @@
 #include "src/ui/FileSystemBrowser.h"
 #include "src/ui/UndoViewer.h"
 #include "QtnProperty/PropertyWidget.h"
+#include <qclipboard.h>
 
 // FIXME QTBUG: Qt 5.13.0 text rendering in OpenGL breaks on QOpenGLWidget delete
 #include <qopenglwidget.h>
@@ -604,6 +605,7 @@ void MainWindow::slot_tabBarCustomContextMenuRequested(const QPoint& pos)
     menu->addAction(ui->actionCloseOtherTabs);
     menu->addAction(ui->actionCloseAllTabs);
     menu->addSeparator();
+    menu->addAction(ui->actionTabCopyFullPath);
     menu->addAction(ui->actionOpenContainingFolder);
 
     /*
@@ -662,6 +664,7 @@ void MainWindow::on_tabs_currentChanged(int index)
     ui->actionSaveAs->setEnabled(hasEditor);
     ui->actionCloseTab->setEnabled(hasEditor);
     ui->actionCloseOtherTabs->setEnabled(hasEditor);
+    ui->actionTabCopyFullPath->setEnabled(hasEditor);
     ui->actionOpenContainingFolder->setEnabled(hasEditor);
 
     if (currentEditor)
@@ -767,6 +770,18 @@ void MainWindow::on_actionCloseAllTabs_triggered()
         // Don't close ones cancelled by user due to unsaved changes
         if (!on_tabs_tabCloseRequested(i))
             ++i;
+    }
+}
+
+void MainWindow::on_actionTabCopyFullPath_triggered()
+{
+    if (auto editor = getEditorForTab(ui->tabs->currentWidget()))
+    {
+        auto path = editor->getFilePath();
+        auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+        if (settings->getEntryValue("global/app/copy_path_os_separators").toBool())
+            path = QDir::toNativeSeparators(path);
+        QApplication::clipboard()->setText(path);
     }
 }
 
@@ -986,6 +1001,14 @@ void MainWindow::on_actionOpenFile_triggered()
                                                     &editorFactoryFileFilters[0]);
     if (!fileName.isEmpty())
         openEditorTab(fileName);
+}
+
+void MainWindow::openMostRecentProject()
+{
+    QStringList items;
+    recentlyUsedProjects->getRecentlyUsed(items);
+    if (!items.empty() && QFileInfo(items[0]).exists() && confirmProjectClosing(false))
+        loadProject(items[0]);
 }
 
 void MainWindow::openRecentProject(const QString& path)

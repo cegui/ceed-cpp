@@ -552,10 +552,9 @@ void LayoutVisualMode::takeScreenshot()
             const auto action = settings->getEntryValue("cegui/screenshots/after_save_action").toInt();
             switch (action)
             {
-                // TODO: https://stackoverflow.com/questions/3490336/how-to-reveal-in-finder-or-show-in-explorer-with-qt
-                case 0: QDesktopServices::openUrl(QUrl::fromLocalFile(dir.path())); break;
+                case 0: Utils::showInGraphicalShell(filePath); break;
                 case 1: QDesktopServices::openUrl(QUrl::fromLocalFile(filePath)); break;
-                default: break;
+                default: break; // 2: do nothing
             }
         }
     }

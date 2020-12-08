@@ -35,6 +35,8 @@ public:
     QToolBar* createToolbar(const QString& name);
     QToolBar* getToolbar(const QString& name) const;
 
+    void openMostRecentProject();
+
     // Common actions
     QAction* getActionCut() const;
     QAction* getActionCopy() const;
@@ -83,6 +85,7 @@ private slots:
     void on_actionCloseTab_triggered();
     void on_actionCloseOtherTabs_triggered();
     void on_actionCloseAllTabs_triggered();
+    void on_actionTabCopyFullPath_triggered();
     void on_actionOpenContainingFolder_triggered();
     void on_actionPreviousTab_triggered();
     void on_actionNextTab_triggered();

@@ -200,8 +200,6 @@
     <addaction name="separator"/>
     <addaction name="actionCloseOtherTabs"/>
     <addaction name="actionCloseAllTabs"/>
-    <addaction name="separator"/>
-    <addaction name="actionOpenContainingFolder"/>
    </widget>
    <widget class="QMenu" name="menuEditor">
     <property name="enabled">
@@ -721,6 +719,9 @@
    </property>
   </action>
   <action name="actionTabCopyFullPath">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Copy Full Path</string>
    </property>
