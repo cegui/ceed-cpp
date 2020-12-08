@@ -12,6 +12,7 @@
 #include "src/util/Utils.h"
 #include "src/Application.h"
 #include <CEGUI/CEGUI.h>
+#include <CEGUI/FreeTypeFont.h>
 #include <CEGUI/RendererModules/OpenGL/GLRenderer.h>
 #include <CEGUI/RendererModules/OpenGL/GL3Renderer.h>
 #include <CEGUI/RendererModules/OpenGL/ViewportTarget.h>
@@ -25,6 +26,8 @@
 #include "qopenglframebufferobject.h"
 #include "qopenglfunctions.h"
 #include <qopenglfunctions_3_2_core.h>
+#include <qdom.h>
+#include <qtextstream.h>
 
 // Allows us to register subscribers that want CEGUI log info
 // This prevents writing CEGUI.log into CWD and allow log display inside the app
@@ -646,6 +649,82 @@ QStringList CEGUIManager::getAvailableFonts() const
 
     std::sort(fonts.begin(), fonts.end());
     return fonts;
+}
+
+bool CEGUIManager::saveFont(CEGUI::Font& font, bool addToSchemes) const
+{
+    const QString fontName = CEGUIUtils::stringToQString(font.getName());
+    const QString fontDescFileName = fontName + ".font";
+
+    // Save an XML font description to the project
+    // TODO: rewrite with FontManager::writeFontToStream!
+
+    QDomDocument doc;
+    auto xmlHeader = doc.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\"");
+    doc.appendChild(xmlHeader);
+    auto xmlRoot = doc.createElement("Font");
+    xmlRoot.setAttribute("version", "3");
+    xmlRoot.setAttribute("name", fontName);
+    xmlRoot.setAttribute("filename", CEGUIUtils::stringToQString(font.getFileName()));
+    xmlRoot.setAttribute("type", CEGUIUtils::stringToQString(font.getTypeName()));
+    if (auto freeTypeFont = dynamic_cast<CEGUI::FreeTypeFont*>(&font))
+        xmlRoot.setAttribute("size", QString::number(static_cast<int>(freeTypeFont->getSize())));
+    xmlRoot.setAttribute("nativeHorzRes", QString::number(static_cast<int>(font.getNativeResolution().d_width)));
+    xmlRoot.setAttribute("nativeVertRes", QString::number(static_cast<int>(font.getNativeResolution().d_height)));
+    xmlRoot.setAttribute("autoScaled", CEGUIUtils::stringToQString(CEGUI::PropertyHelper<CEGUI::AutoScaledMode>::toString(font.getAutoScaled())));
+    doc.appendChild(xmlRoot);
+
+    {
+        const auto dstFontDescPath = currentProject->getResourceFilePath(fontDescFileName, "fonts");
+        QFile file(dstFontDescPath);
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) return false;
+
+        QTextStream stream(&file);
+        doc.save(stream, 4);
+        file.close();
+    }
+
+    // Add a new font to all schemes
+
+    if (!addToSchemes) return true;
+
+    const auto absoluteSchemesPath = currentProject->getAbsolutePathOf(currentProject->schemesPath);
+    if (!QDir(absoluteSchemesPath).exists()) return true;
+
+    QDirIterator schemesIt(absoluteSchemesPath);
+    while (schemesIt.hasNext())
+    {
+        schemesIt.next();
+        QFileInfo info = schemesIt.fileInfo();
+        if (info.isDir() || info.suffix() != "scheme") continue;
+
+        // Open, read & close file. We will work with a DOM document.
+        {
+            QFile file(info.absoluteFilePath());
+            if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+                return false;
+
+            if (!doc.setContent(&file))
+                return false;
+        }
+
+        auto xmlGUIScheme = doc.documentElement();
+        QDomElement xmlFontRec = doc.createElement("Font");
+        xmlFontRec.setAttribute("filename", fontDescFileName);
+        xmlGUIScheme.appendChild(xmlFontRec);
+
+        // Write XML back with changes
+        {
+            QFile file(info.absoluteFilePath());
+            if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) return false;
+
+            QTextStream stream(&file);
+            doc.save(stream, 4);
+            file.close();
+        }
+    }
+
+    return true;
 }
 
 // Retrieves names of images that are available from the set of schemes that were loaded.

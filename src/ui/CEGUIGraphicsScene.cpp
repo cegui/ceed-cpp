@@ -15,8 +15,6 @@
 #include <qopenglframebufferobject.h>
 #include <qmessagebox.h>
 #include <qdir.h>
-#include <qdom.h>
-#include <qtextstream.h>
 
 static void validateResolution(float& width, float& height)
 {
@@ -152,8 +150,7 @@ bool CEGUIGraphicsScene::ensureDefaultFontExists()
     {
         auto ret = QMessageBox::question(qobject_cast<Application*>(qApp)->getMainWindow(),
                                          "Project has no fonts",
-                                         "Do you want CEED to create a default font? Note that some widgets may render wrong without a font.\n"
-                                         "NOTE: You must add a new font into your scheme file by hand to get it loaded in the future. Will be fixed later.",
+                                         "Do you want CEED to create a default font? Note that some widgets may render wrong without a font.\n",
                                          QMessageBox::Yes | QMessageBox::No,
                                          QMessageBox::Yes);
         if (ret != QMessageBox::Yes) return false;
@@ -179,31 +176,9 @@ bool CEGUIGraphicsScene::ensureDefaultFontExists()
             return false;
         }
 
-        // Save an XML font description to the project
-        QDomDocument doc;
-        auto xmlHeader = doc.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\"");
-        doc.appendChild(xmlHeader);
-        auto xmlRoot = doc.createElement("Font");
-        xmlRoot.setAttribute("version", "3");
-        xmlRoot.setAttribute("name", "Default");
-        xmlRoot.setAttribute("filename", "DejaVuSans.ttf");
-        xmlRoot.setAttribute("type", "FreeType");
-        xmlRoot.setAttribute("size", "14");
-        xmlRoot.setAttribute("nativeHorzRes", QString::number(static_cast<int>(resolution.width())));
-        xmlRoot.setAttribute("nativeVertRes", QString::number(static_cast<int>(resolution.height())));
-        xmlRoot.setAttribute("autoScaled", "disabled"); // CEGUI::PropertyHelper<CEGUI::AutoScaledMode>::toString(CEGUI::AutoScaledMode::Disabled));
-        doc.appendChild(xmlRoot);
-
-        const auto dstFontDescPath = currentProject->getResourceFilePath("Default.font", "fonts");
-        QFile file(dstFontDescPath);
-        if (file.open(QIODevice::WriteOnly | QIODevice::Text))
-        {
-            QTextStream stream(&file);
-            doc.save(stream, 4);
-            file.close();
-        }
-
-        // TODO: add to scheme
+        // Save font XML description and add it to all schemes
+        // FIXME: createFont() with family, size etc instead of this, add to particular schemes optionally!
+        CEGUIManager::Instance().saveFont(*defaultFont, true);
     }
 
     if (ceguiContext) ceguiContext->setDefaultFont(defaultFont);
