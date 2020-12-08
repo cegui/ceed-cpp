@@ -3,7 +3,12 @@
 #include "src/cegui/CEGUIManager.h"
 #include "src/cegui/CEGUIProject.h"
 #include "src/ui/MainWindow.h"
+#include "src/util/Utils.h"
 #include "src/editors/EditorBase.h"
+#include "src/Application.h"
+#include <qaction.h>
+#include <qmenu.h>
+#include <qevent.h>
 
 FileSystemBrowser::FileSystemBrowser(QWidget *parent) :
     QDockWidget(parent),
@@ -21,11 +26,60 @@ FileSystemBrowser::FileSystemBrowser(QWidget *parent) :
         setDirectory(CEGUIManager::Instance().getCurrentProject()->getAbsolutePathOf(""));
     else
         setDirectory(QDir::homePath());
+
+    setupContextMenu();
 }
 
 FileSystemBrowser::~FileSystemBrowser()
 {
     delete ui;
+}
+
+void FileSystemBrowser::createActions(Application& app)
+{
+    app.getOrCreateShortcutSettingsSection("global", "Global");
+
+#ifdef Q_OS_WIN
+    const QString showInOSName = "Open in Explorer";
+#elif Q_OS_MAC
+    const QString showInOSName = "Reveal in Finder";
+#else
+    const QString showInOSName = "Open in a file manager";
+#endif
+    app.registerAction("global", "show_in_os", showInOSName,
+                       "Opens a file folder in an OS file manager",
+                       QIcon(), QKeySequence(), false);
+}
+
+void FileSystemBrowser::setupContextMenu()
+{
+    setContextMenuPolicy(Qt::DefaultContextMenu);
+
+    Application* app = qobject_cast<Application*>(qApp);
+
+    auto actionShowInOS = app->getAction("global/show_in_os");
+    connect(actionShowInOS, &QAction::triggered, this, &FileSystemBrowser::showFileInOS);
+
+    contextMenu = new QMenu(this);
+    contextMenu->addAction(actionShowInOS);
+}
+
+void FileSystemBrowser::contextMenuEvent(QContextMenuEvent* event)
+{
+    if (!contextMenu) return;
+
+    contextMenu->exec(event->globalPos());
+}
+
+void FileSystemBrowser::showFileInOS()
+{
+    auto selection = ui->view->selectionModel()->selectedIndexes();
+    for (auto modelIndex : selection)
+    {
+        QString childPath = modelIndex.data().toString();
+        QString absolutePath = QDir::cleanPath(QDir(directory).filePath(childPath));
+        Utils::showInGraphicalShell(absolutePath);
+    }
 }
 
 // Sets the browser to view given directory

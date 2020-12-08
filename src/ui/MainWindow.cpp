@@ -85,6 +85,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(projectManager, &ProjectManager::itemOpenRequested, this, &MainWindow::openEditorTab);
     addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, projectManager);
 
+    FileSystemBrowser::createActions(*qobject_cast<Application*>(qApp));
     fsBrowser = new FileSystemBrowser(this);
     //fsBrowser->setVisible(false);
     connect(fsBrowser, &FileSystemBrowser::fileOpenRequested, this, &MainWindow::openEditorTab);

@@ -13,12 +13,16 @@ class FileSystemBrowser;
 }
 
 class QToolButton;
+class QMenu;
+class Application;
 
 class FileSystemBrowser : public QDockWidget
 {
     Q_OBJECT
 
 public:
+
+    static void createActions(Application& app);
 
     explicit FileSystemBrowser(QWidget *parent = nullptr);
     ~FileSystemBrowser();
@@ -48,7 +52,13 @@ private slots:
 
 private:
 
+    virtual void contextMenuEvent(QContextMenuEvent* event) override;
+
+    void setupContextMenu();
+    void showFileInOS();
+
     Ui::FileSystemBrowser *ui;
+    QMenu* contextMenu = nullptr;
 
     QFileSystemModel model;
     QString directory;
