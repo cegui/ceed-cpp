@@ -1,10 +1,9 @@
 #include "src/cegui/CEGUIProject.h"
 #include "src/cegui/CEGUIProjectItem.h"
 #include "src/Application.h"
-#include "qfile.h"
-#include "qdir.h"
-#include "qdom.h"
-#include "qtextstream.h"
+#include <qdir.h>
+#include <qdom.h>
+#include <qtextstream.h>
 #include <qmessagebox.h>
 
 const QString CEGUIProject::EditorEmbeddedCEGUIVersion("1.0");

@@ -1,16 +1,22 @@
 #include "src/ui/CEGUIGraphicsScene.h"
 #include "src/cegui/CEGUIManager.h"
 #include "src/cegui/CEGUIProject.h"
+#include "src/Application.h"
 #include <CEGUI/RendererModules/OpenGL/RendererBase.h>
 #include <CEGUI/RendererModules/OpenGL/ViewportTarget.h>
 #include <CEGUI/System.h>
 #include <CEGUI/GUIContext.h>
+#include <CEGUI/FontManager.h>
 #include <qdatetime.h>
 #include <qgraphicsitem.h>
 #include <qgraphicssceneevent.h>
 #include <qopenglcontext.h>
 #include <qopenglfunctions.h>
 #include <qopenglframebufferobject.h>
+#include <qmessagebox.h>
+#include <qdir.h>
+#include <qdom.h>
+#include <qtextstream.h>
 
 static void validateResolution(float& width, float& height)
 {
@@ -128,6 +134,80 @@ QList<QGraphicsItem*> CEGUIGraphicsScene::topLevelItems() const
     }
 
     return ret;
+}
+
+bool CEGUIGraphicsScene::ensureDefaultFontExists()
+{
+    if (ceguiContext && ceguiContext->getDefaultFont()) return true;
+
+    const auto* currentProject = CEGUIManager::Instance().getCurrentProject();
+    if (!currentProject) return false;
+
+    auto& fontManager = CEGUI::FontManager::getSingleton();
+    const auto& fontRegistry = fontManager.getRegisteredFonts();
+    CEGUI::Font* defaultFont = fontRegistry.empty() ? nullptr : fontRegistry.begin()->second;
+
+    // If project has no fonts, offer the user to autocreate a default font
+    if (!defaultFont)
+    {
+        auto ret = QMessageBox::question(qobject_cast<Application*>(qApp)->getMainWindow(),
+                                         "Project has no fonts",
+                                         "Do you want CEED to create a default font? Note that some widgets may render wrong without a font.\n"
+                                         "NOTE: You must add a new font into your scheme file by hand to get it loaded in the future. Will be fixed later.",
+                                         QMessageBox::Yes | QMessageBox::No,
+                                         QMessageBox::Yes);
+        if (ret != QMessageBox::Yes) return false;
+
+        // Copy font source file if not exist
+        const auto dstFontPath = currentProject->getResourceFilePath("DejaVuSans.ttf", "fonts");
+        if (!QFileInfo(dstFontPath).exists())
+        {
+            const auto srcFontPath = QDir::current().filePath("data/fonts/DejaVuSans.ttf");
+            if (!QFile(srcFontPath).copy(dstFontPath)) return false;
+        }
+
+        // Create CEGUI font object
+        const QSizeF& resolution = currentProject->getDefaultResolution();
+        try
+        {
+            defaultFont = &fontManager.createFreeTypeFont("Default", 14.f, CEGUI::FontSizeUnit::Pixels,
+                true, "DejaVuSans.ttf", "fonts", CEGUI::AutoScaledMode::Disabled,
+                CEGUI::Sizef(static_cast<float>(resolution.width()), static_cast<float>(resolution.height())));
+        }
+        catch (...)
+        {
+            return false;
+        }
+
+        // Save an XML font description to the project
+        QDomDocument doc;
+        auto xmlHeader = doc.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\"");
+        doc.appendChild(xmlHeader);
+        auto xmlRoot = doc.createElement("Font");
+        xmlRoot.setAttribute("version", "3");
+        xmlRoot.setAttribute("name", "Default");
+        xmlRoot.setAttribute("filename", "DejaVuSans.ttf");
+        xmlRoot.setAttribute("type", "FreeType");
+        xmlRoot.setAttribute("size", "14");
+        xmlRoot.setAttribute("nativeHorzRes", QString::number(static_cast<int>(resolution.width())));
+        xmlRoot.setAttribute("nativeVertRes", QString::number(static_cast<int>(resolution.height())));
+        xmlRoot.setAttribute("autoScaled", "disabled"); // CEGUI::PropertyHelper<CEGUI::AutoScaledMode>::toString(CEGUI::AutoScaledMode::Disabled));
+        doc.appendChild(xmlRoot);
+
+        const auto dstFontDescPath = currentProject->getResourceFilePath("Default.font", "fonts");
+        QFile file(dstFontDescPath);
+        if (file.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            QTextStream stream(&file);
+            doc.save(stream, 4);
+            file.close();
+        }
+
+        // TODO: add to scheme
+    }
+
+    if (ceguiContext) ceguiContext->setDefaultFont(defaultFont);
+    return true;
 }
 
 void CEGUIGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent* event)

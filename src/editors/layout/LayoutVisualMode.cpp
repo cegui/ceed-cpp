@@ -13,7 +13,6 @@
 #include "src/util/SettingsEntry.h"
 #include "src/util/Utils.h"
 #include "src/Application.h"
-#include <CEGUI/GUIContext.h>
 #include <CEGUI/WindowManager.h>
 #include "qboxlayout.h"
 #include "qtoolbar.h"
@@ -61,6 +60,8 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
 
     auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
     const bool continuousRendering = settings->getEntryValue("layout/visual/continuous_rendering").toBool();
+
+    scene->ensureDefaultFontExists();
 
     ceguiWidget = new CEGUIWidget(this);
     layout->addWidget(ceguiWidget);

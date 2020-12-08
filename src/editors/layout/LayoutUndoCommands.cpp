@@ -307,6 +307,9 @@ void LayoutCreateCommand::undo()
 
 void LayoutCreateCommand::redo()
 {
+    // Most of (but not all) widgets require a font to be rendered properly
+    _visualMode.getScene()->ensureDefaultFontExists();
+
     CEGUI::Window* widget = CEGUI::WindowManager::getSingleton().createWindow(
                 CEGUIUtils::qStringToString(_type), CEGUIUtils::qStringToString(_name));
 

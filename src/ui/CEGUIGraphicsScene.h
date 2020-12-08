@@ -32,6 +32,8 @@ public:
 
     QOpenGLFramebufferObject* getOffscreenBuffer() const { return _fbo; }
 
+    bool ensureDefaultFontExists();
+
 protected:
 
     virtual void mousePressEvent(QGraphicsSceneMouseEvent* event) override;
