@@ -335,10 +335,10 @@ void LayoutManipulator::dragLeaveEvent(QGraphicsSceneDragDropEvent* /*event*/)
     resetPen();
 }
 
-// Takes care of creating new widgets when user drops the right mime type here
-// (dragging from the CreateWidgetDockWidget)
 void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
 {
+    // Takes care of creating new widgets when user drops the right mime type here
+    // (dragging from the CreateWidgetDockWidget)
     auto bytes = event->mimeData()->data("application/x-ceed-widget-type");
     if (bytes.size() > 0)
     {
@@ -354,6 +354,7 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
         return;
     }
 
+    // Drop existing widgets into this widget as children with Ctrl+Drag
     bytes = event->mimeData()->data("application/x-ceed-widget-paths");
     if (bytes.size() > 0)
     {
@@ -368,6 +369,11 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
 
         if (event->dropAction() == Qt::MoveAction)
         {
+            // calc offset
+            // get pos of the widget in old parent (need widget that we started to drag, or always first? or drag start pos, if more than one widget?)
+            // get pos of the drop inside this
+            //event->scenePos() - scenePos();
+
             _visualMode.moveWidgetsInHierarchy(std::move(widgetPaths), this, getWidget()->getChildCount());
             event->acceptProposedAction();
             return;
@@ -379,6 +385,7 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
 
 void LayoutManipulator::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
 {
+    // Ctrl+Drag to reparent selected widgets
     if (event->modifiers() & Qt::ControlModifier)
     {
         event->accept();
