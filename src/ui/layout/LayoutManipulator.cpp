@@ -354,7 +354,7 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
         return;
     }
 
-    // Drop existing widgets into this widget as children with Ctrl+Drag
+    // Drop existing widgets into this widget as children with Ctrl+Drag or from widget tree
     bytes = event->mimeData()->data("application/x-ceed-widget-paths");
     if (bytes.size() > 0)
     {
@@ -369,13 +369,15 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
 
         if (event->dropAction() == Qt::MoveAction)
         {
+            _visualMode.moveWidgetsInHierarchy(std::move(widgetPaths), this, getWidget()->getChildCount());
+            event->acceptProposedAction();
+
             // calc offset
             // get pos of the widget in old parent (need widget that we started to drag, or always first? or drag start pos, if more than one widget?)
             // get pos of the drop inside this
             //event->scenePos() - scenePos();
+            // Add move command
 
-            _visualMode.moveWidgetsInHierarchy(std::move(widgetPaths), this, getWidget()->getChildCount());
-            event->acceptProposedAction();
             return;
         }
     }

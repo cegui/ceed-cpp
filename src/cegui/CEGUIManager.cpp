@@ -653,35 +653,13 @@ QStringList CEGUIManager::getAvailableFonts() const
 
 bool CEGUIManager::saveFont(CEGUI::Font& font, bool addToSchemes) const
 {
-    const QString fontName = CEGUIUtils::stringToQString(font.getName());
-    const QString fontDescFileName = fontName + ".font";
+    const QString fontDescFileName = CEGUIUtils::stringToQString(font.getName()) + ".font";
 
     // Save an XML font description to the project
-    // TODO: rewrite with FontManager::writeFontToStream!
-
-    QDomDocument doc;
-    auto xmlHeader = doc.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\"");
-    doc.appendChild(xmlHeader);
-    auto xmlRoot = doc.createElement("Font");
-    xmlRoot.setAttribute("version", "3");
-    xmlRoot.setAttribute("name", fontName);
-    xmlRoot.setAttribute("filename", CEGUIUtils::stringToQString(font.getFileName()));
-    xmlRoot.setAttribute("type", CEGUIUtils::stringToQString(font.getTypeName()));
-    if (auto freeTypeFont = dynamic_cast<CEGUI::FreeTypeFont*>(&font))
-        xmlRoot.setAttribute("size", QString::number(static_cast<int>(freeTypeFont->getSize())));
-    xmlRoot.setAttribute("nativeHorzRes", QString::number(static_cast<int>(font.getNativeResolution().d_width)));
-    xmlRoot.setAttribute("nativeVertRes", QString::number(static_cast<int>(font.getNativeResolution().d_height)));
-    xmlRoot.setAttribute("autoScaled", CEGUIUtils::stringToQString(CEGUI::PropertyHelper<CEGUI::AutoScaledMode>::toString(font.getAutoScaled())));
-    doc.appendChild(xmlRoot);
-
     {
         const auto dstFontDescPath = currentProject->getResourceFilePath(fontDescFileName, "fonts");
-        QFile file(dstFontDescPath);
-        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) return false;
-
-        QTextStream stream(&file);
-        doc.save(stream, 4);
-        file.close();
+        std::ofstream stream(dstFontDescPath.toStdString(), std::ios_base::out | std::ios_base::trunc);
+        CEGUI::FontManager::getSingleton().writeFontToStream(font.getName(), stream);
     }
 
     // Add a new font to all schemes
@@ -697,6 +675,8 @@ bool CEGUIManager::saveFont(CEGUI::Font& font, bool addToSchemes) const
         schemesIt.next();
         QFileInfo info = schemesIt.fileInfo();
         if (info.isDir() || info.suffix() != "scheme") continue;
+
+        QDomDocument doc;
 
         // Open, read & close file. We will work with a DOM document.
         {
