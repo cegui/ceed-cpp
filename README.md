@@ -11,12 +11,12 @@ Collaborators are highly welcome.
 Dependencies
 -------------
 1. [QtnProperty v2.0](https://github.com/qtinuum/QtnProperty) - a Qt property framework. Sources are included;
-2. CEGUI [(default branch)](https://bitbucket.org/cegui/cegui/src/default/) with the OpenGL3Renderer (old OpenGLRenderer is working too but disabled by default);
-3. Qt (tested with 5.12 & 5.13, older versions down to 5.8 inclusive should also work).
+2. CEGUI [(master branch)](https://github.com/cegui/cegui) with the OpenGL3Renderer (old OpenGLRenderer is working too but disabled by default);
+3. Qt (tested with 5.12, 5.13 and 5.15, older versions down to 5.8 inclusive should also work).
 
 Preparing CEGUI
 -------------
-Windows: build CEGUI and either place it into /3rdParty/CEGUI/\[bin, lib, include, dependencies\] or fix your local .pro file to point to the build. Prebuilt 32-bit CEGUI for Windows is included into the [GitHub release](https://github.com/niello/ceed-cpp/releases).
+Windows: build CEGUI and either place it into /3rdParty/CEGUI/\[bin, lib, include, dependencies\] or fix your local .pro file to point to the build. If you have your cegui and ceed-cpp repo folders side by side, use /3rdParty/CEGUI/update_cegui_win_sdk.cmd. Prebuilt 32-bit CEGUI for Windows is included into the [GitHub release](https://github.com/cegui/ceed-cpp/releases).
 
 
 Building with Qt Creator 4.x
