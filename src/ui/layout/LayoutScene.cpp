@@ -1171,8 +1171,32 @@ void LayoutScene::dropEvent(QGraphicsSceneDragDropEvent* event)
 
 void LayoutScene::keyPressEvent(QKeyEvent* event)
 {
+    // UX: select only siblings of already selected, if any?
+    if (event->matches(QKeySequence::SelectAll))
+    {
+        batchSelection(true);
+        clearSelection();
+        for (auto item : items())
+            if (dynamic_cast<LayoutManipulator*>(item))
+                item->setSelected(true);
+        batchSelection(false);
+        emit selectionChanged();
+        event->accept();
+        return;
+    }
+
     switch (event->key())
     {
+        case Qt::Key_Escape:
+        {
+            if (!selectedItems().isEmpty())
+            {
+                clearSelection();
+                event->accept();
+                return;
+            }
+            break;
+        }
         case Qt::Key_Left:
         case Qt::Key_Right:
         case Qt::Key_Up:
