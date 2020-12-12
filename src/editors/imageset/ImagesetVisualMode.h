@@ -11,6 +11,7 @@ class ImagesetEntry;
 class ImagesetEditorDockWidget;
 class QDomElement;
 class QMenu;
+class QRubberBand;
 
 class ImagesetVisualMode : public ResizableGraphicsView, public IEditMode
 {
@@ -27,8 +28,9 @@ public:
 
     void refreshSceneRect();
 
+    void createImageEntry(const QRectF& rect);
     void createImageEntry(QPointF pos);
-    void createImageEntryAtCursor() { createImageEntry(lastCursorPosition); }
+    void createImageEntryAtCursor() { createImageEntry(_lastCursorScenePos); }
     bool moveImageEntries(const std::vector<ImageEntry*>& imageEntries, QPointF delta);
     bool resizeImageEntries(const std::vector<ImageEntry*>& imageEntries, QPointF topLeftDelta, QPointF bottomRightDelta);
     bool deleteImageEntries(const std::vector<ImageEntry*>& imageEntries);
@@ -59,11 +61,14 @@ protected:
 
     void createActiveStateConnections();
     QString getNewImageName(const QString& desiredName, QString copyPrefix = "", QString copySuffix = "_copy");
+    QPoint roundToImagePixels(QPoint src) const;
 
-    QPointF lastCursorPosition;
     ImagesetEntry* imagesetEntry = nullptr;
     ImagesetEditorDockWidget* dockWidget = nullptr;
     QMenu* contextMenu = nullptr;
+    QRubberBand* _rubberBand = nullptr;
+    QPoint _mouseDownPos;
+    QPointF _lastCursorScenePos;
 
     QAction* editOffsetsAction = nullptr;
     QAction* cycleOverlappingAction = nullptr;

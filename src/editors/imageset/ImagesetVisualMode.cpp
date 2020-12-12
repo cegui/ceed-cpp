@@ -15,12 +15,13 @@
 #include "qevent.h"
 #include "qmenu.h"
 #include "qdom.h"
+#include <qrubberband.h>
 
 constexpr qreal newImageHalfSize = 25.0;
 
 ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
     : IEditMode(editor)
-    , lastCursorPosition(newImageHalfSize, newImageHalfSize)
+    , _lastCursorScenePos(newImageHalfSize, newImageHalfSize)
 {
     wheelZoomEnabled = true;
     middleButtonDragScrollEnabled = true;
@@ -30,7 +31,7 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
     setFocusPolicy(Qt::ClickFocus);
     setFrameStyle(QFrame::NoFrame);
 
-    //setRenderHint(QPainter::TextAntialiasing, true);
+    setRenderHint(QPainter::TextAntialiasing, true);
 
     auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
     if (settings->getEntryValue("imageset/visual/partial_updates").toBool())
@@ -176,9 +177,7 @@ void ImagesetVisualMode::refreshSceneRect()
     scene()->setSceneRect(boundingRect);
 }
 
-// Centre position is the position of the centre of the newly created image,
-// the newly created image will then 'encapsulate' the centrepoint
-void ImagesetVisualMode::createImageEntry(QPointF pos)
+void ImagesetVisualMode::createImageEntry(const QRectF& rect)
 {
     // Find an unique image name
     QString name = "NewImage";
@@ -191,10 +190,24 @@ void ImagesetVisualMode::createImageEntry(QPointF pos)
         name = QString("NewImage_%1").arg(index++);
     }
 
-    QPointF imgPos = pos - QPointF(newImageHalfSize, newImageHalfSize);
-    QSizeF imgSize(2.0 * newImageHalfSize, 2.0 * newImageHalfSize);
     QPoint imgOffset(0, 0);
-    _editor.getUndoStack()->push(new ImagesetCreateCommand(*this, name, imgPos, imgSize, imgOffset));
+    _editor.getUndoStack()->push(new ImagesetCreateCommand(*this, name, rect.topLeft(), rect.size(), imgOffset));
+
+    // Select just created entry for convenience
+    if (auto createdEntry = imagesetEntry->getImageEntry(name))
+    {
+        scene()->clearSelection();
+        createdEntry->setSelected(true);
+    }
+}
+
+// Centre position is the position of the centre of the newly created image,
+// the newly created image will then 'encapsulate' the centrepoint
+void ImagesetVisualMode::createImageEntry(QPointF pos)
+{
+    const QPointF imgPos = pos - QPointF(newImageHalfSize, newImageHalfSize);
+    const QSizeF imgSize(2.0 * newImageHalfSize, 2.0 * newImageHalfSize);
+    createImageEntry(QRectF(imgPos, imgSize));
 }
 
 bool ImagesetVisualMode::moveImageEntries(const std::vector<ImageEntry*>& imageEntries, QPointF delta)
@@ -364,7 +377,7 @@ bool ImagesetVisualMode::paste()
 
     _editor.getUndoStack()->push(new ImagesetPasteCommand(*this, std::move(undo)));
 
-    // Select just the pasted image definitions for convenience
+    // Select just pasted image definitions for convenience
     scene()->clearSelection();
     for (const auto& name : newNames)
         imagesetEntry->getImageEntry(name)->setSelected(true);
@@ -459,14 +472,40 @@ void ImagesetVisualMode::slot_customContextMenu(QPoint point)
     contextMenu->exec(mapToGlobal(point));
 }
 
+QPoint ImagesetVisualMode::roundToImagePixels(QPoint src) const
+{
+    return mapFromScene(mapToScene(src).toPoint());
+}
+
 void ImagesetVisualMode::mouseMoveEvent(QMouseEvent* event)
 {
-    lastCursorPosition = mapToScene(event->pos());
+    _lastCursorScenePos = mapToScene(event->pos());
+
+    if (_rubberBand && _rubberBand->isVisible())
+    {
+        _rubberBand->setGeometry(QRect(_mouseDownPos, roundToImagePixels(event->pos())).normalized());
+        event->accept();
+        return;
+    }
+//    rect = QRectF(QPointF(round(rect.topLeft().x()), round(rect.topLeft().y())),
+//                  QPointF(round(rect.bottomRight().x()), round(rect.bottomRight().y())));
+
     ResizableGraphicsView::mouseMoveEvent(event);
 }
 
 void ImagesetVisualMode::mousePressEvent(QMouseEvent* event)
 {
+    // Ctrl+Drag to create new image rect with a rubber band
+    if ((event->buttons() & Qt::LeftButton) && (event->modifiers() & Qt::ControlModifier))
+    {
+        _mouseDownPos = roundToImagePixels(event->pos());
+        if (!_rubberBand) _rubberBand = new QRubberBand(QRubberBand::Rectangle, this);
+        _rubberBand->setGeometry(QRect(_mouseDownPos, QSize()));
+        _rubberBand->show();
+        event->accept();
+        return;
+    }
+
     ResizableGraphicsView::mousePressEvent(event);
 
     if (event->buttons() & Qt::LeftButton)
@@ -494,6 +533,15 @@ void ImagesetVisualMode::mousePressEvent(QMouseEvent* event)
 // AFAIK Qt doesn't give us any move finished notification so I do this manually
 void ImagesetVisualMode::mouseReleaseEvent(QMouseEvent* event)
 {
+    if (_rubberBand && _rubberBand->isVisible())
+    {
+        _rubberBand->hide();
+        if (_rubberBand->geometry().isValid())
+            createImageEntry(mapToScene(_rubberBand->geometry()).boundingRect().toRect());
+        event->accept();
+        return;
+    }
+
     ResizableGraphicsView::mouseReleaseEvent(event);
 
     std::vector<ImageEntry*> imageEntries;
@@ -603,6 +651,15 @@ void ImagesetVisualMode::keyReleaseEvent(QKeyEvent* event)
 
     switch (event->key())
     {
+        case Qt::Key_Control:
+        {
+            if (_rubberBand && _rubberBand->isVisible())
+            {
+                _rubberBand->hide();
+                handled = true;
+            }
+            break;
+        }
         case Qt::Key_Q:
         {
             handled = cycleOverlappingImages();
