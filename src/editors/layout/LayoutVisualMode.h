@@ -47,7 +47,7 @@ public:
     void zoomIn();
     void zoomOut();
     void zoomReset();
-    bool moveWidgetsInHierarchy(QStringList&& paths, LayoutManipulator* newParentManipulator, size_t newChildIndex);
+    bool moveWidgetsInHierarchy(const QStringList& paths, LayoutManipulator* newParentManipulator, size_t newChildIndex);
 
     LayoutScene* getScene() const { return scene; }
     CreateWidgetDockWidget* getCreateWidgetDockWidget() const { return createWidgetDockWidget; }

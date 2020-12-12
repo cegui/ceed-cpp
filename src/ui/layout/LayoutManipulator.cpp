@@ -367,17 +367,59 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
             widgetPaths.append(name);
         }
 
+        CEGUIUtils::removeNestedPaths(widgetPaths);
+
         if (event->dropAction() == Qt::MoveAction)
         {
-            _visualMode.moveWidgetsInHierarchy(std::move(widgetPaths), this, getWidget()->getChildCount());
+            // Remember desired offsets before reparenting:
+            // - Dragged item is always the first (only for visual mode dragging for now, not from the tree)
+            // - The first dragged item from each parent is dropped at a cursor position, with a small cascade offset
+            // - All subsequent items from the same parent keep relative position to the first item
+            std::map<LayoutManipulator*, QPointF> offsetByParent;
+            std::map<CEGUI::Window*, CEGUI::UVector2> newPositions;
+            const auto dropOffset = event->scenePos() - scenePos();
+
+            for (const QString& widgetPath : widgetPaths)
+            {
+                auto manipulator = _visualMode.getScene()->getManipulatorByPath(widgetPath);
+                if (!manipulator) continue;
+
+                auto oldParentManipulator = dynamic_cast<LayoutManipulator*>(manipulator->parentItem());
+                if (!oldParentManipulator) continue;
+
+                auto it = offsetByParent.find(oldParentManipulator);
+                if (it == offsetByParent.cend())
+                {
+                    const qreal cascadeOffset = offsetByParent.size() * 10.0;
+                    const QPointF offset = dropOffset - manipulator->pos() + QPointF(cascadeOffset, cascadeOffset);
+                    it = offsetByParent.emplace(oldParentManipulator, offset).first;
+                }
+
+                if (it->second.manhattanLength() > 0.0)
+                {
+                    auto newPos = manipulator->getWidget()->getPosition();
+                    newPos.d_x.d_offset += static_cast<float>(it->second.x());
+                    newPos.d_y.d_offset += static_cast<float>(it->second.y());
+                    newPositions.emplace(manipulator->getWidget(), newPos);
+                }
+            }
+
+            // First reparent widgets to the new parent
+            _visualMode.moveWidgetsInHierarchy(widgetPaths, this, getWidget()->getChildCount());
+
+            // Then move widgets using the drop position with a separate command
+            std::vector<LayoutMoveCommand::Record> records;
+            LayoutMoveCommand::Record rec;
+            for (const auto& pair : newPositions)
+            {
+                rec.path = CEGUIUtils::stringToQString(pair.first->getNamePath());
+                rec.oldPos = pair.first->getPosition();
+                rec.newPos = pair.second;
+                records.push_back(std::move(rec));
+            }
+            _visualMode.getEditor().getUndoStack()->push(new LayoutMoveCommand(_visualMode, std::move(records)));
+
             event->acceptProposedAction();
-
-            // calc offset
-            // get pos of the widget in old parent (need widget that we started to drag, or always first? or drag start pos, if more than one widget?)
-            // get pos of the drop inside this
-            //event->scenePos() - scenePos();
-            // Add move command
-
             return;
         }
     }
@@ -397,24 +439,25 @@ void LayoutManipulator::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
             setCursor(Qt::ClosedHandCursor);
 
             std::set<LayoutManipulator*> selectedWidgets;
-            _visualMode.getScene()->collectSelectedWidgets(selectedWidgets);
 
             /* UX: not sure what is better, move all selection or only a Ctrl-dragged item
-            if (selectedWidgets.find(this) == selectedWidgets.end())
+            if (!isSelected() && !isAnyHandleSelected())
             {
                 _visualMode.getScene()->clearSelection();
-                selectedWidgets.clear();
-                selectedWidgets.insert(this);
             }
             else
             */
             {
-                selectedWidgets.insert(this);
+                _visualMode.getScene()->collectSelectedWidgets(selectedWidgets);
                 LayoutVisualMode::removeNestedManipulators(selectedWidgets);
+                selectedWidgets.erase(this); // Will add to stream manually
             }
 
             QByteArray bytes;
             QDataStream stream(&bytes, QIODevice::WriteOnly);
+
+            // Add dragged widget first, then the rest of selection
+            stream << getWidgetPath();
             for (LayoutManipulator* manipulator : selectedWidgets)
                 stream << manipulator->getWidgetPath();
 

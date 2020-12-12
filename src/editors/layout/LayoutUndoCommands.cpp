@@ -659,6 +659,12 @@ LayoutMoveInHierarchyCommand::LayoutMoveInHierarchyCommand(LayoutVisualMode& vis
     , _records(std::move(records))
     , _newParentPath(newParentPath)
 {
+    // Only one root widget can exist, and it can't be reparented
+    _records.erase(std::remove_if(_records.begin(), _records.end(), [this](const Record& rec)
+    {
+        return !_visualMode.getScene()->getManipulatorByPath(rec.oldParentPath);
+    }), _records.end());
+
     // Sort by old child index to maintain predictable insertion order.
     // Otherwise it would depend on the order in which user selected items.
     std::sort(_records.begin(), _records.end(), [this](const Record& a, const Record& b)
@@ -716,8 +722,8 @@ void LayoutMoveInHierarchyCommand::undo()
     {
         const auto& rec = *it;
         auto widgetManipulator = _visualMode.getScene()->getManipulatorByPath(_newParentPath + '/' + rec.newName);
-        auto oldParentManipulator = _visualMode.getScene()->getManipulatorByPath(rec.oldParentPath);
         auto newParentManipulator = dynamic_cast<LayoutManipulator*>(widgetManipulator->parentItem());
+        auto oldParentManipulator = _visualMode.getScene()->getManipulatorByPath(rec.oldParentPath);
 
         // Remove it from the current CEGUI parent widget
         if (oldParentManipulator != newParentManipulator)
@@ -770,8 +776,8 @@ void LayoutMoveInHierarchyCommand::redo()
     for (const auto& rec : _records)
     {
         auto widgetManipulator = _visualMode.getScene()->getManipulatorByPath(rec.oldParentPath + '/' + rec.oldName);
-        auto newParentManipulator = _visualMode.getScene()->getManipulatorByPath(_newParentPath);
         auto oldParentManipulator = dynamic_cast<LayoutManipulator*>(widgetManipulator->parentItem());
+        auto newParentManipulator = _visualMode.getScene()->getManipulatorByPath(_newParentPath);
 
         // Remove it from the current CEGUI parent widget
         if (oldParentManipulator != newParentManipulator)
@@ -806,7 +812,7 @@ void LayoutMoveInHierarchyCommand::redo()
 
         // Update widget and its previous parent (the second is mostly for the layout container case)
         widgetManipulator->updateFromWidget(true, true);
-        if (oldParentManipulator) oldParentManipulator->updateFromWidget(true, true);
+        oldParentManipulator->updateFromWidget(true, true);
     }
 
     _visualMode.getHierarchyDockWidget()->refresh();

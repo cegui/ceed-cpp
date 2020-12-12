@@ -67,6 +67,8 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* mimeData, Qt::DropA
             widgetPaths.append(name);
         }
 
+        CEGUIUtils::removeNestedPaths(widgetPaths);
+
         const QString newParentPath = data(parent, Qt::UserRole).toString();
         auto newParentManipulator = _visualMode.getScene()->getManipulatorByPath(newParentPath);
 

@@ -365,11 +365,10 @@ void LayoutVisualMode::zoomReset()
     ceguiWidget->getView()->zoomReset();
 }
 
-bool LayoutVisualMode::moveWidgetsInHierarchy(QStringList&& paths, LayoutManipulator* newParentManipulator, size_t newChildIndex)
+// NB: paths must not contain children of any contained widget
+bool LayoutVisualMode::moveWidgetsInHierarchy(const QStringList& paths, LayoutManipulator* newParentManipulator, size_t newChildIndex)
 {
     if (!newParentManipulator || paths.empty()) return false;
-
-    CEGUIUtils::removeNestedPaths(paths);
 
     std::vector<LayoutMoveInHierarchyCommand::Record> records;
     std::unordered_set<QString> usedNames;
@@ -381,6 +380,10 @@ bool LayoutVisualMode::moveWidgetsInHierarchy(QStringList&& paths, LayoutManipul
         if (!manipulator || manipulator == newParentManipulator) continue;
 
         auto oldParentManipulator = dynamic_cast<LayoutManipulator*>(manipulator->parentItem());
+
+        // Only one root widget can exist, and it can't be reparented
+        if (!oldParentManipulator) continue;
+
         const size_t oldChildIndex = manipulator->getWidgetIndexInParent();
         const QString oldWidgetName = manipulator->getWidgetName();
         QString suggestedName = oldWidgetName;
