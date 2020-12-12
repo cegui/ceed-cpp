@@ -648,8 +648,15 @@ void ImagesetVisualMode::mouseReleaseEvent(QMouseEvent* event)
 void ImagesetVisualMode::keyReleaseEvent(QKeyEvent* event)
 {
     bool handled = false;
-
-    switch (event->key())
+    if (event->matches(QKeySequence::SelectAll))
+    {
+        scene()->clearSelection();
+        for (auto item : items())
+            if (dynamic_cast<ImageEntry*>(item))
+                item->setSelected(true);
+        handled = true;
+    }
+    else switch (event->key())
     {
         case Qt::Key_Control:
         {
@@ -668,6 +675,15 @@ void ImagesetVisualMode::keyReleaseEvent(QKeyEvent* event)
         case Qt::Key_Delete:
         {
             handled = deleteSelectedImageEntries();
+            break;
+        }
+        case Qt::Key_Escape:
+        {
+            if (!scene()->selectedItems().isEmpty())
+            {
+                scene()->clearSelection();
+                handled = true;
+            }
             break;
         }
         case Qt::Key_Left:
