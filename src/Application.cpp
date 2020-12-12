@@ -17,7 +17,7 @@ Application::Application(int& argc, char** argv)
     setOrganizationName("CEGUI");
     setOrganizationDomain("cegui.org.uk");
     setApplicationName("CEED - CEGUI editor");
-    setApplicationVersion("1.0.0-beta2");
+    setApplicationVersion("1.0.0");
 
     // Create settings and load all values from the persistence store
     _settings = new Settings(new QSettings("CEGUI", "CEED", this));
@@ -150,8 +150,6 @@ QString Application::getDocumentationPath() const
                 SYSTEM_DOC_DIR_EXISTS = True
     */
 
-    //!!!must be a working directory, not exe path! or move exe to ROOT/bin & add '../' to the doc subpath?
-    //!!!need to determine package path. On windows it can be built from exe path, like EXE_PATH/../ (given exe is in ROOT/bin)
     return QDir::current().absoluteFilePath("doc");
 }
 

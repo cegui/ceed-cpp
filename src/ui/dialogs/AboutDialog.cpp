@@ -9,6 +9,8 @@ AboutDialog::AboutDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    setFixedSize(size());
+
     // Background, see the data/images directory for SVG source
     ui->aboutImage->setPixmap(QPixmap(":/images/splashscreen.png"));
 

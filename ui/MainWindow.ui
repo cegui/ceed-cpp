@@ -147,7 +147,8 @@
     <addaction name="actionUserManual"/>
     <addaction name="actionWikiPage"/>
     <addaction name="separator"/>
-    <addaction name="actionSendFeedback"/>
+    <addaction name="actionDiscord"/>
+    <addaction name="actionForum"/>
     <addaction name="actionReportBug"/>
     <addaction name="actionCEGUIDebugInfo"/>
     <addaction name="separator"/>
@@ -684,13 +685,16 @@
     <string>Wiki Page</string>
    </property>
   </action>
-  <action name="actionSendFeedback">
+  <action name="actionForum">
    <property name="icon">
     <iconset resource="../data/Resources.qrc">
      <normaloff>:/icons/actions/help_feedback.png</normaloff>:/icons/actions/help_feedback.png</iconset>
    </property>
    <property name="text">
-    <string>Send Feedback</string>
+    <string>Forum</string>
+   </property>
+   <property name="toolTip">
+    <string>Goto CEED forum section</string>
    </property>
   </action>
   <action name="actionReportBug">
@@ -727,6 +731,18 @@
    </property>
    <property name="toolTip">
     <string>Copy the full file path to the clipboard</string>
+   </property>
+  </action>
+  <action name="actionDiscord">
+   <property name="icon">
+    <iconset resource="../data/Resources.qrc">
+     <normaloff>:/icons/actions/help_feedback.png</normaloff>:/icons/actions/help_feedback.png</iconset>
+   </property>
+   <property name="text">
+    <string>Discord</string>
+   </property>
+   <property name="toolTip">
+    <string>Join CEGUI Discord server</string>
    </property>
   </action>
  </widget>

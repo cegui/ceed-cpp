@@ -287,6 +287,10 @@ fonts.path = $$DESTDIR/data/fonts
 fonts.files = $$PWD/data/fonts/*
 INSTALLS += fonts
 
+doc.path = $$DESTDIR/doc
+doc.files = $$PWD/data/doc/*.pdf
+INSTALLS += doc
+
 images.path = $$DESTDIR/data/images
 images.files = $$PWD/data/icons/ceed.png
 INSTALLS += images

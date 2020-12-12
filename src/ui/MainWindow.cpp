@@ -542,13 +542,13 @@ void MainWindow::on_actionStatusbar_toggled(bool isChecked)
 void MainWindow::on_actionQuickstartGuide_triggered()
 {
     QDir docDir(qobject_cast<Application*>(qApp)->getDocumentationPath());
-    QDesktopServices::openUrl(QUrl("file://" + docDir.absoluteFilePath("quickstart-guide.pdf"), QUrl::TolerantMode));
+    QDesktopServices::openUrl(QUrl::fromLocalFile(docDir.absoluteFilePath("quickstart-guide.pdf")));
 }
 
 void MainWindow::on_actionUserManual_triggered()
 {
     QDir docDir(qobject_cast<Application*>(qApp)->getDocumentationPath());
-    QDesktopServices::openUrl(QUrl("file://" + docDir.absoluteFilePath("user-manual.pdf"), QUrl::TolerantMode));
+    QDesktopServices::openUrl(QUrl::fromLocalFile(docDir.absoluteFilePath("user-manual.pdf")));
 }
 
 void MainWindow::on_actionWikiPage_triggered()
@@ -556,9 +556,13 @@ void MainWindow::on_actionWikiPage_triggered()
     QDesktopServices::openUrl(QUrl("http://www.cegui.org.uk/wiki/index.php/CEED", QUrl::TolerantMode));
 }
 
-void MainWindow::on_actionSendFeedback_triggered()
+void MainWindow::on_actionDiscord_triggered()
 {
-    // TODO: add somewhere https://discord.gg/pjEmpXmhXe
+    QDesktopServices::openUrl(QUrl("https://discord.gg/pjEmpXmhXe", QUrl::TolerantMode));
+}
+
+void MainWindow::on_actionForum_triggered()
+{
     QDesktopServices::openUrl(QUrl("http://www.cegui.org.uk/phpBB2/viewforum.php?f=15", QUrl::TolerantMode));
 }
 

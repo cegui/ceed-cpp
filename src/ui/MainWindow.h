@@ -69,7 +69,8 @@ private slots:
     void on_actionQuickstartGuide_triggered();
     void on_actionUserManual_triggered();
     void on_actionWikiPage_triggered();
-    void on_actionSendFeedback_triggered();
+    void on_actionDiscord_triggered();
+    void on_actionForum_triggered();
     void on_actionReportBug_triggered();
     void on_actionCEGUIDebugInfo_triggered();
     void on_actionAbout_triggered();
