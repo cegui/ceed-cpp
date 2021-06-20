@@ -3,12 +3,14 @@
 #include "src/util/SettingsCategory.h"
 #include "src/util/SettingsSection.h"
 #include "src/util/SettingsEntry.h"
+#include "src/util/Utils.h"
 #include "src/editors/imageset/ImagesetEditor.h"
 #include "src/editors/layout/LayoutEditor.h"
 #include "src/editors/looknfeel/LookNFeelEditor.h"
-#include "qsplashscreen.h"
-#include "qsettings.h"
-#include "qdir.h"
+#include <qsplashscreen.h>
+#include <qsettings.h>
+#include <qdir.h>
+#include <qcommandlineparser.h>
 #include <qaction.h>
 
 Application::Application(int& argc, char** argv)
@@ -18,6 +20,8 @@ Application::Application(int& argc, char** argv)
     setOrganizationDomain("cegui.org.uk");
     setApplicationName("CEED - CEGUI editor");
     setApplicationVersion("1.0.0");
+
+    Utils::registerFileAssociation("ceed", "CEGUI Project file", "text/xml", "text", 0);
 
     // Create settings and load all values from the persistence store
     _settings = new Settings(new QSettings("CEGUI", "CEED", this));
@@ -56,12 +60,21 @@ Application::Application(int& argc, char** argv)
         delete splash;
     }
 
-    // Perform a startup action
-    const auto action = _settings->getEntryValue("global/app/startup_action").toInt();
-    switch (action)
+    QCommandLineParser cmdLine;
+    if (cmdLine.parse(arguments()) && cmdLine.positionalArguments().size() > 0)
     {
-        case 1: _mainWindow->openMostRecentProject(); break;
-        default: break; // 0: empty environment
+        // Load project specified in a command line
+        _mainWindow->loadProject(cmdLine.positionalArguments().first());
+    }
+    else
+    {
+        // Perform a startup action
+        const auto action = _settings->getEntryValue("global/app/startup_action").toInt();
+        switch (action)
+        {
+            case 1: _mainWindow->openMostRecentProject(); break;
+            default: break; // 0: empty environment
+        }
     }
 }
 

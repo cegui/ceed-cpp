@@ -36,6 +36,7 @@ public:
     QToolBar* getToolbar(const QString& name) const;
 
     void openMostRecentProject();
+    void loadProject(const QString& path);
 
     // Common actions
     QAction* getActionCut() const;
@@ -123,7 +124,6 @@ private:
 
     void updateProjectDependentUI(CEGUIProject* newProject);
     bool confirmProjectClosing(bool onlyModified);
-    void loadProject(const QString& path);
 
     void openNewEditor(EditorBasePtr editor);
     EditorBasePtr createEditorForFile(const QString& absolutePath);

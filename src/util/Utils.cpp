@@ -4,6 +4,8 @@
 #include <qdir.h>
 #include <qmessagebox.h>
 #include <qprocess.h>
+#include <qsettings.h>
+#include <qapplication.h>
 
 namespace Utils
 {
@@ -92,6 +94,48 @@ bool showInGraphicalShell(const QString& path)
     */
 #endif
     return false;
+}
+
+void registerFileAssociation(const QString& extension, const QString& desc, const QString& mimeType, const QString& perceivedType, int iconIndex)
+{
+    if (extension.isEmpty()) return;
+
+#if defined(Q_OS_WIN)
+    // Register file type on Windows
+    // NB: association will be created with the last launched instance, beware if you have multiple CEED distributions
+    {
+        const QString AppPath = qApp->applicationFilePath().replace('/', '\\');
+        const QString openCommand(AppPath + " \"%1\"");
+        const QString fileIconPath(AppPath + "," + QString::number(iconIndex));
+        QSettings classesKey("HKEY_CURRENT_USER\\SOFTWARE\\Classes", QSettings::NativeFormat);
+        if (classesKey.contains("CEGUI.CEED." + extension + "/shell/Open/Command/."))
+        {
+            // Patch application path if changed
+            if (iconIndex >= 0 && classesKey.value("CEGUI.CEED." + extension + "/DefaultIcon/.").toString() != fileIconPath)
+                classesKey.setValue("CEGUI.CEED." + extension + "/DefaultIcon/.", fileIconPath);
+            if (classesKey.value("CEGUI.CEED." + extension + "/shell/Open/Command/.").toString() != openCommand)
+                classesKey.setValue("CEGUI.CEED." + extension + "/shell/Open/Command/.", openCommand);
+        }
+        else
+        {
+            // Remove key hierarchies being created, just in case
+            classesKey.remove("." + extension);
+            classesKey.remove("CEGUI.CEED." + extension);
+
+            if (!desc.isEmpty())
+                classesKey.setValue("." + extension + "/.", "CEGUI.CEED." + extension);
+            if (!mimeType.isEmpty())
+                classesKey.setValue("." + extension + "/ContentType", mimeType);
+            if (!perceivedType.isEmpty())
+                classesKey.setValue("." + extension + "/PerceivedType", perceivedType);
+
+            classesKey.setValue("CEGUI.CEED." + extension + "/.", "CEGUI Project file");
+            classesKey.setValue("CEGUI.CEED." + extension + "/shell/Open/Command/.", openCommand);
+            if (iconIndex >= 0)
+                classesKey.setValue("CEGUI.CEED." + extension + "/DefaultIcon/.", fileIconPath);
+        }
+    }
+#endif
 }
 
 };
