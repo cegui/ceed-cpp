@@ -823,7 +823,7 @@ void LayoutMoveInHierarchyCommand::redo()
             }
         }
 
-        if (rec.newChildIndex < newParentManipulator->getWidget()->getChildCount())
+        if (rec.newChildIndex <= newParentManipulator->getWidget()->getChildCount())
             newParentManipulator->getWidget()->moveChildToIndex(widgetManipulator->getWidget(), rec.newChildIndex);
 
         // Update widget and its previous parent (the second is mostly for the layout container case)

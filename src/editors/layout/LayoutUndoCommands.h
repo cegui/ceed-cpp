@@ -204,7 +204,7 @@ protected:
 };
 
 // This command changes the parent of given windows and their positions in it.
-// Only one new parent can be specified due to the complexity of the logic.
+// Only one new parent can be specified due to complexity of the logic.
 // NB: we don't merge these commands
 class LayoutMoveInHierarchyCommand : public QUndoCommand
 {
