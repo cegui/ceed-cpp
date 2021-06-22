@@ -336,7 +336,6 @@ bool MainWindow::on_actionQuit_triggered()
     auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
 
     settings->getQSettings()->remove("openedTabs/mostRecentProject");
-    settings->getQSettings()->remove("openedTabs/mostRecentProject/current");
 
     // Remember opened tabs before exit, to restore on project reload
     // TODO: remember not only for the last closed project? Store a list per each project?
@@ -351,7 +350,9 @@ bool MainWindow::on_actionQuit_triggered()
             if (editor.get() == currentEditor)
                 settings->getQSettings()->setValue("openedTabs/mostRecentProject/current", filePath);
         }
-        settings->getQSettings()->setValue("openedTabs/mostRecentProject", openedTabs);
+
+        if (!openedTabs.isEmpty())
+            settings->getQSettings()->setValue("openedTabs/mostRecentProject/tabs", openedTabs);
     }
 
     // We remember last tab we closed to check whether user pressed Cancel in any of the dialogs
@@ -478,6 +479,24 @@ void MainWindow::loadProject(const QString& path)
 
     CEGUIManager::Instance().loadProject(path);
     updateProjectDependentUI(CEGUIManager::Instance().getCurrentProject());
+
+    // Restore tabs
+    // TODO: support all projects, not only the most recent!
+    QStringList items;
+    recentlyUsedProjects->getRecentlyUsed(items);
+    if (!items.empty() && items[0] == QDir::fromNativeSeparators(QDir::cleanPath(path)))
+    {
+        auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
+        if (settings->contains("openedTabs/mostRecentProject/tabs"))
+        {
+            QStringList openedTabs = settings->value("openedTabs/mostRecentProject/tabs").toStringList();
+            for (auto&& filePath : openedTabs)
+                openEditorTab(filePath);
+
+            if (settings->contains("openedTabs/mostRecentProject/current"))
+                activateEditorTabByFilePath(settings->value("openedTabs/mostRecentProject/current").toString());
+        }
+    }
 }
 
 void MainWindow::on_actionNewProject_triggered()
@@ -1031,21 +1050,7 @@ void MainWindow::openMostRecentProject()
     QStringList items;
     recentlyUsedProjects->getRecentlyUsed(items);
     if (!items.empty() && QFileInfo(items[0]).exists() && confirmProjectClosing(false))
-    {
         loadProject(items[0]);
-
-        // Restore tabs
-        auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
-        if (settings->contains("openedTabs/mostRecentProject"))
-        {
-            QStringList openedTabs = settings->value("openedTabs/mostRecentProject").toStringList();
-            for (auto&& filePath : openedTabs)
-                openEditorTab(filePath);
-
-            if (settings->contains("openedTabs/mostRecentProject/current"))
-                activateEditorTabByFilePath(settings->value("openedTabs/mostRecentProject/current").toString());
-        }
-    }
 }
 
 void MainWindow::openRecentProject(const QString& path)
