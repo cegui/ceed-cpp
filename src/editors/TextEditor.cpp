@@ -1,4 +1,5 @@
 #include "src/editors/TextEditor.h"
+#include "src/cegui/CEGUIManager.h"
 #include "qfile.h"
 
 TextEditor::TextEditor(const QString& filePath)
@@ -25,6 +26,9 @@ void TextEditor::initialize()
 
     textDocument->setModified(false);
     textDocument->setUndoRedoEnabled(true);
+
+    // For now don't allow to edit CEED project manually
+    widget.setReadOnly(_filePath.endsWith("." + CEGUIManager::ceedProjectExtension()));
 
     connect(textDocument, &QTextDocument::contentsChanged, [this]()
     {
@@ -155,7 +159,7 @@ QString TextEditorFactory::textFileTypesDescription()
 
 QStringList TextEditorFactory::textFileExtensions()
 {
-    return { "txt", "xml", "py", "lua", "ini", "log", "hrd",
+    return { "txt", "xml", "py", "lua", "ini", "log", "hrd", CEGUIManager::ceedProjectExtension(),
         // FIXME: these are temporary until the appropriate editor is implemented
         "scheme", "font" };
 }

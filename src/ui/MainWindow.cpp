@@ -969,25 +969,11 @@ EditorBasePtr MainWindow::createEditorForFile(const QString& absolutePath)
         // the editor without introducing exceptions, etc...
         if (possibleFactories.empty())
         {
-            if (absolutePath.endsWith("." + CEGUIManager::ceedProjectExtension()))
-            {
-                // Provide a more newbie-friendly message in case they are
-                // trying to open a project file as if it were a file
-                ret.reset(new NoEditor(absolutePath,
-                    tr("You are trying to open '%1' (project relative path: '%2') which "
-                    "seems to be a CEED project file. "
-                    "This simply is not how things are supposed to work, please use "
-                    "File -> Open Project to open your project file instead. "
-                    "(CEED enforces proper extensions)").arg(absolutePath).arg(projectRelativePath)));
-            }
-            else
-            {
-                ret.reset(new NoEditor(absolutePath,
-                    tr("No included tabbed editor was able to accept '%1' "
-                    "(project relative path: '%2'), please check that it's a file CEED "
-                    "supports and that it has the correct extension "
-                    "(CEED enforces proper extensions)").arg(absolutePath).arg(projectRelativePath)));
-            }
+            ret.reset(new NoEditor(absolutePath,
+                tr("No included tabbed editor was able to accept '%1' "
+                "(project relative path: '%2'), please check that it's a file CEED "
+                "supports and that it has the correct extension "
+                "(CEED enforces proper extensions)").arg(absolutePath).arg(projectRelativePath)));
         }
         else
         {
