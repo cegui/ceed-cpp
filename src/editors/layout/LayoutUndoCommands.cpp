@@ -285,6 +285,17 @@ void LayoutDeleteCommand::redo()
 //---------------------------------------------------------------------
 
 LayoutCreateCommand::LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath,
+                                         const QString& type, const QString& name, size_t indexInParent)
+    : _visualMode(visualMode)
+    , _parentPath(parentPath)
+    , _type(type)
+    , _name(name)
+    , _indexInParent(indexInParent)
+{
+    setText(QString("Create '%1' of type '%2'").arg(name, type));
+}
+
+LayoutCreateCommand::LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath,
                                          const QString& type, const QString& name, QPointF scenePos, size_t indexInParent)
     : _visualMode(visualMode)
     , _parentPath(parentPath)
@@ -292,8 +303,9 @@ LayoutCreateCommand::LayoutCreateCommand(LayoutVisualMode& visualMode, const QSt
     , _name(name)
     , _scenePos(scenePos)
     , _indexInParent(indexInParent)
+    , _useScenePos(true)
 {
-    setText(QString("Create '%1' of type '%2'").arg(name, type));
+    setText(QString("Create '%1' of type '%2' at (%3; %4)").arg(name).arg(type).arg(scenePos.x()).arg(scenePos.y()));
 }
 
 void LayoutCreateCommand::undo()
@@ -326,10 +338,14 @@ void LayoutCreateCommand::redo()
     }
     else
     {
-        // Convert requested position into parent cordinate system
-        glm::vec2 pos(static_cast<float>(_scenePos.x()), static_cast<float>(_scenePos.y()));
-        if (parent)
-            pos = CEGUI::CoordConverter::screenToWindow(*parent->getWidget(), pos);
+        glm::vec2 pos(0.f, 0.f);
+        if (_useScenePos)
+        {
+            // Convert requested position into parent cordinate system
+            pos = glm::vec2(static_cast<float>(_scenePos.x()), static_cast<float>(_scenePos.y()));
+            if (parent)
+                pos -= parent->getWidget()->getClientChildContentArea().get().getPosition();
+        }
 
         // Place new window at the requested point in context coords
         widget->setPosition(CEGUI::UVector2(CEGUI::UDim(0.f, pos.x), CEGUI::UDim(0.f, pos.y)));
