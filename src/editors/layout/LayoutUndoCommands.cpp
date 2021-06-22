@@ -773,7 +773,7 @@ void LayoutMoveInHierarchyCommand::undo()
 
         const size_t currIndex = widgetManipulator->getWidgetIndexInParent();
         const size_t destIndex = rec.oldChildIndex > currIndex ? rec.oldChildIndex + 1 : rec.oldChildIndex;
-        if (destIndex < oldParentManipulator->getWidget()->getChildCount())
+        if (destIndex <= oldParentManipulator->getWidget()->getChildCount())
             oldParentManipulator->getWidget()->moveChildToIndex(currIndex, destIndex);
 
         // Update widget and its previous parent (the second is mostly for the layout container case)
