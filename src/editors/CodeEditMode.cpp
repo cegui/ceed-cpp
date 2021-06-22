@@ -15,6 +15,8 @@ CodeEditMode::CodeEditMode(MultiModeEditor& editor)
     QFont font("Courier New", 10);
     font.setStyleHint(QFont::Monospace);
     document()->setDefaultFont(font);
+
+    setTabStopDistance(4 * QFontMetrics(font).horizontalAdvance(' '));
 }
 
 void CodeEditMode::keyPressEvent(QKeyEvent* event)

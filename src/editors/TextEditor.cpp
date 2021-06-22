@@ -19,9 +19,9 @@ void TextEditor::initialize()
             textDocument->setPlainText(file.readAll());
     }
 
-    updateFont();
-
     widget.setDocument(textDocument);
+
+    updateFont();
 
     textDocument->setModified(false);
     textDocument->setUndoRedoEnabled(true);
@@ -142,6 +142,8 @@ void TextEditor::updateFont()
     QFont font("Courier New", fontSize);
     font.setStyleHint(QFont::Monospace);
     textDocument->setDefaultFont(font);
+
+    widget.setTabStopDistance(4 * QFontMetrics(font).horizontalAdvance(' '));
 }
 
 //---------------------------------------------------------------------
