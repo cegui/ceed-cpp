@@ -478,26 +478,24 @@ void MainWindow::loadProject(const QString& path)
     updateProjectDependentUI(CEGUIManager::Instance().getCurrentProject());
 
     // Restore tabs
-    QStringList items;
-    recentlyUsedProjects->getRecentlyUsed(items);
-    if (!items.empty() && items[0] == QDir::fromNativeSeparators(QDir::cleanPath(path)))
+    auto currProject = CEGUIManager::Instance().getCurrentProject();
+    const QString key = "openedTabs/" + currProject->uuid.toString(QUuid::StringFormat::WithBraces);
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
+    if (settings->contains(key + "/tabs"))
     {
-        auto currProject = CEGUIManager::Instance().getCurrentProject();
-        const QString key = "openedTabs/" + currProject->uuid.toString(QUuid::StringFormat::WithBraces);
-        auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
-        if (settings->contains(key + "/tabs"))
-        {
-            QStringList openedTabs = settings->value(key + "/tabs").toStringList();
-            for (auto&& filePath : openedTabs)
-            {
-                const auto absPath = currProject->getAbsolutePathOf(filePath);
-                if (QFileInfo(absPath).exists())
-                    openEditorTab(absPath);
-            }
+        // Close remaining tabs to restore saved tabs in desired order
+        on_actionCloseAllTabs_triggered();
 
-            if (settings->contains(key + "/current"))
-                activateEditorTabByFilePath(currProject->getAbsolutePathOf(settings->value(key + "/current").toString()));
+        QStringList openedTabs = settings->value(key + "/tabs").toStringList();
+        for (auto&& filePath : openedTabs)
+        {
+            const auto absPath = currProject->getAbsolutePathOf(filePath);
+            if (QFileInfo(absPath).exists())
+                openEditorTab(absPath);
         }
+
+        if (settings->contains(key + "/current"))
+            activateEditorTabByFilePath(currProject->getAbsolutePathOf(settings->value(key + "/current").toString()));
     }
 }
 
@@ -1238,13 +1236,17 @@ bool MainWindow::on_actionCloseProject_triggered()
         const QString key = "openedTabs/" + currProject->uuid.toString(QUuid::StringFormat::WithBraces);
         settings->remove(key);
 
+        // Store in UI tab order
         QStringList openedTabs;
-        for (auto&& editor : activeEditors)
+        for (int i = 0; i < ui->tabs->count(); ++i)
         {
-            const auto filePath = currProject->getRelativePathOf(QDir::fromNativeSeparators(QDir::cleanPath(editor->getFilePath())));
-            openedTabs.append(filePath);
-            if (editor.get() == currentEditor)
-                settings->setValue(key + "/current", filePath);
+            if (auto editor = getEditorForTab(i))
+            {
+                const auto filePath = currProject->getRelativePathOf(QDir::fromNativeSeparators(QDir::cleanPath(editor->getFilePath())));
+                openedTabs.append(filePath);
+                if (editor == currentEditor)
+                    settings->setValue(key + "/current", filePath);
+            }
         }
 
         if (!openedTabs.isEmpty())
