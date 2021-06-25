@@ -330,25 +330,25 @@ void MainWindow::closeEvent(QCloseEvent* event)
         event->accept();
 }
 
-// Safely quits the editor, prompting user to save changes to files and the project.
+// Safely quits the editor, prompting user to save changes to files and to the project.
+// If user pressed cancel on any save dialog, we cancel the whole quit operation!
 bool MainWindow::on_actionQuit_triggered()
 {
-    // Request to save changes for all modified tabs.
-    // If user pressed cancel on the tab editor save dialog, cancel the whole quit operation!
+    // Request to save changes for all modified tabs, but don't close them yet
     for (auto&& editor : activeEditors)
         if (!confirmEditorTabClosing(*editor)) return false;
 
-    auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
-
-    // Save geometry and state of this window to QSettings
-    settings->setValue("window-geometry", saveGeometry());
-    settings->setValue("window-state", saveState());
-
-    // Close project. In case user pressed cancel the entire quitting processed has to be terminated.
+    // Close the project, remembering IDE state for restoring at the next session
     if (!on_actionCloseProject_triggered()) return false;
 
     // Close all remaining project-independent tabs
     on_actionCloseAllTabs_triggered();
+    if (ui->tabs->count() > 0) return false;
+
+    // Save geometry and state of this window to QSettings
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
+    settings->setValue("window-geometry", saveGeometry());
+    settings->setValue("window-state", saveState());
 
     QApplication::quit();
 
