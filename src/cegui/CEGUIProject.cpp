@@ -51,10 +51,15 @@ bool CEGUIProject::loadFromFile(const QString& fileName)
     }
 
     filePath = fileName;
+    changed = false;
 
     auto xmlRoot = doc.documentElement();
     setDefaultResolution(xmlRoot.attribute("CEGUIDefaultResolution", "1280x720"));
     CEGUIVersion = xmlRoot.attribute("CEGUIVersion", EditorEmbeddedCEGUIVersion);
+
+    const QString uuidStr = xmlRoot.attribute("UUID", QString{});
+    if (!uuidStr.isEmpty()) uuid = QUuid::fromString(uuidStr);
+    ensureUuidIsValid();
 
     baseDirectory = QDir::cleanPath(xmlRoot.attribute("baseDirectory", "./"));
     imagesetsPath = QDir::cleanPath(xmlRoot.attribute("imagesetsPath", "./imagesets"));
@@ -77,32 +82,29 @@ bool CEGUIProject::loadFromFile(const QString& fileName)
         xmlItem = xmlItem.nextSiblingElement("Item");
     }
 
-    changed = false;
-
     return true;
 }
 
-// Saves in "CEED Project 1" format by default
 bool CEGUIProject::save(const QString& newFilePath)
 {
-    if (newFilePath.isEmpty())
+    if (!newFilePath.isEmpty() && filePath != newFilePath)
     {
-        // "save" vs "save as"
-        changed = false;
-    }
-    else
-    {
-        // Set the project's file path to newPath so that if you press save next time it will save to the new path
-        // (This is what is expected from applications in general I think)
+        // "Save As ...". This class instance becomes a new project instance.
         filePath = newFilePath;
+        uuid = QUuid{};
     }
+
+    ensureUuidIsValid();
+
+    changed = false;
 
     QDomDocument doc;
 
     // Write header
 
     auto xmlRoot = doc.createElement("Project");
-    xmlRoot.setAttribute("version", "CEED Project 1");
+    xmlRoot.setAttribute("UUID", uuid.toString(QUuid::StringFormat::WithoutBraces));
+    xmlRoot.setAttribute("version", "1");
     xmlRoot.setAttribute("CEGUIVersion", CEGUIVersion);
     xmlRoot.setAttribute("CEGUIDefaultResolution", getDefaultResolutionString());
     xmlRoot.setAttribute("baseDirectory", QDir::cleanPath(baseDirectory));
@@ -195,6 +197,15 @@ bool CEGUIProject::checkAllDirectories() const
     }
 
     return true;
+}
+
+void CEGUIProject::ensureUuidIsValid()
+{
+    if (uuid.isNull())
+    {
+        uuid = QUuid::createUuid();
+        changed = true;
+    }
 }
 
 QString CEGUIProject::getName() const

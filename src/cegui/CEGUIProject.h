@@ -1,8 +1,9 @@
 #ifndef CEGUIPROJECT_H
 #define CEGUIPROJECT_H
 
-#include "qstring.h"
-#include "qstandarditemmodel.h"
+#include <qstring.h>
+#include <qstandarditemmodel.h>
+#include <quuid.h>
 
 // Incapsulates a single CEGUI (CEED) project info and methods to work with it
 
@@ -24,6 +25,7 @@ public:
     void unload();
 
     bool checkAllDirectories() const;
+    void ensureUuidIsValid();
 
     bool isModified() const { return changed; }
     void setModified() { changed = true; }
@@ -41,6 +43,7 @@ public:
 //private:
 public: // For now, to avoid lots of boilerplate setters & getters
 
+    QUuid   uuid;
     QString CEGUIVersion;
     QString filePath;
     QString baseDirectory;

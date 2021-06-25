@@ -333,56 +333,22 @@ void MainWindow::closeEvent(QCloseEvent* event)
 // Safely quits the editor, prompting user to save changes to files and the project.
 bool MainWindow::on_actionQuit_triggered()
 {
-    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    // Request to save changes for all modified tabs.
+    // If user pressed cancel on the tab editor save dialog, cancel the whole quit operation!
+    for (auto&& editor : activeEditors)
+        if (!confirmEditorTabClosing(*editor)) return false;
 
-    settings->getQSettings()->remove("openedTabs/mostRecentProject");
-
-    // Remember opened tabs before exit, to restore on project reload
-    // TODO: remember not only for the last closed project? Store a list per each project?
-    const auto startupAction = settings->getEntryValue("global/app/startup_action").toInt();
-    if (startupAction == 1)
-    {
-        QStringList openedTabs;
-        for (auto&& editor : activeEditors)
-        {
-            const auto filePath = QDir::fromNativeSeparators(QDir::cleanPath(editor->getFilePath()));
-            openedTabs.append(filePath);
-            if (editor.get() == currentEditor)
-                settings->getQSettings()->setValue("openedTabs/mostRecentProject/current", filePath);
-        }
-
-        if (!openedTabs.isEmpty())
-            settings->getQSettings()->setValue("openedTabs/mostRecentProject/tabs", openedTabs);
-    }
-
-    // We remember last tab we closed to check whether user pressed Cancel in any of the dialogs
-    QWidget* lastTab = nullptr;
-    while (!activeEditors.empty())
-    {
-        QWidget* currTab = ui->tabs->widget(0);
-        if (currTab == lastTab)
-        {
-            // User pressed cancel on one of the tab editor 'save without changes' dialog,
-            // cancel the whole quit operation!
-            return false;
-        }
-
-        lastTab = currTab;
-
-        on_tabs_tabCloseRequested(0);
-    }
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
 
     // Save geometry and state of this window to QSettings
-    settings->getQSettings()->setValue("window-geometry", saveGeometry());
-    settings->getQSettings()->setValue("window-state", saveState());
+    settings->setValue("window-geometry", saveGeometry());
+    settings->setValue("window-state", saveState());
 
-    // Close project after all tabs have been closed, there may be tabs requiring a project opened!
-    if (CEGUIManager::Instance().isProjectLoaded())
-    {
-        // In case user pressed cancel the entire quitting processed has to be terminated
-        if (!on_actionCloseProject_triggered())
-            return false;
-    }
+    // Close project. In case user pressed cancel the entire quitting processed has to be terminated.
+    if (!on_actionCloseProject_triggered()) return false;
+
+    // Close all remaining project-independent tabs
+    on_actionCloseAllTabs_triggered();
 
     QApplication::quit();
 
@@ -428,8 +394,7 @@ void MainWindow::updateProjectDependentUI(CEGUIProject* newProject)
 
 bool MainWindow::confirmProjectClosing(bool onlyModified)
 {
-    auto project = CEGUIManager::Instance().getCurrentProject();
-    if (project)
+    if (auto project = CEGUIManager::Instance().getCurrentProject())
     {
         if (project->isModified())
         {
@@ -464,6 +429,38 @@ bool MainWindow::confirmProjectClosing(bool onlyModified)
     return true;
 }
 
+bool MainWindow::confirmEditorTabClosing(EditorBase& editor)
+{
+    // We can close immediately
+    if (!editor.hasChanges()) return true;
+
+    // We have changes, lets ask the user whether we should dump them or save them
+    auto result = QMessageBox::question(this,
+                                        "Unsaved changes!",
+                                        tr("There are unsaved changes in '%1'. "
+                                        "Do you want to save them? "
+                                        "(Pressing Discard will discard the changes!)").arg(editor.getFilePath()),
+                                        QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
+                                        QMessageBox::Save);
+
+    if (result == QMessageBox::Save)
+    {
+        // Let's save changes and then kill the editor (This is the default action)
+        // If there was an error saving the file, stop what we're doing
+        // and let the user fix the problem.
+        return editor.save();
+    }
+    else if (result == QMessageBox::Discard)
+    {
+        // Changes will be discarded
+        // NB: we don't have to call editor.discardChanges here
+        return true;
+    }
+
+    // Don't do anything if user selected 'Cancel'
+    return false;
+}
+
 void MainWindow::loadProject(const QString& path)
 {
     if (path.isEmpty())
@@ -481,20 +478,25 @@ void MainWindow::loadProject(const QString& path)
     updateProjectDependentUI(CEGUIManager::Instance().getCurrentProject());
 
     // Restore tabs
-    // TODO: support all projects, not only the most recent!
     QStringList items;
     recentlyUsedProjects->getRecentlyUsed(items);
     if (!items.empty() && items[0] == QDir::fromNativeSeparators(QDir::cleanPath(path)))
     {
+        auto currProject = CEGUIManager::Instance().getCurrentProject();
+        const QString key = "openedTabs/" + currProject->uuid.toString(QUuid::StringFormat::WithBraces);
         auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
-        if (settings->contains("openedTabs/mostRecentProject/tabs"))
+        if (settings->contains(key + "/tabs"))
         {
-            QStringList openedTabs = settings->value("openedTabs/mostRecentProject/tabs").toStringList();
+            QStringList openedTabs = settings->value(key + "/tabs").toStringList();
             for (auto&& filePath : openedTabs)
-                openEditorTab(filePath);
+            {
+                const auto absPath = currProject->getAbsolutePathOf(filePath);
+                if (QFileInfo(absPath).exists())
+                    openEditorTab(absPath);
+            }
 
-            if (settings->contains("openedTabs/mostRecentProject/current"))
-                activateEditorTabByFilePath(settings->value("openedTabs/mostRecentProject/current").toString());
+            if (settings->contains(key + "/current"))
+                activateEditorTabByFilePath(currProject->getAbsolutePathOf(settings->value(key + "/current").toString()));
         }
     }
 }
@@ -746,43 +748,10 @@ bool MainWindow::on_tabs_tabCloseRequested(int index)
     // If it is not an editor tab, close it
     if (!editor) return true;
 
-    if (!editor->hasChanges())
-    {
-        // We can close immediately
-        closeEditorTab(editor);
-        return true;
-    }
+    if (!confirmEditorTabClosing(*editor)) return false;
 
-    // We have changes, lets ask the user whether we should dump them or save them
-    auto result = QMessageBox::question(this,
-                                        "Unsaved changes!",
-                                        tr("There are unsaved changes in '%1'. "
-                                        "Do you want to save them? "
-                                        "(Pressing Discard will discard the changes!)").arg(editor->getFilePath()),
-                                        QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
-                                        QMessageBox::Save);
-
-    if (result == QMessageBox::Save)
-    {
-        // Let's save changes and then kill the editor (This is the default action)
-        // If there was an error saving the file, stop what we're doing
-        // and let the user fix the problem.
-        if (!editor->save())
-            return false;
-
-        closeEditorTab(editor);
-        return true;
-    }
-    else if (result == QMessageBox::Discard)
-    {
-        // Changes will be discarded
-        // NB: we don't have to call editor.discardChanges here
-        closeEditorTab(editor);
-        return true;
-    }
-
-    // Don't do anything if user selected 'Cancel'
-    return false;
+    closeEditorTab(editor);
+    return true;
 }
 
 void MainWindow::on_actionCloseTab_triggered()
@@ -905,7 +874,7 @@ bool MainWindow::closeAllTabsRequiringProject()
 
 EditorBase* MainWindow::getEditorForTab(int index) const
 {
-    return getEditorForTab(ui->tabs->widget(index));
+    return (index < 0) ? nullptr : getEditorForTab(ui->tabs->widget(index));
 }
 
 EditorBase* MainWindow::getEditorForTab(QWidget* tabWidget) const
@@ -1257,13 +1226,33 @@ void MainWindow::on_actionSaveProject_triggered()
 
 bool MainWindow::on_actionCloseProject_triggered()
 {
+    auto currProject = CEGUIManager::Instance().getCurrentProject();
+    if (!currProject) return true;
+
     if (!confirmProjectClosing(true)) return false;
 
-    if (CEGUIManager::Instance().isProjectLoaded())
+    // Remember opened tabs before exit, to restore on project reload
+    if (!currProject->uuid.isNull())
     {
-        updateProjectDependentUI(nullptr);
-        CEGUIManager::Instance().unloadProject();
+        auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
+        const QString key = "openedTabs/" + currProject->uuid.toString(QUuid::StringFormat::WithBraces);
+        settings->remove(key);
+
+        QStringList openedTabs;
+        for (auto&& editor : activeEditors)
+        {
+            const auto filePath = currProject->getRelativePathOf(QDir::fromNativeSeparators(QDir::cleanPath(editor->getFilePath())));
+            openedTabs.append(filePath);
+            if (editor.get() == currentEditor)
+                settings->setValue(key + "/current", filePath);
+        }
+
+        if (!openedTabs.isEmpty())
+            settings->setValue(key + "/tabs", openedTabs);
     }
+
+    updateProjectDependentUI(nullptr);
+    CEGUIManager::Instance().unloadProject();
 
     return true;
 }

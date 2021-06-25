@@ -124,6 +124,7 @@ private:
 
     void updateProjectDependentUI(CEGUIProject* newProject);
     bool confirmProjectClosing(bool onlyModified);
+    bool confirmEditorTabClosing(EditorBase& editor);
 
     void openNewEditor(EditorBasePtr editor);
     EditorBasePtr createEditorForFile(const QString& absolutePath);
