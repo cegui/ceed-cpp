@@ -479,7 +479,7 @@ void MainWindow::loadProject(const QString& path)
 
     // Restore tabs
     auto currProject = CEGUIManager::Instance().getCurrentProject();
-    const QString key = "openedTabs/" + currProject->uuid.toString(QUuid::StringFormat::WithBraces);
+    const QString key = "projectState/" + currProject->uuid.toString(QUuid::StringFormat::WithBraces);
     auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
     if (settings->contains(key + "/tabs"))
     {
@@ -494,8 +494,8 @@ void MainWindow::loadProject(const QString& path)
                 openEditorTab(absPath);
         }
 
-        if (settings->contains(key + "/current"))
-            activateEditorTabByFilePath(currProject->getAbsolutePathOf(settings->value(key + "/current").toString()));
+        if (settings->contains(key + "/currentTab"))
+            activateEditorTabByFilePath(currProject->getAbsolutePathOf(settings->value(key + "/currentTab").toString()));
     }
 }
 
@@ -1233,7 +1233,7 @@ bool MainWindow::on_actionCloseProject_triggered()
     if (!currProject->uuid.isNull())
     {
         auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
-        const QString key = "openedTabs/" + currProject->uuid.toString(QUuid::StringFormat::WithBraces);
+        const QString key = "projectState/" + currProject->uuid.toString(QUuid::StringFormat::WithBraces);
         settings->remove(key);
 
         // Store in UI tab order
@@ -1245,7 +1245,7 @@ bool MainWindow::on_actionCloseProject_triggered()
                 const auto filePath = currProject->getRelativePathOf(QDir::fromNativeSeparators(QDir::cleanPath(editor->getFilePath())));
                 openedTabs.append(filePath);
                 if (editor == currentEditor)
-                    settings->setValue(key + "/current", filePath);
+                    settings->setValue(key + "/currentTab", filePath);
             }
         }
 
