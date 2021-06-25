@@ -374,10 +374,10 @@ void MainWindow::updateProjectDependentUI(CEGUIProject* newProject)
     }
     else
     {
-        // Since we are effectively unloading the project and potentially nuking resources of it
-        // we should definitely unload all tabs that rely on it to prevent segfaults and other
-        // nasty phenomena
-        assert(closeAllTabsRequiringProject());
+        // Since we are unloading the project and potentially nuking resources of it we
+        // should unload all tabs that rely on it to prevent segfaults and other nasty phenomena
+        const bool allProjectTabsClosed = closeAllTabsRequiringProject();
+        assert(allProjectTabsClosed); (void)allProjectTabsClosed;
 
         fsBrowser->setDirectory(QDir::homePath());
 
