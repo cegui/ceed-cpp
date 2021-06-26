@@ -1,8 +1,9 @@
 #include "src/cegui/CEGUIUtils.h"
+#include "src/cegui/CEGUIManager.h" //!!!for OpenGL context! TODO: encapsulate?
 #include <CEGUI/widgets/GridLayoutContainer.h>
 #include <CEGUI/CoordConverter.h>
 #include <CEGUI/WindowManager.h>
-#include "qdatastream.h"
+#include <qdatastream.h>
 
 namespace CEGUIUtils
 {
@@ -185,10 +186,12 @@ bool insertChild(CEGUI::Window* parent, CEGUI::Window* widget, size_t index)
         }
     }
 
+    CEGUIManager::Instance().makeOpenGLContextCurrent();
     if (index < parent->getChildCount())
         parent->addChildAtIndex(widget, index);
     else
         parent->addChild(widget);
+    CEGUIManager::Instance().doneOpenGLContextCurrent();
 
     return true;
 }

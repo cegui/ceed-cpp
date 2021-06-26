@@ -10,6 +10,7 @@
 #include "src/ui/ResizingHandle.h"
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutUndoCommands.h"
+#include "src/cegui/CEGUIManager.h" //!!!for OpenGL context! TODO: encapsulate?
 #include <CEGUI/CoordConverter.h>
 #include <CEGUI/GUIContext.h>
 #include <CEGUI/Window.h>
@@ -74,7 +75,9 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
 
     if (rootManipulator)
     {
+        CEGUIManager::Instance().makeOpenGLContextCurrent();
         ceguiContext->setRootWindow(rootManipulator->getWidget());
+        CEGUIManager::Instance().doneOpenGLContextCurrent();
 
         // Root manipulator changed, perform a full update
         // NB: widget must be already set to a CEGUI context for area calculation
