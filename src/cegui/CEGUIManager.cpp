@@ -192,7 +192,7 @@ void CEGUIManager::ensureCEGUIInitialized()
 {
     if (initialized) return;
 
-    glContext = new QOpenGLContext(); // TODO: destroy
+    glContext = new QOpenGLContext();
     glContext->setShareContext(QOpenGLContext::globalShareContext());
     if (Q_UNLIKELY(!glContext->create()))
     {

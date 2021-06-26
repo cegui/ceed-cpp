@@ -119,11 +119,9 @@ void CEGUIGraphicsView::drawBackground(QPainter* painter, const QRectF& rect)
     gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     gl->glViewport(0, 0, viewport()->width(), viewport()->height());
 
-    if (!blitter->isCreated()) blitter->create();
-
-    QOpenGLFramebufferObject* fbo = ceguiScene->getOffscreenBuffer();
-    if (fbo)
+    if (QOpenGLFramebufferObject* fbo = ceguiScene->getOffscreenBuffer())
     {
+        if (!blitter->isCreated()) blitter->create();
         blitter->bind();
         const QMatrix4x4 target = QOpenGLTextureBlitter::targetTransform(viewportRect, rect.toRect());
         blitter->blit(fbo->texture(), target, QOpenGLTextureBlitter::OriginBottomLeft);

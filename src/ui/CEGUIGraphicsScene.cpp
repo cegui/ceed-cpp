@@ -202,29 +202,29 @@ void CEGUIGraphicsScene::drawCEGUIContextInternal()
 {
     if (!ceguiContext) return;
 
-    const int w = static_cast<int>(contextWidth);
-    const int h = static_cast<int>(contextHeight);
-
     CEGUIManager::Instance().ensureCEGUIInitialized();
     CEGUIManager::Instance().makeOpenGLContextCurrent();
 
     // FBO is not per-view at least for now because we render only one CEGUI view at a time anyway
+    const int w = static_cast<int>(contextWidth);
+    const int h = static_cast<int>(contextHeight);
     if (!_fbo || _fbo->size().width() != w || _fbo->size().height() != h)
     {
         if (_fbo) delete _fbo;
         _fbo = new QOpenGLFramebufferObject(w, h);
     }
 
-    _fbo->bind();
+    if (_fbo->bind())
+    {
+        auto gl = QOpenGLContext::currentContext()->functions();
+        gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+        gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    auto gl = QOpenGLContext::currentContext()->functions();
-    gl->glClearColor(0.f, 0.f, 0.f, 0.f);
-    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        auto renderer = CEGUI::System::getSingleton().getRenderer();
+        renderer->beginRendering();
+        ceguiContext->draw();
+        renderer->endRendering();
 
-    auto renderer = CEGUI::System::getSingleton().getRenderer();
-    renderer->beginRendering();
-    ceguiContext->draw();
-    renderer->endRendering();
-
-    _fbo->release();
+        _fbo->release();
+    }
 }
