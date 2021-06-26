@@ -167,6 +167,8 @@ void LayoutVisualMode::activate(MainWindow& mainWindow, bool editorActivated)
     scene->updateFromWidgets();
 
     createActiveStateConnections();
+
+    ceguiWidget->getView()->setFocus();
 }
 
 bool LayoutVisualMode::deactivate(MainWindow& mainWindow, bool editorDeactivated)

@@ -117,6 +117,8 @@ void ImagesetVisualMode::activate(MainWindow& mainWindow, bool editorActivated)
 
     // Call this every time the visual editing is shown to sync all entries up
     slot_toggleEditOffsets(editOffsetsAction->isChecked());
+
+    setFocus();
 }
 
 bool ImagesetVisualMode::deactivate(MainWindow& mainWindow, bool editorDeactivated)
