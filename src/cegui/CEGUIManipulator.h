@@ -72,7 +72,7 @@ public:
     CEGUIManipulator* getManipulatorByPath(const QString& widgetPath) const;
     void forEachChildWidget(std::function<void (CEGUI::Window*)> callback) const;
 
-    void createChildManipulators(bool recursive, bool skipAutoWidgets, bool checkExisting = true);
+    void createChildManipulators(bool recursive, bool skipAutoWidgets, bool checkExisting);
     void moveToFront();
     bool shouldBeSkipped() const;
     bool hasNonAutoWidgetDescendants() const;

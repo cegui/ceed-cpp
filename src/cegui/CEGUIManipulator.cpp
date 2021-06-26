@@ -21,13 +21,13 @@
 #include "QtnProperty/PropertySet.h"
 #include "QtnProperty/Core/PropertyQString.h"
 #include "QtnProperty/Core/PropertyBool.h"
+#include "QtnProperty/Core/PropertyInt.h"
 #include "QtnProperty/Core/PropertyUInt.h"
 #include "QtnProperty/Core/PropertyFloat.h"
+#include "QtnProperty/Core/PropertyDouble.h"
 #include "QtnProperty/Core/PropertyEnum.h"
 #include "QtnProperty/Delegates/Core/PropertyDelegateQString.h"
 
-// recursive - if true, even children of given widget are wrapped
-// skipAutoWidgets - if true, auto widgets are skipped (only applicable if recursive is True)
 CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent, CEGUI::Window* widget)
     : ResizableRectItem(parent)
     , _widget(widget)
@@ -639,6 +639,9 @@ void CEGUIManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs)
 // when nothing is referencing it.
 void CEGUIManipulator::detach(bool detachWidget, bool destroyWidget, bool recursive)
 {
+    // Don't detach or destroy auto windows and their hierarchies
+    detachWidget = (detachWidget && !_widget->isAutoWindow());
+
     // Descend if recursive
     if (recursive)
     {
@@ -656,8 +659,8 @@ void CEGUIManipulator::detach(bool detachWidget, bool destroyWidget, bool recurs
     if (detachWidget)
     {
         // Detach from the GUI hierarchy
-        auto parentWidget = _widget->getParent();
-        if (parentWidget) parentWidget->removeChild(_widget);
+        if (auto parentWidget = _widget->getParent())
+           parentWidget->removeChild(_widget);
     }
 
     // Detach from the parent manipulator
@@ -889,15 +892,27 @@ void CEGUIManipulator::createPropertySet()
             prop = new QtnPropertyBool(parentSet);
         else if (propertyDataType == "std::uint32_t")
         {
-            auto uintProp = new QtnPropertyUInt(parentSet);
-            uintProp->setDefaultValue(CEGUI::PropertyHelper<std::uint32_t>().fromString(ceguiProp->getDefault(_widget)));
-            prop = uintProp;
+            auto typedProp = new QtnPropertyUInt(parentSet);
+            typedProp->setDefaultValue(CEGUI::PropertyHelper<std::uint32_t>().fromString(ceguiProp->getDefault(_widget)));
+            prop = typedProp;
+        }
+        else if (propertyDataType == "int32")
+        {
+            auto typedProp = new QtnPropertyInt(parentSet);
+            typedProp->setDefaultValue(CEGUI::PropertyHelper<std::int32_t>().fromString(ceguiProp->getDefault(_widget)));
+            prop = typedProp;
         }
         else if (propertyDataType == "float")
         {
-            auto floatProp = new QtnPropertyFloat(parentSet);
-            floatProp->setDefaultValue(CEGUI::PropertyHelper<float>().fromString(ceguiProp->getDefault(_widget)));
-            prop = floatProp;
+            auto typedProp = new QtnPropertyFloat(parentSet);
+            typedProp->setDefaultValue(CEGUI::PropertyHelper<float>().fromString(ceguiProp->getDefault(_widget)));
+            prop = typedProp;
+        }
+        else if (propertyDataType == "double")
+        {
+            auto typedProp = new QtnPropertyDouble(parentSet);
+            typedProp->setDefaultValue(CEGUI::PropertyHelper<double>().fromString(ceguiProp->getDefault(_widget)));
+            prop = typedProp;
         }
         else if (propertyDataType == "HorizontalAlignment")
         {
@@ -1037,6 +1052,31 @@ void CEGUIManipulator::createPropertySet()
             // TODO: implement
             prop = new QtnPropertyQString(parentSet);
         }
+        else if (propertyDataType == "TextInputMode")
+        {
+            // TODO: implement
+            prop = new QtnPropertyQString(parentSet);
+        }
+        else if (propertyDataType == "SelectionMode")
+        {
+            // TODO: implement
+            prop = new QtnPropertyQString(parentSet);
+        }
+        else if (propertyDataType == "SortDirection")
+        {
+            // TODO: implement
+            prop = new QtnPropertyQString(parentSet);
+        }
+        else if (propertyDataType == "MenubarDirection")
+        {
+            // TODO: implement
+            prop = new QtnPropertyQString(parentSet);
+        }
+        else if (propertyDataType == "TabPanePosition")
+        {
+            // TODO: implement
+            prop = new QtnPropertyQString(parentSet);
+        }
         else if (propertyDataType == "Colour")
         {
             // TODO: implement
@@ -1048,7 +1088,9 @@ void CEGUIManipulator::createPropertySet()
 
             if (propertyDataType != "String")
             {
-                assert(false && "propertyDataType unknown");
+                const QString type = CEGUIUtils::stringToQString(propertyDataType);
+                QMessageBox::warning(nullptr, "Unknown property type",
+                                     QString("Property type '%1' is unknown, string inspector will be used").arg(type));
             }
             else
             {

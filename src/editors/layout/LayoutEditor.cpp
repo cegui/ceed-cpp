@@ -41,42 +41,50 @@ LayoutEditor::LayoutEditor(const QString& filePath)
     tabs.addTab(previewer, "Live Preview");
 }
 
+bool LayoutEditor::loadVisualFromString(const QString& rawData)
+{
+    if (rawData.isEmpty())
+    {
+        visualMode->setRootWidgetManipulator(nullptr);
+    }
+    else
+    {
+        try
+        {
+            CEGUI::Window* widget = CEGUI::WindowManager::getSingleton().loadLayoutFromString(CEGUIUtils::qStringToString(rawData));
+            auto root = new LayoutManipulator(*visualMode, nullptr, widget);
+            root->updateFromWidget();
+            root->createChildManipulators(true, false, false);
+            visualMode->setRootWidgetManipulator(root);
+        }
+        catch (const std::exception& e)
+        {
+            QMessageBox::warning(&tabs, "Exception", e.what());
+            return false;
+        }
+    }
+
+    return true;
+}
+
 void LayoutEditor::initialize()
 {
     MultiModeEditor::initialize();
 
-    visualMode->setRootWidgetManipulator(nullptr);
-
-    try
+    QByteArray rawData;
+    if (!_filePath.isEmpty())
     {
-        if (!_filePath.isEmpty())
+        QFile file(_filePath);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         {
-            QByteArray rawData;
-            {
-                QFile file(_filePath);
-                if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-                {
-                    QMessageBox::warning(nullptr, "File read error", "Layout editor can't read file " + _filePath);
-                    return;
-                }
-
-                rawData = file.readAll();
-            }
-
-            if (rawData.size() > 0)
-            {
-                CEGUI::Window* widget = CEGUI::WindowManager::getSingleton().loadLayoutFromString(CEGUIUtils::qStringToString(rawData));
-                auto root = new LayoutManipulator(*visualMode, nullptr, widget);
-                root->updateFromWidget();
-                root->createChildManipulators(true, false, false);
-                visualMode->setRootWidgetManipulator(root);
-            }
+            QMessageBox::warning(nullptr, "File read error", "Layout editor can't read file " + _filePath);
+            return;
         }
+
+        rawData = file.readAll();
     }
-    catch (const std::exception& e)
-    {
-        QMessageBox::warning(nullptr, "Exception", e.what());
-    }
+
+    loadVisualFromString(rawData);
 
     visualMode->getCreateWidgetDockWidget()->populate();
 }

@@ -43,7 +43,7 @@ static LayoutManipulator* CreateManipulatorFromDataStream(LayoutVisualMode& visu
         visualMode.setRootWidgetManipulator(manipulator);
     }
 
-    manipulator->createChildManipulators(true, false);
+    manipulator->createChildManipulators(true, false, true);
     manipulator->updateFromWidget(false, true);
     manipulator->setSelected(true);
 
@@ -369,8 +369,9 @@ void LayoutCreateCommand::redo()
     LayoutManipulator* manipulator;
     if (parent)
     {
-        manipulator = parent->createChildManipulator(widget);
+        // Insert first to get valid GUI context for the widget
         CEGUIUtils::insertChild(parent->getWidget(), widget, _indexInParent);
+        manipulator = parent->createChildManipulator(widget);
 
         // Insertion of the new child into GLC might result in its growing
         if (auto glc = dynamic_cast<CEGUI::GridLayoutContainer*>(parent->getWidget()))
@@ -386,7 +387,7 @@ void LayoutCreateCommand::redo()
     }
 
     manipulator->updateFromWidget(true, true);
-    manipulator->createChildManipulators(true, false);
+    manipulator->createChildManipulators(true, false, true);
 
     // Make only the new widget selected. It is moved to front inside setSelected().
     _visualMode.getScene()->clearSelection();

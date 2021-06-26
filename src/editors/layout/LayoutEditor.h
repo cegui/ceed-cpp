@@ -20,6 +20,8 @@ public:
 
     LayoutEditor(const QString& filePath);
 
+    bool loadVisualFromString(const QString& rawData);
+
     virtual void initialize() override;
     virtual void activate(MainWindow& mainWindow) override;
     virtual void deactivate(MainWindow& mainWindow) override;
