@@ -3,6 +3,7 @@
 #include "src/editors/layout/LayoutEditor.h"
 #include "src/ui/CEGUIWidget.h"
 #include "src/ui/CEGUIGraphicsScene.h"
+#include "src/cegui/CEGUIManager.h" //!!!for OpenGL context! TODO: encapsulate?
 #include "qboxlayout.h"
 #include <CEGUI/Window.h>
 #include <CEGUI/WindowManager.h>
@@ -28,10 +29,15 @@ void LayoutPreviewerMode::activate(MainWindow& mainWindow, bool editorActivated)
 
     assert(!rootWidget);
 
+    // Activate CEGUI OpenGL context for possible imagery cache FBOs creation
+    CEGUIManager::Instance().makeOpenGLContextCurrent();
+
     // Lets clone so we don't affect the layout at all
     auto currentRootWidget = static_cast<LayoutEditor&>(_editor).getVisualMode()->getRootWidget();
     rootWidget = currentRootWidget ? currentRootWidget->clone() : nullptr;
     ceguiWidget->getScene()->getCEGUIContext()->setRootWindow(rootWidget);
+
+    CEGUIManager::Instance().doneOpenGLContextCurrent();
 }
 
 bool LayoutPreviewerMode::deactivate(MainWindow& mainWindow, bool editorDeactivated)
