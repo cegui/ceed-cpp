@@ -186,6 +186,7 @@ bool insertChild(CEGUI::Window* parent, CEGUI::Window* widget, size_t index)
         }
     }
 
+    // Activate CEGUI OpenGL context for possible imagery cache FBOs creation
     CEGUIManager::Instance().makeOpenGLContextCurrent();
     if (index < parent->getChildCount())
         parent->addChildAtIndex(widget, index);

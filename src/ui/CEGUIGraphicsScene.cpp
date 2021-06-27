@@ -218,7 +218,7 @@ void CEGUIGraphicsScene::drawCEGUIContextInternal()
     {
         auto gl = QOpenGLContext::currentContext()->functions();
         gl->glClearColor(0.f, 0.f, 0.f, 0.f);
-        gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        gl->glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         auto renderer = CEGUI::System::getSingleton().getRenderer();
         renderer->beginRendering();

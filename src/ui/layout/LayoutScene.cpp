@@ -75,6 +75,7 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
 
     if (rootManipulator)
     {
+        // Activate CEGUI OpenGL context for possible imagery cache FBOs creation
         CEGUIManager::Instance().makeOpenGLContextCurrent();
         ceguiContext->setRootWindow(rootManipulator->getWidget());
         CEGUIManager::Instance().doneOpenGLContextCurrent();

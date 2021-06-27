@@ -936,7 +936,7 @@ const QImage& CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int
     temporaryFBO->bind();
 
     glContext->functions()->glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glContext->functions()->glClear(GL_COLOR_BUFFER_BIT);
+    glContext->functions()->glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     renderer->beginRendering();
 
