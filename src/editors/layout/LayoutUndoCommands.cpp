@@ -332,8 +332,8 @@ void LayoutCreateCommand::redo()
     if (_type == "DefaultWindow" && !parent)
     {
         // Special case - root widget. Setup it with most useful parameters.
-        widget->setPosition(CEGUI::UVector2(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)));
-        widget->setSize(CEGUI::USize(CEGUI::UDim(1.f, 0.f), CEGUI::UDim(1.f, 0.f)));
+        widget->setArea(CEGUI::UVector2(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)),
+                        CEGUI::USize(CEGUI::UDim(1.f, 0.f), CEGUI::UDim(1.f, 0.f)));
         widget->setCursorPassThroughEnabled(true);
     }
     else
@@ -344,7 +344,7 @@ void LayoutCreateCommand::redo()
             // Convert requested position into parent cordinate system
             pos = glm::vec2(static_cast<float>(_scenePos.x()), static_cast<float>(_scenePos.y()));
             if (parent)
-                pos -= parent->getWidget()->getClientChildContentArea().get().getPosition();
+                pos -= parent->getWidget()->getChildContentArea().get().getPosition();
         }
 
         // Place new window at the requested point in context coords
