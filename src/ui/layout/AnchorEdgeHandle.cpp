@@ -17,7 +17,8 @@ QVariant AnchorEdgeHandle::itemChange(QGraphicsItem::GraphicsItemChange change, 
 {
     if (change == ItemSelectedHasChanged)
     {
-        static_cast<LayoutScene*>(scene())->anchorHandleSelected(this);
+        if (value.toBool())
+            static_cast<LayoutScene*>(scene())->anchorHandleSelected(this);
     }
 
     return GuideLine::itemChange(change, value);

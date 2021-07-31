@@ -1043,8 +1043,6 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
     if (item && _anchorTarget->isSelected())
         _anchorTarget->setSelected(false);
 
-    // TODO: preserveEffectiveSize - need hotkey or option!
-
     if (item == _anchorMinX || item == _anchorMinXMinY || item == _anchorMinXMaxY)
     {
         _anchorTextX->setVisible(true);
