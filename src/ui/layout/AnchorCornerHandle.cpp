@@ -20,6 +20,7 @@ AnchorCornerHandle::AnchorCornerHandle(bool left, bool top, QGraphicsItem* paren
 
     updatePen(false);
     setCursor(Qt::SizeAllCursor);
+    setZValue(1.0);
 }
 
 void AnchorCornerHandle::setPosSilent(const QPointF& newPos)

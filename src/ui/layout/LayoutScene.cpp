@@ -1007,7 +1007,7 @@ void LayoutScene::anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool m
     if (!_anchorTarget->resizeInProgress())
         _anchorTarget->beginResizing(*item);
 
-    const bool preserveEffectiveSize = !(QApplication::keyboardModifiers() & Qt::ShiftModifier);
+    const bool preserveEffectiveSize = !(QApplication::keyboardModifiers() & Qt::ControlModifier);
     _anchorTarget->setAnchors(minX, maxX, minY, maxY, preserveEffectiveSize);
 
     updateAnchorItems(item);
