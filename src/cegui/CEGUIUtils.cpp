@@ -171,6 +171,29 @@ CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent, siz
     return widget;
 }
 
+void addChild(CEGUI::Window* parent, CEGUI::Window* widget)
+{
+    if (!parent || !widget) return;
+
+    // Activate CEGUI OpenGL context for possible imagery cache FBO manipulations
+    CEGUIManager::Instance().makeOpenGLContextCurrent();
+    parent->addChild(widget);
+    CEGUIManager::Instance().doneOpenGLContextCurrent();
+}
+
+void removeChild(CEGUI::Window* widget)
+{
+    if (!widget) return;
+
+    if (auto parent = widget->getParent())
+    {
+        // Activate CEGUI OpenGL context for possible imagery cache FBO manipulations
+        CEGUIManager::Instance().makeOpenGLContextCurrent();
+        parent->removeChild(widget);
+        CEGUIManager::Instance().doneOpenGLContextCurrent();
+    }
+}
+
 bool insertChild(CEGUI::Window* parent, CEGUI::Window* widget, size_t index)
 {
     if (!parent || !widget) return false;
@@ -186,7 +209,7 @@ bool insertChild(CEGUI::Window* parent, CEGUI::Window* widget, size_t index)
         }
     }
 
-    // Activate CEGUI OpenGL context for possible imagery cache FBOs creation
+    // Activate CEGUI OpenGL context for possible imagery cache FBO manipulations
     CEGUIManager::Instance().makeOpenGLContextCurrent();
     if (index < parent->getChildCount())
         parent->addChildAtIndex(widget, index);

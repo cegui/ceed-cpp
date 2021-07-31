@@ -656,12 +656,8 @@ void CEGUIManipulator::detach(bool detachWidget, bool destroyWidget, bool recurs
         }
     }
 
-    if (detachWidget)
-    {
-        // Detach from the GUI hierarchy
-        if (auto parentWidget = _widget->getParent())
-           parentWidget->removeChild(_widget);
-    }
+    // Detach from the GUI hierarchy
+    if (detachWidget) CEGUIUtils::removeChild(_widget);
 
     // Detach from the parent manipulator
     scene()->removeItem(this);

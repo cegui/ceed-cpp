@@ -26,6 +26,8 @@ namespace CEGUIUtils
     bool serializeWidget(const CEGUI::Window& widget, QDataStream& stream, bool recursive);
     CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent = nullptr, size_t index = std::numeric_limits<size_t>().max());
 
+    void addChild(CEGUI::Window* parent, CEGUI::Window* widget);
+    void removeChild(CEGUI::Window* widget);
     bool insertChild(CEGUI::Window* parent, CEGUI::Window* widget, size_t index);
 
     CEGUI::MouseButton qtMouseButtonToMouseButton(Qt::MouseButton button);

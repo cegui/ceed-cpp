@@ -766,10 +766,7 @@ void LayoutMoveInHierarchyCommand::undo()
 
         // Remove it from the current CEGUI parent widget
         if (oldParentManipulator != newParentManipulator)
-        {
-            auto parentWidget = widgetManipulator->getWidget()->getParent();
-            if (parentWidget) parentWidget->removeChild(widgetManipulator->getWidget());
-        }
+            CEGUIUtils::removeChild(widgetManipulator->getWidget());
 
         // Rename it if necessary
         if (rec.oldName != rec.newName)
@@ -790,7 +787,7 @@ void LayoutMoveInHierarchyCommand::undo()
         if (oldParentManipulator != newParentManipulator)
         {
             // Add it to the old CEGUI parent widget and sort out the manipulators
-            oldParentManipulator->getWidget()->addChild(widgetManipulator->getWidget());
+            CEGUIUtils::addChild(oldParentManipulator->getWidget(), widgetManipulator->getWidget());
             widgetManipulator->setParentItem(oldParentManipulator);
         }
 
@@ -820,10 +817,7 @@ void LayoutMoveInHierarchyCommand::redo()
 
         // Remove it from the current CEGUI parent widget
         if (oldParentManipulator != newParentManipulator)
-        {
-            auto parentWidget = widgetManipulator->getWidget()->getParent();
-            if (parentWidget) parentWidget->removeChild(widgetManipulator->getWidget());
-        }
+            CEGUIUtils::removeChild(widgetManipulator->getWidget());
 
         // Rename it if necessary
         if (rec.oldName != rec.newName)
@@ -835,7 +829,7 @@ void LayoutMoveInHierarchyCommand::redo()
         if (oldParentManipulator != newParentManipulator)
         {
             // Add it to the new CEGUI parent widget and sort out the manipulators
-            newParentManipulator->getWidget()->addChild(widgetManipulator->getWidget());
+            CEGUIUtils::addChild(newParentManipulator->getWidget(), widgetManipulator->getWidget());
             widgetManipulator->setParentItem(newParentManipulator);
 
             // Insertion of the new child into GLC might result in its growing
