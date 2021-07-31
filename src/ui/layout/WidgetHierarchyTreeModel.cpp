@@ -85,8 +85,6 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* mimeData, Qt::DropA
     }
     else if (mimeData->hasFormat("application/x-ceed-widget-type"))
     {
-        QString widgetType = mimeData->data("application/x-ceed-widget-type").data();
-
         auto parentItem = itemFromIndex(parent);
 
         // If the drop was at empty space (parentItem is None) the parentItemPath
@@ -95,13 +93,10 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* mimeData, Qt::DropA
         const QString parentItemPath = parentItem ? parentItem->data(Qt::UserRole).toString() : (rootManip ? rootManip->getWidgetName() : "");
         LayoutManipulator* parentManipulator = parentItemPath.isEmpty() ? nullptr : _visualMode.getScene()->getManipulatorByPath(parentItemPath);
 
-        if (!parentManipulator->canAcceptChildren(1, true)) return false;
+        if (parentManipulator && !parentManipulator->canAcceptChildren(1, true)) return false;
 
-        QString uniqueName = widgetType.mid(widgetType.lastIndexOf('/') + 1);
-        if (parentManipulator)
-            uniqueName = CEGUIUtils::getUniqueChildWidgetName(*parentManipulator->getWidget(), uniqueName);
-
-        _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, parentItemPath, widgetType, uniqueName, childIndex));
+        const QString widgetType = mimeData->data("application/x-ceed-widget-type").data();
+        _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, parentItemPath, widgetType, childIndex));
 
         return true;
     }

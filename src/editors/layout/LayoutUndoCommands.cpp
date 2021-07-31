@@ -285,27 +285,49 @@ void LayoutDeleteCommand::redo()
 //---------------------------------------------------------------------
 
 LayoutCreateCommand::LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath,
-                                         const QString& type, const QString& name, size_t indexInParent)
+                                         const QString& type, size_t indexInParent)
     : _visualMode(visualMode)
     , _parentPath(parentPath)
     , _type(type)
-    , _name(name)
     , _indexInParent(indexInParent)
 {
-    setText(QString("Create '%1' of type '%2'").arg(name, type));
+    generateName();
+    setText(QString("Create '%1' of type '%2'").arg(_name, type));
 }
 
 LayoutCreateCommand::LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath,
-                                         const QString& type, const QString& name, QPointF scenePos, size_t indexInParent)
+                                         const QString& type, QPointF scenePos, size_t indexInParent)
     : _visualMode(visualMode)
     , _parentPath(parentPath)
     , _type(type)
-    , _name(name)
     , _scenePos(scenePos)
     , _indexInParent(indexInParent)
     , _useScenePos(true)
 {
-    setText(QString("Create '%1' of type '%2' at (%3; %4)").arg(name).arg(type).arg(scenePos.x()).arg(scenePos.y()));
+    generateName();
+    setText(QString("Create '%1' of type '%2' at (%3; %4)").arg(_name).arg(type).arg(scenePos.x()).arg(scenePos.y()));
+}
+
+void LayoutCreateCommand::generateName()
+{
+    if (_type == "DefaultWindow" && _parentPath.isEmpty())
+    {
+        // Special case - root widget. Setup it with most useful parameters.
+        // Naming convention is from docs:
+        // http://static.cegui.org.uk/docs/0.8.7/window_tutorial.html
+        _name = "root";
+        // can instead use: widgetName = QFileInfo(_visualMode.getEditor().getFilePath()).baseName();
+    }
+    else
+    {
+        const int sepPos = _type.lastIndexOf('/');
+        _name = (sepPos < 0) ? _type : _type.mid(sepPos + 1);
+        if (!_parentPath.isEmpty())
+        {
+            LayoutManipulator* parent = _visualMode.getScene()->getManipulatorByPath(_parentPath);
+            _name = CEGUIUtils::getUniqueChildWidgetName(*parent->getWidget(), _name);
+        }
+    }
 }
 
 void LayoutCreateCommand::undo()

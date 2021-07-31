@@ -95,9 +95,9 @@ class LayoutCreateCommand : public QUndoCommand
 {
 public:
 
-    LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath, const QString& type, const QString& name,
+    LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath, const QString& type,
                         size_t indexInParent = std::numeric_limits<size_t>().max());
-    LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath, const QString& type, const QString& name,
+    LayoutCreateCommand(LayoutVisualMode& visualMode, const QString& parentPath, const QString& type,
                         QPointF scenePos, size_t indexInParent = std::numeric_limits<size_t>().max());
 
     virtual void undo() override;
@@ -105,6 +105,8 @@ public:
     virtual int id() const override { return LayoutUndoCommandBase + 4; }
 
 protected:
+
+    void generateName();
 
     LayoutVisualMode& _visualMode;
     QString _parentPath;

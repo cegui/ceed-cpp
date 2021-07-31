@@ -1144,24 +1144,7 @@ void LayoutScene::dropEvent(QGraphicsSceneDragDropEvent* event)
         auto data = event->mimeData()->data("application/x-ceed-widget-type");
         if (data.size() > 0)
         {
-            QString widgetType = data.data();
-            QString widgetName;
-            if (widgetType == "DefaultWindow")
-            {
-                // Special case - root widget. Setup it with most useful parameters.
-                // Naming convention is from docs:
-                // http://static.cegui.org.uk/docs/0.8.7/window_tutorial.html
-                widgetName = "root";
-                // can instead use: widgetName = QFileInfo(_visualMode.getEditor().getFilePath()).baseName();
-            }
-            else
-            {
-                const int sepPos = widgetType.lastIndexOf('/');
-                widgetName = (sepPos < 0) ? widgetType : widgetType.mid(sepPos + 1);
-            }
-
-            _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, "", widgetType, widgetName, event->scenePos()));
-
+            _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, "", data.data(), event->scenePos()));
             event->acceptProposedAction();
         }
         else
