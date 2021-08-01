@@ -587,11 +587,6 @@ void CEGUIManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs)
     assert(_widget);
     if (!_widget) return;
 
-    if (callUpdate) _widget->update(0.f);
-
-    // Just in case widget or widget name changed. Also updates a tooltip.
-    onWidgetNameChanged();
-
     if (updateAncestorLCs)
     {
         // We are trying to find a topmost LC (in case of nested LCs) and recursively update it
@@ -611,6 +606,11 @@ void CEGUIManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs)
             return;
         }
     }
+
+    if (callUpdate) _widget->update(0.f);
+
+    // Just in case widget or widget name changed. Also updates a tooltip.
+    onWidgetNameChanged();
 
     auto unclippedOuterRect = _widget->getUnclippedOuterRect().getFresh(true);
     auto pos = unclippedOuterRect.getPosition();

@@ -892,8 +892,7 @@ void LayoutPasteCommand::redo()
             break;
         }
 
-        LayoutManipulator* manipulator = CreateManipulatorFromDataStream(_visualMode, target, stream);
-        if (manipulator)
+        if (auto manipulator = CreateManipulatorFromDataStream(_visualMode, target, stream))
             _createdWidgets.push_back(manipulator->getWidgetPath());
     }
 
