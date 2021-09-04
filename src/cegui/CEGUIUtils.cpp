@@ -80,14 +80,18 @@ bool serializeWidget(const CEGUI::Window& widget, QDataStream& stream, bool recu
     while (!it.isAtEnd())
     {
         const auto& propertyName = it.getCurrentKey();
-        if (!widget.isPropertyBannedFromXML(propertyName) && !widget.isPropertyDefault(propertyName))
-        {
-            stream << stringToQString(propertyName);
-            stream << stringToQString(widget.getProperty(propertyName));
-            ++propertyCount;
-        }
-
         ++it;
+
+        if (widget.isPropertyBannedFromXML(propertyName)) continue;
+
+        // FIXME IN CEGUI: LookNFeel can override property value, and if we don't save it we can lose it.
+        // E.g. auto-surface is false by default but TaharezLook/FrameWindow sets it to true. So if we
+        // don't save 'false' because it is default we will get 'true' from LnF after deserialization.
+        //if (widget.isPropertyDefault(propertyName)) continue;
+
+        stream << stringToQString(propertyName);
+        stream << stringToQString(widget.getProperty(propertyName));
+        ++propertyCount;
     }
 
     const auto currPosition = stream.device()->pos();
@@ -147,9 +151,10 @@ CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent, siz
         CEGUI::String widgetName = qStringToString(name);
         if (parent) widgetName = getUniqueChildWidgetName(*parent, widgetName);
         widget = CEGUI::WindowManager::getSingleton().createWindow(qStringToString(type), widgetName);
-        if (parent)
+        if (parent && !insertChild(parent, widget, index))
         {
-            if (!insertChild(parent, widget, index)) return nullptr;
+            CEGUI::WindowManager::getSingleton().destroyWindow(widget);
+            return nullptr;
         }
     }
 
