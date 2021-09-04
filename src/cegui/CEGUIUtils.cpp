@@ -249,37 +249,22 @@ CEGUI::MouseButton qtMouseButtonToMouseButton(Qt::MouseButton button)
 
 // Shame this isn't standardised :-/ Was a pain to write down.
 // And to port too...
-CEGUI::Key::Scan qtKeyToKey(int key)
+CEGUI::Key::Scan qtKeyToKey(int key, bool numpad)
 {
-    // TODO: re-check, may have been added in Qt5
-    // missing Backtab
-    // missing Print
-    // missing AltGr
-    // missing CapsLock
-    // missing NumLock
-    // missing ScrollLock
-    // missing F16 - F35
-    // missing Exclam
-    // missing Key_Less
-    // missing Key_Greater
-    // missing Key_Question
-    // Qt::Key_Super_L    0x01000053
-    // Qt::Key_Super_R    0x01000054
-    // Qt::Key_Menu    0x01000055
-    // Qt::Key_Hyper_L    0x01000056
-    // Qt::Key_Hyper_R    0x01000057
-    // Qt::Key_Help    0x01000058
-    // Qt::Key_Direction_L    0x01000059
-    // Qt::Key_Direction_R    0x01000060
-    // Qt::Key_QuoteDbl    0x22
-    // Qt::Key_NumberSign    0x23
-    // Qt::Key_Dollar    0x24
-    // Qt::Key_Percent    0x25
-    // Qt::Key_Ampersand    0x26
-    // Qt::Key_ParenLeft    0x28
-    // Qt::Key_ParenRight    0x29
-    // Qt::Key_Asterisk    0x2a
-    // Qt::Key_Plus    0x2b
+    // TODO: re-check sometimes!
+    // CEGUI keys not supported by Qt:
+    //    RightWindows    =0xDC,  /* Right Windows key - Correct spelling :) */
+    //    RightShift      =0x36,
+    //    Stop            =0x95,  /*(NEC PC98) */ - conflicts with WebStop now
+    //    RightControl    =0x9D,
+    //    Oem102          =0x56,  /* < > | on UK/Germany keyboards */
+    //    Kana            =0x70,  /* (Japanese keyboard)            */
+    //    AbntC1          =0x73,  /* / ? on Portugese (Brazilian) keyboards */
+    //    Convert         =0x79,  /* (Japanese keyboard)            */
+    //    NoConvert       =0x7B,  /* (Japanese keyboard)            */
+    //    AbntC2          =0x7E,  /* Numpad . on Portugese (Brazilian) keyboards */
+    //    Ax              =0x96,  /*                     (Japan AX) */
+    //    Unlabeled       =0x97,  /*                        (J3100) */
 
     switch (key)
     {
@@ -287,7 +272,7 @@ CEGUI::Key::Scan qtKeyToKey(int key)
         case Qt::Key_Tab: return CEGUI::Key::Scan::Tab;
         case Qt::Key_Backspace: return CEGUI::Key::Scan::Backspace;
         case Qt::Key_Return:
-        case Qt::Key_Enter: return CEGUI::Key::Scan::Return;
+        case Qt::Key_Enter: return numpad ? CEGUI::Key::Scan::NumpadEnter : CEGUI::Key::Scan::Return;
         case Qt::Key_Insert: return CEGUI::Key::Scan::Insert;
         case Qt::Key_Delete: return CEGUI::Key::Scan::DeleteKey;
         case Qt::Key_Pause: return CEGUI::Key::Scan::Pause;
@@ -321,23 +306,27 @@ CEGUI::Key::Scan qtKeyToKey(int key)
         case Qt::Key_F15: return CEGUI::Key::Scan::F15;
         case Qt::Key_Space: return CEGUI::Key::Scan::Space;
         case Qt::Key_Apostrophe: return CEGUI::Key::Scan::Apostrophe;
-        case Qt::Key_Comma: return CEGUI::Key::Scan::Comma;
-        case Qt::Key_Minus: return CEGUI::Key::Scan::Minus;
-        case Qt::Key_Period: return CEGUI::Key::Scan::Period;
-        case Qt::Key_Slash: return CEGUI::Key::Scan::ForwardSlash;
-        case Qt::Key_0: return CEGUI::Key::Scan::Zero;
-        case Qt::Key_1: return CEGUI::Key::Scan::One;
-        case Qt::Key_2: return CEGUI::Key::Scan::Two;
-        case Qt::Key_3: return CEGUI::Key::Scan::Three;
-        case Qt::Key_4: return CEGUI::Key::Scan::Four;
-        case Qt::Key_5: return CEGUI::Key::Scan::Five;
-        case Qt::Key_6: return CEGUI::Key::Scan::Six;
-        case Qt::Key_7: return CEGUI::Key::Scan::Seven;
-        case Qt::Key_8: return CEGUI::Key::Scan::Eight;
-        case Qt::Key_9: return CEGUI::Key::Scan::Nine;
+        case Qt::Key_Comma: return numpad ? CEGUI::Key::Scan::NumpadComma : CEGUI::Key::Scan::Comma;
+        case Qt::Key_Asterisk:
+        case Qt::Key_multiply: return CEGUI::Key::Scan::Multiply; // 'Multiply' is a numpad '*' but we don't check flag, no other '+' exists
+        case Qt::Key_Plus: return CEGUI::Key::Scan::Add; // 'Add' is a numpad '+' but we don't check flag, no other '+' exists
+        case Qt::Key_Minus: return numpad ? CEGUI::Key::Scan::Subtract : CEGUI::Key::Scan::Minus;
+        case Qt::Key_Period: return numpad ? CEGUI::Key::Scan::Decimal : CEGUI::Key::Scan::Period;
+        case Qt::Key_Slash: return numpad ? CEGUI::Key::Scan::Divide : CEGUI::Key::Scan::ForwardSlash;
+        case Qt::Key_Backslash: return CEGUI::Key::Scan::Backslash;
+        case Qt::Key_0: return numpad ? CEGUI::Key::Scan::Numpad_0 : CEGUI::Key::Scan::Zero;
+        case Qt::Key_1: return numpad ? CEGUI::Key::Scan::Numpad_1 : CEGUI::Key::Scan::One;
+        case Qt::Key_2: return numpad ? CEGUI::Key::Scan::Numpad_2 : CEGUI::Key::Scan::Two;
+        case Qt::Key_3: return numpad ? CEGUI::Key::Scan::Numpad_3 : CEGUI::Key::Scan::Three;
+        case Qt::Key_4: return numpad ? CEGUI::Key::Scan::Numpad_4 : CEGUI::Key::Scan::Four;
+        case Qt::Key_5: return numpad ? CEGUI::Key::Scan::Numpad_5 : CEGUI::Key::Scan::Five;
+        case Qt::Key_6: return numpad ? CEGUI::Key::Scan::Numpad_6 : CEGUI::Key::Scan::Six;
+        case Qt::Key_7: return numpad ? CEGUI::Key::Scan::Numpad_7 : CEGUI::Key::Scan::Seven;
+        case Qt::Key_8: return numpad ? CEGUI::Key::Scan::Numpad_8 : CEGUI::Key::Scan::Eight;
+        case Qt::Key_9: return numpad ? CEGUI::Key::Scan::Numpad_9 : CEGUI::Key::Scan::Nine;
         case Qt::Key_Colon: return CEGUI::Key::Scan::Colon;
         case Qt::Key_Semicolon: return CEGUI::Key::Scan::Semicolon;
-        case Qt::Key_Equal: return CEGUI::Key::Scan::Equals;
+        case Qt::Key_Equal: return numpad ? CEGUI::Key::Scan::NumpadEquals : CEGUI::Key::Scan::Equals;
         case Qt::Key_At: return CEGUI::Key::Scan::At;
         case Qt::Key_A: return CEGUI::Key::Scan::A;
         case Qt::Key_B: return CEGUI::Key::Scan::B;
@@ -365,6 +354,41 @@ CEGUI::Key::Scan qtKeyToKey(int key)
         case Qt::Key_X: return CEGUI::Key::Scan::X;
         case Qt::Key_Y: return CEGUI::Key::Scan::Y;
         case Qt::Key_Z: return CEGUI::Key::Scan::Z;
+        case Qt::Key_CapsLock: return CEGUI::Key::Scan::Capital;
+        case Qt::Key_NumLock: return CEGUI::Key::Scan::NumLock;
+        case Qt::Key_ScrollLock: return CEGUI::Key::Scan::ScrollLock;
+        case Qt::Key_AltGr: return CEGUI::Key::Scan::RightAlt;
+        case Qt::Key_Underscore: return CEGUI::Key::Scan::Underline;
+        case Qt::Key_yen: return CEGUI::Key::Scan::Yen; // For Japanese keyboard
+        case Qt::Key_Kanji: return CEGUI::Key::Scan::Kanji; // For Japanese keyboard
+        case Qt::Key_Dead_Circumflex: return CEGUI::Key::Scan::PrevTrack; // For Japanese keyboard
+        case Qt::Key_MediaTogglePlayPause: return CEGUI::Key::Scan::PlayPause;
+        case Qt::Key_MediaPrevious: return CEGUI::Key::Scan::PrevTrack;
+        case Qt::Key_MediaNext: return CEGUI::Key::Scan::NextTrack;
+        case Qt::Key_MediaStop: return CEGUI::Key::Scan::MediaStop;
+        case Qt::Key_VolumeUp: return CEGUI::Key::Scan::VolumeUp;
+        case Qt::Key_VolumeDown: return CEGUI::Key::Scan::VolumeDown;
+        case Qt::Key_VolumeMute: return CEGUI::Key::Scan::Mute;
+        case Qt::Key_Select: return CEGUI::Key::Scan::MediaSelect;
+        case Qt::Key_Favorites: return CEGUI::Key::Scan::WebFavorites;
+        case Qt::Key_Search: return CEGUI::Key::Scan::WebSearch;
+        case Qt::Key_Refresh: return CEGUI::Key::Scan::WebRefresh;
+        case Qt::Key_Forward: return CEGUI::Key::Scan::WebForward;
+        case Qt::Key_Back: return CEGUI::Key::Scan::WebBack;
+        case Qt::Key_Stop: return CEGUI::Key::Scan::WebStop;
+        case Qt::Key_HomePage: return CEGUI::Key::Scan::WebHome;
+        //case Qt::Key_Stop: return CEGUI::Key::Scan::Stop; // NEC PC98
+        case Qt::Key_PowerOff: return CEGUI::Key::Scan::Power;
+        case Qt::Key_Sleep: return CEGUI::Key::Scan::Sleep;
+        case Qt::Key_WakeUp: return CEGUI::Key::Scan::Wake;
+        case Qt::Key_LaunchMail: return CEGUI::Key::Scan::Mail;
+        case Qt::Key_Calculator: return CEGUI::Key::Scan::Calculator;
+        case Qt::Key_Explorer: return CEGUI::Key::Scan::MyComputer; // OK for now
+        case Qt::Key_ApplicationRight:
+        case Qt::Key_ApplicationLeft: return CEGUI::Key::Scan::AppMenu;
+        case Qt::Key_Dead_Grave: return CEGUI::Key::Scan::Grave;
+        case Qt::Key_BracketLeft: return CEGUI::Key::Scan::LeftBracket;
+        case Qt::Key_BracketRight: return CEGUI::Key::Scan::RightBracket;
 
         // The rest are weird keys I refuse to type here
         default: return CEGUI::Key::Scan::Unknown;

@@ -237,7 +237,7 @@ void CEGUIGraphicsView::keyPressEvent(QKeyEvent* event)
     {
         bool handled = false;
 
-        auto key = CEGUIUtils::qtKeyToKey(event->key());
+        auto key = CEGUIUtils::qtKeyToKey(event->key(), event->modifiers() & Qt::KeypadModifier);
         if (key != CEGUI::Key::Scan::Unknown)
             handled = ceguiInput->injectKeyDown(key);
 
@@ -256,7 +256,7 @@ void CEGUIGraphicsView::keyReleaseEvent(QKeyEvent* event)
     // Process CEGUI input
     if (_injectInput && ceguiInput)
     {
-        auto key = CEGUIUtils::qtKeyToKey(event->key());
+        auto key = CEGUIUtils::qtKeyToKey(event->key(), event->modifiers() & Qt::KeypadModifier);
         if (key != CEGUI::Key::Scan::Unknown && ceguiInput->injectKeyUp(key)) return;
     }
 

@@ -33,7 +33,7 @@ namespace CEGUIUtils
     void setWidgetProperty(CEGUI::Window* widget, const CEGUI::String& name, const CEGUI::String& value);
 
     CEGUI::MouseButton qtMouseButtonToMouseButton(Qt::MouseButton button);
-    CEGUI::Key::Scan qtKeyToKey(int key);
+    CEGUI::Key::Scan qtKeyToKey(int key, bool numpad = false);
 };
 
 QDataStream& operator <<(QDataStream& stream, const CEGUI::UDim& value);
