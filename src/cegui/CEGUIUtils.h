@@ -30,6 +30,8 @@ namespace CEGUIUtils
     void removeChild(CEGUI::Window* widget);
     bool insertChild(CEGUI::Window* parent, CEGUI::Window* widget, size_t index);
 
+    void setWidgetProperty(CEGUI::Window* widget, const CEGUI::String& name, const CEGUI::String& value);
+
     CEGUI::MouseButton qtMouseButtonToMouseButton(Qt::MouseButton button);
     CEGUI::Key::Scan qtKeyToKey(int key);
 };

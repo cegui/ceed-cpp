@@ -160,7 +160,7 @@ CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent, siz
         QString propertyName, propertyValue;
         stream >> propertyName;
         stream >> propertyValue;
-        widget->setProperty(qStringToString(propertyName), qStringToString(propertyValue));
+        setWidgetProperty(widget, qStringToString(propertyName), qStringToString(propertyValue));
     }
 
     qint16 childCount = 0;
@@ -218,6 +218,21 @@ bool insertChild(CEGUI::Window* parent, CEGUI::Window* widget, size_t index)
     CEGUIManager::Instance().doneOpenGLContextCurrent();
 
     return true;
+}
+
+void setWidgetProperty(CEGUI::Window* widget, const CEGUI::String& name, const CEGUI::String& value)
+{
+    if (!widget) return;
+
+    // Some properties require CEGUI OpenGL context to be active when being changed
+    const bool oglContextDependent =
+            (name == "AutoRenderingSurface") ||
+            (name == "AutoRenderingSurfaceStencilEnabled");
+    if (oglContextDependent) CEGUIManager::Instance().makeOpenGLContextCurrent();
+
+    widget->setProperty(name, value);
+
+    if (oglContextDependent) CEGUIManager::Instance().doneOpenGLContextCurrent();
 }
 
 CEGUI::MouseButton qtMouseButtonToMouseButton(Qt::MouseButton button)

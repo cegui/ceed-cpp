@@ -494,7 +494,7 @@ void LayoutPropertyEditCommand::setProperty(const QString& widgetPath, const CEG
 
     try
     {
-        manipulator->getWidget()->setProperty(_propertyName, value);
+        CEGUIUtils::setWidgetProperty(manipulator->getWidget(), _propertyName, value);
         manipulator->updateFromWidget(false, true);
         manipulator->update();
         manipulator->updatePropertiesFromWidget(propertiesToUpdate);
