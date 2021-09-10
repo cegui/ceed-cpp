@@ -231,6 +231,17 @@ void setWidgetProperty(CEGUI::Window* widget, const CEGUI::String& name, const C
 
     // Some properties require CEGUI OpenGL context to be active when being changed
     const bool oglContextDependent =
+            // Imagery cache texture size may need to be changed
+            (widget->isUsingAutoRenderingSurface() &&
+                ((name == "Area") ||
+                 (name == "Size") ||
+                 (name == "MinSize") ||
+                 (name == "MaxSize") ||
+                 (name == "AdjustWidthToContent") ||
+                 (name == "AdjustHeightToContent") ||
+                 (name == "AspectRatio") ||
+                 (name == "AspectMode"))) ||
+            // Directly dependent on OpenGL
             (name == "AutoRenderingSurface") ||
             (name == "AutoRenderingSurfaceStencilEnabled");
     if (oglContextDependent) CEGUIManager::Instance().makeOpenGLContextCurrent();
