@@ -3,6 +3,7 @@
 #include <CEGUI/widgets/GridLayoutContainer.h>
 #include <CEGUI/CoordConverter.h>
 #include <CEGUI/WindowManager.h>
+#include <CEGUI/widgets/TabControl.h>
 #include <qdatastream.h>
 
 namespace CEGUIUtils
@@ -181,27 +182,21 @@ CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent, siz
     return widget;
 }
 
+static void setupNewChild(CEGUI::Window& parent, CEGUI::Window& widget)
+{
+    if (dynamic_cast<CEGUI::TabControl*>(&parent) && widget.getText().empty())
+        widget.setText("New tab");
+}
+
 void addChild(CEGUI::Window* parent, CEGUI::Window* widget)
 {
     if (!parent || !widget) return;
 
     // Activate CEGUI OpenGL context for possible imagery cache FBO manipulations
     CEGUIManager::Instance().makeOpenGLContextCurrent();
+    setupNewChild(*parent, *widget);
     parent->addChild(widget);
     CEGUIManager::Instance().doneOpenGLContextCurrent();
-}
-
-void removeChild(CEGUI::Window* widget)
-{
-    if (!widget) return;
-
-    if (auto parent = widget->getParent())
-    {
-        // Activate CEGUI OpenGL context for possible imagery cache FBO manipulations
-        CEGUIManager::Instance().makeOpenGLContextCurrent();
-        parent->removeChild(widget);
-        CEGUIManager::Instance().doneOpenGLContextCurrent();
-    }
 }
 
 bool insertChild(CEGUI::Window* parent, CEGUI::Window* widget, size_t index)
@@ -221,6 +216,7 @@ bool insertChild(CEGUI::Window* parent, CEGUI::Window* widget, size_t index)
 
     // Activate CEGUI OpenGL context for possible imagery cache FBO manipulations
     CEGUIManager::Instance().makeOpenGLContextCurrent();
+    setupNewChild(*parent, *widget);
     if (index < parent->getChildCount())
         parent->addChildAtIndex(widget, index);
     else
@@ -228,6 +224,22 @@ bool insertChild(CEGUI::Window* parent, CEGUI::Window* widget, size_t index)
     CEGUIManager::Instance().doneOpenGLContextCurrent();
 
     return true;
+}
+
+void removeChild(CEGUI::Window* widget)
+{
+    if (!widget) return;
+
+    if (auto parent = widget->getParent())
+    {
+        // Activate CEGUI OpenGL context for possible imagery cache FBO manipulations
+        CEGUIManager::Instance().makeOpenGLContextCurrent();
+        if (auto tabCtl = dynamic_cast<CEGUI::TabControl*>(parent->getParent()))
+            tabCtl->removeTab(widget->getName());
+        else
+            parent->removeChild(widget);
+        CEGUIManager::Instance().doneOpenGLContextCurrent();
+    }
 }
 
 void setWidgetProperty(CEGUI::Window* widget, const CEGUI::String& name, const CEGUI::String& value)

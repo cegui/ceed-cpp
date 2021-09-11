@@ -219,6 +219,12 @@ bool CEGUIManipulator::isInLayoutContainer() const
     return dynamic_cast<CEGUI::LayoutContainer*>(_widget->getParent());
 }
 
+bool CEGUIManipulator::isInTabControl() const
+{
+    // TabControl stores its tabs in a content pane auto-widget
+    return _widget->getParent() && dynamic_cast<CEGUI::TabControl*>(_widget->getParent()->getParent());
+}
+
 QSizeF CEGUIManipulator::getMinSize() const
 {
     if (_widget)

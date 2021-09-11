@@ -27,8 +27,8 @@ namespace CEGUIUtils
     CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent = nullptr, size_t index = std::numeric_limits<size_t>().max());
 
     void addChild(CEGUI::Window* parent, CEGUI::Window* widget);
-    void removeChild(CEGUI::Window* widget);
     bool insertChild(CEGUI::Window* parent, CEGUI::Window* widget, size_t index);
+    void removeChild(CEGUI::Window* widget);
 
     void setWidgetProperty(CEGUI::Window* widget, const CEGUI::String& name, const CEGUI::String& value);
     void setWidgetArea(CEGUI::Window* widget, const CEGUI::UVector2& pos, const CEGUI::USize& size);

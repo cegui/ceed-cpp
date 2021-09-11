@@ -31,6 +31,7 @@ public:
 
     bool isLayoutContainer() const;
     bool isInLayoutContainer() const;
+    bool isInTabControl() const;
 
     virtual QSizeF getMinSize() const override;
     virtual QSizeF getMaxSize() const override;

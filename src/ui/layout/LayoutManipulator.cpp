@@ -183,14 +183,25 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
         }
     }
 
-    // It makes no sense to resize LCs, they will just snap back when they relayout
-    if (isLayoutContainer())
+    const bool isInTabCtl = isInTabControl();
+
+    // It makes no sense to resize LCs, they will just snap back when they relayout.
+    // TabControl tabs should not be resizeable.
+    if (isInTabCtl || isLayoutContainer())
         _resizeable = false;
 
     // If the widget is parented inside a layout container we don't want any drag moving to be possible
-    // TODO: can add drag reordering inside layout containers
-    if (isInLayoutContainer())
+    // TODO: can add drag reordering inside layout containers (https://github.com/cegui/ceed-cpp/issues/53)
+    // TabControl tabs should not be movable.
+    if (isInTabCtl || isInLayoutContainer())
         currFlags &= ~ItemIsMovable;
+
+    // Allow to interact with the TabControl itself
+    if (isInTabCtl)
+    {
+        setAcceptedMouseButtons(static_cast<Qt::MouseButtons>(0));
+        setZValue(-1.0);
+    }
 
     setFlags(currFlags);
     setResizingEnabled(_resizeable);
