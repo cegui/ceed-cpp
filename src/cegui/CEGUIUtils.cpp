@@ -89,8 +89,13 @@ bool serializeWidget(const CEGUI::Window& widget, QDataStream& stream, bool recu
         // don't save 'false' because it is default we will get 'true' from LnF after deserialization.
         //if (widget.isPropertyDefault(propertyName)) continue;
 
+        const auto propertyValue = widget.getProperty(propertyName);
+
+        // It is OK to have no renderer but not to set the empty name. Strange.
+        if (propertyName == "WindowRenderer" && propertyValue.empty()) continue;
+
         stream << stringToQString(propertyName);
-        stream << stringToQString(widget.getProperty(propertyName));
+        stream << stringToQString(propertyValue);
         ++propertyCount;
     }
 

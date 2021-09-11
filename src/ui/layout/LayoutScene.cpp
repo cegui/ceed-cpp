@@ -174,25 +174,26 @@ void LayoutScene::updatePropertySet(const std::set<LayoutManipulator*>& selected
 
     disconnect(propertyWidget->propertyView(), &QtnPropertyView::beforePropertyEdited, this, &LayoutScene::onBeforePropertyEdited);
 
+    if (_multiSet)
+    {
+        // Unset our multiset from the widget to avoid freeze due to contents change
+        if (propertyWidget->propertySet() == _multiSet)
+            propertyWidget->setPropertySet(nullptr);
+        _multiSet->clearChildProperties();
+    }
+
     if (selectedWidgets.size() == 1)
     {
         auto selectedWidget = *selectedWidgets.begin();
         propertyWidget->setPropertySet(selectedWidget->getPropertySet());
-        propertyDockWidget->setWindowTitle("Properties: " + selectedWidget->getWidgetName());
+        propertyDockWidget->setWindowTitle("Properties: " + selectedWidget->getWidgetName() + " (" + selectedWidget->getWidgetType() + ")");
         // TODO: selectedWidget->getWidgetPath() in the header tooltip (not for the whole propertyWidget tooltip!)
     }
     else if (selectedWidgets.size() > 1)
     {
         connect(propertyWidget->propertyView(), &QtnPropertyView::beforePropertyEdited, this, &LayoutScene::onBeforePropertyEdited);
 
-        if (_multiSet)
-        {
-            // Unset our multiset from the widget to avoid freeze due to contents change
-            propertyWidget->setPropertySet(nullptr);
-            _multiSet->clearChildProperties();
-        }
-        else
-            _multiSet = new QtnPropertySet(this);
+        if (!_multiSet) _multiSet = new QtnPropertySet(this);
 
         for (LayoutManipulator* manipulator : selectedWidgets)
             qtnPropertiesToMultiSet(_multiSet, manipulator->getPropertySet(), false);
