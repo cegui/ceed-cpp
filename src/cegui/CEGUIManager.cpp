@@ -868,6 +868,7 @@ const QImage& CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int
 
     auto widgetInstance = CEGUI::WindowManager::getSingleton().createWindow(CEGUIUtils::qStringToString(widgetType), "preview");
     widgetInstance->setVisible(true);
+    widgetInstance->setUsingAutoRenderingSurface(false); // Avoid unnecessary RT creation
 
     // Setup default size
     {
@@ -884,8 +885,8 @@ const QImage& CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int
             previewHeightF *= 1.5f;
         }
 
-        widgetInstance->setPosition(CEGUI::UVector2(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)));
-        widgetInstance->setSize(CEGUI::USize(CEGUI::UDim(0.f, previewWidthF), CEGUI::UDim(0.f, previewHeightF)));
+        widgetInstance->setArea(CEGUI::UVector2(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)),
+                                CEGUI::USize(CEGUI::UDim(0.f, previewWidthF), CEGUI::UDim(0.f, previewHeightF)));
     }
 
     // Window is not attached to a context so it has no default font. Set default.

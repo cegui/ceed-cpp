@@ -397,8 +397,7 @@ void CEGUIManipulator::setAnchors(float minX, float maxX, float minY, float maxY
 
     adjustPositionDeltaOnResize(deltaPos, deltaSize);
 
-    _widget->setPosition(_widget->getPosition() + deltaPos);
-    _widget->setSize(_widget->getSize() + deltaSize);
+    _widget->setArea(_widget->getPosition() + deltaPos, _widget->getSize() + deltaSize);
 
     updateFromWidget();
     updatePropertiesFromWidget({"Size", "Position", "Area"});
@@ -483,8 +482,7 @@ void CEGUIManipulator::notifyResizeProgress(QPointF newPos, QSizeF newSize)
 
     adjustPositionDeltaOnResize(deltaPos, deltaSize);
 
-    _widget->setPosition(_prevPos + deltaPos);
-    _widget->setSize(_prevSize + deltaSize);
+    _widget->setArea(_prevPos + deltaPos, _prevSize + deltaSize);
 
     updatePropertiesFromWidget({"Size", "Position", "Area"});
 }

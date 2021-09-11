@@ -151,8 +151,7 @@ void LayoutResizeCommand::undo()
     {
         auto manipulator = _visualMode.getScene()->getManipulatorByPath(rec.path);
         assert(manipulator);
-        manipulator->getWidget()->setPosition(rec.oldPos);
-        manipulator->getWidget()->setSize(rec.oldSize);
+        manipulator->getWidget()->setArea(rec.oldPos, rec.oldSize);
         manipulator->updateFromWidget(false, true);
 
         // In case the pixel position didn't change but the absolute and negative components changed and canceled each other out
@@ -168,8 +167,7 @@ void LayoutResizeCommand::redo()
     {
         auto manipulator = _visualMode.getScene()->getManipulatorByPath(rec.path);
         assert(manipulator);
-        manipulator->getWidget()->setPosition(rec.newPos);
-        manipulator->getWidget()->setSize(rec.newSize);
+        manipulator->getWidget()->setArea(rec.newPos, rec.newSize);
         manipulator->updateFromWidget(false, true);
 
         // In case the pixel position didn't change but the absolute and negative components changed and canceled each other out
@@ -779,8 +777,7 @@ void LayoutMoveInHierarchyCommand::undo()
         // TODO: is LC the only possible reason of pos & size change when reparenting?
         //if (newParentManipulator->isLayoutContainer())
         {
-            widgetManipulator->getWidget()->setPosition(rec.oldPos);
-            widgetManipulator->getWidget()->setSize(rec.oldSize);
+            widgetManipulator->getWidget()->setArea(rec.oldPos, rec.oldSize);
             widgetManipulator->updatePropertiesFromWidget({"Size", "Position", "Area"});
         }
 
