@@ -443,6 +443,7 @@ class VisualEditing(QtGui.QWidget, multi.EditMode):
                 self.synchInstanceAndWidget()
                 return
 
+            //!!!use CEGUIUtils::setWidgetArea!
             self.currentPreviewWidget.setArea(
                 PyCEGUI.UVector2(PyCEGUI.UDim(0.25, 0), PyCEGUI.UDim(0.25, 0)),
                 PyCEGUI.USize(PyCEGUI.UDim(0.5, 0), PyCEGUI.UDim(0.5, 0)))

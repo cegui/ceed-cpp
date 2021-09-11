@@ -251,6 +251,16 @@ void setWidgetProperty(CEGUI::Window* widget, const CEGUI::String& name, const C
     if (oglContextDependent) CEGUIManager::Instance().doneOpenGLContextCurrent();
 }
 
+void setWidgetArea(CEGUI::Window* widget, const CEGUI::UVector2& pos, const CEGUI::USize& size)
+{
+    if (!widget) return;
+    if (widget->isUsingAutoRenderingSurface()) CEGUIManager::Instance().makeOpenGLContextCurrent();
+
+    widget->setArea(pos, size);
+
+    if (widget->isUsingAutoRenderingSurface()) CEGUIManager::Instance().doneOpenGLContextCurrent();
+}
+
 CEGUI::MouseButton qtMouseButtonToMouseButton(Qt::MouseButton button)
 {
     switch (button)

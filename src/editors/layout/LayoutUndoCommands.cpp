@@ -151,7 +151,7 @@ void LayoutResizeCommand::undo()
     {
         auto manipulator = _visualMode.getScene()->getManipulatorByPath(rec.path);
         assert(manipulator);
-        manipulator->getWidget()->setArea(rec.oldPos, rec.oldSize);
+        CEGUIUtils::setWidgetArea(manipulator->getWidget(), rec.oldPos, rec.oldSize);
         manipulator->updateFromWidget(false, true);
 
         // In case the pixel position didn't change but the absolute and negative components changed and canceled each other out
@@ -167,7 +167,7 @@ void LayoutResizeCommand::redo()
     {
         auto manipulator = _visualMode.getScene()->getManipulatorByPath(rec.path);
         assert(manipulator);
-        manipulator->getWidget()->setArea(rec.newPos, rec.newSize);
+        CEGUIUtils::setWidgetArea(manipulator->getWidget(), rec.newPos, rec.newSize);
         manipulator->updateFromWidget(false, true);
 
         // In case the pixel position didn't change but the absolute and negative components changed and canceled each other out
@@ -352,8 +352,9 @@ void LayoutCreateCommand::redo()
     if (_type == "DefaultWindow" && !parent)
     {
         // Special case - root widget. Setup it with most useful parameters.
-        widget->setArea(CEGUI::UVector2(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)),
-                        CEGUI::USize(CEGUI::UDim(1.f, 0.f), CEGUI::UDim(1.f, 0.f)));
+        CEGUIUtils::setWidgetArea(widget,
+                                  CEGUI::UVector2(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)),
+                                  CEGUI::USize(CEGUI::UDim(1.f, 0.f), CEGUI::UDim(1.f, 0.f)));
         widget->setCursorPassThroughEnabled(true);
     }
     else
@@ -367,12 +368,15 @@ void LayoutCreateCommand::redo()
                 pos -= parent->getWidget()->getChildContentArea().get().getPosition();
         }
 
-        // Place new window at the requested point in context coords
-        widget->setPosition(CEGUI::UVector2(CEGUI::UDim(0.f, pos.x), CEGUI::UDim(0.f, pos.y)));
-
         // If the size is 0x0, the widget will be hard to deal with, lets fix that in that case
-        if (widget->getSize() == CEGUI::USize(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)))
-            widget->setSize(CEGUI::USize(CEGUI::UDim(0.f, 50.f), CEGUI::UDim(0.f, 50.f)));
+        const auto size = (widget->getSize() == CEGUI::USize(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f))) ?
+                    CEGUI::USize(CEGUI::UDim(0.f, 50.f), CEGUI::UDim(0.f, 50.f)) :
+                    widget->getSize();
+
+        // Place new window at the requested point in context coords and fix the size if required
+        CEGUIUtils::setWidgetArea(widget,
+                                  CEGUI::UVector2(CEGUI::UDim(0.f, pos.x), CEGUI::UDim(0.f, pos.y)),
+                                  size);
     }
 
     // Default maximum size to the whole screen
@@ -777,7 +781,7 @@ void LayoutMoveInHierarchyCommand::undo()
         // TODO: is LC the only possible reason of pos & size change when reparenting?
         //if (newParentManipulator->isLayoutContainer())
         {
-            widgetManipulator->getWidget()->setArea(rec.oldPos, rec.oldSize);
+            CEGUIUtils::setWidgetArea(widgetManipulator->getWidget(), rec.oldPos, rec.oldSize);
             widgetManipulator->updatePropertiesFromWidget({"Size", "Position", "Area"});
         }
 
