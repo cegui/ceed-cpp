@@ -1129,7 +1129,7 @@ const QtnEnumInfo& CEGUIManager::enumViewSortMode()
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::ViewSortMode::NoSorting), "NoSorting", "No sorting"});
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::ViewSortMode::Ascending), "Ascending", "Ascending"});
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::ViewSortMode::Descending), "Descending", "Descending"});
-        _enumViewSortMode = new QtnEnumInfo("ItemListBase::SortMode", values);
+        _enumViewSortMode = new QtnEnumInfo("ViewSortMode", values);
     }
     return *_enumViewSortMode;
 }
@@ -1142,7 +1142,78 @@ const QtnEnumInfo& CEGUIManager::enumScrollbarDisplayMode()
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::ScrollbarDisplayMode::Shown), "Shown", "Shown"});
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::ScrollbarDisplayMode::Hidden), "Hidden", "Hidden"});
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::ScrollbarDisplayMode::WhenNeeded), "WhenNeeded", "When needed"});
-        _enumScrollbarDisplayMode = new QtnEnumInfo("ItemListBase::SortMode", values);
+        _enumScrollbarDisplayMode = new QtnEnumInfo("ScrollbarDisplayMode", values);
     }
     return *_enumScrollbarDisplayMode;
+}
+
+const QtnEnumInfo& CEGUIManager::enumTabPanePosition()
+{
+    if (!_enumTabPanePosition)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::TabControl::TabPanePosition::Top), "Top", "Top"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::TabControl::TabPanePosition::Bottom), "Bottom", "Bottom"});
+        _enumTabPanePosition = new QtnEnumInfo("TabControl::TabPanePosition", values);
+    }
+    return *_enumTabPanePosition;
+}
+
+const QtnEnumInfo& CEGUIManager::enumTextInputMode()
+{
+    if (!_enumTextInputMode)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::Spinner::TextInputMode::FloatingPoint), "FloatingPoint", "Float"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::Spinner::TextInputMode::Integer), "Top", "Integer"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::Spinner::TextInputMode::Hexadecimal), "Top", "Hexadecimal"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::Spinner::TextInputMode::Octal), "Top", "Octal"});
+        _enumTextInputMode = new QtnEnumInfo("Spinner::TextInputMode", values);
+    }
+    return *_enumTextInputMode;
+}
+
+const QtnEnumInfo& CEGUIManager::enumSelectionMode()
+{
+    if (!_enumSelectionMode)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::MultiColumnList::SelectionMode::RowSingle), "RowSingle", "Row, single"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::MultiColumnList::SelectionMode::RowMultiple), "RowMultiple", "Row, multiple"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::MultiColumnList::SelectionMode::ColumnSingle), "ColumnSingle", "Column, single"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::MultiColumnList::SelectionMode::ColumnMultiple), "ColumnMultiple", "Column, multiple"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::MultiColumnList::SelectionMode::CellSingle), "CellSingle", "Cell, single"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::MultiColumnList::SelectionMode::CellMultiple), "CellMultiple", "Cell, multiple"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::MultiColumnList::SelectionMode::NominatedRowSingle), "NominatedRowSingle", "Nominated row, single"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::MultiColumnList::SelectionMode::NominatedRowMultiple), "NominatedRowMultiple", "Nominated row, multiple"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::MultiColumnList::SelectionMode::NominatedColumnSingle), "NominatedColumnSingle", "Nominated column, single"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::MultiColumnList::SelectionMode::NominatedColumnMultiple), "NominatedColumnMultiple", "Nominated column, multiple"});
+        _enumSelectionMode = new QtnEnumInfo("MultiColumnList::SelectionMode", values);
+    }
+    return *_enumSelectionMode;
+}
+
+const QtnEnumInfo& CEGUIManager::enumSortDirection()
+{
+    if (!_enumSortDirection)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::ListHeaderSegment::SortDirection::NoSorting), "NoSorting", "No sorting"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::ListHeaderSegment::SortDirection::Ascending), "Ascending", "Ascending"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::ListHeaderSegment::SortDirection::Descending), "Descending", "Descending"});
+        _enumSortDirection = new QtnEnumInfo("ListHeaderSegment::SortDirection", values);
+    }
+    return *_enumSortDirection;
+}
+
+const QtnEnumInfo& CEGUIManager::enumMenubarDirection()
+{
+    if (!_enumMenubarDirection)
+    {
+        QVector<QtnEnumValueInfo> values;
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::MenubarDirection::Down), "Down", "Down"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::MenubarDirection::Up), "Up", "Up"});
+        _enumMenubarDirection = new QtnEnumInfo("MenubarDirection", values);
+    }
+    return *_enumMenubarDirection;
 }

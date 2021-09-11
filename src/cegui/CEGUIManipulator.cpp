@@ -619,8 +619,7 @@ void CEGUIManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs)
     auto unclippedOuterRect = _widget->getUnclippedOuterRect().getFresh(true);
     auto pos = unclippedOuterRect.getPosition();
     auto size = unclippedOuterRect.getSize();
-    auto parentWidget = _widget->getParent();
-    if (parentWidget)
+    if (auto parentWidget = _widget->getParent())
         pos -= parentWidget->getUnclippedOuterRect().get().getPosition();
 
     _ignoreGeometryChanges = true;
@@ -986,6 +985,36 @@ void CEGUIManipulator::createPropertySet()
             enumProp->setEnumInfo(&CEGUIManager::Instance().enumScrollbarDisplayMode());
             prop = enumProp;
         }
+        else if (propertyDataType == "TextInputMode")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumTextInputMode());
+            prop = enumProp;
+        }
+        else if (propertyDataType == "SelectionMode")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumSelectionMode());
+            prop = enumProp;
+        }
+        else if (propertyDataType == "SortDirection")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumSortDirection());
+            prop = enumProp;
+        }
+        else if (propertyDataType == "MenubarDirection")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumMenubarDirection());
+            prop = enumProp;
+        }
+        else if (propertyDataType == "TabPanePosition")
+        {
+            auto enumProp = new QtnPropertyEnum(parentSet);
+            enumProp->setEnumInfo(&CEGUIManager::Instance().enumTabPanePosition());
+            prop = enumProp;
+        }
         else if (propertyDataType == "Font")
         {
             prop = new QtnPropertyQString(parentSet);
@@ -995,6 +1024,7 @@ void CEGUIManipulator::createPropertySet()
             QtnGetCandidatesFn getCb = []() { return CEGUIManager::Instance().getAvailableFonts(); };
             prop->setDelegateAttribute("GetCandidatesFn", QVariant::fromValue(getCb));
 
+            // TODO: font creation dialogue (https://github.com/cegui/ceed-cpp/issues/62)
             QtnCreateCandidateFn createCb = [](QWidget* /*parent*/, QString /*candidate*/) { return QString{}; };
             prop->setDelegateAttribute("CreateCandidateFn", QVariant::fromValue(createCb));
         }
@@ -1021,10 +1051,7 @@ void CEGUIManipulator::createPropertySet()
         else if (propertyDataType == "UBox")
             prop = new QtnPropertyUBox(parentSet);
         else if (propertyDataType == "UDim")
-        {
-            // TODO: implement
-            prop = new QtnPropertyQString(parentSet);
-        }
+            prop = new QtnPropertyUDim(parentSet);
         else if (propertyDataType == "vec2")
         {
             // TODO: implement
@@ -1050,31 +1077,7 @@ void CEGUIManipulator::createPropertySet()
         else if (propertyDataType == "NumOfTextLinesToShow")
         {
             // TODO: implement
-            prop = new QtnPropertyQString(parentSet);
-        }
-        else if (propertyDataType == "TextInputMode")
-        {
-            // TODO: implement
-            prop = new QtnPropertyQString(parentSet);
-        }
-        else if (propertyDataType == "SelectionMode")
-        {
-            // TODO: implement
-            prop = new QtnPropertyQString(parentSet);
-        }
-        else if (propertyDataType == "SortDirection")
-        {
-            // TODO: implement
-            prop = new QtnPropertyQString(parentSet);
-        }
-        else if (propertyDataType == "MenubarDirection")
-        {
-            // TODO: implement
-            prop = new QtnPropertyQString(parentSet);
-        }
-        else if (propertyDataType == "TabPanePosition")
-        {
-            // TODO: implement
+            // float with special value with meaning "auto"
             prop = new QtnPropertyQString(parentSet);
         }
         else if (propertyDataType == "Colour")

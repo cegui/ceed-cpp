@@ -69,6 +69,11 @@ public:
     const QtnEnumInfo& enumItemListBaseSortMode();
     const QtnEnumInfo& enumViewSortMode();
     const QtnEnumInfo& enumScrollbarDisplayMode();
+    const QtnEnumInfo& enumTabPanePosition();
+    const QtnEnumInfo& enumTextInputMode();
+    const QtnEnumInfo& enumSelectionMode();
+    const QtnEnumInfo& enumSortDirection();
+    const QtnEnumInfo& enumMenubarDirection();
 
 protected:
 
@@ -96,6 +101,11 @@ protected:
     QtnEnumInfo* _enumItemListBaseSortMode = nullptr;
     QtnEnumInfo* _enumViewSortMode = nullptr;
     QtnEnumInfo* _enumScrollbarDisplayMode = nullptr;
+    QtnEnumInfo* _enumTabPanePosition = nullptr;
+    QtnEnumInfo* _enumTextInputMode = nullptr;
+    QtnEnumInfo* _enumSelectionMode = nullptr;
+    QtnEnumInfo* _enumSortDirection = nullptr;
+    QtnEnumInfo* _enumMenubarDirection = nullptr;
 
     std::unique_ptr<CEGUIProject> currentProject;
     bool initialized = false;
