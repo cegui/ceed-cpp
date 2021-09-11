@@ -47,17 +47,16 @@ EditorBase::EditorBase(/*compatibilityManager, */ const QString& filePath, bool 
         {
             emit redoAvailable(undoStack->canRedo(), text);
         });
-        connect(undoStack, &QUndoStack::cleanChanged, [this](bool clear)
+        connect(undoStack, &QUndoStack::indexChanged, [this](int /*idx*/)
         {
-            // Clean means that the undo stack is at a state where it's in sync with the underlying file
-            // we set the undostack as clean usually when saving the file so we will assume that there
-            emit contentsChanged(!clear);
+            onContentsChanged();
         });
     }
 }
 
 EditorBase::~EditorBase()
 {
+    if (undoStack) undoStack->disconnect();
 }
 
 // Adds or removes a file monitor to the specified file so CEED will alert the user
@@ -88,7 +87,7 @@ void EditorBase::markAsUnchanged()
     if (undoStack) undoStack->setClean();
 
     // Force GUI update (modified mark etc)
-    emit contentsChanged(false);
+    onContentsChanged();
 }
 
 // The callback method for external file changes.  This method is immediately called when
@@ -97,7 +96,15 @@ void EditorBase::markAsUnchanged()
 void EditorBase::onFileChangedByExternalProgram()
 {
     syncStatus = SyncStatus::Conflict;
+    _changesDiscarded = false;
     emit fileChangedExternally();
+}
+
+void EditorBase::onContentsChanged()
+{
+    // New changes are not discarded by the user and we should ask about saving them
+    _changesDiscarded = false;
+    emit contentsChanged(hasChanges());
 }
 
 //???TODO: make names better? initialize says nothing about loading from disc etc!
@@ -351,8 +358,41 @@ void EditorBase::resolveSyncConflict(bool reload)
         syncStatus = SyncStatus::NotSync;
 
         // Force GUI update (modified mark etc)
-        emit contentsChanged(true);
+        onContentsChanged();
     }
+}
+
+bool EditorBase::confirmClosing()
+{
+    // We can close immediately
+    if (_changesDiscarded || !hasChanges()) return true;
+
+    // We have changes, let's ask the user whether we should discard or save them
+    auto result = QMessageBox::question(qobject_cast<Application*>(qApp)->getMainWindow(),
+                                        "Unsaved changes!",
+                                        tr("There are unsaved changes in '%1'. "
+                                        "Do you want to save them? "
+                                        "(Pressing Discard will discard the changes!)").arg(getFilePath()),
+                                        QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
+                                        QMessageBox::Save);
+
+    if (result == QMessageBox::Save)
+    {
+        // Let's save changes and then kill the editor (This is the default action)
+        // If there was an error saving the file, stop what we're doing
+        // and let the user fix the problem.
+        return save();
+    }
+    else if (result == QMessageBox::Discard)
+    {
+        // Changes will be discarded. Flag is set instead of actually discarding changes which is
+        // potentially wasteful because the editor is going to be closed soon in most of cases.
+        _changesDiscarded = true;
+        return true;
+    }
+
+    // Do nothing if user selected 'Cancel'
+    return false;
 }
 
 void EditorBase::undo()

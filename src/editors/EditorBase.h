@@ -41,6 +41,7 @@ public:
     bool save() { return saveAs(_filePath); }
     bool saveAs(const QString& targetPath);
     void resolveSyncConflict(bool reload);
+    bool confirmClosing();
 
     // Application commands implementation
     virtual void copy() {}
@@ -62,7 +63,7 @@ public:
     virtual bool requiresProject() const { return false; }
 
     QString getFilePath() const { return _filePath; }
-    QString getLabelText() const { return _labelText /* + (hasChanges() ? " *" : "")*/; }
+    QString getLabelText() const { return _labelText; }
 
     virtual QString getFileTypesDescription() const = 0;
     virtual QStringList getFileExtensions() const = 0;
@@ -78,6 +79,7 @@ signals:
 protected:
 
     void onFileChangedByExternalProgram();
+    void onContentsChanged();
 
     void enableFileMonitoring(bool enable);
 
@@ -90,6 +92,7 @@ protected:
     QString _labelText;
     SyncStatus syncStatus = SyncStatus::Sync;
     bool _initialized = false;
+    bool _changesDiscarded = false; // Stores this instead of discarding changes actually
 };
 
 typedef std::unique_ptr<class EditorFactoryBase> EditorFactoryBasePtr;

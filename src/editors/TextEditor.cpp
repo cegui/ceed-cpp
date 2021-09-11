@@ -32,7 +32,7 @@ void TextEditor::initialize()
 
     connect(textDocument, &QTextDocument::contentsChanged, [this]()
     {
-        emit contentsChanged(textDocument->isModified());
+        onContentsChanged();
     });
     connect(textDocument, &QTextDocument::undoAvailable, [this](bool available)
     {

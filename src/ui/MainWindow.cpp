@@ -336,7 +336,7 @@ bool MainWindow::on_actionQuit_triggered()
 {
     // Request to save changes for all modified tabs, but don't close them yet
     for (auto&& editor : activeEditors)
-        if (!confirmEditorTabClosing(*editor)) return false;
+        if (!editor->confirmClosing()) return false;
 
     // Close the project, remembering IDE state for restoring at the next session
     if (!on_actionCloseProject_triggered()) return false;
@@ -427,38 +427,6 @@ bool MainWindow::confirmProjectClosing(bool onlyModified)
     }
 
     return true;
-}
-
-bool MainWindow::confirmEditorTabClosing(EditorBase& editor)
-{
-    // We can close immediately
-    if (!editor.hasChanges()) return true;
-
-    // We have changes, lets ask the user whether we should dump them or save them
-    auto result = QMessageBox::question(this,
-                                        "Unsaved changes!",
-                                        tr("There are unsaved changes in '%1'. "
-                                        "Do you want to save them? "
-                                        "(Pressing Discard will discard the changes!)").arg(editor.getFilePath()),
-                                        QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel,
-                                        QMessageBox::Save);
-
-    if (result == QMessageBox::Save)
-    {
-        // Let's save changes and then kill the editor (This is the default action)
-        // If there was an error saving the file, stop what we're doing
-        // and let the user fix the problem.
-        return editor.save();
-    }
-    else if (result == QMessageBox::Discard)
-    {
-        // Changes will be discarded
-        // NB: we don't have to call editor.discardChanges here
-        return true;
-    }
-
-    // Don't do anything if user selected 'Cancel'
-    return false;
 }
 
 void MainWindow::loadProject(const QString& path)
@@ -678,7 +646,6 @@ void MainWindow::on_tabs_currentChanged(int index)
         disconnect(currentEditor, &EditorBase::undoAvailable, this, &MainWindow::onUndoAvailable);
         disconnect(currentEditor, &EditorBase::redoAvailable, this, &MainWindow::onRedoAvailable);
         disconnect(currentEditor, &EditorBase::filePathChanged, this, &MainWindow::onEditorFilePathChanged);
-        disconnect(currentEditor, &EditorBase::contentsChanged, this, &MainWindow::onEditorContentsChanged);
         disconnect(currentEditor, &EditorBase::fileChangedExternally, this, &MainWindow::onEditorFileChangedExternally);
 
         currentEditor->deactivate(*this);
@@ -732,7 +699,6 @@ void MainWindow::on_tabs_currentChanged(int index)
         connect(currentEditor, &EditorBase::undoAvailable, this, &MainWindow::onUndoAvailable);
         connect(currentEditor, &EditorBase::redoAvailable, this, &MainWindow::onRedoAvailable);
         connect(currentEditor, &EditorBase::filePathChanged, this, &MainWindow::onEditorFilePathChanged);
-        connect(currentEditor, &EditorBase::contentsChanged, this, &MainWindow::onEditorContentsChanged);
         connect(currentEditor, &EditorBase::fileChangedExternally, this, &MainWindow::onEditorFileChangedExternally);
     }
 
@@ -746,7 +712,7 @@ bool MainWindow::on_tabs_tabCloseRequested(int index)
     // If it is not an editor tab, close it
     if (!editor) return true;
 
-    if (!confirmEditorTabClosing(*editor)) return false;
+    if (!editor->confirmClosing()) return false;
 
     closeEditorTab(editor);
     return true;
@@ -1353,4 +1319,6 @@ void MainWindow::openNewEditor(EditorBasePtr editor)
     ui->tabs->setCurrentWidget(editorPtr->getWidget());
 
     if (!filePath.isEmpty()) recentlyUsedFiles->addRecentlyUsed(filePath);
+
+    connect(editorPtr, &EditorBase::contentsChanged, this, &MainWindow::onEditorContentsChanged);
 }
