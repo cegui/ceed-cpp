@@ -52,7 +52,7 @@ public:
     LayoutScene* getScene() const { return scene; }
     CreateWidgetDockWidget* getCreateWidgetDockWidget() const { return createWidgetDockWidget; }
     WidgetHierarchyDockWidget* getHierarchyDockWidget() const { return hierarchyDockWidget; }
-    QMenu* getContextMenu() const { return contextMenu; }
+    QMenu* getContextMenu() const;
     QAction* getAbsoluteModeAction() const { return actionAbsoluteMode; }
     const QBrush& getSnapGridBrush() const;
 
@@ -78,6 +78,7 @@ protected:
     WidgetHierarchyDockWidget* hierarchyDockWidget = nullptr;
     QMenu* contextMenu = nullptr;
 
+    std::map<QString, QList<QAction*>> _widgetActions;
     QAction* actionShowAnchors = nullptr;
     QAction* actionShowLCHandles = nullptr;
     QAction* actionScreenshot = nullptr;

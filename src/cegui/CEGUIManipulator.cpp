@@ -687,6 +687,11 @@ QString CEGUIManipulator::getWidgetType() const
     return _widget ? CEGUIUtils::stringToQString(_widget->getType()) : "<Unknown>";
 }
 
+QString CEGUIManipulator::getWidgetFactoryType() const
+{
+    return _widget ? CEGUIUtils::stringToQString(_widget->getFactoryType()) : "<Unknown>";
+}
+
 QString CEGUIManipulator::getWidgetPath() const
 {
     return _widget ? CEGUIUtils::stringToQString(_widget->getNamePath()) : "<Unknown>";

@@ -199,7 +199,13 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
     // Allow to interact with the TabControl itself
     if (isInTabCtl)
     {
-        setAcceptedMouseButtons(static_cast<Qt::MouseButtons>(0));
+        // FIXME: RMB click still selects an item, WTF?
+        // setVisible(false) prevents dropping child widgets into the tab and also tab deletion
+        setAcceptedMouseButtons(0);
+        //currFlags &= ~ItemIsSelectable;
+        //currFlags &= ~ItemIsFocusable;
+
+        // To access TabControl resizing handles
         setZValue(-1.0);
     }
 

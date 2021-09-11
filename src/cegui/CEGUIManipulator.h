@@ -66,6 +66,7 @@ public:
     CEGUI::Window* getWidget() const { return _widget; }
     QString getWidgetName() const;
     QString getWidgetType() const;
+    QString getWidgetFactoryType() const;
     QString getWidgetPath() const;
     size_t getWidgetIndexInParent() const;
     virtual CEGUIManipulator* createChildManipulator(CEGUI::Window* childWidget);
