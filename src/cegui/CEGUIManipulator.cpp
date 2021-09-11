@@ -1174,7 +1174,9 @@ void CEGUIManipulator::updateTooltip()
     if (_widget)
     {
         auto pxSize = _widget->calculatePixelSize();
-        setToolTip(QString(getWidgetName() + "<br><i>%1 x %2 px</i>").arg(pxSize.d_width).arg(pxSize.d_height));
+        setToolTip(QString(getWidgetName() + "<br><i>%1 x %2 px</i>")
+                   .arg(static_cast<qlonglong>(pxSize.d_width))
+                   .arg(static_cast<qlonglong>(pxSize.d_height)));
     }
     else setToolTip("");
 }

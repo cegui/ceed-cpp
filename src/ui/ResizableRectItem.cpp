@@ -226,7 +226,9 @@ QRectF ResizableRectItem::constrainResizeRect(QRectF rect, QRectF /*oldRect*/)
     QRectF minRect(rect.center() - QPointF(0.5 * minSize.width(), 0.5 * minSize.height()), minSize);
     rect = rect.united(minRect);
 
-    const auto maxSize = getMaxSize();
+    auto maxSize = getMaxSize();
+    if (maxSize.width() <= 0.0) maxSize.setWidth(rect.width());
+    if (maxSize.height() <= 0.0) maxSize.setHeight(rect.height());
     QRectF maxRect(rect.center() - QPointF(0.5 * maxSize.width(), 0.5 * maxSize.height()), maxSize);
     rect = intersectRects(rect, maxRect);
 
