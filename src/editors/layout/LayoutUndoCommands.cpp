@@ -345,6 +345,9 @@ void LayoutCreateCommand::redo()
     CEGUI::Window* widget = CEGUI::WindowManager::getSingleton().createWindow(
                 CEGUIUtils::qStringToString(_type), CEGUIUtils::qStringToString(_name));
 
+    // Disable maximum size by default
+    widget->setMaxSize(CEGUI::USize(CEGUI::UDim(0.f, 0.f), CEGUI::UDim(0.f, 0.f)));
+
     LayoutManipulator* parent = _parentPath.isEmpty() ? nullptr :
                 _visualMode.getScene()->getManipulatorByPath(_parentPath);
 
@@ -365,7 +368,7 @@ void LayoutCreateCommand::redo()
             // Convert requested position into parent cordinate system
             pos = glm::vec2(static_cast<float>(_scenePos.x()), static_cast<float>(_scenePos.y()));
             if (parent)
-                pos -= parent->getWidget()->getChildContentArea().get().getPosition();
+                pos -= parent->getWidget()->getChildContentArea(widget->isNonClient()).get().getPosition();
         }
 
         // If the size is 0x0, the widget will be hard to deal with, lets fix that in that case
@@ -378,9 +381,6 @@ void LayoutCreateCommand::redo()
                                   CEGUI::UVector2(CEGUI::UDim(0.f, pos.x), CEGUI::UDim(0.f, pos.y)),
                                   size);
     }
-
-    // Default maximum size to the whole screen
-    widget->setMaxSize(CEGUI::USize(CEGUI::UDim(1.f, 0.f), CEGUI::UDim(1.f, 0.f)));
 
     // Create GLC capable to accept children
     if (auto glc = dynamic_cast<CEGUI::GridLayoutContainer*>(widget))

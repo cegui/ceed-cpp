@@ -619,8 +619,12 @@ void CEGUIManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs)
     auto unclippedOuterRect = _widget->getUnclippedOuterRect().getFresh(true);
     auto pos = unclippedOuterRect.getPosition();
     auto size = unclippedOuterRect.getSize();
-    if (auto parentWidget = _widget->getParent())
-        pos -= parentWidget->getUnclippedOuterRect().get().getPosition();
+
+    // Translate position to the parent manipulator space. Note that this may not be a direct parent widget!
+    // Also note that we use parent outer rect, not a content area, because outer rects are used for manipulators.
+    if (parentItem())
+        if (auto parentWidget = static_cast<CEGUIManipulator*>(parentItem())->getWidget())
+            pos -= parentWidget->getUnclippedOuterRect().get().getPosition();
 
     _ignoreGeometryChanges = true;
     setPos(QPointF(static_cast<qreal>(pos.x), static_cast<qreal>(pos.y)));
