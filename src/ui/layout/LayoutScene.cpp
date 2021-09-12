@@ -11,9 +11,11 @@
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutUndoCommands.h"
 #include "src/cegui/CEGUIManager.h" //!!!for OpenGL context! TODO: encapsulate?
+#include "src/cegui/CEGUIUtils.h"
 #include <CEGUI/CoordConverter.h>
 #include <CEGUI/GUIContext.h>
 #include <CEGUI/widgets/TabControl.h>
+#include <CEGUI/widgets/TabButton.h>
 #include "qgraphicssceneevent.h"
 #include "qevent.h"
 #include "qmimedata.h"
@@ -53,31 +55,18 @@ void LayoutScene::setupContextMenu()
 
     // Create widget specific actions
 
-    if (auto action = new QAction("&Add Tab", _contextMenu))
-    {
-        action->setToolTip("Add a new tab page to the selected TabControl(s)");
-        action->setStatusTip("Add a new tab page to the selected TabControl(s)");
-        connect(action, &QAction::triggered, [this]()
-        {
-            std::set<LayoutManipulator*> selectedWidgets;
-            collectSelectedWidgets(selectedWidgets);
-            for (auto manipulator : selectedWidgets)
-                if (auto tabCtl = dynamic_cast<CEGUI::TabControl*>(manipulator->getWidget()))
-                    if (manipulator->canAcceptChildren(1, true))
-                        _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, manipulator->getWidgetPath(), "DefaultWindow"));
-        });
-
-        _widgetActions["CEGUI/TabControl"].push_back(action);
-    }
+    setupActionsForTabControl();
 
     // Compose the menu
 
     _contextMenu = new QMenu(&_visualMode);
     for (auto& pair : _widgetActions)
     {
-        _contextMenu->addActions(pair.second);
-        for (auto action : pair.second)
-            action->setVisible(false);
+        for (auto& actionConditon : pair.second)
+        {
+            _contextMenu->addAction(actionConditon.first);
+            actionConditon.first->setVisible(false);
+        }
     }
     _contextMenu->addSeparator();
     _contextMenu->addAction(mainWindow->getActionCut());
@@ -113,9 +102,115 @@ void LayoutScene::setupContextMenu()
     }
 }
 
+void LayoutScene::setupActionsForTabControl()
+{
+    auto conditionTabControlWithMultipleTabs = [this]()
+    {
+        if (!_contextMenuWidget) return false;
+        auto tabCtl = dynamic_cast<CEGUI::TabControl*>(_contextMenuWidget->getWidget());
+        return tabCtl && (tabCtl->getTabCount() > 1);
+    };
+
+    auto conditionTabButtonUnderCursor = [this]()
+    {
+        if (!_contextMenuWidget) return false;
+        auto tabCtl = dynamic_cast<CEGUI::TabControl*>(_contextMenuWidget->getWidget());
+        if (!tabCtl) return false;
+        auto child = tabCtl->getTargetChildAtPosition(glm::vec2(_contextMenuPos.x(), _contextMenuPos.y()));
+        return !!dynamic_cast<CEGUI::TabButton*>(child);
+    };
+
+    if (auto action = new QAction("&Add Tab", _contextMenu))
+    {
+        action->setToolTip("Add a new tab page to the selected TabControl(s)");
+        action->setStatusTip("Add a new tab page to the selected TabControl(s)");
+        connect(action, &QAction::triggered, [this]()
+        {
+            std::set<LayoutManipulator*> selectedWidgets;
+            collectSelectedWidgets(selectedWidgets);
+            for (auto manipulator : selectedWidgets)
+                if (auto tabCtl = dynamic_cast<CEGUI::TabControl*>(manipulator->getWidget()))
+                    if (manipulator->canAcceptChildren(1, true))
+                        _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, manipulator->getWidgetPath(), "DefaultWindow"));
+        });
+
+        _widgetActions["CEGUI/TabControl"].emplace_back(action, nullptr);
+    }
+
+    if (auto action = new QAction("Goto Prev Tab", _contextMenu))
+    {
+        action->setToolTip("Switch to the previous tab in the current TabControl");
+        action->setStatusTip("Switch to the previous tab in the current TabControl");
+        connect(action, &QAction::triggered, [this]()
+        {
+            if (!_contextMenuWidget) return;
+
+            if (auto tabCtl = dynamic_cast<CEGUI::TabControl*>(_contextMenuWidget->getWidget()))
+            {
+                const size_t tabCount = tabCtl->getTabCount();
+                if (tabCount < 2) return;
+
+                const size_t i = tabCtl->getSelectedTabIndex();
+                tabCtl->setSelectedTabAtIndex((i == 0) ? (tabCount - 1) : (i - 1));
+                const auto& tabPath = tabCtl->getTabContentsAtIndex(tabCtl->getSelectedTabIndex())->getNamePath();
+                if (auto tab = getManipulatorByPath(CEGUIUtils::stringToQString(tabPath)))
+                    tab->moveToFront();
+            }
+        });
+
+        _widgetActions["CEGUI/TabControl"].emplace_back(action, conditionTabControlWithMultipleTabs);
+    }
+
+    if (auto action = new QAction("Goto Next Tab", _contextMenu))
+    {
+        action->setToolTip("Switch to the next tab in the current TabControl");
+        action->setStatusTip("Switch to the next tab in the current TabControl");
+        connect(action, &QAction::triggered, [this]()
+        {
+            if (!_contextMenuWidget) return;
+
+            if (auto tabCtl = dynamic_cast<CEGUI::TabControl*>(_contextMenuWidget->getWidget()))
+            {
+                const size_t tabCount = tabCtl->getTabCount();
+                if (tabCount < 2) return;
+
+                const size_t i = tabCtl->getSelectedTabIndex();
+                tabCtl->setSelectedTabAtIndex((i == tabCount - 1) ? 0 : (i + 1));
+                const auto& tabPath = tabCtl->getTabContentsAtIndex(tabCtl->getSelectedTabIndex())->getNamePath();
+                if (auto tab = getManipulatorByPath(CEGUIUtils::stringToQString(tabPath)))
+                    tab->moveToFront();
+            }
+        });
+
+        _widgetActions["CEGUI/TabControl"].emplace_back(action, conditionTabControlWithMultipleTabs);
+    }
+
+    if (auto action = new QAction("Switch to This Tab", _contextMenu))
+    {
+        action->setToolTip("Switch to the tab under the cursor");
+        action->setStatusTip("Switch to the tab under the cursor");
+        connect(action, &QAction::triggered, [this]()
+        {
+            if (!_contextMenuWidget) return;
+            auto tabCtl = dynamic_cast<CEGUI::TabControl*>(_contextMenuWidget->getWidget());
+            if (!tabCtl) return;
+            auto child = tabCtl->getTargetChildAtPosition(glm::vec2(_contextMenuPos.x(), _contextMenuPos.y()));
+            if (auto tabBtn = dynamic_cast<CEGUI::TabButton*>(child))
+            {
+                tabCtl->setSelectedTab(tabBtn->getTargetWindow()->getName());
+                const auto& tabPath = tabCtl->getTabContentsAtIndex(tabCtl->getSelectedTabIndex())->getNamePath();
+                if (auto tab = getManipulatorByPath(CEGUIUtils::stringToQString(tabPath)))
+                    tab->moveToFront();
+            }
+        });
+
+        _widgetActions["CEGUI/TabControl"].emplace_back(action, conditionTabButtonUnderCursor);
+    }
+}
+
 void LayoutScene::updateFromWidgets()
 {
-    if (rootManipulator) rootManipulator->updateFromWidget();
+    if (_rootManipulator) _rootManipulator->updateFromWidget();
 }
 
 // Overridden to keep the manipulators in sync
@@ -140,24 +235,24 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
     clear();
     connect(this, &LayoutScene::selectionChanged, this, &LayoutScene::onSelectionChanged);
 
-    rootManipulator = manipulator;
+    _rootManipulator = manipulator;
 
-    if (rootManipulator)
+    if (_rootManipulator)
     {
         // Activate CEGUI OpenGL context for possible imagery cache FBOs creation
         CEGUIManager::Instance().makeOpenGLContextCurrent();
-        ceguiContext->setRootWindow(rootManipulator->getWidget());
+        ceguiContext->setRootWindow(_rootManipulator->getWidget());
         CEGUIManager::Instance().doneOpenGLContextCurrent();
 
         // Root manipulator changed, perform a full update
         // NB: widget must be already set to a CEGUI context for area calculation
-        rootManipulator->updateFromWidget(true);
-        addItem(rootManipulator);
+        _rootManipulator->updateFromWidget(true);
+        addItem(_rootManipulator);
 
         createAnchorItems();
 
         Application* app = qobject_cast<Application*>(qApp);
-        rootManipulator->showLayoutContainerHandles(app->getAction("layout/show_lc_handles")->isChecked());
+        _rootManipulator->showLayoutContainerHandles(app->getAction("layout/show_lc_handles")->isChecked());
     }
     else
     {
@@ -182,18 +277,18 @@ void LayoutScene::setRootWidgetManipulator(LayoutManipulator* manipulator)
 
 LayoutManipulator* LayoutScene::getManipulatorByPath(const QString& widgetPath) const
 {
-    if (!rootManipulator || widgetPath.isEmpty()) return nullptr;
+    if (!_rootManipulator || widgetPath.isEmpty()) return nullptr;
 
     auto sepPos = widgetPath.indexOf('/');
     if (sepPos < 0)
     {
-        assert(widgetPath == rootManipulator->getWidgetName());
-        return rootManipulator;
+        assert(widgetPath == _rootManipulator->getWidgetName());
+        return _rootManipulator;
     }
     else
     {
-        assert(widgetPath.leftRef(sepPos) == rootManipulator->getWidgetName());
-        return dynamic_cast<LayoutManipulator*>(rootManipulator->getManipulatorByPath(widgetPath.mid(sepPos + 1)));
+        assert(widgetPath.leftRef(sepPos) == _rootManipulator->getWidgetName());
+        return dynamic_cast<LayoutManipulator*>(_rootManipulator->getManipulatorByPath(widgetPath.mid(sepPos + 1)));
     }
 }
 
@@ -505,7 +600,7 @@ bool LayoutScene::deleteSelectedWidgets()
 
 void LayoutScene::showLayoutContainerHandles(bool show)
 {
-    if (rootManipulator) rootManipulator->showLayoutContainerHandles(show);
+    if (_rootManipulator) _rootManipulator->showLayoutContainerHandles(show);
 }
 
 void LayoutScene::selectParent()
@@ -1193,7 +1288,7 @@ void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
 {
     // If the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
     // the graphics items (manipulators in fact) have that implemented already
-    if (rootManipulator)
+    if (_rootManipulator)
         CEGUIGraphicsScene::dragEnterEvent(event);
     else
     {
@@ -1207,7 +1302,7 @@ void LayoutScene::dragLeaveEvent(QGraphicsSceneDragDropEvent* event)
 {
     // If the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
     // the graphics items (manipulators in fact) have that implemented already
-    if (rootManipulator)
+    if (_rootManipulator)
         CEGUIGraphicsScene::dragEnterEvent(event);
 }
 
@@ -1215,7 +1310,7 @@ void LayoutScene::dragMoveEvent(QGraphicsSceneDragDropEvent* event)
 {
     // If the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
     // the graphics items (manipulators in fact) have that implemented already
-    if (rootManipulator)
+    if (_rootManipulator)
         CEGUIGraphicsScene::dragMoveEvent(event);
     else
     {
@@ -1229,7 +1324,7 @@ void LayoutScene::dropEvent(QGraphicsSceneDragDropEvent* event)
 {
     // If the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
     // the graphics items (manipulators in fact) have that implemented already
-    if (rootManipulator)
+    if (_rootManipulator)
         CEGUIGraphicsScene::dropEvent(event);
     else
     {
@@ -1428,8 +1523,10 @@ void LayoutScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
 {
     if (!_contextMenu) return;
 
+    _contextMenuWidget = nullptr;
+    _contextMenuPos = event->scenePos().toPoint();
+
     // Get all items at mouse position and find a topmost interesting
-    LayoutManipulator* currManipulator = nullptr;
     const auto itemsAtMouse = items(event->scenePos());
     for (QGraphicsItem* itemAtMouse : itemsAtMouse)
     {
@@ -1440,14 +1537,14 @@ void LayoutScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
             return;
         }
 
-        currManipulator = getManipulatorFromItem(itemAtMouse);
-        if (currManipulator && currManipulator->acceptedMouseButtons())
+        _contextMenuWidget = getManipulatorFromItem(itemAtMouse);
+        if (_contextMenuWidget && _contextMenuWidget->acceptedMouseButtons())
         {
             // If target manipulator is not in a current selection, select it
-            if (!currManipulator->isSelected() && !currManipulator->isAnyHandleSelected())
+            if (!_contextMenuWidget->isSelected() && !_contextMenuWidget->isAnyHandleSelected())
             {
                 clearSelection();
-                currManipulator->setSelected(true);
+                _contextMenuWidget->setSelected(true);
             }
 
             // Let's show a context menu for this manipulator
@@ -1456,17 +1553,26 @@ void LayoutScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     }
 
     // Prepare widget specific actions
-    const QString currWidgetType = currManipulator ? currManipulator->getWidgetFactoryType() : "";
+    const QString currWidgetType = _contextMenuWidget ? _contextMenuWidget->getWidgetFactoryType() : "";
     for (auto& pair : _widgetActions)
     {
         const bool visible = (pair.first == currWidgetType);
-        for (auto action : pair.second)
-            action->setVisible(visible);
+        for (auto& actionCondition : pair.second)
+            actionCondition.first->setVisible(visible && (!actionCondition.second || actionCondition.second()));
     }
 
     // Menu is shown for the current selection
     _contextMenu->move(event->screenPos());
     _contextMenu->show();
+
+    /* FIXME: it would be good to clear _contextMenuWidget but it is used in actions after this event is triggered
+    connect(_contextMenu, &QMenu::aboutToHide, [this]()
+    {
+        _contextMenuWidget = nullptr;
+        _contextMenuPos = QPoint();
+        disconnect(_contextMenu, &QMenu::aboutToHide, nullptr, nullptr);
+    });
+    */
 
     event->accept();
 }

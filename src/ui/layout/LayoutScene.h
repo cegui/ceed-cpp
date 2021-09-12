@@ -33,7 +33,7 @@ public:
     virtual void setCEGUIDisplaySize(float width, float height) override;
 
     void setRootWidgetManipulator(LayoutManipulator* manipulator);
-    LayoutManipulator* getRootWidgetManipulator() const { return rootManipulator; }
+    LayoutManipulator* getRootWidgetManipulator() const { return _rootManipulator; }
     LayoutManipulator* getManipulatorByPath(const QString& widgetPath) const;
     bool deleteWidgetByPath(const QString& widgetPath);
     size_t getMultiSelectionChangeId() const;
@@ -84,6 +84,8 @@ protected:
 
     void createAnchorItems();
 
+    void setupActionsForTabControl();
+
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragMoveEvent(QGraphicsSceneDragDropEvent* event) override;
@@ -95,14 +97,16 @@ protected:
     virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent* event) override;
 
     LayoutVisualMode& _visualMode;
-    LayoutManipulator* rootManipulator = nullptr;
+    LayoutManipulator* _rootManipulator = nullptr;
 
     QtnPropertySet* _multiSet = nullptr;
     size_t _multiChangeId = 0;
 
     AnchorPopupMenu* _anchorPopupMenu = nullptr;
     QMenu* _contextMenu = nullptr;
-    std::map<QString, QList<QAction*>> _widgetActions;
+    std::map<QString, std::vector<std::pair<QAction*, std::function<bool()>>>> _widgetActions; // Widget type -> {action + condition}
+    QPoint _contextMenuPos;
+    LayoutManipulator* _contextMenuWidget = nullptr;
 
     QPointF _lastCursorPos;
 
