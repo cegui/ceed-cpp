@@ -18,6 +18,24 @@
 #include <qdrag.h>
 #include <qtimer.h>
 
+void LayoutManipulator::removeNestedManipulators(std::set<LayoutManipulator*>& manipulators)
+{
+    for (auto it = manipulators.begin(); it != manipulators.end(); /**/)
+    {
+        bool erased = false;
+        const LayoutManipulator* manipulator = *it;
+        for (LayoutManipulator* potentialParent : manipulators)
+            if (potentialParent->isAncestorOf(manipulator))
+            {
+                it = manipulators.erase(it);
+                erased = true;
+                break;
+            }
+
+        if (!erased) ++it;
+    }
+}
+
 LayoutManipulator::LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, CEGUI::Window* widget)
     : CEGUIManipulator(parent, widget)
     , _visualMode(visualMode)
@@ -461,7 +479,7 @@ void LayoutManipulator::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
             */
             {
                 _visualMode.getScene()->collectSelectedWidgets(selectedWidgets);
-                LayoutVisualMode::removeNestedManipulators(selectedWidgets);
+                removeNestedManipulators(selectedWidgets);
                 selectedWidgets.erase(this); // Will add to stream manually
             }
 

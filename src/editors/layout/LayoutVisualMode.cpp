@@ -14,7 +14,6 @@
 #include "src/util/Utils.h"
 #include "src/Application.h"
 #include <CEGUI/WindowManager.h>
-#include <CEGUI/widgets/TabControl.h>
 #include "qboxlayout.h"
 #include "qtoolbar.h"
 #include "qmenu.h"
@@ -29,27 +28,6 @@
 #include <qbuffer.h>
 #include <qinputdialog.h>
 #include <unordered_set>
-
-//!!!FIXME: move to LayoutScene!
-#include "src/editors/layout/LayoutUndoCommands.h"
-
-void LayoutVisualMode::removeNestedManipulators(std::set<LayoutManipulator*>& manipulators)
-{
-    for (auto it = manipulators.begin(); it != manipulators.end(); /**/)
-    {
-        bool erased = false;
-        const LayoutManipulator* manipulator = *it;
-        for (LayoutManipulator* potentialParent : manipulators)
-            if (potentialParent->isAncestorOf(manipulator))
-            {
-                it = manipulators.erase(it);
-                erased = true;
-                break;
-            }
-
-        if (!erased) ++it;
-    }
-}
 
 LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     : IEditMode(editor)
@@ -74,8 +52,6 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
 
     Application* app = qobject_cast<Application*>(qApp);
 
-    actionShowAnchors = app->getAction("layout/show_anchors");
-    actionShowLCHandles = app->getAction("layout/show_lc_handles");
     actionAbsoluteMode = app->getAction("layout/absolute_mode");
     actionAbsoluteIntegerMode = app->getAction("layout/abs_integers_mode");
     actionSnapGrid = app->getAction("layout/snap_grid");
@@ -98,51 +74,12 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
         self.focusPropertyInspectorFilterBoxAction = action.getAction("layout/focus_property_inspector_filter_box")
     */
 
-    // For a context menu only
-    actionAnchorPresets = new QAction(QIcon(":/icons/anchors/SelfBottom.png"), "Anchor Presets", contextMenu);
-
     // Initial state of checkable actions
-    actionShowAnchors->setChecked(true);
-    actionShowLCHandles->setChecked(true);
     actionAbsoluteMode->setChecked(true);
     actionAbsoluteIntegerMode->setChecked(true);
     actionSnapGrid->setChecked(false);
 
-    // These actions are global (cross-scene), we connect to them once and keep the connection active
-    _anyStateConnections.push_back(connect(actionShowAnchors, &QAction::toggled, [this](bool /*toggled*/) { scene->updateAnchorItems(); }));
-    _anyStateConnections.push_back(connect(actionShowLCHandles, &QAction::toggled, scene, &LayoutScene::showLayoutContainerHandles));
-
-    // Create widget specific actions
-    _widgetActions.emplace("CEGUI/TabControl", QList<QAction*>{ app->getAction("layout/tab_ctl_add_tab") });
-
-    auto mainWindow = app->getMainWindow();
-
-    // FIXME: move to LayoutScene? Calls go back and forth now.
-    contextMenu = new QMenu(this);
-    for (auto& pair : _widgetActions)
-    {
-        contextMenu->addActions(pair.second);
-        for (auto action : pair.second)
-            action->setVisible(false);
-    }
-    contextMenu->addSeparator();
-    contextMenu->addAction(mainWindow->getActionCut());
-    contextMenu->addAction(mainWindow->getActionCopy());
-    contextMenu->addAction(mainWindow->getActionPaste());
-    contextMenu->addSeparator();
-    contextMenu->addAction(app->getAction("layout/lock_widget"));
-    contextMenu->addAction(app->getAction("layout/unlock_widget"));
-    contextMenu->addAction(app->getAction("layout/recursively_lock_widget"));
-    contextMenu->addAction(app->getAction("layout/recursively_unlock_widget"));
-    contextMenu->addSeparator();
-    contextMenu->addAction(actionSelectParent);
-    contextMenu->addSeparator();
-    contextMenu->addAction(actionScreenshot);
-    contextMenu->addSeparator();
-    contextMenu->addAction(actionAnchorPresets);
-    contextMenu->addAction(actionShowAnchors);
-    contextMenu->addAction(actionShowLCHandles);
-
+    scene->setupContextMenu();
     hierarchyDockWidget->setupContextMenu();
 
     auto onSnapGridSettingsChanged = [this]() { snapGridBrushValid = false; };
@@ -265,26 +202,6 @@ void LayoutVisualMode::rebuildEditorMenu(QMenu* editorMenu)
 */
 }
 
-QMenu* LayoutVisualMode::getContextMenu() const
-{
-    QString currWidgetType;
-
-    std::set<LayoutManipulator*> selectedWidgets;
-    scene->collectSelectedWidgets(selectedWidgets);
-    if (!selectedWidgets.empty())
-        currWidgetType = (*selectedWidgets.begin())->getWidgetFactoryType();
-
-    // Prepare widget specific actions
-    for (auto& pair : _widgetActions)
-    {
-        const bool visible = (pair.first == currWidgetType);
-        for (auto action : pair.second)
-            action->setVisible(visible);
-    }
-
-    return contextMenu;
-}
-
 void LayoutVisualMode::createActiveStateConnections()
 {
     _activeStateConnections.push_back(connect(hierarchyDockWidget, &WidgetHierarchyDockWidget::deleteRequested, scene, &LayoutScene::deleteSelectedWidgets));
@@ -305,23 +222,6 @@ void LayoutVisualMode::createActiveStateConnections()
     /*
         self.connectionGroup.add(self.focusPropertyInspectorFilterBoxAction, receiver = lambda: self.focusPropertyInspectorFilterBox())
     */
-    _activeStateConnections.push_back(connect(actionAnchorPresets, &QAction::triggered, [this]() { scene->showAnchorPopupMenu(QCursor::pos()); }));
-
-    Application* app = qobject_cast<Application*>(qApp);
-    _activeStateConnections.push_back(connect(app->getAction("layout/tab_ctl_add_tab"), &QAction::triggered, [this]()
-    {
-        // FIXME: to LayoutScene?!
-        std::set<LayoutManipulator*> selectedWidgets;
-        scene->collectSelectedWidgets(selectedWidgets);
-        if (selectedWidgets.empty()) return;
-
-        auto manipulator = *selectedWidgets.begin();
-        if (auto tabCtl = dynamic_cast<CEGUI::TabControl*>(manipulator->getWidget()))
-        {
-            if (manipulator->canAcceptChildren(1, true))
-                getEditor().getUndoStack()->push(new LayoutCreateCommand(*this, manipulator->getWidgetPath(), "DefaultWindow"));
-        }
-    }));
 }
 
 //!!!???to PropertyWidget / PropertyDockWidget?
@@ -356,7 +256,7 @@ bool LayoutVisualMode::copy()
     scene->collectSelectedWidgets(selectedWidgets);
 
     // We serialize only topmost selected widgets (and thus their entire hierarchies)
-    removeNestedManipulators(selectedWidgets);
+    LayoutManipulator::removeNestedManipulators(selectedWidgets);
 
     if (selectedWidgets.empty()) return false;
 

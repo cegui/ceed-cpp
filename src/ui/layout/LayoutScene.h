@@ -4,6 +4,7 @@
 #include "src/ui/CEGUIGraphicsScene.h"
 #include <CEGUI/HorizontalAlignment.h>
 #include <CEGUI/VerticalAlignment.h>
+#include <qmenu.h>
 #include <set>
 
 // This scene contains all the manipulators users want to interact it. You can visualise it as the
@@ -27,6 +28,7 @@ public:
     LayoutScene(LayoutVisualMode& visualMode);
     virtual ~LayoutScene() override;
 
+    void setupContextMenu();
     void updateFromWidgets();
     virtual void setCEGUIDisplaySize(float width, float height) override;
 
@@ -99,6 +101,8 @@ protected:
     size_t _multiChangeId = 0;
 
     AnchorPopupMenu* _anchorPopupMenu = nullptr;
+    QMenu* _contextMenu = nullptr;
+    std::map<QString, QList<QAction*>> _widgetActions;
 
     QPointF _lastCursorPos;
 

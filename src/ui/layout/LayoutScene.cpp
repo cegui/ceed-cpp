@@ -13,7 +13,7 @@
 #include "src/cegui/CEGUIManager.h" //!!!for OpenGL context! TODO: encapsulate?
 #include <CEGUI/CoordConverter.h>
 #include <CEGUI/GUIContext.h>
-#include <CEGUI/Window.h>
+#include <CEGUI/widgets/TabControl.h>
 #include "qgraphicssceneevent.h"
 #include "qevent.h"
 #include "qmimedata.h"
@@ -42,6 +42,72 @@ LayoutScene::~LayoutScene()
     if (_multiSet) _multiSet->clearChildProperties();
     disconnect(this, &LayoutScene::selectionChanged, this, &LayoutScene::onSelectionChanged);
     delete _anchorPopupMenu;
+}
+
+void LayoutScene::setupContextMenu()
+{
+    if (_contextMenu) return;
+
+    Application* app = qobject_cast<Application*>(qApp);
+    auto mainWindow = app->getMainWindow();
+
+    // Create widget specific actions
+    _widgetActions.emplace("CEGUI/TabControl", QList<QAction*>{ app->getAction("layout/tab_ctl_add_tab") });
+
+    _contextMenu = new QMenu(&_visualMode);
+    for (auto& pair : _widgetActions)
+    {
+        _contextMenu->addActions(pair.second);
+        for (auto action : pair.second)
+            action->setVisible(false);
+    }
+    _contextMenu->addSeparator();
+    _contextMenu->addAction(mainWindow->getActionCut());
+    _contextMenu->addAction(mainWindow->getActionCopy());
+    _contextMenu->addAction(mainWindow->getActionPaste());
+    _contextMenu->addSeparator();
+    _contextMenu->addAction(app->getAction("layout/lock_widget"));
+    _contextMenu->addAction(app->getAction("layout/unlock_widget"));
+    _contextMenu->addAction(app->getAction("layout/recursively_lock_widget"));
+    _contextMenu->addAction(app->getAction("layout/recursively_unlock_widget"));
+    _contextMenu->addSeparator();
+    _contextMenu->addAction(app->getAction("layout/select_parent"));
+    _contextMenu->addSeparator();
+    _contextMenu->addAction(app->getAction("layout/screenshot"));
+    _contextMenu->addSeparator();
+
+    auto actionAnchorPresets = new QAction(QIcon(":/icons/anchors/SelfBottom.png"), "Anchor Presets", _contextMenu);
+    _contextMenu->addAction(actionAnchorPresets);
+    connect(actionAnchorPresets, &QAction::triggered, [this]() { showAnchorPopupMenu(QCursor::pos()); });
+
+    if (auto actionShowAnchors = app->getAction("layout/show_anchors"))
+    {
+        _contextMenu->addAction(actionShowAnchors);
+        actionShowAnchors->setChecked(true);
+        connect(actionShowAnchors, &QAction::toggled, [this]() { updateAnchorItems(); });
+    }
+
+    if (auto actionShowLCHandles = app->getAction("layout/show_lc_handles"))
+    {
+        _contextMenu->addAction(actionShowLCHandles);
+        actionShowLCHandles->setChecked(true);
+        connect(actionShowLCHandles, &QAction::toggled, this, &LayoutScene::showLayoutContainerHandles);
+    }
+
+    // Widget specific actions logic
+
+    connect(app->getAction("layout/tab_ctl_add_tab"), &QAction::triggered, [this]()
+    {
+        std::set<LayoutManipulator*> selectedWidgets;
+        collectSelectedWidgets(selectedWidgets);
+        if (selectedWidgets.empty()) return;
+        auto manipulator = *selectedWidgets.begin();
+        if (auto tabCtl = dynamic_cast<CEGUI::TabControl*>(manipulator->getWidget()))
+        {
+            if (manipulator->canAcceptChildren(1, true))
+                _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, manipulator->getWidgetPath(), "DefaultWindow"));
+        }
+    });
 }
 
 void LayoutScene::updateFromWidgets()
@@ -1340,7 +1406,10 @@ void LayoutScene::showAnchorPopupMenu(const QPoint& pos)
 
 void LayoutScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
 {
+    if (!_contextMenu) return;
+
     // Get all items at mouse position and find a topmost interesting
+    LayoutManipulator* currManipulator = nullptr;
     const auto itemsAtMouse = items(event->scenePos());
     for (QGraphicsItem* itemAtMouse : itemsAtMouse)
     {
@@ -1351,13 +1420,14 @@ void LayoutScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
             return;
         }
 
-        if (auto manipulator = getManipulatorFromItem(itemAtMouse))
+        currManipulator = getManipulatorFromItem(itemAtMouse);
+        if (currManipulator && currManipulator->acceptedMouseButtons())
         {
             // If target manipulator is not in a current selection, select it
-            if (!manipulator->isSelected() && !manipulator->isAnyHandleSelected())
+            if (!currManipulator->isSelected() && !currManipulator->isAnyHandleSelected())
             {
                 clearSelection();
-                manipulator->setSelected(true);
+                currManipulator->setSelected(true);
             }
 
             // Let's show a context menu for this manipulator
@@ -1365,10 +1435,18 @@ void LayoutScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
         }
     }
 
+    // Prepare widget specific actions
+    const QString currWidgetType = currManipulator ? currManipulator->getWidgetFactoryType() : "";
+    for (auto& pair : _widgetActions)
+    {
+        const bool visible = (pair.first == currWidgetType);
+        for (auto action : pair.second)
+            action->setVisible(visible);
+    }
+
     // Menu is shown for the current selection
-    auto contextMenu = _visualMode.getContextMenu();
-    contextMenu->move(event->screenPos());
-    contextMenu->show();
+    _contextMenu->move(event->screenPos());
+    _contextMenu->show();
 
     event->accept();
 }

@@ -2,6 +2,7 @@
 #define LAYOUTMANIPULATOR_H
 
 #include "src/cegui/CEGUIManipulator.h"
+#include <set>
 
 // Layout editing specific widget manipulator
 
@@ -12,6 +13,8 @@ class LayoutContainerHandle;
 class LayoutManipulator : public CEGUIManipulator
 {
 public:
+
+    static void removeNestedManipulators(std::set<LayoutManipulator*>& manipulators);
 
     LayoutManipulator(LayoutVisualMode& visualMode, QGraphicsItem* parent, CEGUI::Window* widget);
     virtual ~LayoutManipulator() override;
