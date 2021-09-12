@@ -727,21 +727,19 @@ CEGUIManipulator* CEGUIManipulator::getManipulatorByPath(const QString& widgetPa
 {
     auto sepPos = widgetPath.indexOf('/');
     QString baseName;
-    if (sepPos < 0)
-    {
-        baseName = widgetPath;
-    }
-    else if (dynamic_cast<CEGUI::TabControl*>(_widget) || dynamic_cast<CEGUI::ScrollablePane*>(_widget))
+
+    if (dynamic_cast<CEGUI::TabControl*>(_widget) || dynamic_cast<CEGUI::ScrollablePane*>(_widget))
     {
         // These widgets store their children in auto container, but CEED treats them as
         // immediate children. Autocontainer therefore is skipped here.
+        if (sepPos < 0) return const_cast<CEGUIManipulator*>(this);
         const auto startPos = sepPos + 1;
         sepPos = widgetPath.indexOf('/', startPos);
         baseName = widgetPath.mid(startPos, sepPos - startPos);
     }
     else
     {
-        baseName = widgetPath.left(sepPos);
+        baseName = (sepPos < 0) ? widgetPath : widgetPath.left(sepPos);
     }
 
     for (QGraphicsItem* item : childItems())

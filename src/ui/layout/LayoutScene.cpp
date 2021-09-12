@@ -137,6 +137,34 @@ void LayoutScene::setupActionsForTabControl()
         _widgetActions["CEGUI/TabControl"].emplace_back(action, nullptr);
     }
 
+    if (auto action = new QAction("&Remove Tab", _contextMenu))
+    {
+        action->setToolTip("Remove the tab under the cursor");
+        action->setStatusTip("Remove the tab under the cursor");
+        connect(action, &QAction::triggered, [this]()
+        {
+            if (!_contextMenuWidget) return;
+            auto tabCtl = dynamic_cast<CEGUI::TabControl*>(_contextMenuWidget->getWidget());
+            if (!tabCtl) return;
+            auto child = tabCtl->getTargetChildAtPosition(glm::vec2(_contextMenuPos.x(), _contextMenuPos.y()));
+            if (auto tabBtn = dynamic_cast<CEGUI::TabButton*>(child))
+            {
+                QStringList widgetPaths;
+                widgetPaths.push_back(CEGUIUtils::stringToQString(tabBtn->getTargetWindow()->getNamePath()));
+                _visualMode.getEditor().getUndoStack()->push(new LayoutDeleteCommand(_visualMode, std::move(widgetPaths)));
+
+                if (tabCtl->getTabCount())
+                {
+                    const auto& tabPath = tabCtl->getTabContentsAtIndex(tabCtl->getSelectedTabIndex())->getNamePath();
+                    if (auto tab = getManipulatorByPath(CEGUIUtils::stringToQString(tabPath)))
+                        tab->moveToFront();
+                }
+            }
+        });
+
+        _widgetActions["CEGUI/TabControl"].emplace_back(action, conditionTabButtonUnderCursor);
+    }
+
     if (auto action = new QAction("Goto Prev Tab", _contextMenu))
     {
         action->setToolTip("Switch to the previous tab in the current TabControl");
