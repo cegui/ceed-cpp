@@ -310,10 +310,6 @@ void LayoutEditor::createActions(Application& app)
                        "Select an immediate parent of the widget.",
                        QIcon(":/icons/layout_editing/SelectParent.png"), QKeySequence(Qt::Key_Backspace));
 
-    app.registerAction("layout", "tab_ctl_add_tab", "&Add Tab",
-                       "Add a new tab page to this TabControl.",
-                       QIcon(), QKeySequence());
-
     app.registerAction("layout", "align_hleft", "Align &Left (horizontally)",
                        "Sets horizontal alignment of all selected widgets to left.",
                        QIcon(":/icons/layout_editing/align_hleft.png"));

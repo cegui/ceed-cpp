@@ -52,7 +52,25 @@ void LayoutScene::setupContextMenu()
     auto mainWindow = app->getMainWindow();
 
     // Create widget specific actions
-    _widgetActions.emplace("CEGUI/TabControl", QList<QAction*>{ app->getAction("layout/tab_ctl_add_tab") });
+
+    if (auto action = new QAction("&Add Tab", _contextMenu))
+    {
+        action->setToolTip("Add a new tab page to the selected TabControl(s)");
+        action->setStatusTip("Add a new tab page to the selected TabControl(s)");
+        connect(action, &QAction::triggered, [this]()
+        {
+            std::set<LayoutManipulator*> selectedWidgets;
+            collectSelectedWidgets(selectedWidgets);
+            for (auto manipulator : selectedWidgets)
+                if (auto tabCtl = dynamic_cast<CEGUI::TabControl*>(manipulator->getWidget()))
+                    if (manipulator->canAcceptChildren(1, true))
+                        _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, manipulator->getWidgetPath(), "DefaultWindow"));
+        });
+
+        _widgetActions["CEGUI/TabControl"].push_back(action);
+    }
+
+    // Compose the menu
 
     _contextMenu = new QMenu(&_visualMode);
     for (auto& pair : _widgetActions)
@@ -93,21 +111,6 @@ void LayoutScene::setupContextMenu()
         actionShowLCHandles->setChecked(true);
         connect(actionShowLCHandles, &QAction::toggled, this, &LayoutScene::showLayoutContainerHandles);
     }
-
-    // Widget specific actions logic
-
-    connect(app->getAction("layout/tab_ctl_add_tab"), &QAction::triggered, [this]()
-    {
-        std::set<LayoutManipulator*> selectedWidgets;
-        collectSelectedWidgets(selectedWidgets);
-        if (selectedWidgets.empty()) return;
-        auto manipulator = *selectedWidgets.begin();
-        if (auto tabCtl = dynamic_cast<CEGUI::TabControl*>(manipulator->getWidget()))
-        {
-            if (manipulator->canAcceptChildren(1, true))
-                _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, manipulator->getWidgetPath(), "DefaultWindow"));
-        }
-    });
 }
 
 void LayoutScene::updateFromWidgets()
