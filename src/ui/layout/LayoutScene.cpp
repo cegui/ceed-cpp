@@ -16,11 +16,11 @@
 #include <CEGUI/GUIContext.h>
 #include <CEGUI/widgets/TabControl.h>
 #include <CEGUI/widgets/TabButton.h>
-#include "qgraphicssceneevent.h"
-#include "qevent.h"
-#include "qmimedata.h"
-#include "qtreeview.h"
-#include "qstandarditemmodel.h"
+#include <qgraphicssceneevent.h>
+#include <qevent.h>
+#include <qmimedata.h>
+#include <qtreeview.h>
+#include <qstandarditemmodel.h>
 #include <qmenu.h>
 #include <set>
 
@@ -159,6 +159,33 @@ void LayoutScene::setupActionsForTabControl()
                     if (auto tab = getManipulatorByPath(CEGUIUtils::stringToQString(tabPath)))
                         tab->moveToFront();
                 }
+            }
+        });
+
+        _widgetActions["CEGUI/TabControl"].emplace_back(action, conditionTabButtonUnderCursor);
+    }
+
+    if (auto action = new QAction("Rename Tab", _contextMenu))
+    {
+        action->setToolTip("Rename the tab under the cursor");
+        action->setStatusTip("Rename the tab under the cursor");
+        connect(action, &QAction::triggered, [this]()
+        {
+            if (!_contextMenuWidget) return;
+            auto tabCtl = dynamic_cast<CEGUI::TabControl*>(_contextMenuWidget->getWidget());
+            if (!tabCtl) return;
+            auto child = tabCtl->getTargetChildAtPosition(glm::vec2(_contextMenuPos.x(), _contextMenuPos.y()));
+            auto tabBtn = dynamic_cast<CEGUI::TabButton*>(child);
+            if (!tabBtn) return;
+            auto tab = getManipulatorByPath(CEGUIUtils::stringToQString(tabBtn->getTargetWindow()->getNamePath()));
+            if (!tab) return;
+
+            auto props = tab->getPropertySet()->findChildProperties("Text");
+            if (!props.empty())
+            {
+                clearSelection();
+                tab->setSelected(true);
+                qobject_cast<Application*>(qApp)->getMainWindow()->focusOnProperty(*props.begin());
             }
         });
 

@@ -36,6 +36,10 @@
 #include "QtnProperty/PropertyWidget.h"
 #include <qclipboard.h>
 
+// TODO: here for now, move to more appropriate place once it is created
+#include "QtnProperty/PropertyView.h"
+#include <qtimer.h>
+
 // FIXME QTBUG: Qt 5.13.0 text rendering in OpenGL breaks on QOpenGLWidget delete
 #include <qopenglwidget.h>
 // FIXME: read-only QLineEdit passes by Backspace and Delete, so shortcuts work when they must not
@@ -1326,4 +1330,34 @@ void MainWindow::openNewEditor(EditorBasePtr editor)
     if (!filePath.isEmpty()) recentlyUsedFiles->addRecentlyUsed(filePath);
 
     connect(editorPtr, &EditorBase::contentsChanged, this, &MainWindow::onEditorContentsChanged);
+}
+
+bool MainWindow::focusOnProperty(const QString& name, bool startEdit) const
+{
+    auto propertyWidget = static_cast<QtnPropertyWidget*>(propertyDockWidget->widget());
+    auto props = propertyWidget->propertySet()->findChildProperties(name);
+    return !props.empty() && focusOnProperty(*props.begin(), startEdit);
+}
+
+bool MainWindow::focusOnProperty(QtnPropertyBase* prop, bool startEdit) const
+{
+    if (!prop) return false;
+
+    auto propertyWidget = static_cast<QtnPropertyWidget*>(propertyDockWidget->widget());
+    propertyWidget->propertyView()->setActiveProperty(prop, true);
+    propertyWidget->propertyView()->setFocus();
+
+    if (startEdit)
+    {
+        QTimer::singleShot(0, [propertyWidget]()
+        {
+            // TODO: check if application is exiting!
+
+            // Async to let the property delegate redraw sub-items. Otherwise will not work.
+            QKeyEvent startEdit(QKeyEvent::Type::KeyPress, Qt::Key_Return, Qt::NoModifier);
+            QApplication::sendEvent(propertyWidget->propertyView(), &startEdit);
+        });
+    }
+
+    return true;
 }

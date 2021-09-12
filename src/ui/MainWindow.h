@@ -16,6 +16,7 @@ class UndoViewer;
 class SettingsDialog;
 class RecentlyUsedMenuEntry;
 class CEGUIProject;
+class QtnPropertyBase;
 typedef std::unique_ptr<class EditorBase> EditorBasePtr;
 typedef std::unique_ptr<class EditorFactoryBase> EditorFactoryBasePtr;
 
@@ -50,6 +51,10 @@ public:
     // FIXME QTBUG: Qt 5.13.0 text rendering in OpenGL breaks on QOpenGLWidget delete
     QWidget* allocateOpenGLWidget();
     void freeOpenGLWidget(QWidget* widget);
+
+    // TODO: here for now, move to more appropriate place once it is created
+    bool focusOnProperty(const QString& name, bool startEdit = true) const;
+    bool focusOnProperty(QtnPropertyBase* prop, bool startEdit = true) const;
 
 private slots:
 
