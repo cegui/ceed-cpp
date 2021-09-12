@@ -105,8 +105,6 @@ MainWindow::MainWindow(QWidget *parent) :
     undoViewer->setVisible(false);
     addDockWidget(Qt::DockWidgetArea::LeftDockWidgetArea, undoViewer);
 
-    ui->actionStatusbar->setChecked(statusBar()->isVisible());
-
     setupToolbars();
 
     // Setup dynamic menus
@@ -177,6 +175,11 @@ MainWindow::MainWindow(QWidget *parent) :
     // Restore geometry and state of this window from QSettings
 
     auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
+
+    const bool statusBarVisible = settings->value("window-statusbar", true).toBool();
+    statusBar()->setVisible(statusBarVisible);
+    ui->actionStatusbar->setChecked(statusBarVisible);
+
     if (settings->contains("window-geometry"))
         restoreGeometry(settings->value("window-geometry").toByteArray());
     if (settings->contains("window-state"))
@@ -544,6 +547,8 @@ void MainWindow::on_actionFullScreen_triggered()
 void MainWindow::on_actionStatusbar_toggled(bool isChecked)
 {
     statusBar()->setVisible(isChecked);
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
+    settings->setValue("window-statusbar", isChecked);
 }
 
 void MainWindow::on_actionQuickstartGuide_triggered()
