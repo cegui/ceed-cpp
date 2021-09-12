@@ -331,9 +331,7 @@ void LayoutCreateCommand::generateName()
 void LayoutCreateCommand::undo()
 {
     QUndoCommand::undo();
-
-    const QString fullPath = _parentPath.isEmpty() ? _name : _parentPath + '/' + _name;
-    _visualMode.getScene()->deleteWidgetByPath(fullPath);
+    _visualMode.getScene()->deleteWidgetByPath(_fullPath);
     _visualMode.getScene()->updatePropertySet();
 }
 
@@ -419,6 +417,10 @@ void LayoutCreateCommand::redo()
     manipulator->setSelected(true);
 
     _visualMode.getHierarchyDockWidget()->refresh();
+
+    // Stored for undo(), because we can't be sure it is equal to _parentPath + '/' + _name.
+    // E.g. TabControl adds its children into an auto content pane.
+    _fullPath = manipulator->getWidgetPath();
 
     QUndoCommand::redo();
 }

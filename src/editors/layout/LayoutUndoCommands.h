@@ -109,6 +109,7 @@ protected:
     void generateName();
 
     LayoutVisualMode& _visualMode;
+    QString _fullPath; // Filled after widget creation. Sometimes it is not equal to _parentPath + _name!
     QString _parentPath;
     QString _type;
     QString _name;
