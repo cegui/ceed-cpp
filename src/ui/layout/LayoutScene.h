@@ -44,9 +44,6 @@ public:
     void alignSelectionVertically(CEGUI::VerticalAlignment alignment);
     void moveSelectedWidgetsInParentWidgetLists(int delta);
 
-    void ignoreSelectionChanges(bool ignore) { _ignoreSelectionChanges = ignore; }
-    void batchSelection(bool active) { _batchSelection = active; }
-
     void onManipulatorRemoved(LayoutManipulator* manipulator);
     void onManipulatorUpdatedFromWidget(LayoutManipulator* manipulator);
     void anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool moveOpposite);
@@ -58,6 +55,9 @@ public:
 
     LayoutManipulator* getManipulatorFromItem(QGraphicsItem* item) const;
     void collectSelectedWidgets(std::set<LayoutManipulator*>& selectedWidgets);
+    void selectWidgetsByPaths(const std::set<QString>& paths);
+    void selectAllWidgets();
+    void ignoreSelectionChanges(bool ignore) { _ignoreSelectionChanges = ignore; }
 
     bool isAnchorItem(QGraphicsItem* item) const;
     QGraphicsItem* getCurrentAnchorItem() const;

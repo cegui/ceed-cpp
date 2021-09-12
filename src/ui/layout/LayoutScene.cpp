@@ -576,6 +576,29 @@ void LayoutScene::collectSelectedWidgets(std::set<LayoutManipulator*>& selectedW
     }
 }
 
+void LayoutScene::selectWidgetsByPaths(const std::set<QString>& paths)
+{
+    if (paths.empty()) return;
+
+    _batchSelection = true;
+    for (const QString& path : paths)
+        if (auto manipulator = getManipulatorByPath(path))
+            manipulator->setSelected(true);
+    _batchSelection = false;
+    emit selectionChanged();
+}
+
+void LayoutScene::selectAllWidgets()
+{
+    _batchSelection = true;
+    clearSelection();
+    for (auto item : items())
+        if (dynamic_cast<LayoutManipulator*>(item))
+            item->setSelected(true);
+    _batchSelection = false;
+    emit selectionChanged();
+}
+
 static void ensureParentIsExpanded(QTreeView* view, QStandardItem* treeItem)
 {
     view->expand(treeItem->index());
@@ -1319,13 +1342,7 @@ void LayoutScene::keyReleaseEvent(QKeyEvent* event)
     else if (event->matches(QKeySequence::SelectAll))
     {
         // UX: select only siblings of already selected, if any?
-        batchSelection(true);
-        clearSelection();
-        for (auto item : items())
-            if (dynamic_cast<LayoutManipulator*>(item))
-                item->setSelected(true);
-        batchSelection(false);
-        emit selectionChanged();
+        selectAllWidgets();
         handled = true;
     }
 

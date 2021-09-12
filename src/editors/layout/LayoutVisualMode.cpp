@@ -9,18 +9,14 @@
 #include "src/ui/layout/CreateWidgetDockWidget.h"
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
 #include "src/util/Settings.h"
-#include "src/util/SettingsCategory.h"
 #include "src/util/SettingsEntry.h"
 #include "src/util/Utils.h"
 #include "src/Application.h"
 #include <CEGUI/WindowManager.h>
-#include "qboxlayout.h"
-#include "qtoolbar.h"
-#include "qmenu.h"
-#include "qmimedata.h"
+#include <qboxlayout.h>
+#include <qtoolbar.h>
+#include <qmimedata.h>
 #include <qdatetime.h>
-#include <qstandardpaths.h>
-#include <qfileinfo.h>
 #include <qdir.h>
 #include <qdesktopservices.h>
 #include <qurl.h>
@@ -40,7 +36,9 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     layout->setContentsMargins(0, 0, 0, 0);
     setLayout(layout);
 
-    auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
+    Application* app = qobject_cast<Application*>(qApp);
+
+    auto&& settings = app->getSettings();
     const bool continuousRendering = settings->getEntryValue("layout/visual/continuous_rendering").toBool();
 
     scene->ensureDefaultFontExists();
@@ -49,8 +47,6 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     layout->addWidget(ceguiWidget);
     ceguiWidget->setScene(scene);
     ceguiWidget->setViewFeatures(true, true, continuousRendering);
-
-    Application* app = qobject_cast<Application*>(qApp);
 
     actionAbsoluteMode = app->getAction("layout/absolute_mode");
     actionAbsoluteIntegerMode = app->getAction("layout/abs_integers_mode");
@@ -91,8 +87,7 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
 
 LayoutVisualMode::~LayoutVisualMode()
 {
-    auto oldRoot = getRootWidget();
-    if (oldRoot)
+    if (auto oldRoot = getRootWidget())
         CEGUI::WindowManager::getSingleton().destroyWindow(oldRoot);
 
     delete hierarchyDockWidget;
@@ -153,15 +148,7 @@ void LayoutVisualMode::setRootWidgetManipulator(LayoutManipulator* manipulator)
     if (oldRoot) CEGUI::WindowManager::getSingleton().destroyWindow(oldRoot);
 
     // Restore selection
-    if (!selectedPaths.empty())
-    {
-        scene->batchSelection(true);
-        for (const QString& path : selectedPaths)
-            if (auto manipulator = scene->getManipulatorByPath(path))
-                manipulator->setSelected(true);
-        scene->batchSelection(false);
-        emit scene->selectionChanged();
-    }
+    scene->selectWidgetsByPaths(selectedPaths);
 }
 
 CEGUI::Window* LayoutVisualMode::getRootWidget() const
