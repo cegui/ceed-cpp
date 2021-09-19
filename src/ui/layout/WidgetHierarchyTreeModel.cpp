@@ -5,8 +5,9 @@
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutUndoCommands.h"
 #include "src/cegui/CEGUIUtils.h"
-#include <qmimedata.h>
 #include <CEGUI/Window.h>
+#include <qmimedata.h>
+#include <qmessagebox.h>
 
 WidgetHierarchyTreeModel::WidgetHierarchyTreeModel(LayoutVisualMode& visualMode)
     : _visualMode(visualMode)
@@ -79,7 +80,9 @@ bool WidgetHierarchyTreeModel::dropMimeData(const QMimeData* mimeData, Qt::DropA
         else if (action == Qt::CopyAction)
         {
             // FIXME: TODO, may need another sorting / fixing than MoveAction (LayoutMoveInHierarchyCommand)
-            assert(false && "NOT IMPLEMENTED!!!");
+            QMessageBox::warning(&_visualMode,
+                                 "Not implemented!",
+                                 "Sorry but copying widgets through the tree is not supported yet");
             return false;
         }
     }

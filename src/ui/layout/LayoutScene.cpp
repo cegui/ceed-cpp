@@ -766,7 +766,8 @@ void LayoutScene::onSelectionChanged()
     // Only one selected anchor item at a time is allowed
     QGraphicsItem* selectedAnchorItem = getCurrentAnchorItem();
 
-    // Update anchors state
+    // Update anchor target
+    // NB: some code treats _anchorTarget as a single selected item for convenience
 
     if (selectedWidgets.size() > 1)
     {
@@ -792,6 +793,8 @@ void LayoutScene::onSelectionChanged()
         // Show anchors for the only selected widget
         _anchorTarget = *selectedWidgets.begin();
     }
+
+    // Update anchors state
 
     if (_anchorTextX) _anchorTextX->setVisible(false);
     if (_anchorTextY) _anchorTextY->setVisible(false);
@@ -1377,14 +1380,29 @@ void LayoutScene::dragMoveEvent(QGraphicsSceneDragDropEvent* event)
 
 void LayoutScene::dropEvent(QGraphicsSceneDragDropEvent* event)
 {
-    // If the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
-    // the graphics items (manipulators in fact) have that implemented already
     if (_rootManipulator)
+    {
+        // Sometimes (e.g. for filling layout containers) it is very handy to drop items into
+        // the current item's parent. We allow this by holding Shift on drop.
+        // Qt 5.15.2: Shift is chosen because Ctrl randomly interferes with drag starting for unknown reason.
+        const bool dropAsSibling = (QApplication::keyboardModifiers() & Qt::ShiftModifier);
+        if (dropAsSibling && _anchorTarget)
+        {
+            if (auto manip = dynamic_cast<LayoutManipulator*>(_anchorTarget->parentItem()))
+            {
+                manip->dropEvent(event);
+                return;
+            }
+        }
+
+        // QGraphicsScene machinery will take care of drag n drop the graphics items
+        // (manipulators in fact) have that implemented already
         CEGUIGraphicsScene::dropEvent(event);
+    }
     else
     {
         // Dropping to an empty scene. Dropped widget becomes a root.
-        auto data = event->mimeData()->data("application/x-ceed-widget-type");
+        const auto data = event->mimeData()->data("application/x-ceed-widget-type");
         if (data.size() > 0)
         {
             _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, "", data.data(), event->scenePos()));

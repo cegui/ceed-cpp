@@ -282,7 +282,8 @@ QRectF CEGUIManipulator::getParentSceneRect() const
 
     if (_widget->getParent())
     {
-        const CEGUI::Rectf& parentRect = _widget->getParent()->getUnclippedInnerRect().get();
+        //const CEGUI::Rectf& parentRect = _widget->getParent()->getUnclippedInnerRect().get();
+        const CEGUI::Rectf& parentRect = _widget->getParent()->getChildContentArea(_widget->isNonClient()).get();
         return QRectF(static_cast<qreal>(parentRect.left()),
                       static_cast<qreal>(parentRect.top()),
                       static_cast<qreal>(parentRect.getWidth()),

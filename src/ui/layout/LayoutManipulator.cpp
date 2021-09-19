@@ -669,7 +669,7 @@ void LayoutManipulator::impl_paint(QPainter* painter, const QStyleOptionGraphics
                           static_cast<qreal>(childRect.d_min.y),
                           static_cast<qreal>(childRect.getWidth()),
                           static_cast<qreal>(childRect.getHeight()));
-         qChildRect.translate(-scenePos());
+        qChildRect.translate(-scenePos());
 
         painter->save();
         painter->setBrushOrigin(qChildRect.topLeft());
