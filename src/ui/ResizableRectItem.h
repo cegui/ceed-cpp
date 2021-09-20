@@ -29,7 +29,7 @@ public:
     QRectF getResizeStartRect() const { return _resizeStartRect; }
 
     void beginResizing(const QGraphicsItem& handle);
-    void performResizing(qreal& deltaLeft, qreal& deltaTop, qreal& deltaRight, qreal& deltaBottom);
+    QPointF performResizing(qreal deltaLeft, qreal deltaTop, qreal deltaRight, qreal deltaBottom);
     void endResizing();
     void beginMoving();
     void performMoving(QPointF& delta, bool external);

@@ -45,7 +45,7 @@ void ResizingHandle::onScaleChanged(qreal scaleX, qreal scaleY)
 // Adjusts the parent rectangle and returns a position to use for this handle (with restrictions accounted for)
 QPointF ResizingHandle::performResizing(QPointF value)
 {
-    auto delta = value - pos();
+    const auto delta = value - pos();
 
     qreal left = 0.0;
     qreal top = 0.0;
@@ -66,9 +66,9 @@ QPointF ResizingHandle::performResizing(QPointF value)
     }
 
     // Modifies left, right, top & bottom inside, results are actual changes
-    static_cast<ResizableRectItem*>(parentItem())->performResizing(left, top, right, bottom);
+    const QPointF offset = static_cast<ResizableRectItem*>(parentItem())->performResizing(left, top, right, bottom);
 
-    return QPointF(left + right + pos().x(), top + bottom + pos().y());
+    return pos() + offset;
 }
 
 void ResizingHandle::showHandle(bool show)
@@ -104,7 +104,8 @@ QVariant ResizingHandle::itemChange(GraphicsItemChange change, const QVariant& v
         // We allow multi-selecting multiple handles but only one handle per resizable is allowed.
 
         // Make sure all siblings of this handle are unselected
-        for (QGraphicsItem* item : parentResizable->childItems())
+        const auto children = parentResizable->childItems();
+        for (QGraphicsItem* item : children)
         {
             ResizingHandle* handle = dynamic_cast<ResizingHandle*>(item);
             if (handle && handle != this) handle->setSelected(false);

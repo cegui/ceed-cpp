@@ -130,8 +130,8 @@ void LayoutManipulator::notifyResizeStarted()
 {
     CEGUIManipulator::notifyResizeStarted();
 
-    LayoutManipulator* parentManipulator = dynamic_cast<LayoutManipulator*>(parentItem());
-    if (parentManipulator) parentManipulator->_drawSnapGrid = true;
+    if (auto parentManipulator = dynamic_cast<LayoutManipulator*>(parentItem()))
+        parentManipulator->_drawSnapGrid = true;
 }
 
 void LayoutManipulator::notifyResizeProgress(QPointF newPos, QSizeF newSize)
@@ -145,8 +145,8 @@ void LayoutManipulator::notifyResizeFinished(QPointF newPos, QSizeF newSize)
 {
     CEGUIManipulator::notifyResizeFinished(newPos, newSize);
 
-    LayoutManipulator* parentManipulator = dynamic_cast<LayoutManipulator*>(parentItem());
-    if (parentManipulator) parentManipulator->_drawSnapGrid = false;
+    if (auto parentManipulator = dynamic_cast<LayoutManipulator*>(parentItem()))
+        parentManipulator->_drawSnapGrid = false;
 }
 
 void LayoutManipulator::notifyMoveStarted()

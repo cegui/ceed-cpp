@@ -1,7 +1,8 @@
 #include "src/ui/ResizableRectItem.h"
 #include "src/ui/ResizingHandle.h"
-#include "qcursor.h"
-#include "qpen.h"
+#include <qcursor.h>
+#include <qpen.h>
+#include <cmath>
 
 ResizableRectItem::ResizableRectItem(QGraphicsItem* parent)
     : QGraphicsRectItem(parent)
@@ -21,7 +22,7 @@ ResizableRectItem::ResizableRectItem(QGraphicsItem* parent)
 
     hideAllHandles();
 
-    setPen(getNormalPen()); // Doesn't work for derived classes so we have to call it there manually
+    setPen(ResizableRectItem::getNormalPen()); // Doesn't work for derived classes so we have to call it there manually
     setCursor(Qt::OpenHandCursor);
 }
 
@@ -29,7 +30,8 @@ ResizableRectItem::ResizableRectItem(QGraphicsItem* parent)
 // NB: At most 1 handle can be selected at a time!
 bool ResizableRectItem::isAnyHandleSelected() const
 {
-    for (QGraphicsItem* item : childItems())
+    const auto children = childItems();
+    for (QGraphicsItem* item : children)
     {
         ResizingHandle* handle = dynamic_cast<ResizingHandle*>(item);
         if (handle && handle->isSelected()) return true;
@@ -41,7 +43,8 @@ bool ResizableRectItem::isAnyHandleSelected() const
 // Deselects all handles of this resizable
 void ResizableRectItem::deselectAllHandles()
 {
-    for (QGraphicsItem* item : childItems())
+    const auto children = childItems();
+    for (QGraphicsItem* item : children)
     {
         ResizingHandle* handle = dynamic_cast<ResizingHandle*>(item);
         if (handle) handle->setSelected(false);
@@ -51,7 +54,8 @@ void ResizableRectItem::deselectAllHandles()
 // Hides all handles. If a handle is given as the 'excluding' parameter, this handle is skipped over when hiding.
 void ResizableRectItem::hideAllHandles(const QGraphicsItem* excluding)
 {
-    for (QGraphicsItem* item : childItems())
+    const auto children = childItems();
+    for (QGraphicsItem* item : children)
     {
         ResizingHandle* handle = dynamic_cast<ResizingHandle*>(item);
         if (handle && handle != excluding)
@@ -62,7 +66,8 @@ void ResizableRectItem::hideAllHandles(const QGraphicsItem* excluding)
 // Makes it possible to disable or enable resizing
 void ResizableRectItem::setResizingEnabled(bool enabled)
 {
-    for (QGraphicsItem* item : childItems())
+    const auto children = childItems();
+    for (QGraphicsItem* item : children)
     {
         ResizingHandle* handle = dynamic_cast<ResizingHandle*>(item);
         if (handle) handle->setVisible(enabled);
@@ -91,24 +96,23 @@ void ResizableRectItem::beginResizing(const QGraphicsItem& handle)
 }
 
 // Adjusts the rectangle and returns actual used deltas (with restrictions accounted for) with in-out arguments
-void ResizableRectItem::performResizing(qreal& deltaLeft, qreal& deltaTop, qreal& deltaRight, qreal& deltaBottom)
+QPointF ResizableRectItem::performResizing(qreal deltaLeft, qreal deltaTop, qreal deltaRight, qreal deltaBottom)
 {
-    auto newRect = rect().adjusted(deltaLeft, deltaTop, deltaRight, deltaBottom);
-    newRect = constrainResizeRect(newRect, rect());
+    const auto desiredRect = rect().adjusted(deltaLeft, deltaTop, deltaRight, deltaBottom);
+    auto newRect = constrainResizeRect(desiredRect, rect());
 
-    // TODO: the rect moves as a whole when it can't be sized any less
-    //       this is probably not the behavior we want!
+    // Round to whole pixels
+    newRect = QRectF(newRect.topLeft().toPoint(), newRect.size());
 
-    deltaLeft = newRect.left() - rect().left();
-    deltaTop = newRect.top() - rect().top();
-    deltaRight = newRect.right() - rect().right();
-    deltaBottom = newRect.bottom() - rect().bottom();
+    const QPointF offset = newRect.topLeft() - rect().topLeft();
 
     setRect(newRect);
 
     QPointF newPos = pos() + rect().topLeft();
     QSizeF newSize(rect().width(), rect().height());
     notifyResizeProgress(newPos, newSize);
+
+    return offset;
 }
 
 void ResizableRectItem::endResizing()
@@ -232,6 +236,25 @@ QRectF ResizableRectItem::constrainResizeRect(QRectF rect, QRectF /*oldRect*/)
     QRectF maxRect(rect.center() - QPointF(0.5 * maxSize.width(), 0.5 * maxSize.height()), maxSize);
     rect = intersectRects(rect, maxRect);
 
+    const auto desiredSizeChange = desiredRect.size() - rect().size();
+    const auto constrainedSizeChange = newRect.size() - rect().size();
+    if (desiredSizeChange != constrainedSizeChange)
+    {
+        if (desiredSizeChange.width() != 0.0 && desiredSizeChange.width() != constrainedSizeChange.width())
+        {
+            const qreal coeff = constrainedSizeChange.width() / desiredSizeChange.width();
+            deltaLeft *= coeff;
+            deltaRight *= coeff;
+        }
+        if (desiredSizeChange.height() != 0.0 && desiredSizeChange.height() != constrainedSizeChange.height())
+        {
+            const qreal coeff = constrainedSizeChange.height() / desiredSizeChange.height();
+            deltaTop *= coeff;
+            deltaBottom *= coeff;
+        }
+        newRect = rect().adjusted(deltaLeft, deltaTop, deltaRight, deltaBottom);
+    }
+
     return rect;
 }
 
@@ -262,7 +285,8 @@ void ResizableRectItem::onScaleChanged(qreal scaleX, qreal scaleY)
     _currentScaleX = scaleX;
     _currentScaleY = scaleY;
 
-    for (QGraphicsItem* item : childItems())
+    const auto children = childItems();
+    for (QGraphicsItem* item : children)
     {
         ResizingHandle* handle = dynamic_cast<ResizingHandle*>(item);
         if (handle)

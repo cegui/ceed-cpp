@@ -229,7 +229,7 @@ QSizeF CEGUIManipulator::getMinSize() const
 {
     if (_widget)
     {
-        auto size = CEGUI::CoordConverter::asAbsolute(_widget->getMinSize(), CEGUI::System::getSingleton().getRenderer()->getDisplaySize());
+        auto size = CEGUI::CoordConverter::asAbsolute(_widget->getMinSize(), _widget->getRootContainerSize(), false);
         return QSizeF(static_cast<qreal>(size.d_width), static_cast<qreal>(size.d_height));
     }
 
@@ -240,7 +240,7 @@ QSizeF CEGUIManipulator::getMaxSize() const
 {
     if (_widget)
     {
-        auto size = CEGUI::CoordConverter::asAbsolute(_widget->getMaxSize(), CEGUI::System::getSingleton().getRenderer()->getDisplaySize());
+        auto size = CEGUI::CoordConverter::asAbsolute(_widget->getMaxSize(), _widget->getRootContainerSize(), false);
         return QSizeF(static_cast<qreal>(size.d_width), static_cast<qreal>(size.d_height));
     }
 
