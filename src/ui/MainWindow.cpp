@@ -961,7 +961,9 @@ EditorBasePtr MainWindow::createEditorForFile(const QString& absolutePath)
 void MainWindow::on_actionOpenFile_triggered()
 {
     QString defaultDir;
-    if (CEGUIManager::Instance().isProjectLoaded())
+    if (currentEditor && !currentEditor->getFilePath().isEmpty())
+        defaultDir = QFileInfo(currentEditor->getFilePath()).dir().path();
+    else if (CEGUIManager::Instance().isProjectLoaded())
         defaultDir = CEGUIManager::Instance().getCurrentProject()->getAbsolutePathOf("");
 
     QString fileName = QFileDialog::getOpenFileName(this,
@@ -1176,6 +1178,8 @@ void MainWindow::on_actionSaveAs_triggered()
 
     QFileDialog dialog(this, "Save as", QFileInfo(currentEditor->getFilePath()).dir().path(), filters.join(";;"));
     dialog.setDefaultSuffix(ext[0]);
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+    dialog.selectFile(currentEditor->getFilePath());
 
     if (dialog.exec())
         currentEditor->saveAs(dialog.selectedFiles()[0]);

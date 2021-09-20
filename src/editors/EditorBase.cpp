@@ -268,6 +268,7 @@ bool EditorBase::saveAs(const QString& targetPath)
 
         QFileDialog dialog(getWidget(), ("New " + getFileTypesDescription().toLower()), defaultDir, filters.join(";;"));
         dialog.setDefaultSuffix(ext[0]);
+        dialog.setAcceptMode(QFileDialog::AcceptSave);
 
         if (dialog.exec())
             actualPath = dialog.selectedFiles()[0];
