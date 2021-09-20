@@ -65,8 +65,23 @@ QPointF ResizingHandle::performResizing(QPointF value)
         case Type::TopRight: top = delta.y(); right = delta.x(); break;
     }
 
-    // Modifies left, right, top & bottom inside, results are actual changes
-    const QPointF offset = static_cast<ResizableRectItem*>(parentItem())->performResizing(left, top, right, bottom);
+    auto host = static_cast<ResizableRectItem*>(parentItem());
+    const auto oldRect = host->rect();
+
+    host->performResizing(left, top, right, bottom);
+
+    QPointF offset;
+    switch (_type)
+    {
+        case Type::Top: offset.setY(host->rect().top() - oldRect.top()); break;
+        case Type::Bottom: offset.setY(host->rect().bottom() - oldRect.bottom()); break;
+        case Type::Left: offset.setX(host->rect().left() - oldRect.left()); break;
+        case Type::Right: offset.setX(host->rect().right() - oldRect.right()); break;
+        case Type::TopLeft: offset = host->rect().topLeft() - oldRect.topLeft(); break;
+        case Type::BottomRight: offset = host->rect().bottomRight() - oldRect.bottomRight(); break;
+        case Type::BottomLeft: offset = host->rect().bottomLeft() - oldRect.bottomLeft(); break;
+        case Type::TopRight: offset = host->rect().topRight() - oldRect.topRight(); break;
+    }
 
     return pos() + offset;
 }

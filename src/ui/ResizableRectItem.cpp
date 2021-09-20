@@ -101,16 +101,10 @@ QPointF ResizableRectItem::performResizing(qreal deltaLeft, qreal deltaTop, qrea
     const auto desiredRect = rect().adjusted(deltaLeft, deltaTop, deltaRight, deltaBottom);
     auto newRect = constrainResizeRect(desiredRect, rect());
 
-    // Round to whole pixels
-    newRect = QRectF(newRect.topLeft().toPoint(), newRect.size());
-
     const QPointF offset = newRect.topLeft() - rect().topLeft();
 
     setRect(newRect);
-
-    QPointF newPos = pos() + rect().topLeft();
-    QSizeF newSize(rect().width(), rect().height());
-    notifyResizeProgress(newPos, newSize);
+    notifyResizeProgress(pos() + rect().topLeft(), rect().size());
 
     return offset;
 }
@@ -224,22 +218,37 @@ QRectF intersectRects(const QRectF& a, const QRectF& b)
     return QRectF(left, top, qMin(r1, r2) - left, qMin(b1, b2) - top);
 }
 
-QRectF ResizableRectItem::constrainResizeRect(QRectF rect, QRectF /*oldRect*/)
+QRectF ResizableRectItem::constrainResizeRect(QRectF rect, QRectF oldRect)
 {
-    const auto minSize = getMinSize();
-    QRectF minRect(rect.center() - QPointF(0.5 * minSize.width(), 0.5 * minSize.height()), minSize);
-    rect = rect.united(minRect);
+    qreal w = rect.width();
+    qreal h = rect.height();
 
-    auto maxSize = getMaxSize();
-    if (maxSize.width() <= 0.0) maxSize.setWidth(rect.width());
-    if (maxSize.height() <= 0.0) maxSize.setHeight(rect.height());
-    QRectF maxRect(rect.center() - QPointF(0.5 * maxSize.width(), 0.5 * maxSize.height()), maxSize);
-    rect = intersectRects(rect, maxRect);
+    auto minSize = getMinSize();
+    const auto maxSize = getMaxSize();
+    if (maxSize.width() > 0.0 && minSize.width() > maxSize.width())
+        minSize.setWidth(maxSize.width());
+    if (maxSize.height() > 0.0 && minSize.height() > maxSize.height())
+        minSize.setHeight(maxSize.height());
 
-    const auto desiredSizeChange = desiredRect.size() - rect().size();
-    const auto constrainedSizeChange = newRect.size() - rect().size();
+    if (w < minSize.width())
+        w = minSize.width();
+    else if (maxSize.width() > 0.0 && w > maxSize.width())
+        w = maxSize.width();
+
+    if (h < minSize.height())
+        h = minSize.height();
+    else if (maxSize.height() > 0.0 && h > maxSize.height())
+        h = maxSize.height();
+
+    // If limited, subtract from each change proportionally to aviod unintended movement
+    const auto desiredSizeChange = rect.size() - oldRect.size();
+    const auto constrainedSizeChange = QSizeF(w, h) - oldRect.size();
     if (desiredSizeChange != constrainedSizeChange)
     {
+        qreal deltaLeft = rect.left() - oldRect.left();
+        qreal deltaRight = rect.right() - oldRect.right();
+        qreal deltaTop = rect.top() - oldRect.top();
+        qreal deltaBottom = rect.bottom() - oldRect.bottom();
         if (desiredSizeChange.width() != 0.0 && desiredSizeChange.width() != constrainedSizeChange.width())
         {
             const qreal coeff = constrainedSizeChange.width() / desiredSizeChange.width();
@@ -252,7 +261,7 @@ QRectF ResizableRectItem::constrainResizeRect(QRectF rect, QRectF /*oldRect*/)
             deltaTop *= coeff;
             deltaBottom *= coeff;
         }
-        newRect = rect().adjusted(deltaLeft, deltaTop, deltaRight, deltaBottom);
+        rect = oldRect.adjusted(deltaLeft, deltaTop, deltaRight, deltaBottom);
     }
 
     return rect;
