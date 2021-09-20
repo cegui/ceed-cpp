@@ -246,9 +246,6 @@ void setWidgetProperty(CEGUI::Window* widget, const CEGUI::String& name, const C
 {
     if (!widget) return;
 
-    auto prop = widget->getPropertyInstance(name);
-    if (!prop) return;
-
     // Some properties require CEGUI OpenGL context to be active when being changed
     const bool oglContextDependent =
             // Imagery cache texture size may need to be changed
@@ -265,19 +262,6 @@ void setWidgetProperty(CEGUI::Window* widget, const CEGUI::String& name, const C
             (name == "AutoRenderingSurface") ||
             (name == "AutoRenderingSurfaceStencilEnabled");
     if (oglContextDependent) CEGUIManager::Instance().makeOpenGLContextCurrent();
-
-    const auto& type = prop->getDataType();
-    if (type == "float" || type == "double")
-    {
-        CEGUI::String fixedValue = value;
-        for (auto& chr : fixedValue)
-            if (chr == '.') chr = ',';
-        prop->set(widget, fixedValue);
-    }
-    else
-    {
-        prop->set(widget, value);
-    }
 
     widget->setProperty(name, value);
 
