@@ -180,10 +180,11 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
 
     auto currFlags = flags();
     currFlags |= (ItemIsFocusable | ItemIsSelectable | ItemIsMovable);
-    currFlags &= ~ItemHasNoContents;
+    currFlags &= ~(ItemHasNoContents | ItemStacksBehindParent);
 
     _showOutline = true;
     _resizeable = true;
+    bool hoverable = true;
     if (_widget->isAutoWindow())
     {
         auto&& settings = qobject_cast<Application*>(qApp)->getSettings();
@@ -195,11 +196,14 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
         if (!settings->getEntryValue("layout/visual/auto_widgets_selectable").toBool())
         {
             // Make this widget non-interactive
-            currFlags |= ItemHasNoContents;
+            currFlags |= (ItemHasNoContents | ItemStacksBehindParent);
             currFlags &= ~(ItemIsFocusable | ItemIsSelectable | ItemIsMovable);
             _resizeable = false;
+            hoverable = false;
         }
     }
+
+    setAcceptHoverEvents(hoverable);
 
     const bool isInTabCtl = isInTabControl();
 

@@ -95,18 +95,11 @@ void ResizableRectItem::beginResizing(const QGraphicsItem& handle)
     notifyResizeStarted();
 }
 
-// Adjusts the rectangle and returns actual used deltas (with restrictions accounted for) with in-out arguments
-QPointF ResizableRectItem::performResizing(qreal deltaLeft, qreal deltaTop, qreal deltaRight, qreal deltaBottom)
+void ResizableRectItem::performResizing(qreal deltaLeft, qreal deltaTop, qreal deltaRight, qreal deltaBottom)
 {
     const auto desiredRect = rect().adjusted(deltaLeft, deltaTop, deltaRight, deltaBottom);
-    auto newRect = constrainResizeRect(desiredRect, rect());
-
-    const QPointF offset = newRect.topLeft() - rect().topLeft();
-
-    setRect(newRect);
+    setRect(constrainResizeRect(desiredRect, rect()));
     notifyResizeProgress(pos() + rect().topLeft(), rect().size());
-
-    return offset;
 }
 
 void ResizableRectItem::endResizing()
@@ -173,49 +166,6 @@ void ResizableRectItem::endMoving()
     _ignoreGeometryChanges = false;
 
     notifyMoveFinished(newPos);
-}
-
-// Qt5 returns an empty rect as intersection with a degenerated rect.
-// We want to handle degenerated rects too.
-QRectF intersectRects(const QRectF& a, const QRectF& b)
-{
-    qreal l1 = a.x();
-    qreal r1 = a.x();
-    if (a.width() < 0.0)
-        l1 += a.width();
-    else
-        r1 += a.width();
-
-    qreal l2 = b.x();
-    qreal r2 = b.x();
-    if (b.width() < 0.0)
-        l2 += b.width();
-    else
-        r2 += b.width();
-
-    if (l1 >= r2 || l2 >= r1)
-        return QRectF();
-
-    qreal t1 = a.y();
-    qreal b1 = a.y();
-    if (a.height() < 0.0)
-        t1 += a.height();
-    else
-        b1 += a.height();
-
-    qreal t2 = b.y();
-    qreal b2 = b.y();
-    if (b.height() < 0.0)
-        t2 += b.height();
-    else
-        b2 += b.height();
-
-    if (t1 >= b2 || t2 >= b1)
-        return QRectF();
-
-    const auto left = qMax(l1, l2);
-    const auto top = qMax(t1, t2);
-    return QRectF(left, top, qMin(r1, r2) - left, qMin(b1, b2) - top);
 }
 
 QRectF ResizableRectItem::constrainResizeRect(QRectF rect, QRectF oldRect)
