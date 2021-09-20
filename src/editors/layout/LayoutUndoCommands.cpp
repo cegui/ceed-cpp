@@ -522,6 +522,7 @@ void LayoutPropertyEditCommand::setProperty(const QString& widgetPath, const CEG
 
 // Some properties are related to others so that when one changes, the others change too.
 // The following ensures that notifications are sent about the related properties as well.
+// TODO: move to CEGUIUtils and use in CEGUIUtils::setWidgetProperty?
 void LayoutPropertyEditCommand::fillInfluencedPropertyList(QStringList& list)
 {
     list.append(CEGUIUtils::stringToQString(_propertyName));
