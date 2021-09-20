@@ -24,6 +24,7 @@ CEGUIProject::CEGUIProject()
 
     // NB: we must not delete it, Qt does this for us
     setItemPrototype(new CEGUIProjectItem(this));
+    changed = false; // HACK, see CEGUIProjectItem constructor
 }
 
 CEGUIProject::~CEGUIProject()

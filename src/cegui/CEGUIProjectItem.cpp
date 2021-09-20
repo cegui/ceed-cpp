@@ -21,7 +21,7 @@ CEGUIProjectItem::CEGUIProjectItem(CEGUIProject* project)
     : _project(project)
 {
     setType(Type::Unknown);
-    project->setModified();
+    project->setModified(); // FIXME: bad place, requires hack in CEGUIProject constructor
 }
 
 CEGUIProjectItem::~CEGUIProjectItem()
