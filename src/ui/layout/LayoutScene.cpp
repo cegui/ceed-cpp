@@ -32,6 +32,9 @@
 #include <QtnProperty/PropertyView.h>
 #include <QtnProperty/MultiProperty.h>
 
+//!!!DBG TMP!
+#include <qdebug.h>
+
 LayoutScene::LayoutScene(LayoutVisualMode& visualMode)
     : CEGUIGraphicsScene(&visualMode)
     , _visualMode(visualMode)
@@ -701,6 +704,37 @@ void LayoutScene::onManipulatorUpdatedFromWidget(LayoutManipulator* manipulator)
     }
 }
 
+void LayoutScene::onManipulatorDragEnter(LayoutManipulator* manipulator)
+{
+    _dragDropTarget =  manipulator;
+    updateStatusMessage();
+}
+
+void LayoutScene::onManipulatorDragLeave(LayoutManipulator* manipulator)
+{
+    if (_dragDropTarget == manipulator)
+    {
+        _dragDropTarget = nullptr;
+        updateStatusMessage();
+    }
+}
+
+void LayoutScene::updateStatusMessage()
+{
+    if (_dragDropTarget)
+    {
+        QString helpMsg = "Drop to insert into " + _dragDropTarget->getWidgetPath();
+        const bool dropAsSibling = (QApplication::keyboardModifiers() & Qt::ShiftModifier);
+        if (!dropAsSibling && _anchorTarget && dynamic_cast<LayoutManipulator*>(_anchorTarget->parentItem()))
+            helpMsg += ", hold Shift to drop as a sibling of " + _anchorTarget->getWidgetPath();
+        qobject_cast<Application*>(qApp)->getMainWindow()->setStatusMessage(helpMsg);
+    }
+    else
+    {
+        qobject_cast<Application*>(qApp)->getMainWindow()->setStatusMessage("");
+    }
+}
+
 LayoutManipulator* LayoutScene::getManipulatorFromItem(QGraphicsItem* item) const
 {
     if (auto manipulator = dynamic_cast<LayoutManipulator*>(item))
@@ -1344,6 +1378,9 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
 
 void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
 {
+    //!!!DBG!
+    qDebug() << "LayoutScene::dragEnterEvent";
+
     // If the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
     // the graphics items (manipulators in fact) have that implemented already
     if (_rootManipulator)
@@ -1353,15 +1390,22 @@ void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
         // Otherwise we should accept a new root widget to the empty layout if it's a new widget
         if (event->mimeData()->hasFormat("application/x-ceed-widget-type"))
             event->acceptProposedAction();
+
+        qobject_cast<Application*>(qApp)->getMainWindow()->setStatusMessage("Drop to insert as a root");
     }
 }
 
 void LayoutScene::dragLeaveEvent(QGraphicsSceneDragDropEvent* event)
 {
+    //!!!DBG!
+    qDebug() << "LayoutScene::dragLeaveEvent";
+
+    onManipulatorDragLeave(_dragDropTarget);
+
     // If the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
     // the graphics items (manipulators in fact) have that implemented already
     if (_rootManipulator)
-        CEGUIGraphicsScene::dragEnterEvent(event);
+        CEGUIGraphicsScene::dragLeaveEvent(event);
 }
 
 void LayoutScene::dragMoveEvent(QGraphicsSceneDragDropEvent* event)
@@ -1380,6 +1424,8 @@ void LayoutScene::dragMoveEvent(QGraphicsSceneDragDropEvent* event)
 
 void LayoutScene::dropEvent(QGraphicsSceneDragDropEvent* event)
 {
+    onManipulatorDragLeave(_dragDropTarget);
+
     if (_rootManipulator)
     {
         // Sometimes (e.g. for filling layout containers) it is very handy to drop items into
@@ -1419,6 +1465,11 @@ void LayoutScene::keyPressEvent(QKeyEvent* event)
 {
     switch (event->key())
     {
+        case Qt::Key_Shift:
+        {
+            if (_dragDropTarget) updateStatusMessage();
+            break;
+        }
         case Qt::Key_Left:
         case Qt::Key_Right:
         case Qt::Key_Up:
@@ -1495,7 +1546,11 @@ void LayoutScene::keyReleaseEvent(QKeyEvent* event)
 {
     bool handled = false;
 
-    if (event->key() == Qt::Key_Delete)
+    if (event->key() == Qt::Key_Shift)
+    {
+        if (_dragDropTarget) updateStatusMessage();
+    }
+    else if (event->key() == Qt::Key_Delete)
     {
         handled = deleteSelectedWidgets();
     }

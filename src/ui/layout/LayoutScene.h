@@ -46,6 +46,8 @@ public:
 
     void onManipulatorRemoved(LayoutManipulator* manipulator);
     void onManipulatorUpdatedFromWidget(LayoutManipulator* manipulator);
+    void onManipulatorDragEnter(LayoutManipulator* manipulator);
+    void onManipulatorDragLeave(LayoutManipulator* manipulator);
     void anchorHandleMoved(QGraphicsItem* item, QPointF& newPos, bool moveOpposite);
     void anchorHandleSelected(QGraphicsItem* item);
 
@@ -86,6 +88,8 @@ protected:
 
     void setupActionsForTabControl();
 
+    void updateStatusMessage();
+
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragMoveEvent(QGraphicsSceneDragDropEvent* event) override;
@@ -107,6 +111,7 @@ protected:
     std::map<QString, std::vector<std::pair<QAction*, std::function<bool()>>>> _widgetActions; // Widget type -> {action + condition}
     QPoint _contextMenuPos;
     LayoutManipulator* _contextMenuWidget = nullptr;
+    LayoutManipulator* _dragDropTarget = nullptr;
 
     QPointF _lastCursorPos;
 

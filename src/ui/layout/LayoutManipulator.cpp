@@ -18,6 +18,9 @@
 #include <qdrag.h>
 #include <qtimer.h>
 
+//!!!DBG TMP!
+#include <qdebug.h>
+
 void LayoutManipulator::removeNestedManipulators(std::set<LayoutManipulator*>& manipulators)
 {
     for (auto it = manipulators.begin(); it != manipulators.end(); /**/)
@@ -357,21 +360,31 @@ void LayoutManipulator::deselectAllHandles()
 
 void LayoutManipulator::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
 {
+    //!!!DBG!
+    qDebug() << "LayoutManipulator::dragEnterEvent " << getWidgetPath();
+
     if (event->mimeData()->hasFormat("application/x-ceed-widget-type") ||
         event->mimeData()->hasFormat("application/x-ceed-widget-paths"))
     {
         event->acceptProposedAction();
         setPen(QPen(QColor(255, 255, 0)));
+        _visualMode.getScene()->onManipulatorDragEnter(this);
     }
     else
     {
         event->ignore();
+        _visualMode.getScene()->onManipulatorDragEnter(nullptr);
     }
 }
 
-void LayoutManipulator::dragLeaveEvent(QGraphicsSceneDragDropEvent* /*event*/)
+void LayoutManipulator::dragLeaveEvent(QGraphicsSceneDragDropEvent* event)
 {
+    //!!!DBG!
+    qDebug() << "LayoutManipulator::dragLeaveEvent " << getWidgetPath();
+
+    _visualMode.getScene()->onManipulatorDragLeave(this);
     resetPen();
+    CEGUIManipulator::dragLeaveEvent(event);
 }
 
 void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
@@ -413,7 +426,7 @@ void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
             std::map<CEGUI::Window*, CEGUI::UVector2> newPositions;
             const auto dropOffset = event->scenePos() - scenePos();
 
-            for (const QString& widgetPath : widgetPaths)
+            for (const QString& widgetPath : qAsConst(widgetPaths))
             {
                 auto manipulator = _visualMode.getScene()->getManipulatorByPath(widgetPath);
                 if (!manipulator) continue;

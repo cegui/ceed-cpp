@@ -17,6 +17,7 @@ class SettingsDialog;
 class RecentlyUsedMenuEntry;
 class CEGUIProject;
 class QtnPropertyBase;
+class QLabel;
 typedef std::unique_ptr<class EditorBase> EditorBasePtr;
 typedef std::unique_ptr<class EditorFactoryBase> EditorFactoryBasePtr;
 
@@ -35,6 +36,7 @@ public:
     void setEditorMenuEnabled(bool enabled);
     QToolBar* createToolbar(const QString& name);
     QToolBar* getToolbar(const QString& name) const;
+    void setStatusMessage(const QString& msg);
 
     void openMostRecentProject();
     void loadProject(const QString& path);
@@ -149,6 +151,7 @@ private:
     RecentlyUsedMenuEntry* recentlyUsedProjects = nullptr;
     QMenu* docsToolbarsMenu = nullptr;
     QAction* tabsMenuSeparator = nullptr;
+    QLabel* _statusBarLabel = nullptr;
 
     bool wasMaximizedBeforeFullscreen = false;
     bool displayingReloadAlert = false;

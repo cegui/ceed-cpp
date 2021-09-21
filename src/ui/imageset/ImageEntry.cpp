@@ -314,7 +314,7 @@ void ImageEntry::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
     if (settings->getEntryValue("imageset/visual/overlay_image_labels").toBool())
         label->setVisible(true);
 
-    app->getMainWindow()->statusBar()->showMessage(QString("Image: '%1'\t\tXPos: %2, YPos: %3, Width: %4, Height: %5")
+    app->getMainWindow()->setStatusMessage(QString("Image: '%1'\t\tXPos: %2, YPos: %3, Width: %4, Height: %5")
                                                    .arg(name()).arg(pos().x()).arg(pos().y()).arg(rect().width()).arg(rect().height()));
 
     _isHovered = true;
@@ -324,7 +324,7 @@ void ImageEntry::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
 {
     _isHovered = false;
 
-    qobject_cast<Application*>(qApp)->getMainWindow()->statusBar()->clearMessage();
+    qobject_cast<Application*>(qApp)->getMainWindow()->setStatusMessage("");
 
     if (!isSelected()) label->setVisible(false);
 

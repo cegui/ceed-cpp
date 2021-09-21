@@ -59,6 +59,7 @@ public:
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dropEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void mouseMoveEvent(QGraphicsSceneMouseEvent* event) override;
+    using CEGUIManipulator::dragMoveEvent; // to make it public
 
 protected:
 

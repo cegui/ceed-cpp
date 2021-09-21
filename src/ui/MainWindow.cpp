@@ -35,6 +35,7 @@
 #include "src/ui/UndoViewer.h"
 #include "QtnProperty/PropertyWidget.h"
 #include <qclipboard.h>
+#include <qlabel.h>
 
 // TODO: here for now, move to more appropriate place once it is created
 #include "QtnProperty/PropertyView.h"
@@ -45,6 +46,9 @@
 // FIXME: read-only QLineEdit passes by Backspace and Delete, so shortcuts work when they must not
 // https://bugreports.qt.io/browse/QTBUG-89138
 #include <qlineedit.h>
+
+//!!!DBG TMP!
+#include <qdebug.h>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -184,6 +188,9 @@ MainWindow::MainWindow(QWidget *parent) :
     statusBar()->setVisible(statusBarVisible);
     ui->actionStatusbar->setChecked(statusBarVisible);
 
+    _statusBarLabel = new QLabel(statusBar());
+    statusBar()->addWidget(_statusBarLabel);
+
     if (settings->contains("window-geometry"))
         restoreGeometry(settings->value("window-geometry").toByteArray());
     if (settings->contains("window-state"))
@@ -209,6 +216,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* ev)
             return true;
         }
     }
+
     return QMainWindow::eventFilter(obj, ev);
 }
 
@@ -292,6 +300,29 @@ QToolBar* MainWindow::createToolbar(const QString& name)
 QToolBar* MainWindow::getToolbar(const QString& name) const
 {
     return findChild<QToolBar*>(name + " toolbar");
+}
+
+void MainWindow::setStatusMessage(const QString& msg)
+{
+    //!!!DBG TMP!
+    qDebug() << "setStatusMessage: " << msg;
+
+    //!!!DBG TMP!
+    if (msg.isEmpty())
+    {
+        //return;
+    }
+
+    // FIXME Qt 5.15.2: QStatusBar::showMessage is bugged, shows previous message instead of current
+    _statusBarLabel->setText(msg);
+    /*
+    if (msg.isEmpty())
+        statusBar()->clearMessage();
+    else
+    {
+        statusBar()->showMessage(msg);
+    }
+    */
 }
 
 QAction* MainWindow::getActionCut() const
@@ -672,7 +703,7 @@ void MainWindow::on_tabs_currentChanged(int index)
         undoViewer->setUndoStack(nullptr);
     }
 
-    statusBar()->clearMessage();
+    setStatusMessage("");
 
     currentEditor = newEditor;
 
