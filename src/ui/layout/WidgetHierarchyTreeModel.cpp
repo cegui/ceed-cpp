@@ -114,6 +114,8 @@ void WidgetHierarchyTreeModel::setRootManipulator(LayoutManipulator* rootManipul
         clear();
         if (rootManipulator) appendRow(constructSubtree(rootManipulator));
     }
+
+    sort(0);
 }
 
 // Attempts to synchronise subtree with given widget manipulator, returns false if impossible.
@@ -149,10 +151,8 @@ bool WidgetHierarchyTreeModel::synchroniseSubtree(WidgetHierarchyItem* item, Lay
         }
 
         for (LayoutManipulator* childManipulator : manipulatorsToRecreate)
-        {
             if (!childManipulator->shouldBeSkipped())
                 item->appendRow(constructSubtree(childManipulator));
-        }
     }
 
     item->refreshOrderingData(true, true);

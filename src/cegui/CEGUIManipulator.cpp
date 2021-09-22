@@ -9,8 +9,8 @@
 #include "src/ui/CEGUIGraphicsScene.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
-#include "qgraphicsscene.h"
-#include "qpainter.h"
+#include <qgraphicsscene.h>
+#include <qpainter.h>
 #include <qmessagebox.h>
 #include <CEGUI/widgets/TabControl.h>
 #include <CEGUI/widgets/ScrollablePane.h>
