@@ -8,6 +8,7 @@
 #include "src/util/Settings.h"
 #include "src/Application.h"
 #include <CEGUI/widgets/GridLayoutContainer.h>
+#include <CEGUI/widgets/TabControl.h>
 #include "QtnProperty/PropertySet.h"
 #include "qpen.h"
 #include "qpainter.h"
@@ -229,6 +230,14 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
 
         // To access TabControl resizing handles
         setZValue(-1.0);
+    }
+
+    // Move the active tab of the TabControl to front
+    if (auto tabCtl = dynamic_cast<CEGUI::TabControl*>(_widget))
+    {
+        QString tabPath = CEGUIUtils::getRelativePath(tabCtl->getTabContentsAtIndex(tabCtl->getSelectedTabIndex()), tabCtl);
+        if (auto tab = getManipulatorByPath(tabPath))
+            tab->moveToFront();
     }
 
     setFlags(currFlags);

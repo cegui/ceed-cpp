@@ -52,6 +52,21 @@ CEGUI::String getUniqueChildWidgetName(const CEGUI::Window& parent, const CEGUI:
     return candidate;
 }
 
+QString getRelativePath(const CEGUI::Window* widget, const CEGUI::Window* parent)
+{
+    if (!widget || widget == parent) return QString{};
+
+    QString name = stringToQString(widget->getName());
+    auto w = widget->getParent();
+    while (w && w != parent)
+    {
+        name = stringToQString(w->getName()) + "/" + name;
+        w = w->getParent();
+    }
+
+    return name;
+}
+
 void removeNestedPaths(QStringList& paths)
 {
     paths.erase(std::remove_if(paths.begin(), paths.end(), [&](const QString& path)
