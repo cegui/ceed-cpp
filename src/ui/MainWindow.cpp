@@ -47,9 +47,6 @@
 // https://bugreports.qt.io/browse/QTBUG-89138
 #include <qlineedit.h>
 
-//!!!DBG TMP!
-#include <qdebug.h>
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)

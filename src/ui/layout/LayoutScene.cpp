@@ -32,9 +32,6 @@
 #include <QtnProperty/PropertyView.h>
 #include <QtnProperty/MultiProperty.h>
 
-//!!!DBG TMP!
-#include <qdebug.h>
-
 LayoutScene::LayoutScene(LayoutVisualMode& visualMode)
     : CEGUIGraphicsScene(&visualMode)
     , _visualMode(visualMode)
@@ -1378,9 +1375,6 @@ void LayoutScene::anchorHandleSelected(QGraphicsItem* item)
 
 void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
 {
-    //!!!DBG!
-    qDebug() << "LayoutScene::dragEnterEvent";
-
     // If the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
     // the graphics items (manipulators in fact) have that implemented already
     if (_rootManipulator)
@@ -1397,9 +1391,6 @@ void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
 
 void LayoutScene::dragLeaveEvent(QGraphicsSceneDragDropEvent* event)
 {
-    //!!!DBG!
-    qDebug() << "LayoutScene::dragLeaveEvent";
-
     onManipulatorDragLeave(_dragDropTarget);
 
     // If the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop

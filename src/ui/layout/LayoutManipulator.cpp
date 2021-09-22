@@ -18,9 +18,6 @@
 #include <qdrag.h>
 #include <qtimer.h>
 
-//!!!DBG TMP!
-#include <qdebug.h>
-
 void LayoutManipulator::removeNestedManipulators(std::set<LayoutManipulator*>& manipulators)
 {
     for (auto it = manipulators.begin(); it != manipulators.end(); /**/)
@@ -360,9 +357,6 @@ void LayoutManipulator::deselectAllHandles()
 
 void LayoutManipulator::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
 {
-    //!!!DBG!
-    qDebug() << "LayoutManipulator::dragEnterEvent " << getWidgetPath();
-
     if (event->mimeData()->hasFormat("application/x-ceed-widget-type") ||
         event->mimeData()->hasFormat("application/x-ceed-widget-paths"))
     {
@@ -379,9 +373,6 @@ void LayoutManipulator::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
 
 void LayoutManipulator::dragLeaveEvent(QGraphicsSceneDragDropEvent* event)
 {
-    //!!!DBG!
-    qDebug() << "LayoutManipulator::dragLeaveEvent " << getWidgetPath();
-
     _visualMode.getScene()->onManipulatorDragLeave(this);
     resetPen();
     CEGUIManipulator::dragLeaveEvent(event);
