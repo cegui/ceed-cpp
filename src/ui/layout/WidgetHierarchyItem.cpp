@@ -8,7 +8,7 @@ WidgetHierarchyItem::WidgetHierarchyItem(LayoutManipulator* manipulator)
 {
     if (manipulator)
     {
-        setToolTip("type: " + manipulator->getWidgetType());
+        setToolTip(manipulator->getWidgetName() + " (" + manipulator->getWidgetType() + ")");
 
         // Interlink them so we can react on selection changes
         manipulator->setTreeItem(this);

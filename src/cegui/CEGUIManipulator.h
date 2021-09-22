@@ -71,7 +71,8 @@ public:
     size_t getWidgetIndexInParent() const;
     virtual CEGUIManipulator* createChildManipulator(CEGUI::Window* childWidget);
     void getChildManipulators(std::vector<CEGUIManipulator*>& outList, bool recursive);
-    CEGUIManipulator* getManipulatorByPath(const QString& widgetPath) const;
+    CEGUIManipulator* getManipulatorByPath(const QString& widgetPath) const { return getManipulatorByPath(QStringRef(&widgetPath)); }
+    CEGUIManipulator* getManipulatorByPath(QStringRef widgetPath) const;
     void forEachChildWidget(std::function<void (CEGUI::Window*)> callback) const;
 
     void createChildManipulators(bool recursive, bool skipAutoWidgets, bool checkExisting);
