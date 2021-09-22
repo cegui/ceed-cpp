@@ -693,9 +693,23 @@ QString CEGUIManipulator::getWidgetFactoryType() const
     return _widget ? CEGUIUtils::stringToQString(_widget->getFactoryType()) : "<Unknown>";
 }
 
-QString CEGUIManipulator::getWidgetPath() const
+QString CEGUIManipulator::getWidgetPath(bool excludeAutoWidgets) const
 {
-    return _widget ? CEGUIUtils::stringToQString(_widget->getNamePath()) : "<Unknown>";
+    if (!_widget) return "<Unknown>";
+
+    if (!excludeAutoWidgets) return CEGUIUtils::stringToQString(_widget->getNamePath());
+
+    // Terminal widget is always present even if it is an auto-widget
+    QString name = CEGUIUtils::stringToQString(_widget->getName());
+    auto w = _widget->getParent();
+    while (w)
+    {
+        if (!w->isAutoWindow())
+            name = CEGUIUtils::stringToQString(w->getName()) + "/" + name;
+        w = w->getParent();
+    }
+
+    return name;
 }
 
 size_t CEGUIManipulator::getWidgetIndexInParent() const

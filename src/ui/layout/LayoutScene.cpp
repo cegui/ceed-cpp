@@ -718,18 +718,26 @@ void LayoutScene::onManipulatorDragLeave(LayoutManipulator* manipulator)
 
 void LayoutScene::updateStatusMessage()
 {
+    QString helpMsg;
+
     if (_dragDropTarget)
     {
-        QString helpMsg = "Drop to insert into <i>" + _dragDropTarget->getWidgetPath() + "</i>";
-        const bool dropAsSibling = (QApplication::keyboardModifiers() & Qt::ShiftModifier);
-        if (!dropAsSibling && _anchorTarget && dynamic_cast<LayoutManipulator*>(_anchorTarget->parentItem()))
-            helpMsg += ", hold <b>Shift</b> to drop as a sibling of <i>" + _anchorTarget->getWidgetPath() + "</i>";
-        qobject_cast<Application*>(qApp)->getMainWindow()->setStatusMessage(helpMsg);
+        const auto siblingDropTarget = _anchorTarget ? dynamic_cast<LayoutManipulator*>(_anchorTarget->parentItem()) : nullptr;
+        const bool dropAsSibling = siblingDropTarget && (QApplication::keyboardModifiers() & Qt::ShiftModifier);
+        if (dropAsSibling)
+        {
+            helpMsg = "Drop to insert into <i>" + siblingDropTarget->getWidgetPath(true) + "</i>";
+        }
+        else
+        {
+            helpMsg = "Drop to insert into <i>" + _dragDropTarget->getWidgetPath(true) + "</i>";
+            if (siblingDropTarget)
+                helpMsg += ", hold <b>Shift</b> to drop into <i>" + siblingDropTarget->getWidgetPath(true)
+                        + "</i> as a sibling of selected <i>" + _anchorTarget->getWidgetName() + "</i>";
+        }
     }
-    else
-    {
-        qobject_cast<Application*>(qApp)->getMainWindow()->setStatusMessage("");
-    }
+
+    qobject_cast<Application*>(qApp)->getMainWindow()->setStatusMessage(helpMsg);
 }
 
 LayoutManipulator* LayoutScene::getManipulatorFromItem(QGraphicsItem* item) const
@@ -1401,6 +1409,10 @@ void LayoutScene::dragLeaveEvent(QGraphicsSceneDragDropEvent* event)
 
 void LayoutScene::dragMoveEvent(QGraphicsSceneDragDropEvent* event)
 {
+    // FIXME: needed only to react on Shift press/release but it is not caught here during drag&drop.
+    // NB: strangely this updates every frame even if dragged object is not moved so it does its job.
+    if (_dragDropTarget) updateStatusMessage();
+
     // If the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
     // the graphics items (manipulators in fact) have that implemented already
     if (_rootManipulator)
@@ -1456,11 +1468,6 @@ void LayoutScene::keyPressEvent(QKeyEvent* event)
 {
     switch (event->key())
     {
-        case Qt::Key_Shift:
-        {
-            if (_dragDropTarget) updateStatusMessage();
-            break;
-        }
         case Qt::Key_Left:
         case Qt::Key_Right:
         case Qt::Key_Up:
@@ -1537,11 +1544,7 @@ void LayoutScene::keyReleaseEvent(QKeyEvent* event)
 {
     bool handled = false;
 
-    if (event->key() == Qt::Key_Shift)
-    {
-        if (_dragDropTarget) updateStatusMessage();
-    }
-    else if (event->key() == Qt::Key_Delete)
+    if (event->key() == Qt::Key_Delete)
     {
         handled = deleteSelectedWidgets();
     }
