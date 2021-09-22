@@ -98,7 +98,7 @@ void ResizableGraphicsView::mouseReleaseEvent(QMouseEvent *event)
             rectItem = dynamic_cast<ResizableRectItem*>(selectedItem->parentItem());
         }
 
-        if (rectItem) rectItem->mouseReleaseEventSelected(event);
+        if (rectItem) rectItem->mouseReleaseEventSelected();
     }
 
     QGraphicsView::mouseReleaseEvent(event);

@@ -89,7 +89,7 @@ bool serializeWidget(const CEGUI::Window& widget, QDataStream& stream, bool recu
 
     const auto propertyCounterPosition = stream.device()->pos();
 
-    qint16 propertyCount = 0;
+    uint16_t propertyCount = 0;
     stream << propertyCount;
 
     auto it = widget.getPropertyIterator();
@@ -115,26 +115,69 @@ bool serializeWidget(const CEGUI::Window& widget, QDataStream& stream, bool recu
         ++propertyCount;
     }
 
-    const auto currPosition = stream.device()->pos();
+    auto currPosition = stream.device()->pos();
     stream.device()->seek(propertyCounterPosition);
     stream << propertyCount;
     stream.device()->seek(currPosition);
 
-    if (recursive)
+    if (!recursive)
     {
-        assert(widget.getChildCount() < 65536);
-        stream << static_cast<qint16>(widget.getChildCount());
-        for (size_t i = 0; i < widget.getChildCount(); ++i)
+        stream << static_cast<uint16_t>(0); // Child count
+        return true;
+    }
+
+    assert(widget.getChildCount() <= std::numeric_limits<uint16_t>().max());
+
+    const auto childCounterPosition = stream.device()->pos();
+
+    uint16_t childCount = 0;
+    stream << childCount;
+
+    // Some widget types require special processing due to overridden writeChildWindowsXML().
+    // TODO: move to CEGUI side, implement universal format-agnostic (de)serialization there!
+    auto tabCtl = dynamic_cast<const CEGUI::TabControl*>(&widget);
+
+    // First serialize normal children
+    for (size_t i = 0; i < widget.getChildCount(); ++i)
+    {
+        const CEGUI::Window* child = widget.getChildAtIndex(i);
+        assert(child);
+        if (child->isAutoWindow()) continue;
+        serializeWidget(*child, stream, true);
+        ++childCount;
+    }
+
+    // Then serialize auto-windows. Some of them may depend on normal children, e.g. TabControl buttons.
+    for (size_t i = 0; i < widget.getChildCount(); ++i)
+    {
+        const CEGUI::Window* child = widget.getChildAtIndex(i);
+        assert(child);
+        if (!child->isAutoWindow()) continue;
+
+        if (tabCtl && child->getName() == CEGUI::TabControl::ContentPaneName)
         {
-            const CEGUI::Window* child = widget.getChildAtIndex(i);
-            if (child) // && (!skipAutoWidgets || !child->isAutoWindow()))
-                serializeWidget(*child, stream, true);
+            // Save tabs as direct children of the TabControl
+            const size_t tabCount = tabCtl->getTabCount();
+            assert(widget.getChildCount() + tabCount - 1 <= std::numeric_limits<uint16_t>().max());
+            for (size_t j = 0; j < tabCount; ++j)
+                serializeWidget(*tabCtl->getTabContentsAtIndex(j), stream, true);
+            childCount += static_cast<uint16_t>(tabCount);
+        }
+        else if (tabCtl && child->getName() == CEGUI::TabControl::TabButtonPaneName)
+        {
+            // Skip
+        }
+        else
+        {
+            serializeWidget(*child, stream, true);
+            ++childCount;
         }
     }
-    else
-    {
-        stream << static_cast<qint16>(0);
-    }
+
+    currPosition = stream.device()->pos();
+    stream.device()->seek(childCounterPosition);
+    stream << childCount;
+    stream.device()->seek(currPosition);
 
     return true;
 }
@@ -179,9 +222,9 @@ CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent, siz
         }
     }
 
-    qint16 propertyCount = 0;
+    uint16_t propertyCount = 0;
     stream >> propertyCount;
-    for (qint16 i = 0; i < propertyCount; ++i)
+    for (uint16_t i = 0; i < propertyCount; ++i)
     {
         QString propertyName, propertyValue;
         stream >> propertyName;
@@ -189,9 +232,9 @@ CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent, siz
         setWidgetProperty(widget, qStringToString(propertyName), qStringToString(propertyValue));
     }
 
-    qint16 childCount = 0;
+    uint16_t childCount = 0;
     stream >> childCount;
-    for (qint16 i = 0; i < childCount; ++i)
+    for (uint16_t i = 0; i < childCount; ++i)
         deserializeWidget(stream, widget);
 
     return widget;

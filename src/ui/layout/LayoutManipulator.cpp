@@ -235,9 +235,12 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
     // Move the active tab of the TabControl to front
     if (auto tabCtl = dynamic_cast<CEGUI::TabControl*>(_widget))
     {
-        QString tabPath = CEGUIUtils::getRelativePath(tabCtl->getTabContentsAtIndex(tabCtl->getSelectedTabIndex()), tabCtl);
-        if (auto tab = getManipulatorByPath(tabPath))
-            tab->moveToFront();
+        if (tabCtl->getTabCount())
+        {
+            QString tabPath = CEGUIUtils::getRelativePath(tabCtl->getTabContentsAtIndex(tabCtl->getSelectedTabIndex()), tabCtl);
+            if (auto tab = getManipulatorByPath(tabPath))
+                tab->moveToFront();
+        }
     }
 
     setFlags(currFlags);
@@ -499,6 +502,10 @@ void LayoutManipulator::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
                 removeNestedManipulators(selectedWidgets);
                 selectedWidgets.erase(this); // Will add to stream manually
             }
+
+            mouseReleaseEventSelected();
+            for (LayoutManipulator* manipulator : selectedWidgets)
+                manipulator->mouseReleaseEventSelected();
 
             QByteArray bytes;
             QDataStream stream(&bytes, QIODevice::WriteOnly);

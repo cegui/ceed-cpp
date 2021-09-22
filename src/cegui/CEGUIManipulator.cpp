@@ -767,6 +767,7 @@ CEGUIManipulator* CEGUIManipulator::getManipulatorByPath(const QString& widgetPa
     return nullptr;
 }
 
+// TODO: to CEGUIUtils? Pass widget instead of manipulator?
 void CEGUIManipulator::forEachChildWidget(std::function<void (CEGUI::Window*)> callback) const
 {
     if (auto tabControl = dynamic_cast<CEGUI::TabControl*>(_widget))
