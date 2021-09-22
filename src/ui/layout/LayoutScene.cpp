@@ -723,10 +723,10 @@ void LayoutScene::updateStatusMessage()
 {
     if (_dragDropTarget)
     {
-        QString helpMsg = "Drop to insert into " + _dragDropTarget->getWidgetPath();
+        QString helpMsg = "Drop to insert into <i>" + _dragDropTarget->getWidgetPath() + "</i>";
         const bool dropAsSibling = (QApplication::keyboardModifiers() & Qt::ShiftModifier);
         if (!dropAsSibling && _anchorTarget && dynamic_cast<LayoutManipulator*>(_anchorTarget->parentItem()))
-            helpMsg += ", hold Shift to drop as a sibling of " + _anchorTarget->getWidgetPath();
+            helpMsg += ", hold <b>Shift</b> to drop as a sibling of <i>" + _anchorTarget->getWidgetPath() + "</i>";
         qobject_cast<Application*>(qApp)->getMainWindow()->setStatusMessage(helpMsg);
     }
     else
@@ -752,7 +752,7 @@ LayoutManipulator* LayoutScene::getManipulatorFromItem(QGraphicsItem* item) cons
 
 void LayoutScene::collectSelectedWidgets(std::set<LayoutManipulator*>& selectedWidgets)
 {
-    auto selection = selectedItems();
+    const auto selection = selectedItems();
     for (QGraphicsItem* item : selection)
     {
         if (auto manipulator = getManipulatorFromItem(item))

@@ -189,6 +189,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->actionStatusbar->setChecked(statusBarVisible);
 
     _statusBarLabel = new QLabel(statusBar());
+    _statusBarLabel->setTextFormat(Qt::RichText); // FIXME QTBUG 5.15.2: non-rich text in a status bar on Win10 is broken when drag&drop
     statusBar()->addWidget(_statusBarLabel);
 
     if (settings->contains("window-geometry"))
@@ -304,25 +305,7 @@ QToolBar* MainWindow::getToolbar(const QString& name) const
 
 void MainWindow::setStatusMessage(const QString& msg)
 {
-    //!!!DBG TMP!
-    qDebug() << "setStatusMessage: " << msg;
-
-    //!!!DBG TMP!
-    if (msg.isEmpty())
-    {
-        //return;
-    }
-
-    // FIXME Qt 5.15.2: QStatusBar::showMessage is bugged, shows previous message instead of current
     _statusBarLabel->setText(msg);
-    /*
-    if (msg.isEmpty())
-        statusBar()->clearMessage();
-    else
-    {
-        statusBar()->showMessage(msg);
-    }
-    */
 }
 
 QAction* MainWindow::getActionCut() const
