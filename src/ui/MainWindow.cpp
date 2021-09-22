@@ -1181,19 +1181,28 @@ void MainWindow::on_actionSaveAs_triggered()
 {
     if (!currentEditor) return;
 
-    QStringList ext = currentEditor->getFileExtensions();
+    if (currentEditor->getFilePath().isEmpty())
+    {
+        // The new file saving dialog is handled inside an EditorBase
+        // FIXME: REFACTOR!
+        currentEditor->saveAs("");
+    }
+    else
+    {
+        QStringList ext = currentEditor->getFileExtensions();
 
-    QStringList filters;
-    filters.append(QString("%1 files (%2)").arg(currentEditor->getFileTypesDescription(), "*." + ext.join(" *.")));
-    filters.append("All files (*)");
+        QStringList filters;
+        filters.append(QString("%1 files (%2)").arg(currentEditor->getFileTypesDescription(), "*." + ext.join(" *.")));
+        filters.append("All files (*)");
 
-    QFileDialog dialog(this, "Save as", QFileInfo(currentEditor->getFilePath()).dir().path(), filters.join(";;"));
-    dialog.setDefaultSuffix(ext[0]);
-    dialog.setAcceptMode(QFileDialog::AcceptSave);
-    dialog.selectFile(currentEditor->getFilePath());
+        QFileDialog dialog(this, "Save as", QFileInfo(currentEditor->getFilePath()).dir().path(), filters.join(";;"));
+        dialog.setDefaultSuffix(ext[0]);
+        dialog.setAcceptMode(QFileDialog::AcceptSave);
+        dialog.selectFile(currentEditor->getFilePath());
 
-    if (dialog.exec())
-        currentEditor->saveAs(dialog.selectedFiles()[0]);
+        if (dialog.exec())
+            currentEditor->saveAs(dialog.selectedFiles()[0]);
+    }
 }
 
 // Saves all opened tabbed editors and opened project (if any)
