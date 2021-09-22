@@ -237,6 +237,9 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
     {
         if (tabCtl->getTabCount())
         {
+            // Reselect tab to update visibility. CEED deserialization may load it when it is not desired.
+            // TODO CEGUI: add selected tab as a TabColtrol's property instead, CEED will restore it when deserialize!
+            tabCtl->setSelectedTabAtIndex(tabCtl->getSelectedTabIndex());
             QString tabPath = CEGUIUtils::getRelativePath(tabCtl->getTabContentsAtIndex(tabCtl->getSelectedTabIndex()), tabCtl);
             if (auto tab = getManipulatorByPath(tabPath))
                 tab->moveToFront();

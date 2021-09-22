@@ -131,7 +131,18 @@ void LayoutScene::setupActionsForTabControl()
             for (auto manipulator : selectedWidgets)
                 if (auto tabCtl = dynamic_cast<CEGUI::TabControl*>(manipulator->getWidget()))
                     if (manipulator->canAcceptChildren(1, true))
+                    {
                         _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, manipulator->getWidgetPath(), "DefaultWindow"));
+
+                        // Make the new tab current
+                        if (tabCtl->getTabCount())
+                        {
+                            tabCtl->setSelectedTabAtIndex(tabCtl->getTabCount() - 1);
+                            const auto& tabPath = tabCtl->getTabContentsAtIndex(tabCtl->getSelectedTabIndex())->getNamePath();
+                            if (auto tab = getManipulatorByPath(CEGUIUtils::stringToQString(tabPath)))
+                                tab->moveToFront();
+                        }
+                    }
         });
 
         _widgetActions["CEGUI/TabControl"].emplace_back(action, nullptr);
