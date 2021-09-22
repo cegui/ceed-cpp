@@ -712,6 +712,12 @@ QString CEGUIManipulator::getWidgetPath(bool excludeAutoWidgets) const
     return name;
 }
 
+size_t CEGUIManipulator::getWidgetChildCount() const
+{
+    //???handle auto-containers for TabControl and ScrollablePane?
+    return _widget ? _widget->getChildCount() : 0;
+}
+
 size_t CEGUIManipulator::getWidgetIndexInParent() const
 {
     return (_widget && _widget->getParent()) ? _widget->getParent()->getChildIndex(_widget) : 0;

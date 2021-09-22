@@ -4,6 +4,7 @@
 #include <CEGUI/CoordConverter.h>
 #include <CEGUI/WindowManager.h>
 #include <CEGUI/widgets/TabControl.h>
+#include <CEGUI/widgets/ButtonBase.h>
 #include <qdatastream.h>
 
 namespace CEGUIUtils
@@ -242,8 +243,13 @@ CEGUI::Window* deserializeWidget(QDataStream& stream, CEGUI::Window* parent, siz
 
 static void setupNewChild(CEGUI::Window& parent, CEGUI::Window& widget)
 {
-    if (dynamic_cast<CEGUI::TabControl*>(&parent) && widget.getText().empty())
-        widget.setText("New tab");
+    if (widget.getText().empty())
+    {
+        if (dynamic_cast<CEGUI::TabControl*>(&parent))
+            widget.setText("New tab");
+        else if (dynamic_cast<CEGUI::ButtonBase*>(&widget) && !widget.isAutoWindow())
+            widget.setText(widget.getName());
+    }
 }
 
 void addChild(CEGUI::Window* parent, CEGUI::Window* widget)

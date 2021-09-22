@@ -54,6 +54,8 @@ public:
     virtual bool isAnyHandleSelected() const override;
     virtual void deselectAllHandles() override;
 
+    bool dropChildren(QGraphicsSceneDragDropEvent* event, size_t indexInParent = std::numeric_limits<size_t>().max()) const;
+
     // For redirection from children
     virtual void dragEnterEvent(QGraphicsSceneDragDropEvent* event) override;
     virtual void dragLeaveEvent(QGraphicsSceneDragDropEvent* event) override;

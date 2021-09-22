@@ -306,9 +306,13 @@ void LayoutVisualMode::zoomReset()
 }
 
 // NB: paths must not contain children of any contained widget
-bool LayoutVisualMode::moveWidgetsInHierarchy(const QStringList& paths, LayoutManipulator* newParentManipulator, size_t newChildIndex)
+bool LayoutVisualMode::moveWidgetsInHierarchy(const QStringList& paths, const LayoutManipulator* newParentManipulator, size_t newChildIndex)
 {
     if (!newParentManipulator || paths.empty()) return false;
+
+    const size_t childCount = newParentManipulator->getWidgetChildCount();
+    if (newChildIndex > childCount)
+        newChildIndex = childCount;
 
     std::vector<LayoutMoveInHierarchyCommand::Record> records;
     std::unordered_set<QString> usedNames;

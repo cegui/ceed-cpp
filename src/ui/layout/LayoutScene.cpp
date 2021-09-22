@@ -549,15 +549,19 @@ void LayoutScene::roundPositionOfSelectedWidgets()
     for (LayoutManipulator* manipulator : selectedWidgets)
     {
         LayoutMoveCommand::Record rec;
-        rec.path = manipulator->getWidgetPath();
         rec.oldPos = manipulator->getWidget()->getPosition();
         rec.newPos = rec.oldPos;
         rec.newPos.d_x.d_offset = CEGUI::CoordConverter::alignToPixels(rec.oldPos.d_x.d_offset);
         rec.newPos.d_y.d_offset = CEGUI::CoordConverter::alignToPixels(rec.oldPos.d_y.d_offset);
-        records.push_back(std::move(rec));
+        if (rec.oldPos != rec.newPos)
+        {
+            rec.path = manipulator->getWidgetPath();
+            records.push_back(std::move(rec));
+        }
     }
 
-    _visualMode.getEditor().getUndoStack()->push(new LayoutMoveCommand(_visualMode, std::move(records)));
+    if (!records.empty())
+        _visualMode.getEditor().getUndoStack()->push(new LayoutMoveCommand(_visualMode, std::move(records)));
 }
 
 void LayoutScene::roundSizeOfSelectedWidgets()
@@ -571,17 +575,21 @@ void LayoutScene::roundSizeOfSelectedWidgets()
     for (LayoutManipulator* manipulator : selectedWidgets)
     {
         LayoutResizeCommand::Record rec;
-        rec.path = manipulator->getWidgetPath();
-        rec.oldPos = manipulator->getWidget()->getPosition();
-        rec.newPos = rec.oldPos;
         rec.oldSize = manipulator->getWidget()->getSize();
         rec.newSize = rec.oldSize;
         rec.newSize.d_width.d_offset = CEGUI::CoordConverter::alignToPixels(rec.oldSize.d_width.d_offset);
         rec.newSize.d_height.d_offset = CEGUI::CoordConverter::alignToPixels(rec.oldSize.d_height.d_offset);
-        records.push_back(std::move(rec));
+        if (rec.oldSize != rec.newSize)
+        {
+            rec.path = manipulator->getWidgetPath();
+            rec.oldPos = manipulator->getWidget()->getPosition();
+            rec.newPos = rec.oldPos;
+            records.push_back(std::move(rec));
+        }
     }
 
-    _visualMode.getEditor().getUndoStack()->push(new LayoutResizeCommand(_visualMode, std::move(records)));
+    if (!records.empty())
+        _visualMode.getEditor().getUndoStack()->push(new LayoutResizeCommand(_visualMode, std::move(records)));
 }
 
 void LayoutScene::alignSelectionHorizontally(CEGUI::HorizontalAlignment alignment)
@@ -1130,7 +1138,6 @@ void LayoutScene::setAnchorValues(float minX, float maxX, float minY, float maxY
     if (!_anchorTarget) return;
 
     LayoutResizeCommand::Record rec;
-    rec.path = _anchorTarget->getWidgetPath();
     rec.oldPos = _anchorTarget->getWidget()->getPosition();
     rec.oldSize = _anchorTarget->getWidget()->getSize();
 
@@ -1138,6 +1145,10 @@ void LayoutScene::setAnchorValues(float minX, float maxX, float minY, float maxY
 
     rec.newPos = _anchorTarget->getWidget()->getPosition();
     rec.newSize = _anchorTarget->getWidget()->getSize();
+
+    if (rec.oldPos == rec.newPos && rec.oldSize == rec.newSize) return;
+
+    rec.path = _anchorTarget->getWidgetPath();
 
     std::vector<LayoutResizeCommand::Record> resize;
     resize.push_back(std::move(rec));
@@ -1438,6 +1449,7 @@ void LayoutScene::dragMoveEvent(QGraphicsSceneDragDropEvent* event)
 
 void LayoutScene::dropEvent(QGraphicsSceneDragDropEvent* event)
 {
+    auto dragDropTarget = _dragDropTarget;
     onManipulatorDragLeave(_dragDropTarget);
 
     if (_rootManipulator)
@@ -1450,7 +1462,14 @@ void LayoutScene::dropEvent(QGraphicsSceneDragDropEvent* event)
         {
             if (auto manip = dynamic_cast<LayoutManipulator*>(_anchorTarget->parentItem()))
             {
-                manip->dropEvent(event);
+                // If drop over sibling, insert before it
+                const auto idx = (dragDropTarget && dragDropTarget->parentItem() == _anchorTarget->parentItem()) ?
+                            dragDropTarget->getWidgetIndexInParent() :
+                            std::numeric_limits<size_t>().max();
+                if (manip->dropChildren(event, idx))
+                    event->acceptProposedAction();
+                else
+                    event->ignore();
                 return;
             }
         }
@@ -1618,7 +1637,8 @@ void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
             rec.path = item->getWidgetPath();
             rec.oldPos = item->getStartPosition();
             rec.newPos = item->getWidget()->getPosition();
-            move.push_back(std::move(rec));
+            if (rec.oldPos != rec.newPos)
+                move.push_back(std::move(rec));
 
             item->resetMove();
         }
@@ -1631,7 +1651,8 @@ void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
             rec.newPos = item->getWidget()->getPosition();
             rec.oldSize = item->getStartSize();
             rec.newSize = item->getWidget()->getSize();
-            resize.push_back(std::move(rec));
+            if (rec.oldPos != rec.newPos || rec.oldSize != rec.newSize)
+                resize.push_back(std::move(rec));
 
             item->resetResize();
         }

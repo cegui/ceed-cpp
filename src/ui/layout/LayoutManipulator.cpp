@@ -370,6 +370,104 @@ void LayoutManipulator::deselectAllHandles()
     CEGUIManipulator::deselectAllHandles();
 }
 
+bool LayoutManipulator::dropChildren(QGraphicsSceneDragDropEvent* event, size_t indexInParent) const
+{
+    // Takes care of creating new widgets when user drops the right mime type here
+    // (dragging from the CreateWidgetDockWidget)
+    auto bytes = event->mimeData()->data("application/x-ceed-widget-type");
+    if (bytes.size() > 0)
+    {
+        if (canAcceptChildren(1, true))
+            _visualMode.getEditor().getUndoStack()->push(
+                        new LayoutCreateCommand(_visualMode, getWidgetPath(), bytes.data(), event->scenePos(), indexInParent));
+        return true;
+    }
+
+    // Drop existing widgets into this widget as children with Ctrl+Drag or from widget tree
+    bytes = event->mimeData()->data("application/x-ceed-widget-paths");
+    if (bytes.size() > 0)
+    {
+        QStringList widgetPaths;
+        QDataStream stream(&bytes, QIODevice::ReadOnly);
+        while (!stream.atEnd())
+        {
+            QString name;
+            stream >> name;
+            widgetPaths.append(name);
+        }
+
+        CEGUIUtils::removeNestedPaths(widgetPaths);
+
+        if (event->dropAction() == Qt::MoveAction)
+        {
+            // Remember desired offsets before reparenting
+            std::map<LayoutManipulator*, QPointF> offsetByParent;
+            std::map<CEGUI::Window*, CEGUI::UVector2> newPositions;
+
+            // Layout containers align their children, no need to move them
+            const bool isLC = isLayoutContainer();
+
+            if (!isLC)
+            {
+                // - Dragged item is always the first (only for visual mode dragging for now, not from the tree)
+                // - The first dragged item from each parent is dropped at a cursor position, with a small cascade offset
+                // - All subsequent items from the same parent keep relative position to the first item
+                const auto dropOffset = event->scenePos() - scenePos();
+
+                for (const QString& widgetPath : qAsConst(widgetPaths))
+                {
+                    auto manipulator = _visualMode.getScene()->getManipulatorByPath(widgetPath);
+                    if (!manipulator) continue;
+
+                    auto oldParentManipulator = dynamic_cast<LayoutManipulator*>(manipulator->parentItem());
+                    if (!oldParentManipulator) continue;
+
+                    auto it = offsetByParent.find(oldParentManipulator);
+                    if (it == offsetByParent.cend())
+                    {
+                        const qreal cascadeOffset = offsetByParent.size() * 10.0;
+                        const QPointF offset = dropOffset - manipulator->pos() + QPointF(cascadeOffset, cascadeOffset);
+                        it = offsetByParent.emplace(oldParentManipulator, offset).first;
+                    }
+
+                    if (it->second.manhattanLength() > 0.0)
+                    {
+                        auto newPos = manipulator->getWidget()->getPosition();
+                        newPos.d_x.d_offset += static_cast<float>(it->second.x());
+                        newPos.d_y.d_offset += static_cast<float>(it->second.y());
+                        newPositions.emplace(manipulator->getWidget(), newPos);
+                    }
+                }
+            }
+
+            // Reparent widgets to the new parent
+            _visualMode.moveWidgetsInHierarchy(widgetPaths, this, indexInParent);
+
+            if (!isLC)
+            {
+                // Then move widgets using the drop position with a separate command
+                std::vector<LayoutMoveCommand::Record> records;
+                for (const auto& pair : newPositions)
+                {
+                    if (pair.first->getPosition() == pair.second) continue;
+
+                    LayoutMoveCommand::Record rec;
+                    rec.path = CEGUIUtils::stringToQString(pair.first->getNamePath());
+                    rec.oldPos = pair.first->getPosition();
+                    rec.newPos = pair.second;
+                    records.push_back(std::move(rec));
+                }
+                if (!records.empty())
+                    _visualMode.getEditor().getUndoStack()->push(new LayoutMoveCommand(_visualMode, std::move(records)));
+            }
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void LayoutManipulator::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
 {
     if (event->mimeData()->hasFormat("application/x-ceed-widget-type") ||
@@ -395,89 +493,10 @@ void LayoutManipulator::dragLeaveEvent(QGraphicsSceneDragDropEvent* event)
 
 void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
 {
-    // Takes care of creating new widgets when user drops the right mime type here
-    // (dragging from the CreateWidgetDockWidget)
-    auto bytes = event->mimeData()->data("application/x-ceed-widget-type");
-    if (bytes.size() > 0)
-    {
-        if (canAcceptChildren(1, true))
-            _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, getWidgetPath(), bytes.data(), event->scenePos()));
-
+    if (dropChildren(event))
         event->acceptProposedAction();
-        return;
-    }
-
-    // Drop existing widgets into this widget as children with Ctrl+Drag or from widget tree
-    bytes = event->mimeData()->data("application/x-ceed-widget-paths");
-    if (bytes.size() > 0)
-    {
-        QStringList widgetPaths;
-        QDataStream stream(&bytes, QIODevice::ReadOnly);
-        while (!stream.atEnd())
-        {
-            QString name;
-            stream >> name;
-            widgetPaths.append(name);
-        }
-
-        CEGUIUtils::removeNestedPaths(widgetPaths);
-
-        if (event->dropAction() == Qt::MoveAction)
-        {
-            // Remember desired offsets before reparenting:
-            // - Dragged item is always the first (only for visual mode dragging for now, not from the tree)
-            // - The first dragged item from each parent is dropped at a cursor position, with a small cascade offset
-            // - All subsequent items from the same parent keep relative position to the first item
-            std::map<LayoutManipulator*, QPointF> offsetByParent;
-            std::map<CEGUI::Window*, CEGUI::UVector2> newPositions;
-            const auto dropOffset = event->scenePos() - scenePos();
-
-            for (const QString& widgetPath : qAsConst(widgetPaths))
-            {
-                auto manipulator = _visualMode.getScene()->getManipulatorByPath(widgetPath);
-                if (!manipulator) continue;
-
-                auto oldParentManipulator = dynamic_cast<LayoutManipulator*>(manipulator->parentItem());
-                if (!oldParentManipulator) continue;
-
-                auto it = offsetByParent.find(oldParentManipulator);
-                if (it == offsetByParent.cend())
-                {
-                    const qreal cascadeOffset = offsetByParent.size() * 10.0;
-                    const QPointF offset = dropOffset - manipulator->pos() + QPointF(cascadeOffset, cascadeOffset);
-                    it = offsetByParent.emplace(oldParentManipulator, offset).first;
-                }
-
-                if (it->second.manhattanLength() > 0.0)
-                {
-                    auto newPos = manipulator->getWidget()->getPosition();
-                    newPos.d_x.d_offset += static_cast<float>(it->second.x());
-                    newPos.d_y.d_offset += static_cast<float>(it->second.y());
-                    newPositions.emplace(manipulator->getWidget(), newPos);
-                }
-            }
-
-            // First reparent widgets to the new parent
-            _visualMode.moveWidgetsInHierarchy(widgetPaths, this, getWidget()->getChildCount());
-
-            // Then move widgets using the drop position with a separate command
-            std::vector<LayoutMoveCommand::Record> records;
-            LayoutMoveCommand::Record rec;
-            for (const auto& pair : newPositions)
-            {
-                rec.path = CEGUIUtils::stringToQString(pair.first->getNamePath());
-                rec.oldPos = pair.first->getPosition();
-                rec.newPos = pair.second;
-                records.push_back(std::move(rec));
-            }
-            _visualMode.getEditor().getUndoStack()->push(new LayoutMoveCommand(_visualMode, std::move(records)));
-
-            event->acceptProposedAction();
-            return;
-        }
-    }
-
-    event->ignore();
+    else
+        event->ignore();
 }
 
 void LayoutManipulator::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
