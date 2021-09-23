@@ -8,6 +8,9 @@
 #include "src/cegui/QtnPropertyUBox.h"
 #include "src/cegui/QtnPropertyColourRect.h"
 #include "src/cegui/QtnPropertyGlmVec2.h"
+#include "src/cegui/QtnProperty2DRotation.h"
+#include "src/cegui/QtnPropertySizef.h"
+#include "src/cegui/QtnPropertyRectf.h"
 #include "src/ui/CEGUIGraphicsScene.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
@@ -1091,21 +1094,12 @@ void CEGUIManipulator::createPropertySet()
             prop = new QtnPropertyColourRect(parentSet);
         else if (propertyDataType == "vec2")
             prop = new QtnPropertyGlmVec2(parentSet);
-        else if (propertyDataType == "Sizef")
-        {
-            // TODO: implement
-            prop = new QtnPropertyQString(parentSet);
-        }
-        else if (propertyDataType == "Rectf")
-        {
-            // TODO: implement
-            prop = new QtnPropertyQString(parentSet);
-        }
         else if (propertyDataType == "quat")
-        {
-            // TODO: implement
-            prop = new QtnPropertyQString(parentSet);
-        }
+            prop = new QtnProperty2DRotation(parentSet); // TODO: improve with full-fledged quaternion?
+        else if (propertyDataType == "Sizef")
+            prop = new QtnPropertySizef(parentSet);
+        else if (propertyDataType == "Rectf")
+            prop = new QtnPropertyRectf(parentSet);
         else if (propertyDataType == "NumOfTextLinesToShow")
         {
             // TODO: improve

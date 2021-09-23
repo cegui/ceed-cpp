@@ -123,9 +123,12 @@ SOURCES += \
 HEADERS += \
     src/QtStdHash.h \
     src/cegui/CEGUIUtils.h \
+    src/cegui/QtnProperty2DRotation.h \
     src/cegui/QtnPropertyColour.h \
     src/cegui/QtnPropertyColourRect.h \
     src/cegui/QtnPropertyGlmVec2.h \
+    src/cegui/QtnPropertyRectf.h \
+    src/cegui/QtnPropertySizef.h \
     src/editors/anim/AnimationCodeMode.h \
     src/editors/anim/AnimationEditor.h \
     src/editors/anim/AnimationUndoCommands.h \
