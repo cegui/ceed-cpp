@@ -5,6 +5,7 @@
 #include "QtnProperty/Auxiliary/PropertyTemplates.h"
 #include <src/cegui/CEGUIUtils.h> // for stream operators
 #include <CEGUI/Colour.h>
+#include <CEGUI/PropertyHelper.h>
 
 class QtnPropertyColourBase : public QtnSinglePropertyBaseAs<QtnPropertyQColorBase, CEGUI::Colour>
 {
@@ -35,6 +36,27 @@ protected:
         actualValue.set(baseValue.redF(), baseValue.greenF(), baseValue.blueF(), baseValue.alphaF());
         return true;
     }
+
+    /*
+    bool toStrImpl(QString& str) const override
+    {
+        str = CEGUIUtils::stringToQString(CEGUI::PropertyHelper<CEGUI::Colour>().toString(value()));
+        return true;
+    }
+
+    bool fromStrImpl(const QString& str, QtnPropertyChangeReason reason) override
+    {
+        try
+        {
+            return setValue(CEGUI::PropertyHelper<CEGUI::Colour>().fromString(CEGUIUtils::qStringToString(str)), reason);
+        }
+        catch (...)
+        {
+        }
+
+        return false;
+    }
+    */
 };
 
 P_PROPERTY_DECL_ALL_OPERATORS(QtnPropertyColourBase, CEGUI::Colour)

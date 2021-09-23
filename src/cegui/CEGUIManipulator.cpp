@@ -1091,6 +1091,11 @@ void CEGUIManipulator::createPropertySet()
             prop = new QtnPropertyColourRect(parentSet);
         else if (propertyDataType == "vec2")
             prop = new QtnPropertyGlmVec2(parentSet);
+        else if (propertyDataType == "Sizef")
+        {
+            // TODO: implement
+            prop = new QtnPropertyQString(parentSet);
+        }
         else if (propertyDataType == "Rectf")
         {
             // TODO: implement
