@@ -6,6 +6,7 @@
 #include "src/cegui/QtnPropertyUSize.h"
 #include "src/cegui/QtnPropertyURect.h"
 #include "src/cegui/QtnPropertyUBox.h"
+#include "src/cegui/QtnPropertyColourRect.h"
 #include "src/ui/CEGUIGraphicsScene.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
@@ -1083,6 +1084,10 @@ void CEGUIManipulator::createPropertySet()
             prop = new QtnPropertyUBox(parentSet);
         else if (propertyDataType == "UDim")
             prop = new QtnPropertyUDim(parentSet);
+        else if (propertyDataType == "Colour")
+            prop = new QtnPropertyColour(parentSet);
+        else if (propertyDataType == "ColourRect")
+            prop = new QtnPropertyColourRect(parentSet);
         else if (propertyDataType == "vec2")
         {
             // TODO: implement
@@ -1098,23 +1103,11 @@ void CEGUIManipulator::createPropertySet()
             // TODO: implement
             prop = new QtnPropertyQString(parentSet);
         }
-        else if (propertyDataType == "ColourRect")
-        {
-            // TODO: implement
-            //!!!4x Color subproperty!
-            //!!!Preview rect. OpenGL triangles rendering? Or QPainter handles gradient?
-            prop = new QtnPropertyQString(parentSet);
-        }
         else if (propertyDataType == "NumOfTextLinesToShow")
         {
             // TODO: implement
             // float with special value with meaning "auto"
             prop = new QtnPropertyQString(parentSet);
-        }
-        else if (propertyDataType == "Colour")
-        {
-            // TODO: implement
-            prop = new QtnPropertyQString(parentSet);//???use delegate for Qt type? The same for GLM vec2, vec3?
         }
         else // "String" and any other
         {

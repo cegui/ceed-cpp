@@ -7,6 +7,7 @@
 #include "src/cegui/QtnPropertyUSize.h"
 #include "src/cegui/QtnPropertyURect.h"
 #include "src/cegui/QtnPropertyUBox.h"
+#include "src/cegui/QtnPropertyColourRect.h"
 #include "src/ui/CEGUIDebugInfo.h"
 #include "src/util/DismissableMessage.h"
 #include "src/util/Utils.h"
@@ -284,6 +285,7 @@ void CEGUIManager::ensureCEGUIInitialized()
     QtnPropertyDelegateUSize::Register(QtnPropertyDelegateFactory::staticInstance());
     QtnPropertyDelegateURect::Register(QtnPropertyDelegateFactory::staticInstance());
     QtnPropertyDelegateUBox::Register(QtnPropertyDelegateFactory::staticInstance());
+    QtnPropertyDelegateColourRect::Register(QtnPropertyDelegateFactory::staticInstance());
 
     initialized = true;
 }

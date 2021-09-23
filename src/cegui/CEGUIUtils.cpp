@@ -593,3 +593,41 @@ QDataStream& operator >>(QDataStream& stream, CEGUI::UBox& value)
     stream >> value.d_bottom;
     return stream;
 }
+
+QDataStream& operator <<(QDataStream& stream, const CEGUI::Colour& value)
+{
+    stream << value.getRed();
+    stream << value.getGreen();
+    stream << value.getBlue();
+    stream << value.getAlpha();
+    return stream;
+}
+
+QDataStream& operator >>(QDataStream& stream, CEGUI::Colour& value)
+{
+    float r, g, b, a;
+    stream >> r;
+    stream >> g;
+    stream >> b;
+    stream >> a;
+    value.set(r, g, b, a);
+    return stream;
+}
+
+QDataStream& operator <<(QDataStream& stream, const CEGUI::ColourRect& value)
+{
+    stream << value.d_top_left;
+    stream << value.d_top_right;
+    stream << value.d_bottom_left;
+    stream << value.d_bottom_right;
+    return stream;
+}
+
+QDataStream& operator >>(QDataStream& stream, CEGUI::ColourRect& value)
+{
+    stream >> value.d_top_left;
+    stream >> value.d_top_right;
+    stream >> value.d_bottom_left;
+    stream >> value.d_bottom_right;
+    return stream;
+}

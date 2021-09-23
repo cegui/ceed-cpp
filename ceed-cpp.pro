@@ -28,6 +28,7 @@ CONFIG += c++11
 
 SOURCES += \
     src/cegui/CEGUIUtils.cpp \
+    src/cegui/QtnPropertyColourRect.cpp \
     src/editors/anim/AnimationCodeMode.cpp \
     src/editors/anim/AnimationEditor.cpp \
     src/editors/anim/AnimationUndoCommands.cpp \
@@ -122,6 +123,8 @@ SOURCES += \
 HEADERS += \
     src/QtStdHash.h \
     src/cegui/CEGUIUtils.h \
+    src/cegui/QtnPropertyColour.h \
+    src/cegui/QtnPropertyColourRect.h \
     src/editors/anim/AnimationCodeMode.h \
     src/editors/anim/AnimationEditor.h \
     src/editors/anim/AnimationUndoCommands.h \
