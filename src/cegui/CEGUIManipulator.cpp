@@ -7,6 +7,7 @@
 #include "src/cegui/QtnPropertyURect.h"
 #include "src/cegui/QtnPropertyUBox.h"
 #include "src/cegui/QtnPropertyColourRect.h"
+#include "src/cegui/QtnPropertyGlmVec2.h"
 #include "src/ui/CEGUIGraphicsScene.h"
 #include "src/util/Settings.h"
 #include "src/Application.h"
@@ -1089,10 +1090,7 @@ void CEGUIManipulator::createPropertySet()
         else if (propertyDataType == "ColourRect")
             prop = new QtnPropertyColourRect(parentSet);
         else if (propertyDataType == "vec2")
-        {
-            // TODO: implement
-            prop = new QtnPropertyQString(parentSet);
-        }
+            prop = new QtnPropertyGlmVec2(parentSet);
         else if (propertyDataType == "Rectf")
         {
             // TODO: implement
@@ -1105,9 +1103,9 @@ void CEGUIManipulator::createPropertySet()
         }
         else if (propertyDataType == "NumOfTextLinesToShow")
         {
-            // TODO: implement
+            // TODO: improve
             // float with special value with meaning "auto"
-            prop = new QtnPropertyQString(parentSet);
+            prop = new QtnPropertyFloat(parentSet);
         }
         else // "String" and any other
         {

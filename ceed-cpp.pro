@@ -125,6 +125,7 @@ HEADERS += \
     src/cegui/CEGUIUtils.h \
     src/cegui/QtnPropertyColour.h \
     src/cegui/QtnPropertyColourRect.h \
+    src/cegui/QtnPropertyGlmVec2.h \
     src/editors/anim/AnimationCodeMode.h \
     src/editors/anim/AnimationEditor.h \
     src/editors/anim/AnimationUndoCommands.h \
