@@ -43,8 +43,6 @@ protected:
     bool toActualValue(ValueTypeStore& actualValue, BaseValueType baseValue) const override
     {
         // Z axis goes through the screen, 2D objects are rotated around it
-        baseValue = std::fmodf(baseValue, 360.f);
-        if (baseValue < 0.f) baseValue += 360.f;
 #ifdef GLM_FORCE_RADIANS
         actualValue = glm::angleAxis(glm::radians(normalizeAngle(baseValue)), 0.f, 0.f, 1.f);
 #else
