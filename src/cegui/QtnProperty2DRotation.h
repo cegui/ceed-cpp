@@ -22,21 +22,37 @@ public:
 
 protected:
 
+    static float normalizeAngle(float angle)
+    {
+        angle = std::fmodf(angle, 360.f);
+        if (angle < 0.f) angle += 360.f;
+        return angle;
+    }
+
     bool fromActualValue(ValueType actualValue, BaseValueTypeStore& baseValue) const override
     {
         // TODO: support extracting a 2D angle from quaternion rotated not along Z
-        baseValue = glm::degrees(glm::angle(actualValue));
+#ifdef GLM_FORCE_RADIANS
+        baseValue = normalizeAngle(glm::degrees(glm::angle(actualValue)));
+#else
+        baseValue = normalizeAngle(glm::angle(actualValue));
+#endif
         return true;
     }
 
     bool toActualValue(ValueTypeStore& actualValue, BaseValueType baseValue) const override
     {
         // Z axis goes through the screen, 2D objects are rotated around it
-        actualValue = glm::angleAxis(glm::radians(baseValue), 0.f, 0.f, 1.f);
+        baseValue = std::fmodf(baseValue, 360.f);
+        if (baseValue < 0.f) baseValue += 360.f;
+#ifdef GLM_FORCE_RADIANS
+        actualValue = glm::angleAxis(glm::radians(normalizeAngle(baseValue)), 0.f, 0.f, 1.f);
+#else
+        actualValue = glm::angleAxis(normalizeAngle(baseValue), 0.f, 0.f, 1.f);
+#endif
         return true;
     }
 
-    /*
     bool toStrImpl(QString& str) const override
     {
         str = CEGUIUtils::stringToQString(CEGUI::PropertyHelper<glm::quat>().toString(value()));
@@ -55,7 +71,6 @@ protected:
 
         return false;
     }
-    */
 };
 
 P_PROPERTY_DECL_EQ_OPERATORS(QtnProperty2DRotationBase, glm::quat)

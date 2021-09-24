@@ -24,10 +24,7 @@ protected:
 
     bool fromActualValue(ValueType actualValue, BaseValueTypeStore& baseValue) const override
     {
-        baseValue.setRedF(actualValue.getRed());
-        baseValue.setGreenF(actualValue.getGreen());
-        baseValue.setBlueF(actualValue.getBlue());
-        baseValue.setAlphaF(actualValue.getAlpha());
+        baseValue.setRgbF(actualValue.getRed(), actualValue.getGreen(), actualValue.getBlue(), actualValue.getAlpha());
         return true;
     }
 
@@ -37,7 +34,6 @@ protected:
         return true;
     }
 
-    /*
     bool toStrImpl(QString& str) const override
     {
         str = CEGUIUtils::stringToQString(CEGUI::PropertyHelper<CEGUI::Colour>().toString(value()));
@@ -56,7 +52,6 @@ protected:
 
         return false;
     }
-    */
 };
 
 P_PROPERTY_DECL_ALL_OPERATORS(QtnPropertyColourBase, CEGUI::Colour)

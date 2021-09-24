@@ -105,16 +105,13 @@ bool LayoutMoveCommand::mergeWith(const QUndoCommand* other)
     // it might be possible in this exact scenario (no resizes) but in the generic one it's a pain
     // and can't be done consistently, so I don't even try and just merge if the paths match
 
-    if (_records.size() != otherCmd->_records.size()) return false;
+    const bool sameSet = std::is_permutation(_records.cbegin(), _records.cend(), otherCmd->_records.cbegin(), otherCmd->_records.cend(),
+        [](const Record& a, const Record& b)
+    {
+        return a.path == b.path;
+    });
 
-    QStringList paths;
-    for (const auto& rec : _records)
-        paths.push_back(rec.path);
-
-    for (const auto& rec : otherCmd->_records)
-        if (!paths.contains(rec.path)) return false;
-
-    // The same set of widgets, can merge
+    if (!sameSet) return false;
 
     for (auto& rec : _records)
     {
@@ -188,16 +185,13 @@ bool LayoutResizeCommand::mergeWith(const QUndoCommand* other)
     // it might be possible in this exact scenario (no resizes) but in the generic one it's a pain
     // and can't be done consistently, so I don't even try and just merge if the paths match
 
-    if (_records.size() != otherCmd->_records.size()) return false;
+    const bool sameSet = std::is_permutation(_records.cbegin(), _records.cend(), otherCmd->_records.cbegin(), otherCmd->_records.cend(),
+        [](const Record& a, const Record& b)
+    {
+        return a.path == b.path;
+    });
 
-    QStringList paths;
-    for (const auto& rec : _records)
-        paths.push_back(rec.path);
-
-    for (const auto& rec : otherCmd->_records)
-        if (!paths.contains(rec.path)) return false;
-
-    // The same set of widgets, can merge
+    if (!sameSet) return false;
 
     for (auto& rec : _records)
     {
@@ -468,7 +462,7 @@ bool LayoutPropertyEditCommand::mergeWith(const QUndoCommand* other)
     // Can merge only the same property
     if (_propertyName != otherCmd->_propertyName) return false;
 
-    // Multiproperty merge
+    // Multiproperty merge (one action for all targets in the multiselection)
     if (_multiChangeId > 0 && _multiChangeId == otherCmd->_multiChangeId)
     {
         for (const auto& otherRec : otherCmd->_records)
@@ -481,6 +475,38 @@ bool LayoutPropertyEditCommand::mergeWith(const QUndoCommand* other)
             if (it == _records.cend())
                 _records.push_back(otherRec);
         }
+        refreshText();
+        return true;
+    }
+
+    // Rotation changes too frequently when edit with a spinner, merge them
+    // NB: due to multiproperty merging nature the best we can do is to break merging when single/multi mode changes.
+    //     Sometimes the new multiselection may be partially merged to the previous command but it's ok for now.
+    if (_propertyName == "Rotation" && (!!_multiChangeId == !!otherCmd->_multiChangeId))
+    {
+        // If the new command contains unknown objects it can't be merged
+        for (const auto& otherRec : otherCmd->_records)
+        {
+            auto it = std::find_if(_records.begin(), _records.end(), [&otherRec](const Record& rec)
+            {
+                return rec.path == otherRec.path;
+            });
+            if (it == _records.cend()) return false;
+        }
+
+        for (const auto& otherRec : otherCmd->_records)
+        {
+            auto it = std::find_if(_records.begin(), _records.end(), [&otherRec](const Record& rec)
+            {
+                return rec.path == otherRec.path;
+            });
+
+            if (it != _records.cend())
+                it->newValue = otherRec.newValue;
+            else
+                _records.push_back(otherRec);
+        }
+
         refreshText();
         return true;
     }
@@ -589,16 +615,13 @@ bool LayoutHorizontalAlignCommand::mergeWith(const QUndoCommand* other)
     const LayoutHorizontalAlignCommand* otherCmd = dynamic_cast<const LayoutHorizontalAlignCommand*>(other);
     if (!otherCmd) return false;
 
-    if (_records.size() != otherCmd->_records.size()) return false;
+    const bool sameSet = std::is_permutation(_records.cbegin(), _records.cend(), otherCmd->_records.cbegin(), otherCmd->_records.cend(),
+        [](const Record& a, const Record& b)
+    {
+        return a.path == b.path;
+    });
 
-    QStringList paths;
-    for (const auto& rec : _records)
-        paths.push_back(rec.path);
-
-    for (const auto& rec : otherCmd->_records)
-        if (!paths.contains(rec.path)) return false;
-
-    // The same set of widgets, can merge
+    if (!sameSet) return false;
 
     _newAlignment = otherCmd->_newAlignment;
     refreshText();
@@ -664,16 +687,13 @@ bool LayoutVerticalAlignCommand::mergeWith(const QUndoCommand* other)
     const LayoutVerticalAlignCommand* otherCmd = dynamic_cast<const LayoutVerticalAlignCommand*>(other);
     if (!otherCmd) return false;
 
-    if (_records.size() != otherCmd->_records.size()) return false;
+    const bool sameSet = std::is_permutation(_records.cbegin(), _records.cend(), otherCmd->_records.cbegin(), otherCmd->_records.cend(),
+        [](const Record& a, const Record& b)
+    {
+        return a.path == b.path;
+    });
 
-    QStringList paths;
-    for (const auto& rec : _records)
-        paths.push_back(rec.path);
-
-    for (const auto& rec : otherCmd->_records)
-        if (!paths.contains(rec.path)) return false;
-
-    // The same set of widgets, can merge
+    if (!sameSet) return false;
 
     _newAlignment = otherCmd->_newAlignment;
     refreshText();
@@ -1017,12 +1037,8 @@ bool MoveInParentWidgetListCommand::mergeWith(const QUndoCommand* other)
     const MoveInParentWidgetListCommand* otherCmd = dynamic_cast<const MoveInParentWidgetListCommand*>(other);
     if (!otherCmd) return false;
 
-    if (_paths.size() != otherCmd->_paths.size()) return false;
-
-    for (const auto& rec : otherCmd->_paths)
-        if (!_paths.contains(rec)) return false;
-
-    // The same set of widgets, can merge
+    const bool sameSet = std::is_permutation(_paths.cbegin(), _paths.cend(), otherCmd->_paths.cbegin(), otherCmd->_paths.cend());
+    if (!sameSet) return false;
 
     _delta = otherCmd->_delta;
     refreshText();
