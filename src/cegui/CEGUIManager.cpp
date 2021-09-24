@@ -861,10 +861,46 @@ void CEGUIManager::initializePreviewWidgetSpecific(CEGUI::Window* widgetInstance
 }
 
 // Renders and retrieves a widget preview QImage. This is useful for various widget selection lists as a preview.
-const QImage& CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int previewWidth, int previewHeight)
+const QImage* CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int previewWidth, int previewHeight)
 {
     auto it = _widgetPreviewCache.find(widgetType);
-    if (it != _widgetPreviewCache.cend()) return it->second;
+    if (it != _widgetPreviewCache.cend()) return &it->second;
+
+    if (widgetType == "DefaultWindow")
+    {
+        QImage result(previewWidth ? previewWidth : 100, previewHeight ? previewHeight : 50, QImage::Format_ARGB32);
+        Utils::fillTransparencyWithChecker(result);
+        return &_widgetPreviewCache.emplace(widgetType, std::move(result)).first->second;
+    }
+    else if (widgetType == "DragContainer")
+    {
+        QImage result(previewWidth ? previewWidth : 100, previewHeight ? previewHeight : 50, QImage::Format_ARGB32);
+        QPainter painter(&result);
+        painter.eraseRect(result.rect());
+        painter.setBrush(Qt::DiagCrossPattern);
+        painter.drawRect(result.rect().adjusted(0, 0, -1, -1));
+        painter.end();
+        Utils::fillTransparencyWithChecker(result);
+        return &_widgetPreviewCache.emplace(widgetType, std::move(result)).first->second;
+    }
+    else if (widgetType == "HorizontalLayoutContainer")
+    {
+        QImage result(":/icons/widgets/HLC.png");
+        return &_widgetPreviewCache.emplace(widgetType, std::move(result)).first->second;
+    }
+    else if (widgetType == "VerticalLayoutContainer")
+    {
+        QImage result(":/icons/widgets/VLC.png");
+        return &_widgetPreviewCache.emplace(widgetType, std::move(result)).first->second;
+    }
+    else if (widgetType == "GridLayoutContainer")
+    {
+        QImage result(":/icons/widgets/GLC.png");
+        return &_widgetPreviewCache.emplace(widgetType, std::move(result)).first->second;
+    }
+
+    // No other skinless widgets are currently supported
+    if (widgetType.indexOf('/') < 0) return nullptr;
 
     ensureCEGUIInitialized();
 
@@ -970,7 +1006,7 @@ const QImage& CEGUIManager::getWidgetPreviewImage(const QString& widgetType, int
 
     Utils::fillTransparencyWithChecker(result);
 
-    return _widgetPreviewCache.emplace(widgetType, std::move(result)).first->second;
+    return &_widgetPreviewCache.emplace(widgetType, std::move(result)).first->second;
 }
 
 const QtnEnumInfo& CEGUIManager::enumHorizontalAlignment()

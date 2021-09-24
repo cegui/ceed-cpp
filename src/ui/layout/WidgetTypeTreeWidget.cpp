@@ -52,29 +52,45 @@ bool WidgetTypeTreeWidget::viewportEvent(QEvent* event)
             const QString fullWidgetType = hasSkin ? (skin + "/" + widgetType) : widgetType;
 
             QString tooltipText;
-            if (!hasSkin)
-                tooltipText = "This widget type has no skin and can't be previewed";
-            else if (widgetType == "TabButton")
-                tooltipText = "Can't render a preview as this is an autowidget, it requires a parent to be rendered.";
+            if (widgetType == "TabButton")
+                tooltipText += "Can't render a preview as this is an autowidget, it requires a parent to be rendered.";
             else
             {
+                if (fullWidgetType == "DefaultWindow")
+                    tooltipText += "A basic widget container without its own graphics<br/>";
+                else if (fullWidgetType == "DragContainer")
+                    tooltipText += "A widget container that can be dragged in runtime<br/>";
+                else if (fullWidgetType == "HorizontalLayoutContainer")
+                    tooltipText += "A widget container that arranges its children horizontally<br/>";
+                else if (fullWidgetType == "VerticalLayoutContainer")
+                    tooltipText += "A widget container that arranges its children vertically<br/>";
+                else if (fullWidgetType == "GridLayoutContainer")
+                    tooltipText += "A widget container that arranges its children in a grid<br/>";
+
                 try
                 {
-                    QByteArray bytes;
-                    QBuffer buffer(&bytes);
-                    buffer.open(QIODevice::WriteOnly);
-                    CEGUIManager::Instance().getWidgetPreviewImage(fullWidgetType).save(&buffer, "PNG");
-                    buffer.close();
+                    if (const QImage* preview = CEGUIManager::Instance().getWidgetPreviewImage(fullWidgetType))
+                    {
+                        QByteArray bytes;
+                        QBuffer buffer(&bytes);
+                        buffer.open(QIODevice::WriteOnly);
+                        preview->save(&buffer, "PNG");
+                        buffer.close();
 
-                    tooltipText = QString("<img src=\"data:image/png;base64,%1\" />").arg(QString(bytes.toBase64()));
+                        tooltipText += QString("<img src=\"data:image/png;base64,%1\" />").arg(QString(bytes.toBase64()));
+                    }
+                    else
+                    {
+                        tooltipText += "This widget type has no skin and can't be previewed";
+                    }
                 }
                 catch (const std::exception& e)
                 {
-                    tooltipText = e.what();
+                    tooltipText += e.what();
                 }
             }
 
-            item->setToolTip(0, QString("<small>Drag to the layout to create!</small><br />%1").arg(tooltipText));
+            item->setToolTip(0, QString("<small>Drag to the layout to create!</small><br/>%1").arg(tooltipText));
         }
     }
 

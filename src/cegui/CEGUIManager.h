@@ -48,7 +48,7 @@ public:
     bool saveFont(CEGUI::Font& font, bool addToSchemes) const;
     QStringList getAvailableImages() const;
     void getAvailableWidgetsBySkin(std::map<QString, QStringList>& out) const;
-    const QImage& getWidgetPreviewImage(const QString& widgetType, int previewWidth = 0, int previewHeight = 0);
+    const QImage* getWidgetPreviewImage(const QString& widgetType, int previewWidth = 0, int previewHeight = 0);
 
     bool syncProjectToCEGUIInstance();
     void ensureCEGUIInitialized();
