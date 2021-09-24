@@ -8,7 +8,7 @@ QT       += core gui xml
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = Editor
+TARGET = ceed
 TEMPLATE = app
 
 # The following define makes your compiler emit warnings if you use
@@ -268,7 +268,7 @@ RC_ICONS = data/icons/ceed.ico
 #MacOS: ICON = myapp.icns
 
 QMAKE_TARGET_COMPANY = "CEGUI team, Vladimir 'Niello' Orlov"
-QMAKE_TARGET_COPYRIGHT = "(c) 2019, CEGUI team, Vladimir 'Niello' Orlov"
+QMAKE_TARGET_COPYRIGHT = "(c) 2019-2021, CEGUI team, Vladimir 'Niello' Orlov"
 QMAKE_TARGET_PRODUCT = "CEED"
 QMAKE_TARGET_DESCRIPTION = "CEGUI unified editor (CEED)"
 VERSION = 1.0.0
