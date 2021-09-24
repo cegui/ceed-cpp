@@ -262,6 +262,32 @@ protected:
     std::vector<QString> _createdWidgets;
 };
 
+// This command duplicates selected widgets
+class LayoutDuplicateCommand : public QUndoCommand
+{
+public:
+
+    struct Record
+    {
+        QString parentPath;
+        QByteArray data; // To aviod reserialization on undo/redo
+        size_t childIndex;
+        QString name;
+    };
+
+    LayoutDuplicateCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records);
+
+    virtual void undo() override;
+    virtual void redo() override;
+    virtual int id() const override { return LayoutUndoCommandBase + 10; }
+
+protected:
+
+    LayoutVisualMode& _visualMode;
+    std::vector<Record> _records;
+    std::vector<QString> _createdWidgets;
+};
+
 // TThis command changes the name of the given widget
 // NB: we don't merge these commands
 class LayoutRenameCommand : public QUndoCommand

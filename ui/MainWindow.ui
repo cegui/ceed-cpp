@@ -168,6 +168,7 @@
     <addaction name="actionCut"/>
     <addaction name="actionCopy"/>
     <addaction name="actionPaste"/>
+    <addaction name="actionDuplicate"/>
     <addaction name="actionDelete"/>
     <addaction name="separator"/>
     <addaction name="actionPreferences"/>
@@ -743,6 +744,17 @@
    </property>
    <property name="toolTip">
     <string>Join CEGUI Discord server</string>
+   </property>
+  </action>
+  <action name="actionDuplicate">
+   <property name="text">
+    <string>Duplicate</string>
+   </property>
+   <property name="toolTip">
+    <string>Duplicate selection</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
    </property>
   </action>
  </widget>

@@ -30,6 +30,7 @@ public:
     virtual void copy() override;
     virtual void cut() override;
     virtual void paste() override;
+    virtual void duplicate() override;
     virtual void deleteSelected() override;
     virtual void zoomIn() override;
     virtual void zoomOut() override;

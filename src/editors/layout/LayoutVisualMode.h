@@ -40,6 +40,7 @@ public:
     bool cut();
     bool copy();
     bool paste();
+    bool duplicate();
     bool deleteSelected();
     void zoomIn();
     void zoomOut();

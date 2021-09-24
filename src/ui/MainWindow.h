@@ -45,6 +45,7 @@ public:
     QAction* getActionCut() const;
     QAction* getActionCopy() const;
     QAction* getActionPaste() const;
+    QAction* getActionDuplicate() const;
     QAction* getActionDeleteSelected() const;
     QAction* getActionZoomIn() const;
     QAction* getActionZoomOut() const;
@@ -107,6 +108,7 @@ private slots:
     void on_actionCut_triggered();
     void on_actionCopy_triggered();
     void on_actionPaste_triggered();
+    void on_actionDuplicate_triggered();
     void on_actionDelete_triggered();
     void on_actionSave_triggered();
     void on_actionSaveAs_triggered();

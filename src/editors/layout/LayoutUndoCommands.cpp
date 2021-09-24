@@ -936,6 +936,55 @@ void LayoutPasteCommand::redo()
 
 //---------------------------------------------------------------------
 
+LayoutDuplicateCommand::LayoutDuplicateCommand(LayoutVisualMode& visualMode, std::vector<Record>&& records)
+    : _visualMode(visualMode)
+    , _records(std::move(records))
+{
+    // Sort by child index descending to keep correct ordering of created widgets
+    std::sort(_records.begin(), _records.end(), [](const Record& a, const Record& b)
+    {
+        return a.childIndex > b.childIndex;
+    });
+
+    if (_records.size() == 1)
+        setText(QString("Duplicate '%1'").arg(_records[0].name));
+    else
+        setText(QString("Duplicate %1 widgets").arg(_records.size()));
+}
+
+void LayoutDuplicateCommand::undo()
+{
+    QUndoCommand::undo();
+
+    for (const QString& path : _createdWidgets)
+        _visualMode.getScene()->deleteWidgetByPath(path);
+
+    _visualMode.getScene()->updatePropertySet();
+
+    _createdWidgets.clear();
+}
+
+void LayoutDuplicateCommand::redo()
+{
+    for (auto& rec : _records)
+    {
+        auto parentManipulator = _visualMode.getScene()->getManipulatorByPath(rec.parentPath);
+
+        QDataStream stream(&rec.data, QIODevice::ReadOnly);
+        if (auto manipulator = CreateManipulatorFromDataStream(_visualMode, parentManipulator, stream, rec.childIndex + 1))
+        {
+            _createdWidgets.push_back(manipulator->getWidgetPath());
+            parentManipulator->updateFromWidget(true, true);
+        }
+    }
+
+    _visualMode.getHierarchyDockWidget()->refresh();
+
+    QUndoCommand::redo();
+}
+
+//---------------------------------------------------------------------
+
 LayoutRenameCommand::LayoutRenameCommand(LayoutVisualMode& visualMode, const QString& path, const QString& newName)
     : _visualMode(visualMode)
     , _newName(newName)

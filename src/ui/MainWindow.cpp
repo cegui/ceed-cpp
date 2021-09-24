@@ -320,6 +320,11 @@ QAction* MainWindow::getActionPaste() const
     return ui->actionPaste;
 }
 
+QAction* MainWindow::getActionDuplicate() const
+{
+    return ui->actionDuplicate;
+}
+
 QAction* MainWindow::getActionDeleteSelected() const
 {
     return ui->actionDelete;
@@ -1165,6 +1170,11 @@ void MainWindow::on_actionCopy_triggered()
 void MainWindow::on_actionPaste_triggered()
 {
     if (currentEditor) currentEditor->paste();
+}
+
+void MainWindow::on_actionDuplicate_triggered()
+{
+    if (currentEditor) currentEditor->duplicate();
 }
 
 void MainWindow::on_actionDelete_triggered()

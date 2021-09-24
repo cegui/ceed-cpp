@@ -139,6 +139,12 @@ void LayoutEditor::paste()
         visualMode->paste();
 }
 
+void LayoutEditor::duplicate()
+{
+    if (tabs.currentWidget() == visualMode)
+        visualMode->duplicate();
+}
+
 void LayoutEditor::deleteSelected()
 {
     if (tabs.currentWidget() == visualMode)

@@ -47,6 +47,7 @@ public:
     virtual void copy() {}
     virtual void cut() {}
     virtual void paste() {}
+    virtual void duplicate() { copy(); paste(); }
     virtual void deleteSelected() {}
     virtual void undo();
     virtual void redo();

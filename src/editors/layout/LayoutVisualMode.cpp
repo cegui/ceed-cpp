@@ -288,6 +288,46 @@ bool LayoutVisualMode::paste()
     return true;
 }
 
+bool LayoutVisualMode::duplicate()
+{
+    std::set<LayoutManipulator*> selectedWidgets;
+    scene->collectSelectedWidgets(selectedWidgets);
+
+    LayoutManipulator::removeNestedManipulators(selectedWidgets);
+
+    if (selectedWidgets.empty()) return false;
+
+    std::vector<LayoutDuplicateCommand::Record> records;
+
+    QByteArray bytes;
+    for (LayoutManipulator* manipulator : selectedWidgets)
+    {
+        auto parentManipulator = dynamic_cast<LayoutManipulator*>(manipulator->parentItem());
+
+        // Can't duplicate the root
+        if (!parentManipulator) continue;
+
+        QDataStream stream(&bytes, QIODevice::WriteOnly);
+        if (!CEGUIUtils::serializeWidget(*manipulator->getWidget(), stream, true))
+            return false;
+
+        if (!bytes.size()) continue;
+
+        LayoutDuplicateCommand::Record rec;
+        std::swap(rec.data, bytes);
+        rec.name = manipulator->getWidgetName();
+        rec.childIndex = manipulator->getWidgetIndexInParent();
+        rec.parentPath = parentManipulator->getWidgetPath();
+
+        records.push_back(std::move(rec));
+    }
+
+    if (!records.empty())
+        _editor.getUndoStack()->push(new LayoutDuplicateCommand(*this, std::move(records)));
+
+    return true;
+}
+
 bool LayoutVisualMode::deleteSelected()
 {
     return scene->deleteSelectedWidgets();

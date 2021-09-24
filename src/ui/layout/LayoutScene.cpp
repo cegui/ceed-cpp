@@ -72,6 +72,7 @@ void LayoutScene::setupContextMenu()
     _contextMenu->addAction(mainWindow->getActionCut());
     _contextMenu->addAction(mainWindow->getActionCopy());
     _contextMenu->addAction(mainWindow->getActionPaste());
+    _contextMenu->addAction(mainWindow->getActionDuplicate());
     _contextMenu->addSeparator();
     _contextMenu->addAction(app->getAction("layout/lock_widget"));
     _contextMenu->addAction(app->getAction("layout/unlock_widget"));

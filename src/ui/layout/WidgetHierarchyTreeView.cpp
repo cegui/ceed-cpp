@@ -106,6 +106,7 @@ void WidgetHierarchyTreeView::setupContextMenu()
     contextMenu->addAction(app->getMainWindow()->getActionCut());
     contextMenu->addAction(app->getMainWindow()->getActionCopy());
     contextMenu->addAction(app->getMainWindow()->getActionPaste());
+    contextMenu->addAction(app->getMainWindow()->getActionDuplicate());
     contextMenu->addAction(app->getMainWindow()->getActionDeleteSelected());
     contextMenu->addSeparator();
     contextMenu->addAction(actionCopyWidgetPath);
