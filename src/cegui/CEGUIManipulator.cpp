@@ -31,6 +31,8 @@
 #include "QtnProperty/Core/PropertyFloat.h"
 #include "QtnProperty/Core/PropertyDouble.h"
 #include "QtnProperty/Core/PropertyEnum.h"
+#include "QtnProperty/PropertyInt64.h"
+#include "QtnProperty/PropertyUInt64.h"
 #include "QtnProperty/Delegates/Core/PropertyDelegateQString.h"
 
 CEGUIManipulator::CEGUIManipulator(QGraphicsItem* parent, CEGUI::Window* widget)
@@ -931,10 +933,30 @@ void CEGUIManipulator::createPropertySet()
             typedProp->setDefaultValue(CEGUI::PropertyHelper<std::uint32_t>().fromString(ceguiProp->getDefault(_widget)));
             prop = typedProp;
         }
+        else if (propertyDataType == "std::uint64_t")
+        {
+            auto typedProp = new QtnPropertyUInt64(parentSet);
+            typedProp->setDefaultValue(CEGUI::PropertyHelper<std::uint64_t>().fromString(ceguiProp->getDefault(_widget)));
+            prop = typedProp;
+        }
+        else if (propertyDataType == "int16")
+        {
+            auto typedProp = new QtnPropertyInt(parentSet);
+            typedProp->setDefaultValue(CEGUI::PropertyHelper<std::int16_t>().fromString(ceguiProp->getDefault(_widget)));
+            typedProp->setMinValue(std::numeric_limits<uint16_t>().min());
+            typedProp->setMaxValue(std::numeric_limits<uint16_t>().max());
+            prop = typedProp;
+        }
         else if (propertyDataType == "int32")
         {
             auto typedProp = new QtnPropertyInt(parentSet);
             typedProp->setDefaultValue(CEGUI::PropertyHelper<std::int32_t>().fromString(ceguiProp->getDefault(_widget)));
+            prop = typedProp;
+        }
+        else if (propertyDataType == "int64")
+        {
+            auto typedProp = new QtnPropertyInt64(parentSet);
+            typedProp->setDefaultValue(CEGUI::PropertyHelper<std::int64_t>().fromString(ceguiProp->getDefault(_widget)));
             prop = typedProp;
         }
         else if (propertyDataType == "float")

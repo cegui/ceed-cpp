@@ -127,6 +127,7 @@ HEADERS += \
     src/cegui/QtnPropertyColour.h \
     src/cegui/QtnPropertyColourRect.h \
     src/cegui/QtnPropertyGlmVec2.h \
+    src/cegui/QtnPropertyGlmVec3.h \
     src/cegui/QtnPropertyRectf.h \
     src/cegui/QtnPropertySizef.h \
     src/editors/anim/AnimationCodeMode.h \
