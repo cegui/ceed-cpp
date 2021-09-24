@@ -52,6 +52,7 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     actionAbsoluteIntegerMode = app->getAction("layout/abs_integers_mode");
     actionSnapGrid = app->getAction("layout/snap_grid");
     actionScreenshot = app->getAction("layout/screenshot");
+    actionOpenScreenshotFolder = app->getAction("layout/open_screenshot_folder");
     actionSelectParent = app->getAction("layout/select_parent");
     actionAlignHLeft = app->getAction("layout/align_hleft");
     actionAlignHCenter = app->getAction("layout/align_hcentre");
@@ -163,6 +164,7 @@ void LayoutVisualMode::rebuildEditorMenu(QMenu* editorMenu)
     editorMenu->addAction(actionSelectParent);
     editorMenu->addSeparator();
     editorMenu->addAction(actionScreenshot);
+    editorMenu->addAction(actionOpenScreenshotFolder);
     editorMenu->addSeparator();
     editorMenu->addAction(actionAlignHLeft);
     editorMenu->addAction(actionAlignHCenter);
@@ -193,6 +195,7 @@ void LayoutVisualMode::createActiveStateConnections()
 {
     _activeStateConnections.push_back(connect(hierarchyDockWidget, &WidgetHierarchyDockWidget::deleteRequested, scene, &LayoutScene::deleteSelectedWidgets));
     _activeStateConnections.push_back(connect(actionScreenshot, &QAction::triggered, this, &LayoutVisualMode::takeScreenshot));
+    _activeStateConnections.push_back(connect(actionOpenScreenshotFolder, &QAction::triggered, this, &LayoutVisualMode::openScreenshotFolder));
     _activeStateConnections.push_back(connect(actionSelectParent, &QAction::triggered, scene, &LayoutScene::selectParent));
     _activeStateConnections.push_back(connect(actionAlignHLeft, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Left); }));
     _activeStateConnections.push_back(connect(actionAlignHCenter, &QAction::triggered, [this]() { scene->alignSelectionHorizontally(CEGUI::HorizontalAlignment::Centre); }));
@@ -563,4 +566,12 @@ void LayoutVisualMode::takeScreenshot()
     }
 
     QApplication::clipboard()->setMimeData(data);
+}
+
+void LayoutVisualMode::openScreenshotFolder()
+{
+    // TODO: add project subfolder (need name), optional through settings
+    const QDir dir(QDir(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)).filePath("CEED"));
+    if (!dir.exists()) dir.mkpath(".");
+    Utils::showInGraphicalShell(dir.path());
 }

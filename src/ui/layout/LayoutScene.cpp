@@ -81,6 +81,7 @@ void LayoutScene::setupContextMenu()
     _contextMenu->addAction(app->getAction("layout/select_parent"));
     _contextMenu->addSeparator();
     _contextMenu->addAction(app->getAction("layout/screenshot"));
+    _contextMenu->addAction(app->getAction("layout/open_screenshot_folder"));
     _contextMenu->addSeparator();
 
     auto actionAnchorPresets = new QAction(QIcon(":/icons/anchors/SelfBottom.png"), "Anchor Presets", _contextMenu);

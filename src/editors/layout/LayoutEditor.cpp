@@ -306,6 +306,9 @@ void LayoutEditor::createActions(Application& app)
                        "Takes a screenshot of the whole scene in 100% zoom and without HUD items.",
                        QIcon(":/icons/actions/screenshot.png"), QKeySequence(Qt::Key_Pause));
 
+    app.registerAction("layout", "open_screenshot_folder", "Open Screenshot Folder",
+                       "Opens a folder where CEED saves screenshots.");
+
     app.registerAction("layout", "select_parent", "Select &Parent",
                        "Select an immediate parent of the widget.",
                        QIcon(":/icons/layout_editing/SelectParent.png"), QKeySequence(Qt::Key_Backspace));

@@ -59,6 +59,7 @@ public:
 public slots:
 
     void takeScreenshot();
+    void openScreenshotFolder();
 
 protected:
 
@@ -74,6 +75,7 @@ protected:
     WidgetHierarchyDockWidget* hierarchyDockWidget = nullptr;
 
     QAction* actionScreenshot = nullptr;
+    QAction* actionOpenScreenshotFolder = nullptr;
     QAction* actionSelectParent = nullptr;
     QAction* actionAlignHLeft = nullptr;
     QAction* actionAlignHCenter = nullptr;
