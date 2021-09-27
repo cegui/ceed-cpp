@@ -966,6 +966,8 @@ void LayoutDuplicateCommand::undo()
 
 void LayoutDuplicateCommand::redo()
 {
+    _visualMode.getScene()->clearSelection();
+
     for (auto& rec : _records)
     {
         auto parentManipulator = _visualMode.getScene()->getManipulatorByPath(rec.parentPath);
