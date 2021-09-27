@@ -21,6 +21,7 @@ private:
 
     virtual QString getFileTypesDescription() const override { return QString(); }
     virtual QStringList getFileExtensions() const override { return QStringList(); }
+    virtual QString getDefaultFolder(CEGUIProject* /*project*/) const override { return QString(); }
 
     QScrollArea* widget = nullptr;
 };

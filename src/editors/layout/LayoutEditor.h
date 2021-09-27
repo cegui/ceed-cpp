@@ -47,6 +47,7 @@ protected:
 
     virtual QString getFileTypesDescription() const override;
     virtual QStringList getFileExtensions() const override;
+    virtual QString getDefaultFolder(CEGUIProject* project) const override;
 
     virtual void getRawData(QByteArray& outRawData) override;
 

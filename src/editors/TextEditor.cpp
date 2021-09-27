@@ -141,6 +141,11 @@ QStringList TextEditor::getFileExtensions() const
     return TextEditorFactory::textFileExtensions();
 }
 
+QString TextEditor::getDefaultFolder(CEGUIProject* project) const
+{
+    return "";
+}
+
 void TextEditor::updateFont()
 {
     QFont font("Courier New", fontSize);

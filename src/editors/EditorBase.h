@@ -11,6 +11,7 @@ class QWidget;
 class QUndoStack;
 class QFileSystemWatcher;
 class MainWindow;
+class CEGUIProject;
 
 typedef std::unique_ptr<class EditorBase> EditorBasePtr;
 
@@ -68,6 +69,7 @@ public:
 
     virtual QString getFileTypesDescription() const = 0;
     virtual QStringList getFileExtensions() const = 0;
+    virtual QString getDefaultFolder(CEGUIProject* project) const = 0;
 
 signals:
 

@@ -4,6 +4,7 @@
 #include "src/editors/looknfeel/LookNFeelPreviewMode.h"
 #include "src/cegui/CEGUIManager.h"
 #include "src/cegui/CEGUIUtils.h"
+#include "src/cegui/CEGUIProject.h"
 #include "src/util/DismissableMessage.h"
 #include "src/util/Settings.h"
 #include <CEGUI/falagard/WidgetLookManager.h>
@@ -146,6 +147,11 @@ QString LookNFeelEditor::getFileTypesDescription() const
 QStringList LookNFeelEditor::getFileExtensions() const
 {
     return LookNFeelEditorFactory::lnfFileExtensions();
+}
+
+QString LookNFeelEditor::getDefaultFolder(CEGUIProject* project) const
+{
+    return project ? project->looknfeelsPath : "";
 }
 
 void LookNFeelEditor::getRawData(QByteArray& outRawData)

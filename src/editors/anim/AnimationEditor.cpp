@@ -28,6 +28,11 @@ QStringList AnimationEditor::getFileExtensions() const
     return AnimationEditorFactory::animationFileExtensions();
 }
 
+QString AnimationEditor::getDefaultFolder(CEGUIProject* project) const
+{
+    return "";
+}
+
 /*
     def initialise(self, mainWindow):
         super(AnimationListTabbedEditor, self).initialise(mainWindow)

@@ -8,6 +8,7 @@
 #include "src/ui/imageset/ImagesetEditorDockWidget.h"
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/MainWindow.h"
+#include "src/cegui/CEGUIProject.h"
 #include "src/Application.h"
 #include "qmenu.h"
 #include "qdom.h"
@@ -157,6 +158,11 @@ QString ImagesetEditor::getFileTypesDescription() const
 QStringList ImagesetEditor::getFileExtensions() const
 {
     return ImagesetEditorFactory::imagesetFileExtensions();
+}
+
+QString ImagesetEditor::getDefaultFolder(CEGUIProject* project) const
+{
+    return project ? project->imagesetsPath : "";
 }
 
 void ImagesetEditor::getRawData(QByteArray& outRawData)

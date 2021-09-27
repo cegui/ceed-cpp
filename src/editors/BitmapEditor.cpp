@@ -22,6 +22,11 @@ QStringList BitmapEditor::getFileExtensions() const
     return BitmapEditorFactory::bitmapFileExtensions();
 }
 
+QString BitmapEditor::getDefaultFolder(CEGUIProject* project) const
+{
+    return "";
+}
+
 //---------------------------------------------------------------------
 
 QString BitmapEditorFactory::bitmapFileTypesDescription()

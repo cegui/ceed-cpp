@@ -179,6 +179,11 @@ QStringList LayoutEditor::getFileExtensions() const
     return LayoutEditorFactory::layoutFileExtensions();
 }
 
+QString LayoutEditor::getDefaultFolder(CEGUIProject* project) const
+{
+    return project ? project->layoutsPath : "";
+}
+
 void LayoutEditor::getRawData(QByteArray& outRawData)
 {
     // If user saved in code mode, we process the code by propagating it to visual

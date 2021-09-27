@@ -257,8 +257,8 @@ bool EditorBase::saveAs(const QString& targetPath)
         // Editor target is new, ask for a file location and name
 
         QString defaultDir;
-        if (CEGUIManager::Instance().isProjectLoaded())
-            defaultDir = CEGUIManager::Instance().getCurrentProject()->getAbsolutePathOf("");
+        if (auto project = CEGUIManager::Instance().getCurrentProject())
+            defaultDir = project->getAbsolutePathOf(getDefaultFolder(project));
 
         QStringList ext = getFileExtensions();
 
