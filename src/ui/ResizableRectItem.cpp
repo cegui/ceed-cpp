@@ -74,7 +74,7 @@ void ResizableRectItem::setResizingEnabled(bool enabled)
     }
 }
 
-// FIXME: dangerous overloading!
+// FIXME: dangerous overloading! Can use itemChange reaction?
 void ResizableRectItem::setRect(QRectF newRect)
 {
     if (newRect != rect()) _handlesDirty = true;

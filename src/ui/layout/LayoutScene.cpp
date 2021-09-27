@@ -1415,7 +1415,20 @@ void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
     // If the root manipulator is in place the QGraphicsScene machinery will take care of drag n drop
     // the graphics items (manipulators in fact) have that implemented already
     if (_rootManipulator)
+    {
+        // FIXME QTBUG: Qt 5.15.2 QGraphicsScene does not update some internal data and the next item
+        // dragging after Ctrl+Drag reparenting uses wrong mouse offset. A click fixes that so we emulate it.
+        if (event->mimeData()->hasFormat("application/x-ceed-widget-paths"))
+        {
+            QGraphicsSceneMouseEvent mouseEvent(QGraphicsSceneMouseEvent::GraphicsSceneMouseRelease);
+            mouseEvent.setPos(event->pos());
+            mouseEvent.setScenePos(event->scenePos());
+            mouseEvent.setButton(Qt::LeftButton);
+            CEGUIGraphicsScene::mouseReleaseEvent(&mouseEvent);
+        }
+
         CEGUIGraphicsScene::dragEnterEvent(event);
+    }
     else
     {
         // Otherwise we should accept a new root widget to the empty layout if it's a new widget
