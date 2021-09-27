@@ -124,13 +124,13 @@ void LayoutEditor::deactivate(MainWindow& mainWindow)
 
 void LayoutEditor::saveState(QSettings& settings, const QString& rootPath) const
 {
-    settings.setValue(rootPath + "/currentSceneRect", visualMode->getSceneRect());
+    settings.setValue(rootPath + "/currentSceneTfm", visualMode->getSceneTransform());
 }
 
 void LayoutEditor::restoreState(const QSettings& settings, const QString& rootPath)
 {
-    if (settings.contains(rootPath + "/currentSceneRect"))
-        visualMode->setSceneRect(settings.value(rootPath + "/currentSceneRect").toRectF());
+    if (settings.contains(rootPath + "/currentSceneTfm"))
+        visualMode->setSceneTransform(settings.value(rootPath + "/currentSceneTfm").value<QTransform>());
 }
 
 void LayoutEditor::copy()

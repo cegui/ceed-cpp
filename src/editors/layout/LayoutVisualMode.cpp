@@ -348,14 +348,14 @@ void LayoutVisualMode::zoomReset()
     ceguiWidget->getView()->zoomReset();
 }
 
-QRectF LayoutVisualMode::getSceneRect() const
+QTransform LayoutVisualMode::getSceneTransform() const
 {
-    return ceguiWidget->getView()->sceneRect();
+    return ceguiWidget->getView()->transform();
 }
 
-void LayoutVisualMode::setSceneRect(const QRectF& rect)
+void LayoutVisualMode::setSceneTransform(const QTransform& tfm)
 {
-    ceguiWidget->getView()->setSceneRect(rect);
+    ceguiWidget->getView()->setTransform(tfm);
 }
 
 // NB: paths must not contain children of any contained widget
