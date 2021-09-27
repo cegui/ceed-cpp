@@ -14,11 +14,12 @@
 #include "src/ui/layout/CreateWidgetDockWidget.h"
 #include "src/ui/layout/LayoutManipulator.h"
 #include "src/Application.h"
-#include "qmenu.h"
-#include "qtoolbar.h"
-#include "qmessagebox.h"
-#include "qfileinfo.h"
-#include "QDir"
+#include <qmenu.h>
+#include <qtoolbar.h>
+#include <qmessagebox.h>
+#include <qsettings.h>
+#include <qfileinfo.h>
+#include <QDir>
 #include <CEGUI/WindowManager.h>
 
 LayoutEditor::LayoutEditor(const QString& filePath)
@@ -119,6 +120,17 @@ void LayoutEditor::deactivate(MainWindow& mainWindow)
     mainWindow.removeToolBar(mainWindow.getToolbar("Layout"));
 
     MultiModeEditor::deactivate(mainWindow);
+}
+
+void LayoutEditor::saveState(QSettings& settings, const QString& rootPath) const
+{
+    settings.setValue(rootPath + "/currentSceneRect", visualMode->getSceneRect());
+}
+
+void LayoutEditor::restoreState(const QSettings& settings, const QString& rootPath)
+{
+    if (settings.contains(rootPath + "/currentSceneRect"))
+        visualMode->setSceneRect(settings.value(rootPath + "/currentSceneRect").toRectF());
 }
 
 void LayoutEditor::copy()

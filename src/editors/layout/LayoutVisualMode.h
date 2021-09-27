@@ -45,6 +45,8 @@ public:
     void zoomIn();
     void zoomOut();
     void zoomReset();
+    QRectF getSceneRect() const;
+    void setSceneRect(const QRectF& rect);
     bool moveWidgetsInHierarchy(const QStringList& paths, const LayoutManipulator* newParentManipulator, size_t newChildIndex);
 
     LayoutScene* getScene() const { return scene; }

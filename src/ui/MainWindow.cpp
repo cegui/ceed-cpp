@@ -486,7 +486,10 @@ void MainWindow::loadProject(const QString& path)
         }
 
         if (settings->contains(key + "/currentTab"))
+        {
             activateEditorTabByFilePath(currProject->getAbsolutePathOf(settings->value(key + "/currentTab").toString()));
+            if (currentEditor) currentEditor->restoreState(*settings, key);
+        }
     }
 }
 
@@ -1254,7 +1257,10 @@ bool MainWindow::on_actionCloseProject_triggered()
                 const auto filePath = currProject->getRelativePathOf(QDir::fromNativeSeparators(QDir::cleanPath(editor->getFilePath())));
                 openedTabs.append(filePath);
                 if (editor == currentEditor)
+                {
                     settings->setValue(key + "/currentTab", filePath);
+                    currentEditor->saveState(*settings, key);
+                }
             }
         }
 

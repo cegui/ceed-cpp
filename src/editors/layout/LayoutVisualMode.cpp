@@ -348,6 +348,16 @@ void LayoutVisualMode::zoomReset()
     ceguiWidget->getView()->zoomReset();
 }
 
+QRectF LayoutVisualMode::getSceneRect() const
+{
+    return ceguiWidget->getView()->sceneRect();
+}
+
+void LayoutVisualMode::setSceneRect(const QRectF& rect)
+{
+    ceguiWidget->getView()->setSceneRect(rect);
+}
+
 // NB: paths must not contain children of any contained widget
 bool LayoutVisualMode::moveWidgetsInHierarchy(const QStringList& paths, const LayoutManipulator* newParentManipulator, size_t newChildIndex)
 {

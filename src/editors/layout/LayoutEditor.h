@@ -25,6 +25,8 @@ public:
     virtual void initialize() override;
     virtual void activate(MainWindow& mainWindow) override;
     virtual void deactivate(MainWindow& mainWindow) override;
+    virtual void saveState(QSettings& settings, const QString& rootPath) const override;
+    virtual void restoreState(const QSettings& settings, const QString& rootPath) override;
 
     // Application commands implementation
     virtual void copy() override;

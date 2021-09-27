@@ -10,6 +10,7 @@
 class QWidget;
 class QUndoStack;
 class QFileSystemWatcher;
+class QSettings;
 class MainWindow;
 class CEGUIProject;
 
@@ -36,6 +37,8 @@ public:
     virtual void finalize();
     virtual void activate(MainWindow& mainWindow);
     virtual void deactivate(MainWindow& mainWindow);
+    virtual void saveState(QSettings& /*settings*/, const QString& /*rootPath*/) const {}
+    virtual void restoreState(const QSettings& /*settings*/, const QString& /*rootPath*/) {}
     void reloadData();
     void destroy();
 
