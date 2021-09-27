@@ -724,8 +724,12 @@ void LayoutScene::onManipulatorUpdatedFromWidget(LayoutManipulator* manipulator)
 
 void LayoutScene::onManipulatorDragEnter(LayoutManipulator* manipulator)
 {
-    _dragDropTarget =  manipulator;
-    updateStatusMessage();
+    if (_dragDropTarget != manipulator)
+    {
+        _dragDropTarget =  manipulator;
+        updateStatusMessage();
+        updateAnchorItems(nullptr);
+    }
 }
 
 void LayoutScene::onManipulatorDragLeave(LayoutManipulator* manipulator)
@@ -734,6 +738,7 @@ void LayoutScene::onManipulatorDragLeave(LayoutManipulator* manipulator)
     {
         _dragDropTarget = nullptr;
         updateStatusMessage();
+        updateAnchorItems(nullptr);
     }
 }
 
@@ -1029,7 +1034,7 @@ void LayoutScene::updateAnchorItems(QGraphicsItem* movedItem)
     if (!_anchorParentRect) return;
 
     Application* app = qobject_cast<Application*>(qApp);
-    bool showAnchors = (_anchorTarget != nullptr && app->getAction("layout/show_anchors")->isChecked());
+    bool showAnchors = (_anchorTarget && !_dragDropTarget && app->getAction("layout/show_anchors")->isChecked());
 
     const bool showPosAnchors = showAnchors && (!_anchorTarget->isInLayoutContainer());
     const bool showSizeAnchors = showAnchors && !_anchorTarget->isLayoutContainer();

@@ -473,8 +473,13 @@ void LayoutManipulator::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
     if (event->mimeData()->hasFormat("application/x-ceed-widget-type") ||
         event->mimeData()->hasFormat("application/x-ceed-widget-paths"))
     {
+        QPen pen(Qt::PenStyle::DashLine);
+        pen.setColor(Qt::white);
+        pen.setWidth(2);
+        pen.setCosmetic(true);
+        setPen(pen);
+
         event->acceptProposedAction();
-        setPen(QPen(QColor(255, 255, 0)));
         _visualMode.getScene()->onManipulatorDragEnter(this);
     }
     else
