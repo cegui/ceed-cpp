@@ -30,6 +30,7 @@ public:
     void setViewFeatures(bool wheelZoom = false, bool middleButtonScroll = false, bool continuousRendering = true);
     void setResolution(int width, int height);
     void setInputEnabled(bool enable);
+    void updateZoomText();
 
 protected slots:
 

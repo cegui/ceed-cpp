@@ -20,11 +20,10 @@ CEGUIWidget::CEGUIWidget(QWidget *parent) :
         ui->lblCursorPosition->setText(text.arg(x).arg(y));
     });
 
-    ui->lblZoom->setText("Zoom: 100%");
-    connect(ui->view, &ResizableGraphicsView::zoomChanged, [this](qreal factor)
+    updateZoomText();
+    connect(ui->view, &ResizableGraphicsView::zoomChanged, [this](qreal /*factor*/)
     {
-        QString text("Zoom: %1%");
-        ui->lblZoom->setText(text.arg(static_cast<int>(factor * 100.0)));
+        updateZoomText();
     });
 
     ui->resolutionBox->installEventFilter(this);
@@ -93,6 +92,15 @@ void CEGUIWidget::setInputEnabled(bool enable)
 {
     if (ui->view)
         ui->view->injectInput(enable);
+}
+
+void CEGUIWidget::updateZoomText()
+{
+    // We use the fact that our view is never rotated or sheared, so diagonal contains the scale
+    // TODO: use SRT decomposition for stability!
+    //assert(ui->view->transform().type() == QTransform::TxScale);
+    QString text("Zoom: %1%");
+    ui->lblZoom->setText(text.arg(static_cast<int>(ui->view->transform().m11() * 100.0)));
 }
 
 void CEGUIWidget::on_debugInfoButton_clicked()

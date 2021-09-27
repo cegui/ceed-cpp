@@ -348,14 +348,10 @@ void LayoutVisualMode::zoomReset()
     ceguiWidget->getView()->zoomReset();
 }
 
-QTransform LayoutVisualMode::getSceneTransform() const
-{
-    return ceguiWidget->getView()->transform();
-}
-
 void LayoutVisualMode::setSceneTransform(const QTransform& tfm)
 {
     ceguiWidget->getView()->setTransform(tfm);
+    ceguiWidget->updateZoomText();
 }
 
 // NB: paths must not contain children of any contained widget
@@ -475,6 +471,11 @@ bool LayoutVisualMode::moveWidgetsInHierarchy(const QStringList& paths, const La
 
     getEditor().getUndoStack()->push(new LayoutMoveInHierarchyCommand(*this, std::move(records), newParentManipulator->getWidgetPath()));
     return true;
+}
+
+CEGUIGraphicsView* LayoutVisualMode::getView() const
+{
+    return ceguiWidget->getView();
 }
 
 // Retrieves a (cached) snap grid brush

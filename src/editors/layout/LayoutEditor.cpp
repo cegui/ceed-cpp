@@ -10,12 +10,14 @@
 #include "src/util/SettingsSection.h"
 #include "src/util/SettingsEntry.h"
 #include "src/ui/MainWindow.h"
+#include "src/ui/CEGUIGraphicsView.h"
 #include "src/ui/layout/WidgetHierarchyDockWidget.h"
 #include "src/ui/layout/CreateWidgetDockWidget.h"
 #include "src/ui/layout/LayoutManipulator.h"
 #include "src/Application.h"
 #include <qmenu.h>
 #include <qtoolbar.h>
+#include <qscrollbar.h>
 #include <qmessagebox.h>
 #include <qsettings.h>
 #include <qfileinfo.h>
@@ -124,13 +126,27 @@ void LayoutEditor::deactivate(MainWindow& mainWindow)
 
 void LayoutEditor::saveState(QSettings& settings, const QString& rootPath) const
 {
-    settings.setValue(rootPath + "/currentSceneTfm", visualMode->getSceneTransform());
+    if (auto view = visualMode->getView())
+    {
+        settings.setValue(rootPath + "/currentSceneTfm", view->transform());
+        settings.setValue(rootPath + "/currentSceneOffset", QPoint(view->horizontalScrollBar()->value(), view->verticalScrollBar()->value()));
+    }
 }
 
 void LayoutEditor::restoreState(const QSettings& settings, const QString& rootPath)
 {
-    if (settings.contains(rootPath + "/currentSceneTfm"))
-        visualMode->setSceneTransform(settings.value(rootPath + "/currentSceneTfm").value<QTransform>());
+    if (auto view = visualMode->getView())
+    {
+        if (settings.contains(rootPath + "/currentSceneTfm"))
+            visualMode->setSceneTransform(settings.value(rootPath + "/currentSceneTfm").value<QTransform>());
+
+        if (settings.contains(rootPath + "/currentSceneOffset"))
+        {
+            const auto offset = settings.value(rootPath + "/currentSceneOffset").toPoint();
+            view->horizontalScrollBar()->setValue(offset.x());
+            view->verticalScrollBar()->setValue(offset.y());
+        }
+    }
 }
 
 void LayoutEditor::copy()

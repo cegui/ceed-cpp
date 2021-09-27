@@ -15,6 +15,7 @@ class LayoutEditor;
 class LayoutScene;
 class LayoutManipulator;
 class CEGUIWidget;
+class CEGUIGraphicsView;
 class CreateWidgetDockWidget;
 class WidgetHierarchyDockWidget;
 class QDockWidget;
@@ -45,11 +46,11 @@ public:
     void zoomIn();
     void zoomOut();
     void zoomReset();
-    QTransform getSceneTransform() const;
     void setSceneTransform(const QTransform& tfm);
     bool moveWidgetsInHierarchy(const QStringList& paths, const LayoutManipulator* newParentManipulator, size_t newChildIndex);
 
     LayoutScene* getScene() const { return scene; }
+    CEGUIGraphicsView* getView() const;
     CreateWidgetDockWidget* getCreateWidgetDockWidget() const { return createWidgetDockWidget; }
     WidgetHierarchyDockWidget* getHierarchyDockWidget() const { return hierarchyDockWidget; }
     QAction* getAbsoluteModeAction() const { return actionAbsoluteMode; }
