@@ -22,7 +22,7 @@ QStringList BitmapEditor::getFileExtensions() const
     return BitmapEditorFactory::bitmapFileExtensions();
 }
 
-QString BitmapEditor::getDefaultFolder(CEGUIProject* project) const
+QString BitmapEditor::getDefaultFolder(CEGUIProject* /*project*/) const
 {
     return "";
 }

@@ -141,7 +141,7 @@ QStringList TextEditor::getFileExtensions() const
     return TextEditorFactory::textFileExtensions();
 }
 
-QString TextEditor::getDefaultFolder(CEGUIProject* project) const
+QString TextEditor::getDefaultFolder(CEGUIProject* /*project*/) const
 {
     return "";
 }

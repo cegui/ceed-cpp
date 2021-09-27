@@ -28,7 +28,7 @@ QStringList AnimationEditor::getFileExtensions() const
     return AnimationEditorFactory::animationFileExtensions();
 }
 
-QString AnimationEditor::getDefaultFolder(CEGUIProject* project) const
+QString AnimationEditor::getDefaultFolder(CEGUIProject* /*project*/) const
 {
     return "";
 }
