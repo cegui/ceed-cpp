@@ -530,10 +530,6 @@ void LayoutManipulator::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
                 selectedWidgets.erase(this); // Will add to stream manually
             }
 
-            mouseReleaseEventSelected();
-            for (LayoutManipulator* manipulator : selectedWidgets)
-                manipulator->mouseReleaseEventSelected();
-
             QByteArray bytes;
             QDataStream stream(&bytes, QIODevice::WriteOnly);
 

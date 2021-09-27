@@ -8,6 +8,7 @@
 #include "src/ui/layout/LayoutContainerHandle.h"
 #include "src/ui/NumericValueItem.h"
 #include "src/ui/ResizingHandle.h"
+#include "src/ui/ResizableGraphicsView.h"
 #include "src/editors/layout/LayoutVisualMode.h"
 #include "src/editors/layout/LayoutUndoCommands.h"
 #include "src/cegui/CEGUIManager.h" //!!!for OpenGL context! TODO: encapsulate?
@@ -1418,13 +1419,14 @@ void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
     {
         // FIXME QTBUG: Qt 5.15.2 QGraphicsScene does not update some internal data and the next item
         // dragging after Ctrl+Drag reparenting uses wrong mouse offset. A click fixes that so we emulate it.
-        if (event->mimeData()->hasFormat("application/x-ceed-widget-paths"))
+        // This also does the job of finalizing movement and resizing of items so that undo commands are created.
+        if (event->source() && event->mimeData()->hasFormat("application/x-ceed-widget-paths"))
         {
-            QGraphicsSceneMouseEvent mouseEvent(QGraphicsSceneMouseEvent::GraphicsSceneMouseRelease);
-            mouseEvent.setPos(event->pos());
-            mouseEvent.setScenePos(event->scenePos());
-            mouseEvent.setButton(Qt::LeftButton);
-            CEGUIGraphicsScene::mouseReleaseEvent(&mouseEvent);
+            if (auto view = dynamic_cast<ResizableGraphicsView*>(event->source()->parentWidget()))
+            {
+                QMouseEvent mouseEvent(QMouseEvent::MouseButtonRelease, view->mapFromScene(event->scenePos()), Qt::LeftButton, 0, Qt::NoModifier);
+                view->mouseReleaseEvent(&mouseEvent);
+            }
         }
 
         CEGUIGraphicsScene::dragEnterEvent(event);
