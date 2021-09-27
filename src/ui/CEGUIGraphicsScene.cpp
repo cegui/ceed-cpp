@@ -194,6 +194,13 @@ void CEGUIGraphicsScene::mousePressEvent(QGraphicsSceneMouseEvent* event)
         return;
     }
 
+    // Accept right button click to preserve selected items for the context menu
+    if (event->button() == Qt::RightButton)
+    {
+        event->accept();
+        return;
+    }
+
     QGraphicsScene::mousePressEvent(event);
 }
 
