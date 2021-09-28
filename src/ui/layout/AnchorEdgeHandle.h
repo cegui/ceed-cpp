@@ -12,6 +12,9 @@ public:
 
 protected:
 
+    virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
+    virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
+
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
 
     virtual void onMoving(QPointF& newPos) override;

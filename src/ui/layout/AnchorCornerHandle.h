@@ -17,6 +17,7 @@ protected:
 
     void updatePen(bool hovered);
     void updateBrush();
+    void updateStatusMessage(bool newMoveOpposite);
 
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
     virtual void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
