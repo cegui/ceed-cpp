@@ -1424,7 +1424,7 @@ void LayoutScene::dragEnterEvent(QGraphicsSceneDragDropEvent* event)
         {
             if (auto view = dynamic_cast<ResizableGraphicsView*>(event->source()->parentWidget()))
             {
-                QMouseEvent mouseEvent(QMouseEvent::MouseButtonRelease, view->mapFromScene(event->scenePos()), Qt::LeftButton, 0, Qt::NoModifier);
+                QMouseEvent mouseEvent(QMouseEvent::MouseButtonRelease, view->mapFromScene(event->scenePos()), Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
                 view->mouseReleaseEvent(&mouseEvent);
             }
         }

@@ -224,7 +224,7 @@ void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs
     {
         // FIXME: RMB click still selects an item, WTF?
         // setVisible(false) prevents dropping child widgets into the tab and also tab deletion
-        setAcceptedMouseButtons(0);
+        setAcceptedMouseButtons(Qt::NoButton);
         //currFlags &= ~ItemIsSelectable;
         //currFlags &= ~ItemIsFocusable;
 
