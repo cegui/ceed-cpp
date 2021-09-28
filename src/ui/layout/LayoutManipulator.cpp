@@ -503,7 +503,10 @@ void LayoutManipulator::dragLeaveEvent(QGraphicsSceneDragDropEvent* event)
 void LayoutManipulator::dropEvent(QGraphicsSceneDragDropEvent* event)
 {
     if (dropChildren(event))
+    {
         event->acceptProposedAction();
+        event->widget()->setFocus();
+    }
     else
         event->ignore();
 }

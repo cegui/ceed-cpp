@@ -832,6 +832,16 @@ void LayoutScene::onSelectionChanged()
     // Only one selected anchor item at a time is allowed
     QGraphicsItem* selectedAnchorItem = getCurrentAnchorItem();
 
+    // Update status message. Don't interfere with an anchor handle's message.
+    if (!selectedAnchorItem)
+    {
+        if (selectedWidgets.empty())
+            qobject_cast<Application*>(qApp)->getMainWindow()->setStatusMessage("");
+        else
+            qobject_cast<Application*>(qApp)->getMainWindow()->setStatusMessage(
+                        "<b>Arrows</b> to move, <b>Shift+Arrows</b> to resize by 1 px. Hold <b>Ctrl</b> for 10 px step.");
+    }
+
     // Update anchor target
     // NB: some code treats _anchorTarget as a single selected item for convenience
 
@@ -1508,6 +1518,7 @@ void LayoutScene::dropEvent(QGraphicsSceneDragDropEvent* event)
         {
             _visualMode.getEditor().getUndoStack()->push(new LayoutCreateCommand(_visualMode, "", data.data(), event->scenePos()));
             event->acceptProposedAction();
+            event->widget()->setFocus();
         }
         else
         {
