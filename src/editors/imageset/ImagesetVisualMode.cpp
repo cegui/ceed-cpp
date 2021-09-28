@@ -461,6 +461,13 @@ void ImagesetVisualMode::slot_selectionChanged()
         ImageEntry* entry = dynamic_cast<ImageEntry*>(selectedItems[0]);
         dockWidget->scrollToEntry(entry);
     }
+
+    // Update status message. Don't interfere with an anchor handle's message.
+    if (selectedItems.empty())
+        qobject_cast<Application*>(qApp)->getMainWindow()->setStatusMessage("");
+    else
+        qobject_cast<Application*>(qApp)->getMainWindow()->setStatusMessage(
+                    "<b>Arrows</b> to move, <b>Shift+Arrows</b> to resize by 1 px. Hold <b>Ctrl</b> for 10 px step.");
 }
 
 void ImagesetVisualMode::slot_toggleEditOffsets(bool enabled)
