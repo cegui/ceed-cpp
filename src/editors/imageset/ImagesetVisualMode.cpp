@@ -2,6 +2,7 @@
 #include "src/editors/imageset/ImagesetUndoCommands.h"
 #include "src/util/Settings.h"
 #include "src/util/SettingsCategory.h"
+#include "src/util/SettingsEntry.h"
 #include "src/ui/imageset/ImagesetEntry.h"
 #include "src/ui/imageset/ImageEntry.h"
 #include "src/ui/imageset/ImageOffsetMark.h"
@@ -90,8 +91,14 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
     contextMenu->addSeparator();
     contextMenu->addAction(editOffsetsAction);
 
+    initViewHelpText();
+
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, &ImagesetVisualMode::customContextMenuRequested, this, &ImagesetVisualMode::slot_customContextMenu);
+    connect(settings->getEntry("global/navigation/ctrl_zoom"), &SettingsEntry::valueChanged, [this]()
+    {
+        initViewHelpText();
+    });
 }
 
 ImagesetVisualMode::~ImagesetVisualMode()
@@ -102,6 +109,16 @@ ImagesetVisualMode::~ImagesetVisualMode()
     // Order matters!
     delete imagesetEntry;
     delete dockWidget;
+}
+
+void ImagesetVisualMode::initViewHelpText()
+{
+    Application* app = qobject_cast<Application*>(qApp);
+    const bool ctrlZoom = app->getSettings()->getEntryValue("global/navigation/ctrl_zoom", true).toBool();
+    setHelpText(QString("Ctrl+LMB drag - create new image rect\nShift+LMB drag - rubber band\n") +
+                (ctrlZoom ?
+                     "Wheel - vertical scrolling\nAlt+Wheel - horizontal scrolling\nCtrl+Wheel - zoom" :
+                     "Wheel - zoom"));
 }
 
 void ImagesetVisualMode::activate(MainWindow& mainWindow, bool editorActivated)

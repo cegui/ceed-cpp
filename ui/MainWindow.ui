@@ -664,9 +664,6 @@
    <property name="text">
     <string>Quickstart Guide</string>
    </property>
-   <property name="shortcut">
-    <string>F1</string>
-   </property>
   </action>
   <action name="actionUserManual">
    <property name="icon">

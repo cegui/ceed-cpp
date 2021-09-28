@@ -11,6 +11,8 @@
 // resizables on top of CEGUI. If you don't need them, simply don't use them.
 // The overhead is minimal.
 
+class QLabel;
+
 class ResizableGraphicsView : public QGraphicsView
 {
     Q_OBJECT
@@ -25,12 +27,16 @@ public:
     void zoomReset();
 
     void setWheelZoomEnabled(bool enabled) { wheelZoomEnabled = enabled; }
+    void setHelpEnabled(bool enabled);
     void setMiddleButtonDragScrollEnabled(bool enabled) { middleButtonDragScrollEnabled = enabled; }
+    void setHelpText(const QString& text);
+    void setHelpVisible(bool show);
 
     virtual void wheelEvent(QWheelEvent *event) override;
     virtual void mousePressEvent(QMouseEvent *event) override;
     virtual void mouseReleaseEvent(QMouseEvent *event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
+    virtual void keyPressEvent(QKeyEvent* event) override;
 
 signals:
 
@@ -38,9 +44,12 @@ signals:
 
 protected:
 
+    QLabel* helpLabel = nullptr;
+
     QPoint lastDragScrollMousePosition;
     qreal zoomFactor = 1.0;
     bool wheelZoomEnabled = false;
+    bool _helpEnabled = true;
     bool middleButtonDragScrollEnabled = false;
     bool ctrlZoom = false;
 };

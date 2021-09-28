@@ -3,8 +3,9 @@
 #include "src/ui/ResizingHandle.h"
 #include "src/Application.h"
 #include "src/util/Settings.h"
-#include "qevent.h"
-#include "qscrollbar.h"
+#include <qevent.h>
+#include <qscrollbar.h>
+#include <qlabel.h>
 
 ResizableGraphicsView::ResizableGraphicsView(QWidget *parent)
     : QGraphicsView(parent)
@@ -15,6 +16,13 @@ ResizableGraphicsView::ResizableGraphicsView(QWidget *parent)
     // Reset to unreachable value
     lastDragScrollMousePosition.setX(-10000);
     lastDragScrollMousePosition.setY(-10000);
+
+    helpLabel = new QLabel(this);
+    auto fontCopy = helpLabel->font();
+    fontCopy.setPointSize(10);
+    helpLabel->setFont(fontCopy);
+    helpLabel->setStyleSheet("background : rgba(32, 32, 32, 128)");
+    helpLabel->setVisible(false);
 }
 
 void ResizableGraphicsView::setTransform(const QTransform& transform)
@@ -53,6 +61,22 @@ void ResizableGraphicsView::zoomReset()
     emit zoomChanged(zoomFactor);
 }
 
+void ResizableGraphicsView::setHelpEnabled(bool enabled)
+{
+    _helpEnabled = enabled;
+    if (!_helpEnabled) setHelpVisible(false);
+}
+
+void ResizableGraphicsView::setHelpText(const QString& text)
+{
+    helpLabel->setText(text);
+}
+
+void ResizableGraphicsView::setHelpVisible(bool show)
+{
+    helpLabel->setVisible(_helpEnabled && show);
+}
+
 void ResizableGraphicsView::wheelEvent(QWheelEvent *event)
 {
     if (wheelZoomEnabled && (!ctrlZoom || (event->modifiers() & Qt::ControlModifier)))
@@ -60,9 +84,9 @@ void ResizableGraphicsView::wheelEvent(QWheelEvent *event)
         setTransformationAnchor(AnchorUnderMouse);
         setResizeAnchor(AnchorUnderMouse);
 
-        if (event->delta() > 0)
+        if (event->angleDelta().y() > 0)
             zoomIn();
-        else if (event->delta() < 0)
+        else if (event->angleDelta().y() < 0)
             zoomOut();
 
         setTransformationAnchor(AnchorViewCenter);
@@ -117,4 +141,16 @@ void ResizableGraphicsView::mouseMoveEvent(QMouseEvent *event)
     }
 
     QGraphicsView::mouseMoveEvent(event);
+}
+
+void ResizableGraphicsView::keyPressEvent(QKeyEvent* event)
+{
+    if (_helpEnabled && event->matches(QKeySequence::HelpContents))
+    {
+        setHelpVisible(!helpLabel->isVisible());
+        event->accept();
+        return;
+    }
+
+    QGraphicsView::keyPressEvent(event);
 }

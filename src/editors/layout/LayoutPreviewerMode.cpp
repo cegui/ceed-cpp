@@ -19,7 +19,7 @@ LayoutPreviewerMode::LayoutPreviewerMode(LayoutEditor& editor, QWidget* parent)
     ceguiWidget = new CEGUIWidget(this);
     layout->addWidget(ceguiWidget);
     ceguiWidget->setScene(new CEGUIGraphicsScene());
-    ceguiWidget->setViewFeatures(false, false, true);
+    ceguiWidget->setViewFeatures(false, false, true, false);
     ceguiWidget->setInputEnabled(true);
 }
 

@@ -46,7 +46,7 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     ceguiWidget = new CEGUIWidget(this);
     layout->addWidget(ceguiWidget);
     ceguiWidget->setScene(scene);
-    ceguiWidget->setViewFeatures(true, true, continuousRendering);
+    ceguiWidget->setViewFeatures(true, true, continuousRendering, true);
 
     actionAbsoluteMode = app->getAction("layout/absolute_mode");
     actionAbsoluteIntegerMode = app->getAction("layout/abs_integers_mode");
@@ -79,11 +79,28 @@ LayoutVisualMode::LayoutVisualMode(LayoutEditor& editor)
     scene->setupContextMenu();
     hierarchyDockWidget->setupContextMenu();
 
+    initViewHelpText();
+
     auto onSnapGridSettingsChanged = [this]() { snapGridBrushValid = false; };
     connect(settings->getEntry("layout/visual/snap_grid_x"), &SettingsEntry::valueChanged, onSnapGridSettingsChanged);
     connect(settings->getEntry("layout/visual/snap_grid_y"), &SettingsEntry::valueChanged, onSnapGridSettingsChanged);
     connect(settings->getEntry("layout/visual/snap_grid_point_colour"), &SettingsEntry::valueChanged, onSnapGridSettingsChanged);
     connect(settings->getEntry("layout/visual/snap_grid_point_shadow_colour"), &SettingsEntry::valueChanged, onSnapGridSettingsChanged);
+    connect(settings->getEntry("global/navigation/ctrl_zoom"), &SettingsEntry::valueChanged, [this]()
+    {
+        initViewHelpText();
+    });
+}
+
+void LayoutVisualMode::initViewHelpText()
+{
+    Application* app = qobject_cast<Application*>(qApp);
+    const bool ctrlZoom = app->getSettings()->getEntryValue("global/navigation/ctrl_zoom", true).toBool();
+    ceguiWidget->getView()->setHelpText(
+                QString("Shift+LMB drag - rubber band\n") +
+                (ctrlZoom ?
+                     "Wheel - vertical scrolling\nAlt+Wheel - horizontal scrolling\nCtrl+Wheel - zoom" :
+                     "Wheel - zoom"));
 }
 
 LayoutVisualMode::~LayoutVisualMode()

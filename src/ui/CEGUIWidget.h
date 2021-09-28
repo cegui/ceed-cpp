@@ -21,13 +21,13 @@ class CEGUIWidget : public QWidget
 public:
 
     explicit CEGUIWidget(QWidget* parent = nullptr);
-    ~CEGUIWidget();
+    virtual ~CEGUIWidget() override;
 
     void setScene(CEGUIGraphicsScene* scene);
     CEGUIGraphicsScene* getScene() const;
     CEGUIGraphicsView* getView() const;
 
-    void setViewFeatures(bool wheelZoom = false, bool middleButtonScroll = false, bool continuousRendering = true);
+    void setViewFeatures(bool wheelZoom, bool middleButtonScroll, bool continuousRendering, bool help);
     void setResolution(int width, int height);
     void setInputEnabled(bool enable);
     void updateZoomText();

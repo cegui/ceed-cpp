@@ -63,11 +63,12 @@ CEGUIGraphicsView* CEGUIWidget::getView() const
 // wheelZoom - mouse wheel will zoom in and out
 // middleButtonScroll - pressing and dragging with the middle button will cause panning/scrolling
 // continuousRendering - CEGUI will render continuously (not just when you tell it to)
-void CEGUIWidget::setViewFeatures(bool wheelZoom, bool middleButtonScroll, bool continuousRendering)
+void CEGUIWidget::setViewFeatures(bool wheelZoom, bool middleButtonScroll, bool continuousRendering, bool help)
 {
     // Always zoom to the original 100% when changing view features
     ui->view->zoomReset();
     ui->view->setWheelZoomEnabled(wheelZoom);
+    ui->view->setHelpEnabled(help);
     ui->view->setMiddleButtonDragScrollEnabled(middleButtonScroll);
     ui->view->setContinuousRendering(continuousRendering);
 }

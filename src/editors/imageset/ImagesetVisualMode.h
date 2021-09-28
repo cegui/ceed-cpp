@@ -59,6 +59,7 @@ protected:
     virtual void mouseReleaseEvent(QMouseEvent* event) override;
     virtual void keyReleaseEvent(QKeyEvent* event) override;
 
+    void initViewHelpText();
     void createActiveStateConnections();
     QString getNewImageName(const QString& desiredName, QString copyPrefix = "", QString copySuffix = "_copy");
     QPoint roundToImagePixels(QPoint src) const;

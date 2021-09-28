@@ -9,14 +9,14 @@
 #include <CEGUI/WindowManager.h>
 #include <CEGUI/InputAggregator.h>
 #include <CEGUI/GUIContext.h>
-#include "qopenglwidget.h"
-#include "qpaintengine.h"
-#include "qopenglframebufferobject.h"
-#include "qopengltextureblitter.h"
-#include "qopenglcontext.h"
-#include "qopenglfunctions.h"
-#include "qtimer.h"
-#include "qevent.h"
+#include <qopenglwidget.h>
+#include <qpaintengine.h>
+#include <qopenglframebufferobject.h>
+#include <qopengltextureblitter.h>
+#include <qopenglcontext.h>
+#include <qopenglfunctions.h>
+#include <qtimer.h>
+#include <qevent.h>
 
 CEGUIGraphicsView::CEGUIGraphicsView(QWidget *parent) :
     ResizableGraphicsView(parent)

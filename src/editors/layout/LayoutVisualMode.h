@@ -67,6 +67,7 @@ public slots:
 
 protected:
 
+    void initViewHelpText();
     void createActiveStateConnections();
     void focusPropertyInspectorFilterBox();
 
