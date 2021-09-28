@@ -10,13 +10,14 @@
 #include "src/ui/ResizingHandle.h"
 #include "src/ui/MainWindow.h"
 #include "src/Application.h"
-#include "qclipboard.h"
-#include "qmimedata.h"
-#include "qtoolbar.h"
-#include "qevent.h"
-#include "qmenu.h"
-#include "qdom.h"
+#include <qclipboard.h>
+#include <qmimedata.h>
+#include <qtoolbar.h>
+#include <qevent.h>
+#include <qmenu.h>
+#include <qdom.h>
 #include <qrubberband.h>
+#include <qlabel.h>
 
 constexpr qreal newImageHalfSize = 25.0;
 
@@ -58,6 +59,14 @@ ImagesetVisualMode::ImagesetVisualMode(MultiModeEditor& editor)
 
         //setViewport(new QOpenGLWidget());
         setViewportUpdateMode(FullViewportUpdate);
+    }
+
+    if (helpLabel)
+    {
+        viewport()->stackUnder(helpLabel);
+
+        // FIXME QTBUG(?): setting this in ResizableGraphicsView breaks the color for a layout visual mode help overlay
+        helpLabel->setStyleSheet("background : rgba(32, 32, 32, 128); color : rgba(255, 255, 255, 255)");
     }
 
     setDragMode(RubberBandDrag);
@@ -118,7 +127,8 @@ void ImagesetVisualMode::initViewHelpText()
     setHelpText(QString("Ctrl+LMB drag - create new image rect\nShift+LMB drag - rubber band\n") +
                 (ctrlZoom ?
                      "Wheel - vertical scrolling\nAlt+Wheel - horizontal scrolling\nCtrl+Wheel - zoom" :
-                     "Wheel - zoom"));
+                     "Wheel - zoom") +
+                "\nF1 - hide this");
 }
 
 void ImagesetVisualMode::activate(MainWindow& mainWindow, bool editorActivated)

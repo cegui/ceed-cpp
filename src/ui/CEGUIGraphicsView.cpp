@@ -17,12 +17,14 @@
 #include <qopenglfunctions.h>
 #include <qtimer.h>
 #include <qevent.h>
+#include <qlabel.h>
 
 CEGUIGraphicsView::CEGUIGraphicsView(QWidget *parent) :
     ResizableGraphicsView(parent)
 {
     // FIXME QTBUG: Qt 5.13.0 text rendering in OpenGL breaks on QOpenGLWidget delete
     setViewport(qobject_cast<Application*>(qApp)->getMainWindow()->allocateOpenGLWidget());
+    if (helpLabel) viewport()->stackUnder(helpLabel);
 
     //setViewport(new QOpenGLWidget());
     setViewportUpdateMode(FullViewportUpdate);

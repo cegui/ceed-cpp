@@ -100,7 +100,8 @@ void LayoutVisualMode::initViewHelpText()
                 QString("Shift+LMB drag - rubber band\n") +
                 (ctrlZoom ?
                      "Wheel - vertical scrolling\nAlt+Wheel - horizontal scrolling\nCtrl+Wheel - zoom" :
-                     "Wheel - zoom"));
+                     "Wheel - zoom") +
+                "\nF1 - hide this");
 }
 
 LayoutVisualMode::~LayoutVisualMode()

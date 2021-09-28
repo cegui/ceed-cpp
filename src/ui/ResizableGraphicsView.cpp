@@ -23,6 +23,7 @@ ResizableGraphicsView::ResizableGraphicsView(QWidget *parent)
     helpLabel->setFont(fontCopy);
     helpLabel->setStyleSheet("background : rgba(32, 32, 32, 128)");
     helpLabel->setVisible(false);
+    helpLabel->setWindowFlag(Qt::WindowStaysOnTopHint);// >raise();
 }
 
 void ResizableGraphicsView::setTransform(const QTransform& transform)
@@ -69,12 +70,16 @@ void ResizableGraphicsView::setHelpEnabled(bool enabled)
 
 void ResizableGraphicsView::setHelpText(const QString& text)
 {
-    helpLabel->setText(text);
+    if (helpLabel)
+    {
+        helpLabel->setText(text);
+        helpLabel->adjustSize();
+    }
 }
 
 void ResizableGraphicsView::setHelpVisible(bool show)
 {
-    helpLabel->setVisible(_helpEnabled && show);
+    if (helpLabel) helpLabel->setVisible(_helpEnabled && show);
 }
 
 void ResizableGraphicsView::wheelEvent(QWheelEvent *event)
