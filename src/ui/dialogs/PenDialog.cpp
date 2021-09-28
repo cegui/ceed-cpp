@@ -16,54 +16,47 @@ PenDialog::~PenDialog()
 
 void PenDialog::setPen(const QPen& newPen)
 {
-    auto colour = findChild<ColourButton*>("colour");
-    auto lineStyle = findChild<QComboBox*>("lineStyle");
-    auto lineWidth = findChild<QDoubleSpinBox*>("lineWidth");
-
-    colour->setColour(newPen.color());
-
+    ui->colour->setColour(newPen.color());
+    ui->cosmeticBox->setChecked(newPen.isCosmetic());
 
     QString lineStyleStr;
     if (newPen.style() == Qt::SolidLine)
-        lineStyle->setCurrentIndex(0);
+        ui->lineStyle->setCurrentIndex(0);
     else if (newPen.style() == Qt::DashLine)
-        lineStyle->setCurrentIndex(1);
+        ui->lineStyle->setCurrentIndex(1);
     else if (newPen.style() == Qt::DotLine)
-        lineStyle->setCurrentIndex(2);
+        ui->lineStyle->setCurrentIndex(2);
     else if (newPen.style() == Qt::DashDotLine)
-        lineStyle->setCurrentIndex(3);
+        ui->lineStyle->setCurrentIndex(3);
     else if (newPen.style() == Qt::DashDotDotLine)
-        lineStyle->setCurrentIndex(4);
+        ui->lineStyle->setCurrentIndex(4);
     //else if (newPen.style() == Qt::CustomDashLine)
-    //    lineStyle->setCurrentIndex(0);
+    //    ui->lineStyle->setCurrentIndex(0);
     else
     {
         assert(false);
-        lineStyle->setCurrentIndex(-1);
+        ui->lineStyle->setCurrentIndex(-1);
     }
 
-    lineWidth->setValue(newPen.widthF());
+    ui->lineWidth->setValue(newPen.widthF());
 }
 
 QPen PenDialog::getPen() const
 {
-    auto colour = findChild<ColourButton*>("colour");
-    auto lineStyle = findChild<QComboBox*>("lineStyle");
-    auto lineWidth = findChild<QDoubleSpinBox*>("lineWidth");
-
     QPen pen;
-    pen.setColor(colour->colour());
+    pen.setColor(ui->colour->colour());
+    pen.setCosmetic(ui->cosmeticBox->isChecked());
 
     Qt::PenStyle style = Qt::SolidLine;
-    if (lineStyle->currentIndex() == 0)
+    if (ui->lineStyle->currentIndex() == 0)
         style = Qt::SolidLine;
-    else if (lineStyle->currentIndex() == 1)
+    else if (ui->lineStyle->currentIndex() == 1)
         style = Qt::DashLine;
-    else if (lineStyle->currentIndex() == 2)
+    else if (ui->lineStyle->currentIndex() == 2)
         style = Qt::DotLine;
-    else if (lineStyle->currentIndex() == 3)
+    else if (ui->lineStyle->currentIndex() == 3)
         style = Qt::DashDotLine;
-    else if (lineStyle->currentIndex() == 4)
+    else if (ui->lineStyle->currentIndex() == 4)
         style = Qt::DashDotDotLine;
     else
     {
@@ -72,7 +65,7 @@ QPen PenDialog::getPen() const
 
     pen.setStyle(style);
 
-    pen.setWidth(lineWidth->value());
+    pen.setWidth(static_cast<int>(ui->lineWidth->value()));
 
     return pen;
 }

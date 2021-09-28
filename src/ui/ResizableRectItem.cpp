@@ -221,22 +221,29 @@ QPen ResizableRectItem::getNormalPen() const
 {
     QPen ret(Qt::DotLine);
     ret.setColor(QColor(255, 255, 255, 150));
+    ret.setCosmetic(true);
     return ret;
 }
 
 QPen ResizableRectItem::getHoverPen() const
 {
-    return QPen(QColor(0, 255, 255, 255));
+    QPen ret(QColor(0, 255, 255, 255));
+    ret.setCosmetic(true);
+    return ret;
 }
 
 QPen ResizableRectItem::getPenWhileResizing() const
 {
-    return QPen(QColor(255, 0, 255, 255));
+    QPen ret(QColor(255, 0, 255, 255));
+    ret.setCosmetic(true);
+    return ret;
 }
 
 QPen ResizableRectItem::getPenWhileMoving() const
 {
-    return QPen(QColor(255, 0, 255, 255));
+    QPen ret(QColor(255, 0, 255, 255));
+    ret.setCosmetic(true);
+    return ret;
 }
 
 void ResizableRectItem::onScaleChanged(qreal scaleX, qreal scaleY)

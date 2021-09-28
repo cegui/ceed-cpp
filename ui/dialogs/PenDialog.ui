@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>PenDialog</class>
- <widget class="QDialog" name="PenButtonDialog">
+ <widget class="QDialog" name="PenDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -14,37 +14,24 @@
    <string>Choose pen style</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="2" column="1">
-    <widget class="QDoubleSpinBox" name="lineWidth">
-     <property name="maximum">
-      <double>100.000000000000000</double>
-     </property>
-     <property name="singleStep">
-      <double>0.500000000000000</double>
-     </property>
-     <property name="value">
-      <double>1.000000000000000</double>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0">
-    <widget class="QLabel" name="colourLabel">
+   <item row="1" column="0">
+    <widget class="QLabel" name="lineStyleLabel">
      <property name="text">
-      <string>Colour</string>
+      <string>Line style</string>
      </property>
     </widget>
    </item>
    <item row="5" column="0" colspan="2">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+    <widget class="QGraphicsView" name="preview"/>
+   </item>
+   <item row="0" column="1">
+    <widget class="ColourButton" name="colour">
+     <property name="text">
+      <string>PushButton</string>
      </property>
     </widget>
    </item>
-   <item row="3" column="1">
+   <item row="4" column="1">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -57,10 +44,10 @@
      </property>
     </spacer>
    </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="lineStyleLabel">
+   <item row="2" column="0">
+    <widget class="QLabel" name="lineWidthLabel">
      <property name="text">
-      <string>Line style</string>
+      <string>Line width</string>
      </property>
     </widget>
    </item>
@@ -93,22 +80,49 @@
      </item>
     </widget>
    </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="lineWidthLabel">
-     <property name="text">
-      <string>Line width</string>
+   <item row="6" column="0" colspan="2">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
      </property>
     </widget>
    </item>
-   <item row="4" column="0" colspan="2">
-    <widget class="QGraphicsView" name="preview"/>
-   </item>
-   <item row="0" column="1">
-    <widget class="ColourButton" name="colour">
+   <item row="0" column="0">
+    <widget class="QLabel" name="colourLabel">
      <property name="text">
-      <string>PushButton</string>
+      <string>Colour</string>
      </property>
     </widget>
+   </item>
+   <item row="2" column="1">
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QDoubleSpinBox" name="lineWidth">
+       <property name="maximum">
+        <double>100.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.500000000000000</double>
+       </property>
+       <property name="value">
+        <double>1.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="cosmeticBox">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Cosmetic pen has the same width regardless the scene zoom&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string>Cosmetic</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>
@@ -124,7 +138,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>PenButtonDialog</receiver>
+   <receiver>PenDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -140,7 +154,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>PenButtonDialog</receiver>
+   <receiver>PenDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

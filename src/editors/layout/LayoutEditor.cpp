@@ -253,22 +253,27 @@ void LayoutEditor::createSettings(Settings& mgr)
                                   "checkbox", false, 0));
     secVisual->addEntry(std::move(entry));
 
-    entry.reset(new SettingsEntry(*secVisual, "normal_outline", QPen(QColor(255, 255, 0, 255)), "Normal outline",
+    QPen pen(QColor(255, 255, 0, 255));
+    pen.setCosmetic(true);
+    entry.reset(new SettingsEntry(*secVisual, "normal_outline", pen, "Normal outline",
                                   "Pen for normal outline.",
                                   "pen", false, 1));
     secVisual->addEntry(std::move(entry));
 
-    entry.reset(new SettingsEntry(*secVisual, "hover_outline", QPen(QColor(0, 255, 255, 255)), "Hover outline",
+    pen.setColor(QColor(0, 255, 255, 255));
+    entry.reset(new SettingsEntry(*secVisual, "hover_outline", pen, "Hover outline",
                                   "Pen for hover outline.",
                                   "pen", false, 2));
     secVisual->addEntry(std::move(entry));
 
-    entry.reset(new SettingsEntry(*secVisual, "resizing_outline", QPen(QColor(255, 0, 255, 255)), "Outline while resizing",
+    pen.setColor(QColor(255, 0, 255, 255));
+    entry.reset(new SettingsEntry(*secVisual, "resizing_outline", pen, "Outline while resizing",
                                   "Pen for resizing outline.",
                                   "pen", false, 3));
     secVisual->addEntry(std::move(entry));
 
-    entry.reset(new SettingsEntry(*secVisual, "moving_outline", QPen(QColor(255, 0, 255, 255)), "Outline while moving",
+    pen.setColor(QColor(255, 0, 255, 255));
+    entry.reset(new SettingsEntry(*secVisual, "moving_outline", pen, "Outline while moving",
                                   "Pen for moving outline.",
                                   "pen", false, 4));
     secVisual->addEntry(std::move(entry));
