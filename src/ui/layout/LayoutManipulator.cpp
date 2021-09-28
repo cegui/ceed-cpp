@@ -156,6 +156,8 @@ void LayoutManipulator::notifyMoveStarted()
 
     LayoutManipulator* parentManipulator = dynamic_cast<LayoutManipulator*>(parentItem());
     if (parentManipulator) parentManipulator->_drawSnapGrid = true;
+
+    qobject_cast<Application*>(qApp)->getMainWindow()->setStatusMessage("Hold <b>Ctrl</b> and continue dragging to initiate drag&drop for reparenting a widget");
 }
 
 void LayoutManipulator::notifyMoveProgress(QPointF newPos)
@@ -170,6 +172,8 @@ void LayoutManipulator::notifyMoveFinished(QPointF newPos)
 
     LayoutManipulator* parentManipulator = dynamic_cast<LayoutManipulator*>(parentItem());
     if (parentManipulator) parentManipulator->_drawSnapGrid = false;
+
+    qobject_cast<Application*>(qApp)->getMainWindow()->setStatusMessage("");
 }
 
 void LayoutManipulator::updateFromWidget(bool callUpdate, bool updateAncestorLCs)
