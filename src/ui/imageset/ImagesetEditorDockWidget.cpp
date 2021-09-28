@@ -67,6 +67,12 @@ ImagesetEditorDockWidget::ImagesetEditorDockWidget(ImagesetVisualMode& visualMod
     connect(ui->nativeHorzResPerImage, &QLineEdit::textEdited, this, &ImagesetEditorDockWidget::onNativeResolutionPerImageEdited);
     connect(ui->nativeVertResPerImage, &QLineEdit::textEdited, this, &ImagesetEditorDockWidget::onNativeResolutionPerImageEdited);
 
+    connect(&_visualMode, &ResizableGraphicsView::helpOverlayVisibilityChanged, [this](bool visible)
+    {
+        if (ui->btnHelp->isChecked() != visible)
+            ui->btnHelp->setChecked(visible);
+    });
+
     ui->list->setItemDelegate(new ImageEntryItemDelegate());
 
     setActiveImageEntry(nullptr);
@@ -329,6 +335,12 @@ void ImagesetEditorDockWidget::on_offsetY_textChanged(const QString& arg1)
     onIntPropertyChanged("yoffset", arg1);
 }
 
+void ImagesetEditorDockWidget::on_btnHelp_toggled(bool checked)
+{
+    _visualMode.setHelpVisible(checked);
+    _visualMode.setFocus();
+}
+
 void ImagesetEditorDockWidget::onIntPropertyChanged(const QString& name, const QString& valueString)
 {
     if (!activeImageEntry) return;
@@ -369,3 +381,4 @@ void ImagesetEditorDockWidget::keyReleaseEvent(QKeyEvent* event)
 
     QDockWidget::keyReleaseEvent(event);
 }
+

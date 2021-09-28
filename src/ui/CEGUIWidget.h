@@ -35,6 +35,7 @@ public:
 protected slots:
 
     void on_debugInfoButton_clicked();
+    void on_btnHelp_toggled(bool checked);
 
     void onResolutionTextChanged();
 

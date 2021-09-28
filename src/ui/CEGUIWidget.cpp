@@ -25,6 +25,11 @@ CEGUIWidget::CEGUIWidget(QWidget *parent) :
     {
         updateZoomText();
     });
+    connect(ui->view, &ResizableGraphicsView::helpOverlayVisibilityChanged, [this](bool visible)
+    {
+        if (ui->btnHelp->isChecked() != visible)
+            ui->btnHelp->setChecked(visible);
+    });
 
     ui->resolutionBox->installEventFilter(this);
     connect(ui->resolutionBox->lineEdit(), &QLineEdit::editingFinished, this, &CEGUIWidget::onResolutionTextChanged);
@@ -71,6 +76,8 @@ void CEGUIWidget::setViewFeatures(bool wheelZoom, bool middleButtonScroll, bool 
     ui->view->setHelpEnabled(help);
     ui->view->setMiddleButtonDragScrollEnabled(middleButtonScroll);
     ui->view->setContinuousRendering(continuousRendering);
+
+    ui->btnHelp->setVisible(help);
 }
 
 void CEGUIWidget::setResolution(int width, int height)
@@ -107,6 +114,12 @@ void CEGUIWidget::updateZoomText()
 void CEGUIWidget::on_debugInfoButton_clicked()
 {
     CEGUIManager::Instance().showDebugInfo();
+}
+
+void CEGUIWidget::on_btnHelp_toggled(bool checked)
+{
+    getView()->setHelpVisible(checked);
+    getView()->setFocus();
 }
 
 void CEGUIWidget::onResolutionTextChanged()

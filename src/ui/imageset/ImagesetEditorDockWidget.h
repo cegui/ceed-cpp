@@ -69,6 +69,8 @@ private slots:
 
     void on_offsetY_textChanged(const QString &arg1);
 
+    void on_btnHelp_toggled(bool checked);
+
 private:
 
     void onIntPropertyChanged(const QString& name, const QString& valueString);

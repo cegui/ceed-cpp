@@ -27,10 +27,13 @@ public:
     void zoomReset();
 
     void setWheelZoomEnabled(bool enabled) { wheelZoomEnabled = enabled; }
-    void setHelpEnabled(bool enabled);
     void setMiddleButtonDragScrollEnabled(bool enabled) { middleButtonDragScrollEnabled = enabled; }
+    void setHelpEnabled(bool enabled);
+    bool isHelpEnabled() const { return _helpEnabled; }
     void setHelpText(const QString& text);
     void setHelpVisible(bool show);
+    bool isHelpVisible() const;
+    QLabel* getHelpLabel() const { return helpLabel; }
 
     virtual void wheelEvent(QWheelEvent *event) override;
     virtual void mousePressEvent(QMouseEvent *event) override;
@@ -41,6 +44,7 @@ public:
 signals:
 
     void zoomChanged(qreal factor);
+    void helpOverlayVisibilityChanged(bool visible);
 
 protected:
 

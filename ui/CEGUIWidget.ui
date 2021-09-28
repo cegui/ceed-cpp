@@ -190,6 +190,26 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QPushButton" name="btnHelp">
+        <property name="toolTip">
+         <string>Show help overlay</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="../data/Resources.qrc">
+          <normaloff>:/icons/actions/help_about.png</normaloff>:/icons/actions/help_about.png</iconset>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
