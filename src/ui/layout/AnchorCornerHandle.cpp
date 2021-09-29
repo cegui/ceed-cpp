@@ -68,7 +68,8 @@ void AnchorCornerHandle::updateStatusMessage(bool newMoveOpposite)
                      "hold <b>Ctrl</b> to resize the widget accordingly.") +
                 (newMoveOpposite ?
                      " Handle will shift opposite anchor on collision, grab farther from the tip to change this." :
-                     " Handle will stop at opposite anchor on collision, grab closer to the tip to change this.");
+                     " Handle will stop at opposite anchor on collision, grab closer to the tip to change this.")
+                + " <b>Right click</b> to show presets.";
         qobject_cast<Application*>(qApp)->getMainWindow()->setStatusMessage(helpMsg);
     }
     else

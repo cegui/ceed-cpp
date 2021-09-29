@@ -26,7 +26,8 @@ void AnchorEdgeHandle::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
         QString helpMsg = "Drag to change anchors of <i>" + target->getWidgetPath(true) + "</i>, " +
                 (ctrl ?
                      "release <b>Ctrl</b> to preserve current widget size." :
-                     "hold <b>Ctrl</b> to resize the widget accordingly.");
+                     "hold <b>Ctrl</b> to resize the widget accordingly.")
+                + " <b>Right click</b> to show presets.";
         qobject_cast<Application*>(qApp)->getMainWindow()->setStatusMessage(helpMsg);
     }
     else

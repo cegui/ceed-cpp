@@ -23,6 +23,7 @@
 #include <qtreeview.h>
 #include <qstandarditemmodel.h>
 #include <qmenu.h>
+#include <qscreen.h>
 #include <set>
 
 // For properties (may be incapsulated somewhere):
@@ -1700,9 +1701,27 @@ void LayoutScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 
 void LayoutScene::showAnchorPopupMenu(const QPoint& pos)
 {
+    // Get current screen to fit the menu into its rect
+    QScreen* screen = qApp->screenAt(pos);
+    if (!screen && !qApp->screens().empty())
+        screen = qApp->screens()[0];
+    if (!screen) return;
+
     if (!_anchorPopupMenu)
         _anchorPopupMenu = new AnchorPopupMenu(*this);
-    _anchorPopupMenu->move(pos);
+
+    QRect menuRect(pos, _anchorPopupMenu->size());
+    QRect screenRect = screen->availableGeometry();
+    if (menuRect.left() < screenRect.left())
+        menuRect.translate(screenRect.left() - menuRect.left(), 0);
+    if (menuRect.right() > screenRect.right())
+        menuRect.translate(screenRect.right() - menuRect.right(), 0);
+    if (menuRect.top() < screenRect.top())
+        menuRect.translate(0, screenRect.top() - menuRect.top());
+    if (menuRect.bottom() > screenRect.bottom())
+        menuRect.translate(0, screenRect.bottom() - menuRect.bottom());
+
+    _anchorPopupMenu->move(menuRect.topLeft());
     _anchorPopupMenu->show();
 }
 
@@ -1719,7 +1738,7 @@ void LayoutScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
     {
         if (_anchorTarget && isAnchorItem(itemAtMouse))
         {
-            showAnchorPopupMenu(event->scenePos().toPoint());
+            showAnchorPopupMenu(event->screenPos());
             event->accept();
             return;
         }
