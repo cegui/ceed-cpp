@@ -41,4 +41,4 @@ Acknowledgements
 ----------------
 
 - The python CEED Team and contributors for the original source code this is based off of.
-- [(OpenSSL)](https://www.openssl.org/). Distributed under the [(double license of the OpenSSL and SSLeay licenses)](https://www.openssl.org/source/license-openssl-ssleay.txt). Copyright (c) 1998-2021 The OpenSSL Project. Copyright (C) 1995-1998 Eric Young.
+- [OpenSSL](https://www.openssl.org/). Distributed under the [double license of the OpenSSL and SSLeay licenses](https://www.openssl.org/source/license-openssl-ssleay.txt). Copyright (c) 1998-2021 The OpenSSL Project. Copyright (C) 1995-1998 Eric Young.

@@ -207,7 +207,7 @@ void Application::checkForUpdates()
 
             QVersionNumber latestVersion = QVersionNumber::fromString(latestVersionStr);
             QVersionNumber currentVersion = QVersionNumber::fromString(applicationVersion());
-            if (latestVersion <= currentVersion)
+            if (latestVersion.normalized() <= currentVersion.normalized())
             {
                 // We are up to date
                 _mainWindow->setStatusMessage("");
