@@ -7,6 +7,7 @@
 #include "src/editors/imageset/ImagesetEditor.h"
 #include "src/editors/layout/LayoutEditor.h"
 #include "src/editors/looknfeel/LookNFeelEditor.h"
+#include "src/ui/dialogs/UpdateDialog.h"
 #include <qsplashscreen.h>
 #include <qsettings.h>
 #include <qdir.h>
@@ -201,38 +202,23 @@ void Application::checkForUpdates()
             auto releaseInfo = QJsonDocument::fromJson(infoReply->readAll()).object();
             QString latestVersionStr = releaseInfo.value("tag_name").toString();
             if (!latestVersionStr.isEmpty() && latestVersionStr[0] == 'v')
-                latestVersionStr = "";//latestVersionStr.mid(1);
+                latestVersionStr = latestVersionStr.mid(1);
 
             if (latestVersionStr.isEmpty()) throw std::exception("Latest release version string is empty");
 
             QVersionNumber latestVersion = QVersionNumber::fromString(latestVersionStr);
             QVersionNumber currentVersion = QVersionNumber::fromString(applicationVersion());
-            if (latestVersion.normalized() <= currentVersion.normalized())
+            //if (latestVersion.normalized() > currentVersion.normalized())
             {
-                // We are up to date
-                _mainWindow->setStatusMessage("");
-                return;
+                UpdateDialog dlg(currentVersion, latestVersion, releaseInfo);
+                dlg.exec();
             }
-
-            //???show detail dialog and initiate downloading from there!?
-
-            //!!!check if this version was already downloaded! reload if corrupted?
-
-            _mainWindow->setStatusMessage("Downloading version " + latestVersionStr);
         }
         catch (const std::exception& e)
         {
             onUpdateError(infoReply->url(), e.what());
             return;
         }
-
-        //!!!show progress!
-
-#if QT_POINTER_SIZE == 4
-        const QString arch = "x86";
-#else
-        const QString arch = "x64";
-#endif
 
         _mainWindow->setStatusMessage("");
     });

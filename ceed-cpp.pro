@@ -51,6 +51,7 @@ SOURCES += \
     src/ui/dialogs/NewProjectDialog.cpp \
     src/ui/dialogs/ProjectSettingsDialog.cpp \
     src/ui/FileSystemBrowser.cpp \
+    src/ui/dialogs/UpdateDialog.cpp \
     src/ui/layout/AnchorCornerHandle.cpp \
     src/ui/layout/AnchorEdgeHandle.cpp \
     src/ui/layout/AnchorPopupMenu.cpp \
@@ -161,6 +162,7 @@ HEADERS += \
     src/ui/dialogs/NewProjectDialog.h \
     src/ui/dialogs/ProjectSettingsDialog.h \
     src/ui/FileSystemBrowser.h \
+    src/ui/dialogs/UpdateDialog.h \
     src/ui/layout/AnchorCornerHandle.h \
     src/ui/layout/AnchorEdgeHandle.h \
     src/ui/layout/AnchorPopupMenu.h \
@@ -218,7 +220,8 @@ HEADERS += \
     src/ui/XMLSyntaxHighlighter.h \
     src/ui/layout/WidgetTypeTreeWidget.h \
     src/ui/layout/CreateWidgetDockWidget.h \
-    src/ui/layout/WidgetHierarchyItem.h
+    src/ui/layout/WidgetHierarchyItem.h \
+    ui/dialogs/UpdateDialog.h
 
 FORMS += \
     ui/CEGUIDebugInfo.ui \
@@ -228,6 +231,7 @@ FORMS += \
     ui/dialogs/NewProjectDialog.ui \
     ui/dialogs/ProjectSettingsDialog.ui \
     ui/FileSystemBrowser.ui \
+    ui/dialogs/UpdateDialog.ui \
     ui/layout/AnchorPopupMenu.ui \
     ui/widgets/FileLineEdit.ui \
     ui/dialogs/LicenseDialog.ui \
