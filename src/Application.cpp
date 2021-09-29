@@ -12,6 +12,14 @@
 #include <qdir.h>
 #include <qcommandlineparser.h>
 #include <qaction.h>
+#include <QtNetwork/qnetworkaccessmanager.h>
+#include <QtNetwork/qnetworkreply.h>
+#include <qurl.h>
+#include <qmessagebox.h>
+#include <qdesktopservices.h>
+#include <qjsondocument.h>
+#include <qjsonobject.h>
+#include <qversionnumber.h>
 
 Application::Application(int& argc, char** argv)
     : QApplication(argc, argv)
@@ -46,6 +54,8 @@ Application::Application(int& argc, char** argv)
         processEvents();
     }
 
+    _network = new QNetworkAccessManager(this);
+
     _mainWindow = new MainWindow();
 
     ImagesetEditor::createToolbar(*this);
@@ -76,6 +86,9 @@ Application::Application(int& argc, char** argv)
             default: break; // 0: empty environment
         }
     }
+
+    // TODO: if not disabled in settings / if time has come
+    checkForUpdates();
 }
 
 Application::~Application()
@@ -164,6 +177,81 @@ QString Application::getDocumentationPath() const
     */
 
     return QDir::current().absoluteFilePath("doc");
+}
+
+void Application::checkForUpdates()
+{
+    QUrl infoUrl = _settings->getQSettings()->value("updateInfoUrl", "https://api.github.com/repos/cegui/ceed-cpp/releases/latest").toUrl();
+
+    _mainWindow->setStatusMessage("Checking for updates...");
+
+    QNetworkReply* infoReply = _network->get(QNetworkRequest(infoUrl));
+    QObject::connect(infoReply, &QNetworkReply::errorOccurred, [this, infoReply](QNetworkReply::NetworkError)
+    {
+        onUpdateError(infoReply->url(), infoReply->errorString());
+    });
+
+    QObject::connect(infoReply, &QNetworkReply::finished, [this, infoReply]()
+    {
+        // Already processed by QNetworkReply::errorOccurred handler
+        if (infoReply->error() != QNetworkReply::NoError) return;
+
+        try
+        {
+            auto releaseInfo = QJsonDocument::fromJson(infoReply->readAll()).object();
+            QString latestVersionStr = releaseInfo.value("tag_name").toString();
+            if (!latestVersionStr.isEmpty() && latestVersionStr[0] == 'v')
+                latestVersionStr = "";//latestVersionStr.mid(1);
+
+            if (latestVersionStr.isEmpty()) throw std::exception("Latest release version string is empty");
+
+            QVersionNumber latestVersion = QVersionNumber::fromString(latestVersionStr);
+            QVersionNumber currentVersion = QVersionNumber::fromString(applicationVersion());
+            if (latestVersion <= currentVersion)
+            {
+                // We are up to date
+                _mainWindow->setStatusMessage("");
+                return;
+            }
+
+            //???show detail dialog and initiate downloading from there!?
+
+            //!!!check if this version was already downloaded! reload if corrupted?
+
+            _mainWindow->setStatusMessage("Downloading version " + latestVersionStr);
+        }
+        catch (const std::exception& e)
+        {
+            onUpdateError(infoReply->url(), e.what());
+            return;
+        }
+
+        //!!!show progress!
+
+#if QT_POINTER_SIZE == 4
+        const QString arch = "x86";
+#else
+        const QString arch = "x64";
+#endif
+
+        _mainWindow->setStatusMessage("");
+    });
+}
+
+void Application::onUpdateError(const QUrl& url, const QString& errorString)
+{
+    _mainWindow->setStatusMessage("Failed to check for updates");
+    qCritical() << "Network error '" << errorString << "' accessing " << url;
+
+    const auto response = QMessageBox::question(_mainWindow, "Update check failed",
+            QString("Update failed with error:\n%1\n\nOpen releases web page?").arg(errorString),
+            QMessageBox::Yes | QMessageBox::No,
+            QMessageBox::Yes);
+
+    if (response == QMessageBox::Yes)
+        QDesktopServices::openUrl(QUrl("https://github.com/cegui/ceed-cpp/releases"));
+
+    _mainWindow->setStatusMessage("");
 }
 
 // Creates general application settings plus some subsystem settings

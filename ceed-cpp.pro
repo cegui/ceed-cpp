@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui xml
+QT       += core gui xml network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -306,7 +306,9 @@ INSTALLS += images
 win32 {
     cegui_dlls.path = $$DESTDIR
     cegui_dlls.files = $$CEGUI_BIN_DIR/*.dll
-    INSTALLS += cegui_dlls
+    ssl_dlls.path = $$DESTDIR
+    ssl_dlls.files = $$PWD/3rdParty/OpenSSL/*.dll
+    INSTALLS += cegui_dlls ssl_dlls
     win32-msvc* {
         QMAKE_POST_LINK += $$quote(nmake install$$escape_expand(\n\t))
     } else:win32-g++ {

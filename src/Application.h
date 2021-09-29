@@ -1,7 +1,7 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
-#include "qapplication.h"
+#include <qapplication.h>
 #include "ui/MainWindow.h"
 #include <map>
 
@@ -9,6 +9,7 @@
 
 class Settings;
 class SettingsSection;
+class QNetworkAccessManager;
 
 class Application : public QApplication
 {
@@ -30,12 +31,16 @@ public:
 
     QString getDocumentationPath() const;
 
+    void checkForUpdates();
+
 private:
 
     void createSettingsEntries();
+    void onUpdateError(const QUrl& url, const QString& errorString);
 
     MainWindow* _mainWindow = nullptr;
     Settings* _settings = nullptr;
+    QNetworkAccessManager* _network = nullptr;
     std::map<QString, QAction*> _globalActions;
 };
 
