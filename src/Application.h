@@ -22,6 +22,7 @@ public:
 
     MainWindow* getMainWindow() { return _mainWindow; }
     Settings* getSettings() const { return _settings; }
+    QNetworkAccessManager* getNetworkManager() const { return _network; }
 
     SettingsSection* getOrCreateShortcutSettingsSection(const QString& groupId, const QString& label);
     QAction* registerAction(const QString& groupId, const QString& id, const QString& label,

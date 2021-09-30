@@ -2,6 +2,7 @@
 #define UPDATEDIALOG_H
 
 #include <QDialog>
+#include <qurl.h>
 
 class QVersionNumber;
 class QJsonObject;
@@ -22,12 +23,17 @@ public:
 private slots:
     void on_btnUpdate_clicked();
 
+    void on_btnWeb_clicked();
+
 private:
 
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void closeEvent(QCloseEvent* event) override;
 
     Ui::UpdateDialog *ui;
+
+    QUrl _releaseWebPage;
+    QUrl _releaseAsset;
 };
 
 #endif // UPDATEDIALOG_H

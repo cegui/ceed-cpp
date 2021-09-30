@@ -220,8 +220,7 @@ HEADERS += \
     src/ui/XMLSyntaxHighlighter.h \
     src/ui/layout/WidgetTypeTreeWidget.h \
     src/ui/layout/CreateWidgetDockWidget.h \
-    src/ui/layout/WidgetHierarchyItem.h \
-    ui/dialogs/UpdateDialog.h
+    src/ui/layout/WidgetHierarchyItem.h
 
 FORMS += \
     ui/CEGUIDebugInfo.ui \

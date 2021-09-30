@@ -49,7 +49,7 @@
      <x>300</x>
      <y>10</y>
      <width>93</width>
-     <height>28</height>
+     <height>31</height>
     </rect>
    </property>
    <property name="text">
@@ -80,6 +80,19 @@
    </property>
    <property name="text">
     <string>Downloading:</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btnWeb">
+   <property name="geometry">
+    <rect>
+     <x>194</x>
+     <y>10</y>
+     <width>91</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Visit Web page</string>
    </property>
   </widget>
  </widget>
