@@ -263,6 +263,12 @@ CONFIG(debug, debug|release) {
 }
 LIBS += -L"$$PWD/3rdParty/CEGUI/lib" -L"$$CEGUI_BIN_DIR" # Bin is for DLL searching when debugging
 
+# WinAPI: CoCreateInstance, INetworkListManager
+
+win32 {
+    LIBS += -lole32
+}
+
 # Deployment
 
 qnx: target.path = /tmp/$${TARGET}/bin

@@ -6,6 +6,12 @@
 #include <qprocess.h>
 #include <qsettings.h>
 #include <qapplication.h>
+#ifdef Q_OS_WIN
+#include <initguid.h>
+#include <netlistmgr.h>
+#endif
+#undef min
+#undef max
 
 namespace Utils
 {
@@ -138,4 +144,26 @@ void registerFileAssociation(const QString& extension, const QString& desc, cons
 #endif
 }
 
-};
+bool isInternetConnected()
+{
+#ifdef Q_OS_WIN
+    INetworkListManager* netMgr = nullptr;
+    HRESULT hr = CoCreateInstance(CLSID_NetworkListManager, nullptr, CLSCTX_ALL, IID_INetworkListManager, (LPVOID*)&netMgr);
+    if (SUCCEEDED(hr) && netMgr)
+    {
+        NLM_CONNECTIVITY connect;
+        hr = netMgr->GetConnectivity(&connect);
+        netMgr->Release();
+        if (hr == S_OK)
+            return connect & (NLM_CONNECTIVITY_IPV4_INTERNET | NLM_CONNECTIVITY_IPV6_INTERNET);
+    }
+#endif
+
+    // Fallback to Qt could be here but there is no good way found. Please don't hesitate to implement it.
+    // ...
+
+    // Consider an internet is available by default
+    return true;
+}
+
+}

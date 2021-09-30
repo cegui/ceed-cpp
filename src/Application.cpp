@@ -182,6 +182,12 @@ QString Application::getDocumentationPath() const
 
 void Application::checkForUpdates()
 {
+    if (!Utils::isInternetConnected())
+    {
+        qCritical() << "No Internet connection, update check skipped";
+        return;
+    }
+
     QUrl infoUrl = _settings->getQSettings()->value("updateInfoUrl", "https://api.github.com/repos/cegui/ceed-cpp/releases/latest").toUrl();
 
     _mainWindow->setStatusMessage("Checking for updates...");
