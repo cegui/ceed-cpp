@@ -2,6 +2,7 @@
 #include "ui_UpdateDialog.h"
 #include "src/Application.h"
 #include "src/util/Settings.h"
+#include "src/util/Utils.h"
 #include <qjsonobject.h>
 #include <qjsonarray.h>
 #include <qevent.h>
@@ -62,7 +63,7 @@ UpdateDialog::UpdateDialog(const QVersionNumber& currentVersion, const QVersionN
     }
     else
     {
-        versionStr += tr(" (%3 MB)").arg(_releaseAssetSize / MB, 0, 'f', 1);
+        versionStr += tr(" (%3 MB)").arg(static_cast<double>(_releaseAssetSize) / MB, 0, 'f', 1);
     }
 
     _releaseWebPage = releaseInfo.value("html_url").toString();
@@ -186,12 +187,13 @@ void UpdateDialog::downloadUpdate()
 
         if (bytesTotal <= 0) return;
 
-        ui->progressBar->setValue(static_cast<int>(ui->progressBar->maximum() * (bytesReceived / static_cast<double>(bytesTotal))));
+        ui->progressBar->setValue(
+                    static_cast<int>(ui->progressBar->maximum() * (static_cast<double>(bytesReceived) / static_cast<double>(bytesTotal))));
 
         const auto mbReceived = static_cast<double>(bytesReceived) / MB;
         const auto mbTotal = static_cast<double>(bytesTotal) / MB;
 
-        double secondsElapsed = _downloadTimer.elapsed() / 1000.0; // msec to sec
+        double secondsElapsed = static_cast<double>(_downloadTimer.elapsed()) / 1000.0; // msec to sec
 
         double speedMbps = mbReceived / secondsElapsed;
 
@@ -258,8 +260,9 @@ void UpdateDialog::downloadUpdate()
         // Update is successfully downloaded, remember its version
         settings->setValue("update/version", _releaseVersion.toString());
 
-        QFileInfo fileInfo(filePath);
+        //QFileInfo fileInfo(filePath);
         //.baseName()
+        Utils::unzip(filePath, "");
 
         installUpdate();
     });
@@ -270,7 +273,12 @@ void UpdateDialog::installUpdate()
     auto response = QMessageBox::question(this, tr("Confirm closing"),
                                           tr("Application will be closed and all unsaved work will be lost.\nContinue?"),
                                           QMessageBox::Yes | QMessageBox::No);
-    if (response != QMessageBox::Yes) return;
+    if (response != QMessageBox::Yes)
+    {
+        ui->lblStatus->setVisible(false);
+        ui->progressBar->setVisible(false);
+        return;
+    }
 
     QSettings* settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
 

@@ -6,12 +6,19 @@
 #include <qprocess.h>
 #include <qsettings.h>
 #include <qapplication.h>
+#include <mz.h>
+#include <mz_strm.h>
+#include <mz_zip.h>
+#include <mz_zip_rw.h>
 #ifdef Q_OS_WIN
 #include <initguid.h>
 #include <netlistmgr.h>
 #endif
 #undef min
 #undef max
+
+//!!!DBG TMP!
+#include <qdebug.h>
 
 namespace Utils
 {
@@ -148,7 +155,7 @@ bool isInternetConnected()
 {
 #ifdef Q_OS_WIN
     INetworkListManager* netMgr = nullptr;
-    HRESULT hr = CoCreateInstance(CLSID_NetworkListManager, nullptr, CLSCTX_ALL, IID_INetworkListManager, (LPVOID*)&netMgr);
+    HRESULT hr = CoCreateInstance(CLSID_NetworkListManager, nullptr, CLSCTX_ALL, IID_INetworkListManager, reinterpret_cast<LPVOID*>(&netMgr));
     if (SUCCEEDED(hr) && netMgr)
     {
         NLM_CONNECTIVITY connect;
@@ -164,6 +171,43 @@ bool isInternetConnected()
 
     // Consider an internet is available by default
     return true;
+}
+
+bool unzip(const QString& srcFilePath, const QString& dstFolderPath)
+{
+    struct ZipReaderRAII final
+    {
+        void* handle = nullptr;
+
+        ZipReaderRAII() { mz_zip_reader_create(&handle); }
+        ~ZipReaderRAII() { mz_zip_reader_delete(&handle); }
+
+        operator void*() { return handle; }
+    };
+
+    ZipReaderRAII zip;
+
+    auto err = mz_zip_reader_open_file(zip, srcFilePath.toLocal8Bit().constData());
+    if (err != MZ_OK) return false;
+
+    err = mz_zip_reader_goto_first_entry(zip);
+    if (err == MZ_END_OF_LIST) return true;
+    if (err != MZ_OK) return false;
+
+    mz_zip_file* zipFileInfo = nullptr;
+    do
+    {
+        err = mz_zip_reader_entry_get_info(zip, &zipFileInfo);
+        if (err != MZ_OK) return false;
+
+        qDebug() << zipFileInfo->filename;
+
+        err = mz_zip_reader_goto_next_entry(zip);
+        if (err != MZ_OK && err != MZ_END_OF_LIST) return false;
+    }
+    while (err == MZ_OK);
+
+    return (err == MZ_END_OF_LIST);
 }
 
 }

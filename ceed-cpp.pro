@@ -23,6 +23,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 include(3rdParty/QtnProperty/QtnProperty/QtnProperty.pri)
+include(3rdParty/zlib/zlib.pri)
+include(3rdParty/minizip-ng/minizip-ng.pri)
 
 CONFIG += c++11
 
