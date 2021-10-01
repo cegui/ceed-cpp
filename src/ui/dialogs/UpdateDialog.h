@@ -41,6 +41,7 @@ private:
     QVersionNumber _releaseVersion;
     QUrl _releaseWebPage;
     QUrl _releaseAsset;
+    QString _releaseAssetFleName;
     int64_t _releaseAssetSize = 0.0;
     bool _blocked = false;
 };

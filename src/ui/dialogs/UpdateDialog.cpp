@@ -35,8 +35,8 @@ UpdateDialog::UpdateDialog(const QVersionNumber& currentVersion, const QVersionN
     const QString arch = "x64";
 #endif
 
-    const QString assetName = QString("CEED-v%1-%2-%3.zip").arg(newVersion.toString(), os, arch);
-    const QString assetNameNoCase = assetName.toLower();
+    _releaseAssetFleName = QString("CEED-v%1-%2-%3.zip").arg(newVersion.toString(), os, arch);
+    const QString assetNameNoCase = _releaseAssetFleName.toLower();
     const auto assets = releaseInfo.value("assets").toArray();
     for (const QJsonValue& assetDesc : assets)
     {
@@ -134,7 +134,7 @@ void UpdateDialog::downloadUpdate()
     settings->remove("update");
 
     // Reserve disk space for the download
-    QFile file(tmpDir.absoluteFilePath("update.zip"));
+    QFile file(tmpDir.absoluteFilePath(_releaseAssetFleName));
     try
     {
         if (file.open(QFile::WriteOnly))
@@ -258,6 +258,9 @@ void UpdateDialog::downloadUpdate()
         // Update is successfully downloaded, remember its version
         settings->setValue("update/version", _releaseVersion.toString());
 
+        QFileInfo fileInfo(filePath);
+        //.baseName()
+
         installUpdate();
     });
 }
@@ -274,12 +277,15 @@ void UpdateDialog::installUpdate()
     // Remember that we started an update to check results on the next CEED launch
     settings->setValue("update/launched", true);
 
-    // Run external tool and close us
+    //RunProcessElevated(generated_cmd)
+
+    exit(0);
 }
 
 void UpdateDialog::on_btnUpdate_clicked()
 {
-    // TODO: if already downloaded proceed to installation immediately
+    // TODO: if already downloaded proceed to installation immediately, check "update/version"
+    // TODO: if "update/version" is set but there is no update package in the folder, fallback to downloading
     // TODO: if previous package is not deleted and we found newer one, delete old tmp folder and clear settings
     downloadUpdate();
 }
