@@ -34,6 +34,7 @@ private:
 
     QUrl _releaseWebPage;
     QUrl _releaseAsset;
+    bool _blocked = false;
 };
 
 #endif // UPDATEDIALOG_H
