@@ -19,7 +19,7 @@ UpdateDialog::UpdateDialog(const QVersionNumber& currentVersion, const QVersionN
                            const QJsonObject& releaseInfo, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::UpdateDialog),
-    releaseVersion(newVersion)
+    _releaseVersion(newVersion)
 {
     ui->setupUi(this);
 
