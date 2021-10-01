@@ -34,6 +34,7 @@ private:
 
     QUrl _releaseWebPage;
     QUrl _releaseAsset;
+    int64_t _releaseAssetSize = 0.0;
     bool _blocked = false;
 };
 
