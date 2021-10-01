@@ -260,9 +260,12 @@ void UpdateDialog::downloadUpdate()
         // Update is successfully downloaded, remember its version
         settings->setValue("update/version", _releaseVersion.toString());
 
-        //QFileInfo fileInfo(filePath);
-        //.baseName()
-        Utils::unzip(filePath, "");
+        if (!Utils::unzip(filePath, QFileInfo(filePath).dir().absolutePath()))
+        {
+            ui->lblStatus->setText(tr("Failed to unpack ") + filePath);
+            ui->progressBar->setVisible(false);
+            return;
+        }
 
         installUpdate();
     });

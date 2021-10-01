@@ -180,34 +180,22 @@ bool unzip(const QString& srcFilePath, const QString& dstFolderPath)
         void* handle = nullptr;
 
         ZipReaderRAII() { mz_zip_reader_create(&handle); }
-        ~ZipReaderRAII() { mz_zip_reader_delete(&handle); }
+        ~ZipReaderRAII() { mz_zip_reader_delete(&handle); } // close happens inside
 
         operator void*() { return handle; }
     };
 
     ZipReaderRAII zip;
 
+    //mz_zip_reader_set_entry_cb(zip, userdata, minizip_extract_entry_cb);
+    //mz_zip_reader_set_progress_cb(zip, userdata, minizip_extract_progress_cb);
+    //mz_zip_reader_set_overwrite_cb(zip, userdata, minizip_extract_overwrite_cb);
+
     auto err = mz_zip_reader_open_file(zip, srcFilePath.toLocal8Bit().constData());
     if (err != MZ_OK) return false;
 
-    err = mz_zip_reader_goto_first_entry(zip);
-    if (err == MZ_END_OF_LIST) return true;
-    if (err != MZ_OK) return false;
-
-    mz_zip_file* zipFileInfo = nullptr;
-    do
-    {
-        err = mz_zip_reader_entry_get_info(zip, &zipFileInfo);
-        if (err != MZ_OK) return false;
-
-        qDebug() << zipFileInfo->filename;
-
-        err = mz_zip_reader_goto_next_entry(zip);
-        if (err != MZ_OK && err != MZ_END_OF_LIST) return false;
-    }
-    while (err == MZ_OK);
-
-    return (err == MZ_END_OF_LIST);
+    err = mz_zip_reader_save_all(zip, dstFolderPath.toLocal8Bit().constData());
+    return (err == MZ_OK || err == MZ_END_OF_LIST);
 }
 
 }
