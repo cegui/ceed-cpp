@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <qurl.h>
+#include <qelapsedtimer.h>
 
 class QVersionNumber;
 class QJsonObject;
@@ -34,6 +35,8 @@ private:
     void installUpdate();
 
     Ui::UpdateDialog *ui;
+
+    QElapsedTimer _downloadTimer;
 
     QUrl _releaseWebPage;
     QUrl _releaseAsset;

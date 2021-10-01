@@ -10,7 +10,6 @@
 #include <qnetworkaccessmanager.h>
 #include <qnetworkreply.h>
 #include <qscreen.h>
-#include <qelapsedtimer.h>
 
 constexpr double MB = 1048576.0;
 
@@ -118,6 +117,8 @@ void UpdateDialog::downloadUpdate()
     // FIXME QTBUG: Qt 5.15.2 freezes in QMessageBox::question below
     //setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
 
+    // TODO: create tmp folder and reserve file size. Save to settings tmp folder but not version yet!
+
     _blocked = true;
 
     ui->btnUpdate->setEnabled(false);
@@ -128,12 +129,13 @@ void UpdateDialog::downloadUpdate()
     ui->lblStatus->setVisible(true);
     ui->lblStatus->setText(tr("Preparing download..."));
 
-    QElapsedTimer downloadTimer;
-    downloadTimer.start();
+    _downloadTimer.start();
 
-    QNetworkReply* assetReply = qobject_cast<Application*>(qApp)->getNetworkManager()->get(QNetworkRequest(_releaseAsset));
+    QNetworkRequest assetRequest(_releaseAsset);
+    assetRequest.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+    QNetworkReply* assetReply = qobject_cast<Application*>(qApp)->getNetworkManager()->get(assetRequest);
 
-    QObject::connect(assetReply, &QNetworkReply::downloadProgress, [this, &downloadTimer](qint64 bytesReceived, qint64 bytesTotal)
+    QObject::connect(assetReply, &QNetworkReply::downloadProgress, [this](qint64 bytesReceived, qint64 bytesTotal)
     {
         if (bytesTotal <= 0) bytesTotal = _releaseAssetSize;
 
@@ -151,7 +153,7 @@ void UpdateDialog::downloadUpdate()
         const auto mbReceived = static_cast<double>(bytesReceived) / MB;
         const auto mbTotal = static_cast<double>(bytesTotal) / MB;
 
-        double secondsElapsed = downloadTimer.elapsed() / 1000.0; // msec to sec
+        double secondsElapsed = _downloadTimer.elapsed() / 1000.0; // msec to sec
 
         double speedMbps = mbReceived / secondsElapsed;
 
@@ -198,10 +200,11 @@ void UpdateDialog::downloadUpdate()
 
         _blocked = false;
 
+        ui->btnUpdate->setEnabled(true);
+
         if (assetReply->error() != QNetworkReply::NoError)
         {
             ui->progressBar->setVisible(false);
-            ui->btnUpdate->setEnabled(true);
             ui->btnUpdate->setText(tr("Retry"));
             return;
         }
