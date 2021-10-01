@@ -1,7 +1,7 @@
 #include "UpdateDialog.h"
 #include "ui_UpdateDialog.h"
 #include "src/Application.h"
-#include <qversionnumber.h>
+#include "src/util/Settings.h"
 #include <qjsonobject.h>
 #include <qjsonarray.h>
 #include <qevent.h>
@@ -10,13 +10,16 @@
 #include <qnetworkaccessmanager.h>
 #include <qnetworkreply.h>
 #include <qscreen.h>
+#include <qsettings.h>
+#include <qdir.h>
 
 constexpr double MB = 1048576.0;
 
 UpdateDialog::UpdateDialog(const QVersionNumber& currentVersion, const QVersionNumber& newVersion,
                            const QJsonObject& releaseInfo, QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::UpdateDialog)
+    ui(new Ui::UpdateDialog),
+    releaseVersion(newVersion)
 {
     ui->setupUi(this);
 
@@ -117,7 +120,42 @@ void UpdateDialog::downloadUpdate()
     // FIXME QTBUG: Qt 5.15.2 freezes in QMessageBox::question below
     //setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
 
-    // TODO: create tmp folder and reserve file size. Save to settings tmp folder but not version yet!
+    QDir tmpDir(QDir::tempPath());
+    if (tmpDir.cd("CEEDUpdate"))
+    {
+        tmpDir.removeRecursively();
+        tmpDir.cdUp();
+    }
+
+    tmpDir.mkdir("CEEDUpdate");
+    tmpDir.cd("CEEDUpdate");
+
+    QSettings* settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
+    settings->remove("update");
+
+    // Reserve disk space for the download
+    QFile file(tmpDir.absoluteFilePath("update.zip"));
+    try
+    {
+        if (file.open(QFile::WriteOnly))
+        {
+            if (!file.seek(_releaseAssetSize - 1))
+                throw std::exception("Can't reserve enough space in the temporary file");
+            file.write("\0", 1);
+            file.close();
+        }
+        else
+        {
+            throw std::exception("Can't create temporary file");
+        }
+    }
+    catch (const std::exception& e)
+    {
+        if (file.exists())
+            file.remove();
+        QMessageBox::critical(this, tr("IO error"), tr("Can't reserve disk space for downloading.\nCheck available space and access rights and then retry.\n\nError: %1").arg(e.what()));
+        return;
+    }
 
     _blocked = true;
 
@@ -194,7 +232,7 @@ void UpdateDialog::downloadUpdate()
         ui->lblStatus->setText(tr("Network error: %1").arg(assetReply->errorString()));
     });
 
-    QObject::connect(assetReply, &QNetworkReply::finished, [this, assetReply]()
+    QObject::connect(assetReply, &QNetworkReply::finished, [this, assetReply, settings, filePath = file.fileName()]()
     {
         //setWindowFlags(windowFlags() | Qt::WindowCloseButtonHint);
 
@@ -210,6 +248,15 @@ void UpdateDialog::downloadUpdate()
         }
 
         // TODO: save to settings info about downloaded update package - version, tmp path
+        QFile file(filePath);
+        if (file.open(QFile::WriteOnly | QFile::Truncate))
+        {
+            file.write(assetReply->readAll());
+            file.close();
+        }
+
+        // Update is successfully downloaded, remember its version
+        settings->setValue("update/version", _releaseVersion.toString());
 
         installUpdate();
     });
@@ -221,6 +268,11 @@ void UpdateDialog::installUpdate()
                                           tr("Application will be closed and all unsaved work will be lost.\nContinue?"),
                                           QMessageBox::Yes | QMessageBox::No);
     if (response != QMessageBox::Yes) return;
+
+    QSettings* settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
+
+    // Remember that we started an update to check results on the next CEED launch
+    settings->setValue("update/launched", true);
 
     // Run external tool and close us
 }

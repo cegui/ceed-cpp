@@ -4,8 +4,8 @@
 #include <QDialog>
 #include <qurl.h>
 #include <qelapsedtimer.h>
+#include <qversionnumber.h>
 
-class QVersionNumber;
 class QJsonObject;
 
 namespace Ui {
@@ -38,6 +38,7 @@ private:
 
     QElapsedTimer _downloadTimer;
 
+    QVersionNumber _releaseVersion;
     QUrl _releaseWebPage;
     QUrl _releaseAsset;
     int64_t _releaseAssetSize = 0.0;
