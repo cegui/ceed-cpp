@@ -30,6 +30,9 @@ private:
     virtual void keyPressEvent(QKeyEvent* event) override;
     virtual void closeEvent(QCloseEvent* event) override;
 
+    void downloadUpdate();
+    void installUpdate();
+
     Ui::UpdateDialog *ui;
 
     QUrl _releaseWebPage;

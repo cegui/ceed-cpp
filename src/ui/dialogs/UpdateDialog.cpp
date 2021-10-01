@@ -10,6 +10,9 @@
 #include <qnetworkaccessmanager.h>
 #include <qnetworkreply.h>
 #include <qscreen.h>
+#include <qelapsedtimer.h>
+
+constexpr double MB = 1048576.0;
 
 UpdateDialog::UpdateDialog(const QVersionNumber& currentVersion, const QVersionNumber& newVersion,
                            const QJsonObject& releaseInfo, QWidget *parent) :
@@ -57,7 +60,7 @@ UpdateDialog::UpdateDialog(const QVersionNumber& currentVersion, const QVersionN
     }
     else
     {
-        versionStr += tr(" (%3 MB)").arg(_releaseAssetSize / 1048576.0, 0, 'f', 1);
+        versionStr += tr(" (%3 MB)").arg(_releaseAssetSize / MB, 0, 'f', 1);
     }
 
     _releaseWebPage = releaseInfo.value("html_url").toString();
@@ -87,7 +90,7 @@ UpdateDialog::UpdateDialog(const QVersionNumber& currentVersion, const QVersionN
 
     ui->lblStatus->setVisible(false);
     ui->progressBar->setVisible(false);
-    ui->progressBar->setMaximum(10000);
+    ui->progressBar->setMaximum(1000);
 }
 
 UpdateDialog::~UpdateDialog()
@@ -110,7 +113,7 @@ void UpdateDialog::closeEvent(QCloseEvent* event)
         QDialog::closeEvent(event);
 }
 
-void UpdateDialog::on_btnUpdate_clicked()
+void UpdateDialog::downloadUpdate()
 {
     // FIXME QTBUG: Qt 5.15.2 freezes in QMessageBox::question below
     //setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
@@ -125,14 +128,63 @@ void UpdateDialog::on_btnUpdate_clicked()
     ui->lblStatus->setVisible(true);
     ui->lblStatus->setText(tr("Preparing download..."));
 
-    //QElapsedTimer downloadTimer;
-    //downloadTimer.start();
+    QElapsedTimer downloadTimer;
+    downloadTimer.start();
 
     QNetworkReply* assetReply = qobject_cast<Application*>(qApp)->getNetworkManager()->get(QNetworkRequest(_releaseAsset));
 
-    QObject::connect(assetReply, &QNetworkReply::downloadProgress, [this](qint64 received, qint64 total)
+    QObject::connect(assetReply, &QNetworkReply::downloadProgress, [this, &downloadTimer](qint64 bytesReceived, qint64 bytesTotal)
     {
-        //UpdateTransferProgress(recvd, total, m_DownloadTimer, ui->progressBar, ui->progressText, tr("Downloading update..."));
+        if (bytesTotal <= 0) bytesTotal = _releaseAssetSize;
+
+        if (bytesReceived >= bytesTotal)
+        {
+            ui->progressBar->setValue(ui->progressBar->maximum());
+            ui->lblStatus->setText(tr("Downloaded"));
+            return;
+        }
+
+        if (bytesTotal <= 0) return;
+
+        ui->progressBar->setValue(static_cast<int>(ui->progressBar->maximum() * (bytesReceived / static_cast<double>(bytesTotal))));
+
+        const auto mbReceived = static_cast<double>(bytesReceived) / MB;
+        const auto mbTotal = static_cast<double>(bytesTotal) / MB;
+
+        double secondsElapsed = downloadTimer.elapsed() / 1000.0; // msec to sec
+
+        double speedMbps = mbReceived / secondsElapsed;
+
+        auto secondsRemaining = static_cast<uint64_t>((mbTotal - mbReceived) / speedMbps);
+
+        if (secondsElapsed < 1.0)
+        {
+            ui->lblStatus->setText(tr("Downloading..."));
+            return;
+        }
+
+        QString remainigTime;
+        if (secondsRemaining > 3600)
+        {
+            remainigTime += QString("%1 h").arg(secondsRemaining / 3600);
+            secondsRemaining %= 3600;
+        }
+        if (secondsRemaining > 60)
+        {
+            remainigTime += QString("%1 m").arg(secondsRemaining / 60);
+            secondsRemaining %= 60;
+        }
+        remainigTime += QString("%1 s").arg(secondsRemaining);
+
+        const bool mbps = (speedMbps > 1.0);
+
+        ui->lblStatus->setText(
+            tr("Downloading: %2 / %3 MB. %4 remaining (%5 %6)")
+            .arg(mbReceived, 0, 'f', 1)
+            .arg(mbTotal, 0, 'f', 1)
+            .arg(remainigTime)
+            .arg(mbps ? speedMbps : speedMbps * 1000.0, 0, 'f', mbps ? 2 : 0)
+            .arg(mbps ? tr("MB/s") : tr("KB/s")));
     });
 
     QObject::connect(assetReply, &QNetworkReply::errorOccurred, [this, assetReply](QNetworkReply::NetworkError)
@@ -154,13 +206,27 @@ void UpdateDialog::on_btnUpdate_clicked()
             return;
         }
 
-        auto response = QMessageBox::question(this, tr("Confirm closing"),
-                                              tr("Application will be closed and all unsaved work will be lost.\nContinue?"),
-                                              QMessageBox::Yes | QMessageBox::No);
-        if (response != QMessageBox::Yes) return;
+        // TODO: save to settings info about downloaded update package - version, tmp path
 
-        // Run external tool and close us
+        installUpdate();
     });
+}
+
+void UpdateDialog::installUpdate()
+{
+    auto response = QMessageBox::question(this, tr("Confirm closing"),
+                                          tr("Application will be closed and all unsaved work will be lost.\nContinue?"),
+                                          QMessageBox::Yes | QMessageBox::No);
+    if (response != QMessageBox::Yes) return;
+
+    // Run external tool and close us
+}
+
+void UpdateDialog::on_btnUpdate_clicked()
+{
+    // TODO: if already downloaded proceed to installation immediately
+    // TODO: if previous package is not deleted and we found newer one, delete old tmp folder and clear settings
+    downloadUpdate();
 }
 
 void UpdateDialog::on_btnWeb_clicked()
