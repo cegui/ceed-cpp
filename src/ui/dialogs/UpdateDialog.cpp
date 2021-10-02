@@ -131,16 +131,25 @@ void UpdateDialog::on_btnUpdate_clicked()
             // Package zip must exist
             // TODO: verify checksum
             packageName = settings->value("update/package", QString()).toString();
-            const QString fileName = QDir::tempPath() + QDir::separator() + "CEEDUpdate" + QDir::separator() + packageName + ".zip";
-            if (QFileInfo::exists(fileName))
-                packageName.clear();
+            if (!packageName.isEmpty())
+            {
+                const QString fileName = QDir::tempPath() + QDir::separator() + "CEEDUpdate" + QDir::separator() + packageName + ".zip";
+                if (!QFileInfo::exists(fileName))
+                    packageName.clear();
+            }
         }
     }
 
     if (!packageName.isEmpty())
+    {
+        ui->lblStatus->setVisible(true);
+        ui->lblStatus->setText(tr("Update package '%1' is found in the cache").arg(packageName));
         installUpdate(packageName);
+    }
     else
+    {
         downloadUpdate();
+    }
 }
 
 void UpdateDialog::on_btnWeb_clicked()
@@ -292,7 +301,7 @@ void UpdateDialog::downloadUpdate()
             file.close();
         }
 
-        const QString packageName = fileInfo.baseName();
+        const QString packageName = fileInfo.completeBaseName();
 
         // Update is successfully downloaded, remember its version and file name
         settings->setValue("update/version", _releaseVersion.toString());
@@ -348,10 +357,6 @@ void UpdateDialog::installUpdate(const QString& packageName)
 
     // Launch an updater and exit
 
-    // Remember that we started an update to check results on the next CEED launch
-    QSettings* settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
-    settings->setValue("update/launched", true);
-
     const QString appFile = qApp->applicationFilePath();
     const QString installPath = qApp->applicationDirPath();
     const QString updatePath = packageDir.absolutePath();
@@ -365,7 +370,7 @@ void UpdateDialog::installUpdate(const QString& packageName)
     // Copy update script to the update folder because the current installation will be removed.
     // NB: working directory is changed accordingly!
     const QString cmdFileSrc = QDir(installPath).absoluteFilePath("data/misc/update.cmd");
-    const QString cmdFileDst = QFileInfo(updatePath).dir().absoluteFilePath("update.cmd");
+    const QString cmdFileDst = updateDir.absoluteFilePath("update.cmd");
     QFile::copy(cmdFileSrc, cmdFileDst);
 
     QStringList cmdArgs;
@@ -382,7 +387,12 @@ void UpdateDialog::installUpdate(const QString& packageName)
     // TODO: Linux, Mac
 #endif
 
-    exit(0);
+    // Remember that we started an update to check results on the next CEED launch
+    QSettings* settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
+    settings->setValue("update/launched", true);
+
+    //!!!DBG TMP! TODO: uncomment!
+    //exit(0);
 }
 
 void UpdateDialog::onUpdateError(const QString& error)

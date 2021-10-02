@@ -71,11 +71,13 @@ Application::Application(int& argc, char** argv)
         delete splash;
     }
 
-    QCommandLineParser cmdLine;
-    if (cmdLine.parse(arguments()) && cmdLine.positionalArguments().size() > 0)
+    _cmdLine = new QCommandLineParser();
+    _cmdLine->setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
+    _cmdLine->parse(arguments());
+    if (_cmdLine->positionalArguments().size() > 0)
     {
         // Load project specified in a command line
-        _mainWindow->loadProject(cmdLine.positionalArguments().first());
+        _mainWindow->loadProject(_cmdLine->positionalArguments().first());
     }
     else
     {
@@ -88,6 +90,8 @@ Application::Application(int& argc, char** argv)
         }
     }
 
+    checkUpdateResults();
+
     // TODO: if not disabled in settings / if time has come
     checkForUpdates();
 }
@@ -96,6 +100,7 @@ Application::~Application()
 {
     delete _mainWindow;
     delete _settings;
+    delete _cmdLine;
 }
 
 SettingsSection* Application::getOrCreateShortcutSettingsSection(const QString& groupId, const QString& label)
@@ -216,6 +221,9 @@ void Application::checkForUpdates()
             QVersionNumber currentVersion = QVersionNumber::fromString(applicationVersion());
             //if (latestVersion.normalized() > currentVersion.normalized())
             {
+                // TODO: check if we failed to update to the latestVersion before, write in a statusbar?
+                //!!!forced update check must clear this value before calling app::checkForUpdate()!
+
                 UpdateDialog dlg(currentVersion, latestVersion, releaseInfo);
                 dlg.exec();
             }
@@ -244,6 +252,25 @@ void Application::onUpdateError(const QUrl& url, const QString& errorString)
         QDesktopServices::openUrl(QUrl("https://github.com/cegui/ceed-cpp/releases"));
 
     _mainWindow->setStatusMessage("");
+}
+
+void Application::checkUpdateResults()
+{
+    const bool updateLaunched = _settings->getQSettings()->value("update/launched").toBool();
+    const bool startedByUpdater = _cmdLine->isSet("updateResult");
+    if (!updateLaunched && !startedByUpdater) return;
+
+    if (!updateLaunched)
+        QMessageBox::warning(_mainWindow, tr("Warning"), tr("An application was launched by an updater script but no update was scheduled!"));
+
+    if (startedByUpdater)
+    {
+        const auto updateResult = _cmdLine->value("updateResult");
+        const auto updateMessage = _cmdLine->value("updateMessage");
+
+        //!!!DBG TMP!
+        QMessageBox::warning(_mainWindow, "Update results", tr("Code: %1\nMsg: %2").arg(updateResult, updateMessage));
+    }
 }
 
 // Creates general application settings plus some subsystem settings

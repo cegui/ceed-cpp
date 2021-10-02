@@ -10,6 +10,7 @@
 class Settings;
 class SettingsSection;
 class QNetworkAccessManager;
+class QCommandLineParser;
 
 class Application : public QApplication
 {
@@ -38,7 +39,9 @@ private:
 
     void createSettingsEntries();
     void onUpdateError(const QUrl& url, const QString& errorString);
+    void checkUpdateResults();
 
+    QCommandLineParser* _cmdLine = nullptr;
     MainWindow* _mainWindow = nullptr;
     Settings* _settings = nullptr;
     QNetworkAccessManager* _network = nullptr;

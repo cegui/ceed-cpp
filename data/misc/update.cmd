@@ -44,6 +44,6 @@ set "ResultMsg=Updated successfully"
 
 :run
 
-::!!!DBG TMP!
-"%InstallPath%\Editor.exe" -updateResult %ResultCode% -updateMessage "%ResultMsg%"
+:: First "" is an empty title for a new command prompt
+start "" "%InstallPath%\ceed.exe" -updateResult %ResultCode% -updateMessage "%ResultMsg%"
 
