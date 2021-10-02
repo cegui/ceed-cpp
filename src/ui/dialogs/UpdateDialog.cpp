@@ -13,6 +13,7 @@
 #include <qscreen.h>
 #include <qsettings.h>
 #include <qdir.h>
+#include <qprocess.h>
 
 constexpr double MB = 1048576.0;
 
@@ -36,8 +37,8 @@ UpdateDialog::UpdateDialog(const QVersionNumber& currentVersion, const QVersionN
     const QString arch = "x64";
 #endif
 
-    _releaseAssetFleName = QString("CEED-v%1-%2-%3.zip").arg(newVersion.toString(), os, arch);
-    const QString assetNameNoCase = _releaseAssetFleName.toLower();
+    _releaseAssetFileName = QString("CEED-v%1-%2-%3.zip").arg(newVersion.toString(), os, arch);
+    const QString assetNameNoCase = _releaseAssetFileName.toLower();
     const auto assets = releaseInfo.value("assets").toArray();
     for (const QJsonValue& assetDesc : assets)
     {
@@ -135,7 +136,7 @@ void UpdateDialog::downloadUpdate()
     settings->remove("update");
 
     // Reserve disk space for the download
-    QFile file(tmpDir.absoluteFilePath(_releaseAssetFleName));
+    QFile file(tmpDir.absoluteFilePath(_releaseAssetFileName));
     try
     {
         if (file.open(QFile::WriteOnly))
@@ -288,9 +289,41 @@ void UpdateDialog::installUpdate()
     // Remember that we started an update to check results on the next CEED launch
     settings->setValue("update/launched", true);
 
-    //RunProcessElevated(generated_cmd)
+    const QString appFile = qApp->applicationFilePath();
+    const QString installPath = qApp->applicationDirPath();
 
-    exit(0);
+    QDir tmpDir(QDir::tempPath());
+    tmpDir.cd("CEEDUpdate");
+    const QString updatePath = tmpDir.absoluteFilePath(QFileInfo(_releaseAssetFileName).completeBaseName());
+
+#ifdef Q_OS_WIN
+    // 'wmic process' requires an SQL string
+    QString sqlAppFile = appFile;
+    sqlAppFile.replace("\\", "\\\\");
+    sqlAppFile.replace("/", "\\\\");
+
+    // Copy update script to the update folder because the current installation will be removed.
+    // NB: working directory is changed accordingly!
+    const QString cmdFileSrc = QDir(installPath).absoluteFilePath("data/misc/update.cmd");
+    const QString cmdFileDst = QFileInfo(updatePath).dir().absoluteFilePath("update.cmd");
+    QFile::copy(cmdFileSrc, cmdFileDst);
+
+    QStringList cmdArgs;
+    cmdArgs.push_back(sqlAppFile);
+    cmdArgs.push_back(installPath);
+    cmdArgs.push_back(updatePath);
+    if (!QProcess::startDetached(cmdFileDst, cmdArgs, QFileInfo(cmdFileDst).absolutePath()))
+    {
+        QMessageBox::critical(this, tr("Error"), tr("Failed to launch an updater script"));
+        ui->lblStatus->setText(tr("Failed to launch an updater script"));
+        ui->progressBar->setVisible(false);
+        return;
+    }
+#else
+    // Linux, Mac
+#endif
+
+    //exit(0);
 }
 
 void UpdateDialog::on_btnUpdate_clicked()

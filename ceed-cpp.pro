@@ -314,6 +314,10 @@ images.path = $$DESTDIR/data/images
 images.files = $$PWD/data/icons/ceed.png
 INSTALLS += images
 
+misc.path = $$DESTDIR/data/misc
+misc.files = $$PWD/data/misc/*
+INSTALLS += misc
+
 win32 {
     cegui_dlls.path = $$DESTDIR
     cegui_dlls.files = $$CEGUI_BIN_DIR/*.dll

@@ -105,8 +105,8 @@ bool showInGraphicalShell(const QString& path)
         //showGraphicalShellError(parent, app, error);
     return error.isEmpty();
     */
-#endif
     return false;
+#endif
 }
 
 void registerFileAssociation(const QString& extension, const QString& desc, const QString& mimeType, const QString& perceivedType, int iconIndex)
