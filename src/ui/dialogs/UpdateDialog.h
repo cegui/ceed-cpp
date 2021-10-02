@@ -32,7 +32,8 @@ private:
     virtual void closeEvent(QCloseEvent* event) override;
 
     void downloadUpdate();
-    void installUpdate();
+    void installUpdate(const QString& packageName);
+    void onUpdateError(const QString& error);
 
     Ui::UpdateDialog *ui;
 

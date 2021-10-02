@@ -1,12 +1,12 @@
-::@echo off
+@echo off
 
-set ExePathSQLStr=%~1
+set AppFileSlashesEsc=%~1
 set InstallPath=%~2
 set UpdatePath=%~3
 
 :: Wait for all processes running from this .exe to finish
 :loop
-wmic process where "ExecutablePath='%ExePathSQLStr%'" get ExecutablePath | findstr /i "ceed" >nul
+wmic process get ExecutablePath | findstr /i "%AppFileSlashesEsc%" >nul
 if %errorlevel% neq 1 (
     timeout /t 2 >nul
     goto :loop

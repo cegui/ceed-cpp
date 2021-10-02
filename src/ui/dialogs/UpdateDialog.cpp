@@ -21,7 +21,7 @@ UpdateDialog::UpdateDialog(const QVersionNumber& currentVersion, const QVersionN
                            const QJsonObject& releaseInfo, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::UpdateDialog),
-    _releaseVersion(newVersion)
+    _releaseVersion(newVersion.normalized())
 {
     ui->setupUi(this);
 
@@ -117,14 +117,46 @@ void UpdateDialog::closeEvent(QCloseEvent* event)
         QDialog::closeEvent(event);
 }
 
+void UpdateDialog::on_btnUpdate_clicked()
+{
+    QSettings* settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
+
+    // Check if we already have an update package downloaded
+    QString packageName;
+    if (settings->contains("update/version"))
+    {
+        // Version must match
+        if (_releaseVersion == QVersionNumber::fromString(settings->value("update/version").toString()).normalized())
+        {
+            // Package zip must exist
+            // TODO: verify checksum
+            packageName = settings->value("update/package", QString()).toString();
+            const QString fileName = QDir::tempPath() + QDir::separator() + "CEEDUpdate" + QDir::separator() + packageName + ".zip";
+            if (QFileInfo::exists(fileName))
+                packageName.clear();
+        }
+    }
+
+    if (!packageName.isEmpty())
+        installUpdate(packageName);
+    else
+        downloadUpdate();
+}
+
+void UpdateDialog::on_btnWeb_clicked()
+{
+    QDesktopServices::openUrl(_releaseWebPage);
+}
+
 void UpdateDialog::downloadUpdate()
 {
     // FIXME QTBUG: Qt 5.15.2 freezes in QMessageBox::question below
     //setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
 
-    QDir tmpDir(QDir::tempPath());
+    QDir tmpDir = QDir::temp();
     if (tmpDir.cd("CEEDUpdate"))
     {
+        // Our cache is verified to be invalid, let's erase it and start clean
         tmpDir.removeRecursively();
         tmpDir.cdUp();
     }
@@ -155,7 +187,7 @@ void UpdateDialog::downloadUpdate()
     {
         if (file.exists())
             file.remove();
-        QMessageBox::critical(this, tr("IO error"), tr("Can't reserve disk space for downloading.\nCheck available space and access rights and then retry.\n\nError: %1").arg(e.what()));
+        onUpdateError(tr("Can't reserve disk space for downloading.\nCheck available space and access rights and then retry.\n\nError: %1").arg(e.what()));
         return;
     }
 
@@ -243,14 +275,16 @@ void UpdateDialog::downloadUpdate()
 
         ui->btnUpdate->setEnabled(true);
 
+        QFileInfo fileInfo(filePath);
+
         if (assetReply->error() != QNetworkReply::NoError)
         {
+            fileInfo.dir().removeRecursively();
             ui->progressBar->setVisible(false);
             ui->btnUpdate->setText(tr("Retry"));
             return;
         }
 
-        // TODO: save to settings info about downloaded update package - version, tmp path
         QFile file(filePath);
         if (file.open(QFile::WriteOnly | QFile::Truncate))
         {
@@ -258,23 +292,21 @@ void UpdateDialog::downloadUpdate()
             file.close();
         }
 
-        // Update is successfully downloaded, remember its version
+        const QString packageName = fileInfo.baseName();
+
+        // Update is successfully downloaded, remember its version and file name
         settings->setValue("update/version", _releaseVersion.toString());
+        settings->setValue("update/package", packageName);
 
-        if (!Utils::unzip(filePath, QFileInfo(filePath).dir().absolutePath()))
-        {
-            ui->lblStatus->setText(tr("Failed to unpack ") + filePath);
-            ui->progressBar->setVisible(false);
-            return;
-        }
-
-        installUpdate();
+        installUpdate(packageName);
     });
 }
 
-void UpdateDialog::installUpdate()
+void UpdateDialog::installUpdate(const QString& packageName)
 {
-    auto response = QMessageBox::question(this, tr("Confirm closing"),
+    // Confirm restart
+
+    auto response = QMessageBox::question(this, tr("Confirm restart"),
                                           tr("Application will be closed and all unsaved work will be lost.\nContinue?"),
                                           QMessageBox::Yes | QMessageBox::No);
     if (response != QMessageBox::Yes)
@@ -284,23 +316,51 @@ void UpdateDialog::installUpdate()
         return;
     }
 
-    QSettings* settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
+    // Unpack a zip package
+
+    QDir updateDir = QDir(QDir::temp().absoluteFilePath("CEEDUpdate"));
+    QString packageDirPath = updateDir.absoluteFilePath(packageName);
+    QDir packageDir(packageDirPath);
+    const QString packageZipPath = packageDirPath + ".zip";
+
+    if (packageDir.exists()) packageDir.removeRecursively();
+
+    if (!Utils::unzip(packageZipPath, packageDirPath) || !packageDir.exists())
+    {
+        onUpdateError(tr("Failed to unpack '%1'").arg(packageZipPath));
+        return;
+    }
+
+    packageDir.setFilter(QDir::AllEntries | QDir::NoDotAndDotDot);
+    const auto itemCount = packageDir.count();
+    if (itemCount == 0)
+    {
+        onUpdateError(tr("A package '%1' was empty").arg(packageZipPath));
+        return;
+    }
+    else if (itemCount == 1)
+    {
+        // If there is a single root directory in the package, we skip it
+        const auto dirList = packageDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+        if (!dirList.isEmpty())
+            packageDir.cd(dirList[0]);
+    }
+
+    // Launch an updater and exit
 
     // Remember that we started an update to check results on the next CEED launch
+    QSettings* settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
     settings->setValue("update/launched", true);
 
     const QString appFile = qApp->applicationFilePath();
     const QString installPath = qApp->applicationDirPath();
-
-    QDir tmpDir(QDir::tempPath());
-    tmpDir.cd("CEEDUpdate");
-    const QString updatePath = tmpDir.absoluteFilePath(QFileInfo(_releaseAssetFileName).completeBaseName());
+    const QString updatePath = packageDir.absolutePath();
 
 #ifdef Q_OS_WIN
-    // 'wmic process' requires an SQL string
-    QString sqlAppFile = appFile;
-    sqlAppFile.replace("\\", "\\\\");
-    sqlAppFile.replace("/", "\\\\");
+    // 'findstr' requires slashes to be escaped
+    QString appFileSlashesEsc = appFile;
+    appFileSlashesEsc.replace("\\", "\\\\");
+    appFileSlashesEsc.replace("/", "\\\\");
 
     // Copy update script to the update folder because the current installation will be removed.
     // NB: working directory is changed accordingly!
@@ -309,33 +369,27 @@ void UpdateDialog::installUpdate()
     QFile::copy(cmdFileSrc, cmdFileDst);
 
     QStringList cmdArgs;
-    cmdArgs.push_back(sqlAppFile);
+    cmdArgs.push_back(appFileSlashesEsc);
     cmdArgs.push_back(installPath);
     cmdArgs.push_back(updatePath);
     if (!QProcess::startDetached(cmdFileDst, cmdArgs, QFileInfo(cmdFileDst).absolutePath()))
     {
-        QMessageBox::critical(this, tr("Error"), tr("Failed to launch an updater script"));
-        ui->lblStatus->setText(tr("Failed to launch an updater script"));
-        ui->progressBar->setVisible(false);
+        onUpdateError(tr("Failed to launch an updater script"));
+        packageDir.removeRecursively();
         return;
     }
 #else
-    // Linux, Mac
+    // TODO: Linux, Mac
 #endif
 
-    //exit(0);
+    exit(0);
 }
 
-void UpdateDialog::on_btnUpdate_clicked()
+void UpdateDialog::onUpdateError(const QString& error)
 {
-    // TODO: if already downloaded proceed to installation immediately, check "update/version"
-    // TODO: if "update/version" is set but there is no update package in the folder, fallback to downloading
-    // TODO: if previous package is not deleted and we found newer one, delete old tmp folder and clear settings
-    downloadUpdate();
-}
-
-void UpdateDialog::on_btnWeb_clicked()
-{
-    QDesktopServices::openUrl(_releaseWebPage);
+    QMessageBox::critical(this, tr("Error"), error);
+    ui->lblStatus->setText(error);
+    ui->lblStatus->setVisible(true);
+    ui->progressBar->setVisible(false);
 }
 
