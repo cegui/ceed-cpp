@@ -454,10 +454,7 @@ bool MainWindow::confirmProjectClosing(bool onlyModified)
 
 void MainWindow::loadProject(const QString& path)
 {
-    if (path.isEmpty())
-    {
-        return;
-    }
+    if (path.isEmpty()) return;
 
     if (CEGUIManager::Instance().isProjectLoaded())
     {
@@ -466,10 +463,13 @@ void MainWindow::loadProject(const QString& path)
     }
 
     CEGUIManager::Instance().loadProject(path);
-    updateProjectDependentUI(CEGUIManager::Instance().getCurrentProject());
+    auto currProject = CEGUIManager::Instance().getCurrentProject();
+
+    if (!currProject) return;
+
+    updateProjectDependentUI(currProject);
 
     // Restore tabs
-    auto currProject = CEGUIManager::Instance().getCurrentProject();
     const QString key = "projectState/" + currProject->uuid.toString(QUuid::StringFormat::WithBraces);
     auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
     if (settings->contains(key + "/tabs"))

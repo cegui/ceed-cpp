@@ -73,7 +73,13 @@ Application::Application(int& argc, char** argv)
 
     _cmdLine = new QCommandLineParser();
     _cmdLine->setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
-    _cmdLine->parse(arguments());
+    _cmdLine->addOptions(
+    {
+        { "updateResult", tr("Update result code, 0 if succeeded."), tr("updateResult") },
+        { "updateMessage", tr("Update results messaged by an updater."), tr("updateMessage") },
+    });
+    _cmdLine->process(*this);
+
     if (_cmdLine->positionalArguments().size() > 0)
     {
         // Load project specified in a command line
@@ -265,11 +271,11 @@ void Application::checkUpdateResults()
 
     if (startedByUpdater)
     {
-        const auto updateResult = _cmdLine->value("updateResult");
+        const auto updateResult = _cmdLine->value("updateResult").toInt();
         const auto updateMessage = _cmdLine->value("updateMessage");
 
         //!!!DBG TMP!
-        QMessageBox::warning(_mainWindow, "Update results", tr("Code: %1\nMsg: %2").arg(updateResult, updateMessage));
+        QMessageBox::warning(_mainWindow, "Update results", tr("Code: %1\nMsg: %2").arg(updateResult).arg(updateMessage));
     }
 }
 
