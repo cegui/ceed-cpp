@@ -17,9 +17,6 @@
 #undef min
 #undef max
 
-//!!!DBG TMP!
-#include <qdebug.h>
-
 namespace Utils
 {
 

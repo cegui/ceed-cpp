@@ -32,6 +32,7 @@ public:
     void setActionsEnabled(const QString& groupId, bool enabled);
 
     QString getDocumentationPath() const;
+    QString getUpdatePath() const;
 
     void checkForUpdates();
 

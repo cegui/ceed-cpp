@@ -155,6 +155,7 @@
     <addaction name="actionQt"/>
     <addaction name="actionLicense"/>
     <addaction name="separator"/>
+    <addaction name="actionCheckForUpdates"/>
     <addaction name="actionAbout"/>
    </widget>
    <widget class="QMenu" name="menu_Edit">
@@ -752,6 +753,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+D</string>
+   </property>
+  </action>
+  <action name="actionCheckForUpdates">
+   <property name="text">
+    <string>Check For Updates</string>
+   </property>
+   <property name="toolTip">
+    <string>Checks the latest official release on GitHub</string>
    </property>
   </action>
  </widget>

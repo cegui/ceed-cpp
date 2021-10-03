@@ -64,7 +64,14 @@ UpdateDialog::UpdateDialog(const QVersionNumber& currentVersion, const QVersionN
     }
     else
     {
+#ifdef Q_OS_WIN
         versionStr += tr(" (%3 MB)").arg(static_cast<double>(_releaseAssetSize) / MB, 0, 'f', 1);
+#else
+        // TODO: support auto-update for Linux & Mac!
+        ui->btnUpdate->setEnabled(false);
+        ui->btnUpdate->setText(tr("<Not auto-updatable>"));
+        ui->btnUpdate->setToolTip(tr("Auto-updates are not yet implemented for your OS,\nplease visit a release web page and download manually"));
+#endif
     }
 
     _releaseWebPage = releaseInfo.value("html_url").toString();
@@ -119,7 +126,8 @@ void UpdateDialog::closeEvent(QCloseEvent* event)
 
 void UpdateDialog::on_btnUpdate_clicked()
 {
-    QSettings* settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
+    auto app = qobject_cast<Application*>(qApp);
+    QSettings* settings = app->getSettings()->getQSettings();
 
     // Check if we already have an update package downloaded
     QString packageName;
@@ -133,8 +141,8 @@ void UpdateDialog::on_btnUpdate_clicked()
             packageName = settings->value("update/package", QString()).toString();
             if (!packageName.isEmpty())
             {
-                const QString fileName = QDir::tempPath() + QDir::separator() + "CEEDUpdate" + QDir::separator() + packageName + ".zip";
-                if (!QFileInfo::exists(fileName))
+                const QString fileName = QDir(app->getUpdatePath()).absoluteFilePath(packageName + ".zip");
+                if (QFileInfo(fileName).size() != _releaseAssetSize)
                     packageName.clear();
             }
         }
@@ -162,22 +170,18 @@ void UpdateDialog::downloadUpdate()
     // FIXME QTBUG: Qt 5.15.2 freezes in QMessageBox::question below
     //setWindowFlags(windowFlags() & ~Qt::WindowCloseButtonHint);
 
-    QDir tmpDir = QDir::temp();
-    if (tmpDir.cd("CEEDUpdate"))
-    {
-        // Our cache is verified to be invalid, let's erase it and start clean
-        tmpDir.removeRecursively();
-        tmpDir.cdUp();
-    }
+    auto app = qobject_cast<Application*>(qApp);
 
-    tmpDir.mkdir("CEEDUpdate");
-    tmpDir.cd("CEEDUpdate");
+    // Our cache is verified to be invalid, let's erase it and start clean
+    QDir updateDir(app->getUpdatePath());
+    if (updateDir.exists()) updateDir.removeRecursively();
+    updateDir.mkpath(".");
 
-    QSettings* settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
+    QSettings* settings = app->getSettings()->getQSettings();
     settings->remove("update");
 
     // Reserve disk space for the download
-    QFile file(tmpDir.absoluteFilePath(_releaseAssetFileName));
+    QFile file(updateDir.absoluteFilePath(_releaseAssetFileName));
     try
     {
         if (file.open(QFile::WriteOnly))
@@ -327,7 +331,9 @@ void UpdateDialog::installUpdate(const QString& packageName)
 
     // Unpack a zip package
 
-    QDir updateDir = QDir(QDir::temp().absoluteFilePath("CEEDUpdate"));
+    auto app = qobject_cast<Application*>(qApp);
+
+    QDir updateDir = QDir(app->getUpdatePath());
     QString packageDirPath = updateDir.absoluteFilePath(packageName);
     QDir packageDir(packageDirPath);
     const QString packageZipPath = packageDirPath + ".zip";
@@ -388,11 +394,11 @@ void UpdateDialog::installUpdate(const QString& packageName)
 #endif
 
     // Remember that we started an update to check results on the next CEED launch
-    QSettings* settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
+    QSettings* settings = app->getSettings()->getQSettings();
     settings->setValue("update/launched", true);
+    settings->setValue("update/webPage", _releaseWebPage.toString());
 
-    //!!!DBG TMP! TODO: uncomment!
-    //exit(0);
+    exit(0);
 }
 
 void UpdateDialog::onUpdateError(const QString& error)

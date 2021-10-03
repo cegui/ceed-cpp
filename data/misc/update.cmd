@@ -3,6 +3,7 @@
 set AppFileSlashesEsc=%~1
 set InstallPath=%~2
 set UpdatePath=%~3
+set "PrevVersionBackupPath=%InstallPath%_old"
 
 :: Wait for all processes running from this .exe to finish
 :loop
@@ -13,7 +14,7 @@ if %errorlevel% neq 1 (
 )
 
 :: Rename an application directory into a temporary folder with the previous version backup
-move /y "%InstallPath%" "%InstallPath%Tmp"
+move /y "%InstallPath%" "%PrevVersionBackupPath%"
 if %errorlevel% neq 0 (
 	set "ResultCode=10"
 	set "ResultMsg=Failed to rename an installation directory to create a previous version backup"
@@ -25,17 +26,17 @@ mkdir "%InstallPath%"
 (robocopy "%UpdatePath%" "%InstallPath%" *.* /r:5 /w:2 /e /move >nul) & if %errorlevel% lss 8 set errorlevel=0
 if %errorlevel% neq 0 (
     :: Restore backup
-    move /y "%InstallPath%Tmp" "%InstallPath%"
+    move /y "%PrevVersionBackupPath%" "%InstallPath%"
 	set "ResultCode=20"
 	set "ResultMsg=Failed to move an update to the installation directory"
 	goto :run
 )
 
 :: Remove a temporary folder with the previous version backup
-rmdir /S /Q "%InstallPath%Tmp" | rem
+rmdir /S /Q "%PrevVersionBackupPath%" | rem
 if %errorlevel% neq 0 (
 	set "ResultCode=30"
-	set "ResultMsg=Updated successfully but failed to remove temporary folder %InstallPath%Tmp"
+	set "ResultMsg=Updated successfully but failed to remove temporary folder %PrevVersionBackupPath%"
     goto :run
 )
 

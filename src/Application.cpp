@@ -191,6 +191,11 @@ QString Application::getDocumentationPath() const
     return QDir::current().absoluteFilePath("doc");
 }
 
+QString Application::getUpdatePath() const
+{
+    return QDir::temp().absoluteFilePath("CEEDUpdate");
+}
+
 void Application::checkForUpdates()
 {
     if (!Utils::isInternetConnected())
@@ -225,10 +230,25 @@ void Application::checkForUpdates()
 
             QVersionNumber latestVersion = QVersionNumber::fromString(latestVersionStr);
             QVersionNumber currentVersion = QVersionNumber::fromString(applicationVersion());
-            //if (latestVersion.normalized() > currentVersion.normalized())
+            if (latestVersion.normalized() > currentVersion.normalized())
             {
-                // TODO: check if we failed to update to the latestVersion before, write in a statusbar?
-                //!!!forced update check must clear this value before calling app::checkForUpdate()!
+                if (_settings->getQSettings()->value("update/failed").toBool())
+                {
+                    auto savedVersion = QVersionNumber::fromString(_settings->getQSettings()->value("update/version").toString());
+                    if (latestVersion.normalized() == savedVersion.normalized())
+                    {
+                        _mainWindow->setStatusMessage(tr("Auto-update to %1 is blocked because it failed before. "
+                                                         "Use Help->Check For Updates to try again.").arg(latestVersionStr));
+                        return;
+                    }
+                    else
+                    {
+                        _settings->getQSettings()->remove("update");
+
+                        QDir updateDir(getUpdatePath());
+                        if (updateDir.exists()) updateDir.removeRecursively();
+                    }
+                }
 
                 UpdateDialog dlg(currentVersion, latestVersion, releaseInfo);
                 dlg.exec();
@@ -247,10 +267,10 @@ void Application::checkForUpdates()
 void Application::onUpdateError(const QUrl& url, const QString& errorString)
 {
     _mainWindow->setStatusMessage("Failed to check for updates");
-    qCritical() << "Network error '" << errorString << "' accessing " << url;
+    qCritical() << "Update error: '" << errorString << "' accessing " << url;
 
-    const auto response = QMessageBox::question(_mainWindow, "Update check failed",
-            QString("Update failed with error:\n%1\n\nOpen releases web page?").arg(errorString),
+    const auto response = QMessageBox::question(_mainWindow, tr("Update check failed"),
+            tr("Update failed with error:\n%1\n\nOpen releases web page?").arg(errorString),
             QMessageBox::Yes | QMessageBox::No,
             QMessageBox::Yes);
 
@@ -269,13 +289,75 @@ void Application::checkUpdateResults()
     if (!updateLaunched)
         QMessageBox::warning(_mainWindow, tr("Warning"), tr("An application was launched by an updater script but no update was scheduled!"));
 
+    int updateResult = -1;
+    QString updateMessage = "<Not launched by updater>";
     if (startedByUpdater)
     {
-        const auto updateResult = _cmdLine->value("updateResult").toInt();
-        const auto updateMessage = _cmdLine->value("updateMessage");
+        updateResult = _cmdLine->value("updateResult").toInt();
+        updateMessage = tr(_cmdLine->value("updateMessage").toUtf8());
+    }
 
-        //!!!DBG TMP!
-        QMessageBox::warning(_mainWindow, "Update results", tr("Code: %1\nMsg: %2").arg(updateResult).arg(updateMessage));
+    auto currentVersion = QVersionNumber::fromString(applicationVersion());
+    auto savedVersion = QVersionNumber::fromString(_settings->getQSettings()->value("update/version").toString());
+    if (currentVersion.normalized() == savedVersion.normalized())
+    {
+        // Updated but couldn't remove a tmp folder, let's try again
+        if (updateResult == 30)
+        {
+            QDir backupDir(applicationDirPath() + "_old");
+            if (!backupDir.exists() || backupDir.removeRecursively())
+            {
+                updateResult = 0;
+                updateMessage = tr("Updated successfully");
+            }
+        }
+
+        QDir updateDir(getUpdatePath());
+        if (updateDir.exists()) updateDir.removeRecursively();
+
+        auto releaseWebPage = _settings->getQSettings()->value("update/webPage").toString();
+        if (releaseWebPage.isEmpty())
+            releaseWebPage= "https://github.com/cegui/ceed-cpp/releases/tag/v" + currentVersion.toString();
+
+        _settings->getQSettings()->remove("update");
+
+        if (updateResult == 0 && startedByUpdater)
+        {
+            // NB: \n is replaced with <br/> to indicate Qt that this is a rich text
+            QMessageBox::information(_mainWindow, tr("Updated"),
+                                     tr("Updated to %1.<br/>"
+                                        "Visit <a href=\"%2\">release page</a> for the full release description.<br/><br/>"
+                                        "Updater result code: %3<br/>"
+                                        "Updater message: %4")
+                                     .arg(currentVersion.toString())
+                                     .arg(releaseWebPage)
+                                     .arg(updateResult)
+                                     .arg(updateMessage));
+        }
+        else
+        {
+            QMessageBox::warning(_mainWindow, tr("Updated with problems"),
+                                 tr("Application executable is updated to %1, yet something gone wrong. "
+                                    "Please check updater results and reinstall manually if you encounter problems.\n\n"
+                                    "Updater result code: %2\n"
+                                    "Updater message: %3")
+                                 .arg(currentVersion.toString())
+                                 .arg(updateResult)
+                                 .arg(updateMessage));
+        }
+    }
+    else
+    {
+        QMessageBox::critical(_mainWindow, tr("Update failed"),
+                              tr("Failed to update to %1.\n"
+                                 "Automatic update will be blocked for this version.\n"
+                                 "Use Help->Check For Updates to remove the block.\n\n"
+                                 "Updater result code: %2\n"
+                                 "Updater message: %3")
+                              .arg(savedVersion.toString())
+                              .arg(updateResult)
+                              .arg(updateMessage));
+        _settings->getQSettings()->setValue("update/failed", true);
     }
 }
 

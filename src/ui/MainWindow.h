@@ -119,6 +119,7 @@ private slots:
     void on_actionNewLayout_triggered();
     void on_actionNewImageset_triggered();
     void on_actionNewOtherFile_triggered();
+    void on_actionCheckForUpdates_triggered();
 
 private:
 

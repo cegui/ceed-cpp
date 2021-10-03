@@ -1350,6 +1350,14 @@ void MainWindow::on_actionNewOtherFile_triggered()
     }
 }
 
+void MainWindow::on_actionCheckForUpdates_triggered()
+{
+    // Forced check for update removes a failed flag which prevents an auto-update
+    auto app = qobject_cast<Application*>(qApp);
+    app->getSettings()->getQSettings()->remove("update/failed");
+    app->checkForUpdates();
+}
+
 void MainWindow::openNewEditor(EditorBasePtr editor)
 {
     if (!editor) return;
