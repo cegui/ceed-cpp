@@ -28,7 +28,7 @@ Application::Application(int& argc, char** argv)
     setOrganizationName("CEGUI");
     setOrganizationDomain("cegui.org.uk");
     setApplicationName("CEED - CEGUI editor");
-    setApplicationVersion("1.0.0");
+    setApplicationVersion("1.1.0");
 
     Utils::registerFileAssociation("ceed", "CEGUI Project file", "text/xml", "text", 0);
 
