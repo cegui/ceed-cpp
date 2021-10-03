@@ -14,8 +14,8 @@ Dependencies
 2. CEGUI [(master branch)](https://github.com/cegui/cegui) with the OpenGL3Renderer (old OpenGLRenderer is working too but disabled by default);
 3. Qt (tested with 5.12, 5.13 and 5.15.2, older versions down to 5.8 inclusive should also work).
 4. [OpenSSL](https://www.openssl.org/) 1.1.0 - update checking and downloading
-5. [zlib](https://github.com/madler/zlib) - update zip unpacking
-6. [minizip-ng](https://github.com/zlib-ng/minizip-ng) - update zip unpacking
+5. [zlib](https://github.com/madler/zlib) - update zip unpacking. Sources are included;
+6. [minizip-ng](https://github.com/zlib-ng/minizip-ng) - update zip unpacking. Sources are included;
 
 Preparing CEGUI
 -------------
