@@ -13,7 +13,7 @@
 #include "src/util/Utils.h"
 #include "src/Application.h"
 #include <CEGUI/CEGUI.h>
-#include <CEGUI/FreeTypeFont.h>
+#include <CEGUI/text/FreeTypeFont.h>
 #include <CEGUI/RendererModules/OpenGL/GLRenderer.h>
 #include <CEGUI/RendererModules/OpenGL/GL3Renderer.h>
 #include <CEGUI/RendererModules/OpenGL/ViewportTarget.h>
@@ -1124,7 +1124,7 @@ const QtnEnumInfo& CEGUIManager::enumHorizontalTextFormatting()
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::LeftAligned), "LeftAligned", "Left"});
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::RightAligned), "RightAligned", "Right"});
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::CentreAligned), "CentreAligned", "Center"});
-        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWraperJustified), "WordWraperJustified", "Justified"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapJustified), "WordWraperJustified", "Justified"});
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapLeftAligned), "WordWrapLeftAligned", "Left word-wrapped"});
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapRightAligned), "WordWrapRightAligned", "Right word-wrapped"});
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapCentreAligned), "WordWrapCentreAligned", "Center word-wrapped"});

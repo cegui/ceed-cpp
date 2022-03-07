@@ -7,6 +7,7 @@
 #include "qboxlayout.h"
 #include <CEGUI/Window.h>
 #include <CEGUI/WindowManager.h>
+#include <CEGUI/GUIContext.h>
 
 LayoutPreviewerMode::LayoutPreviewerMode(LayoutEditor& editor, QWidget* parent)
     : QWidget(parent)

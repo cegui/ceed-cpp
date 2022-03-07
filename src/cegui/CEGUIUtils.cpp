@@ -2,6 +2,7 @@
 #include "src/cegui/CEGUIManager.h" //!!!for OpenGL context! TODO: encapsulate?
 #include <CEGUI/widgets/GridLayoutContainer.h>
 #include <CEGUI/CoordConverter.h>
+#include <CEGUI/ColourRect.h>
 #include <CEGUI/WindowManager.h>
 #include <CEGUI/widgets/TabControl.h>
 #include <CEGUI/widgets/ButtonBase.h>

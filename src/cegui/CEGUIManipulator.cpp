@@ -22,6 +22,7 @@
 #include <CEGUI/widgets/ScrolledContainer.h>
 #include <CEGUI/widgets/GridLayoutContainer.h>
 #include <CEGUI/WindowManager.h>
+#include <CEGUI/GUIContext.h>
 #include <CEGUI/CoordConverter.h>
 #include "QtnProperty/PropertySet.h"
 #include "QtnProperty/Core/PropertyQString.h"

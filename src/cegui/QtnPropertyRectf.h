@@ -5,6 +5,7 @@
 #include "QtnProperty/Auxiliary/PropertyTemplates.h"
 #include <src/cegui/CEGUIUtils.h> // for stream operators and string conversion
 #include <CEGUI/PropertyHelper.h>
+#include <CEGUI/Rectf.h>
 
 class QtnPropertyRectfBase : public QtnSinglePropertyBaseAs<QtnPropertyQRectFBase, CEGUI::Rectf>
 {
