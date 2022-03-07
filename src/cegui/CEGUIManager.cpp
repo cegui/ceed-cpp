@@ -1114,20 +1114,20 @@ const QtnEnumInfo& CEGUIManager::enumVerticalFormatting()
     return *_enumVerticalFormatting;
 }
 
-//???TODO: make special property of alignment + word wrap flag?
 const QtnEnumInfo& CEGUIManager::enumHorizontalTextFormatting()
 {
     if (!_enumHorizontalTextFormatting)
     {
         QVector<QtnEnumValueInfo> values;
-        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::Justified), "Justified"});
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::LeftAligned), "LeftAligned", "Left"});
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::RightAligned), "RightAligned", "Right"});
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::CentreAligned), "CentreAligned", "Center"});
-        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapJustified), "WordWraperJustified", "Justified"});
-        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapLeftAligned), "WordWrapLeftAligned", "Left word-wrapped"});
-        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapRightAligned), "WordWrapRightAligned", "Right word-wrapped"});
-        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapCentreAligned), "WordWrapCentreAligned", "Center word-wrapped"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::Justified), "Justified"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::Bidi), "Bidi"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapLeftAligned), "WordWrapLeftAligned", "(deprecated) Left word-wrapped"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapRightAligned), "WordWrapRightAligned", "(deprecated) Right word-wrapped"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapCentreAligned), "WordWrapCentreAligned", "(deprecated) Center word-wrapped"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalTextFormatting::WordWrapJustified), "WordWrapJustified", "(deprecated) Justified word-wrapped"});
         _enumHorizontalTextFormatting = new QtnEnumInfo("HorizontalTextFormatting", values);
     }
     return *_enumHorizontalTextFormatting;
