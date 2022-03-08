@@ -1,5 +1,5 @@
 /build
 *.pro.user*
 /3rdParty/CEGUI
+!3rdParty/CEGUI/update_cegui_win_sdk*.cmd
 *.qm
-!3rdParty/CEGUI/update_cegui_win_sdk.cmd
