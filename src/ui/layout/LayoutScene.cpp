@@ -403,8 +403,7 @@ void LayoutScene::updatePropertySet()
 void LayoutScene::updatePropertySet(const std::set<LayoutManipulator*>& selectedWidgets)
 {
     auto mainWindow = qobject_cast<Application*>(qApp)->getMainWindow();
-    auto propertyDockWidget = mainWindow->getPropertyDockWidget();
-    auto propertyWidget = static_cast<QtnPropertyWidget*>(propertyDockWidget->widget());
+    auto propertyWidget = static_cast<QtnPropertyWidget*>(mainWindow->getPropertyDockWidget()->widget());
 
     disconnect(propertyWidget->propertyView(), &QtnPropertyView::beforePropertyEdited, this, &LayoutScene::onBeforePropertyEdited);
 
@@ -420,8 +419,6 @@ void LayoutScene::updatePropertySet(const std::set<LayoutManipulator*>& selected
     {
         auto selectedWidget = *selectedWidgets.begin();
         propertyWidget->setPropertySet(selectedWidget->getPropertySet());
-        propertyDockWidget->setWindowTitle("Properties: " + selectedWidget->getWidgetName() + " (" + selectedWidget->getWidgetType() + ")");
-        // TODO: selectedWidget->getWidgetPath() in the header tooltip (not for the whole propertyWidget tooltip!)
     }
     else if (selectedWidgets.size() > 1)
     {
@@ -433,13 +430,28 @@ void LayoutScene::updatePropertySet(const std::set<LayoutManipulator*>& selected
             qtnPropertiesToMultiSet(_multiSet, manipulator->getPropertySet(), false);
 
         propertyWidget->setPropertySet(_multiSet);
-        propertyDockWidget->setWindowTitle(QString("Properties: %1 widgets").arg(selectedWidgets.size()));
     }
     else
     {
         propertyWidget->setPropertySet(nullptr);
-        propertyDockWidget->setWindowTitle("Properties");
     }
+
+    updatePropertyWidgetTitle(selectedWidgets);
+}
+
+void LayoutScene::updatePropertyWidgetTitle(const std::set<LayoutManipulator*>& selectedWidgets)
+{
+    auto propertyDockWidget = qobject_cast<Application*>(qApp)->getMainWindow()->getPropertyDockWidget();
+    if (selectedWidgets.size() == 1)
+    {
+        auto selectedWidget = *selectedWidgets.begin();
+        propertyDockWidget->setWindowTitle("Properties: " + selectedWidget->getWidgetName() + " (" + selectedWidget->getWidgetType() + ")");
+        // TODO: selectedWidget->getWidgetPath() in the header tooltip (not for the whole propertyWidget tooltip!)
+    }
+    else if (selectedWidgets.size() > 1)
+        propertyDockWidget->setWindowTitle(QString("Properties: %1 widgets").arg(selectedWidgets.size()));
+    else
+        propertyDockWidget->setWindowTitle("Properties");
 }
 
 void LayoutScene::normalizePositionOfSelectedWidgets()

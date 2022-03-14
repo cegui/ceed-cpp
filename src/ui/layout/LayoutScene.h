@@ -39,6 +39,7 @@ public:
     size_t getMultiSelectionChangeId() const;
     void updatePropertySet();
     void updatePropertySet(const std::set<LayoutManipulator*>& selectedWidgets);
+    void updatePropertyWidgetTitle(const std::set<LayoutManipulator*>& selectedWidgets);
 
     void alignSelectionHorizontally(CEGUI::HorizontalAlignment alignment);
     void alignSelectionVertically(CEGUI::VerticalAlignment alignment);

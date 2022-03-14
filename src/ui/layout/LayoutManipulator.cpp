@@ -689,6 +689,11 @@ void LayoutManipulator::onWidgetNameChanged()
     CEGUIManipulator::onWidgetNameChanged();
     if (_treeItem) _treeItem->refreshPathData();
     if (_lcHandle) _lcHandle->updateTooltip();
+
+    // Update name in the property widget title
+    std::set<LayoutManipulator*> selectedWidgets;
+    _visualMode.getScene()->collectSelectedWidgets(selectedWidgets);
+    _visualMode.getScene()->updatePropertyWidgetTitle(selectedWidgets);
 }
 
 QPen LayoutManipulator::getNormalPen() const
