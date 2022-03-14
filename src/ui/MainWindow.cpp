@@ -1107,14 +1107,33 @@ void MainWindow::onEditorFileChangedExternally()
     if (!editor) editor = currentEditor;
     if (!editor) return;
 
-    auto ret = QMessageBox::question(this,
-                                     "File has been modified externally!",
-                                     "The file that you have currently opened has been modified outside the CEGUI Unified Editor."
-                                     "\n\nReload the file?\n\nIf you select Yes, ALL UNDO HISTORY WILL BE DESTROYED!",
-                                     QMessageBox::No | QMessageBox::Yes,
-                                     QMessageBox::No); // defaulting to No is safer IMO
+    if (QFileInfo::exists(editor->getFilePath()))
+    {
+        // File changed
+        auto ret = QMessageBox::question(this,
+                                         "File has been modified externally!",
+                                         "The file that you have currently opened has been modified outside the CEGUI Unified Editor."
+                                         "\n\nReload the file?\n\nIf you select Yes, ALL UNDO HISTORY WILL BE DESTROYED!",
+                                         QMessageBox::No | QMessageBox::Yes,
+                                         QMessageBox::No); // defaulting to No is safer IMO
 
-    editor->resolveSyncConflict(ret == QMessageBox::Yes);
+        editor->resolveSyncConflict(ret == QMessageBox::Yes);
+    }
+    else
+    {
+        // File moved or deleted
+        auto ret = QMessageBox::question(this,
+                                         "File has been moved or deleted externally!",
+                                         "The file that you have currently opened has been moved or deleted form the disk."
+                                         "\n\nKeep the file opened?",
+                                         QMessageBox::No | QMessageBox::Yes,
+                                         QMessageBox::Yes);
+
+        if (ret == QMessageBox::Yes)
+            editor->resolveSyncConflict(false);
+        else
+            closeEditorTab(editor);
+    }
 
     displayingReloadAlert = false;
 }

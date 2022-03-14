@@ -128,7 +128,7 @@ void TextEditor::zoomReset()
 
 bool TextEditor::hasChanges() const
 {
-    return textDocument && textDocument->isModified();
+    return (textDocument && textDocument->isModified()) || (syncStatus != SyncStatus::Sync);
 }
 
 QString TextEditor::getFileTypesDescription() const
