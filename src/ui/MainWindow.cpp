@@ -362,14 +362,22 @@ bool MainWindow::on_actionQuit_triggered()
         if (!editor->confirmClosing()) return false;
 
     // Close the project, remembering IDE state for restoring at the next session
-    if (!on_actionCloseProject_triggered()) return false;
+    auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
+    if (auto currProject = CEGUIManager::Instance().getCurrentProject())
+    {
+        settings->setValue("lastProject", currProject->filePath);
+        if (!on_actionCloseProject_triggered()) return false;
+    }
+    else
+    {
+        settings->remove("lastProject");
+    }
 
     // Close all remaining project-independent tabs
     on_actionCloseAllTabs_triggered();
     if (ui->tabs->count() > 0) return false;
 
     // Save geometry and state of this window to QSettings
-    auto&& settings = qobject_cast<Application*>(qApp)->getSettings()->getQSettings();
     settings->setValue("window-geometry", saveGeometry());
     settings->setValue("window-state", saveState());
 
@@ -818,7 +826,7 @@ void MainWindow::openEditorTab(const QString& absolutePath)
 {
     if (activateEditorTabByFilePath(absolutePath)) return;
 
-    openNewEditor(createEditorForFile(absolutePath));
+    initEditor(createEditorForFile(absolutePath));
 }
 
 // Closes given editor tab.
@@ -992,14 +1000,6 @@ void MainWindow::on_actionOpenFile_triggered()
                                                     &editorFactoryFileFilters[0]);
     if (!fileName.isEmpty())
         openEditorTab(fileName);
-}
-
-void MainWindow::openMostRecentProject()
-{
-    QStringList items;
-    recentlyUsedProjects->getRecentlyUsed(items);
-    if (!items.empty() && QFileInfo(items[0]).exists() && confirmProjectClosing(false))
-        loadProject(items[0]);
 }
 
 void MainWindow::openRecentProject(const QString& path)
@@ -1320,7 +1320,7 @@ void MainWindow::on_actionNewLayout_triggered()
     {
         if (auto typedFactory = dynamic_cast<LayoutEditorFactory*>(factory.get()))
         {
-            openNewEditor(typedFactory->create(QString()));
+            openNewEditor(typedFactory);
             return;
         }
     }
@@ -1332,7 +1332,7 @@ void MainWindow::on_actionNewImageset_triggered()
     {
         if (auto typedFactory = dynamic_cast<ImagesetEditorFactory*>(factory.get()))
         {
-            openNewEditor(typedFactory->create(QString()));
+            openNewEditor(typedFactory);
             return;
         }
     }
@@ -1344,7 +1344,7 @@ void MainWindow::on_actionNewOtherFile_triggered()
     {
         if (auto typedFactory = dynamic_cast<TextEditorFactory*>(factory.get()))
         {
-            openNewEditor(typedFactory->create(QString()));
+            openNewEditor(typedFactory);
             return;
         }
     }
@@ -1358,7 +1358,20 @@ void MainWindow::on_actionCheckForUpdates_triggered()
     app->checkForUpdates();
 }
 
-void MainWindow::openNewEditor(EditorBasePtr editor)
+void MainWindow::openNewEditor(EditorFactoryBase* factory)
+{
+    if (!factory) return;
+
+    if (factory->requiresProject() && !CEGUIManager::Instance().isProjectLoaded())
+    {
+        QMessageBox::warning(this, _title, tr("Creating this file requires you to have a project opened!"));
+        return;
+    }
+
+    initEditor(factory->create(QString()));
+}
+
+void MainWindow::initEditor(EditorBasePtr editor)
 {
     if (!editor) return;
 
@@ -1367,7 +1380,7 @@ void MainWindow::openNewEditor(EditorBasePtr editor)
     // Will cleanup itself inside if something went wrong
     editor->initialize();
 
-    // Intentionally before ui->tabs->... to make getEditorForTab() in on_tabs_currentChanged() work
+    // NB: intentionally before ui->tabs->... to make getEditorForTab() in on_tabs_currentChanged() work
     auto editorPtr = editor.get();
     activeEditors.push_back(std::move(editor));
 

@@ -91,7 +91,16 @@ Application::Application(int& argc, char** argv)
         const auto action = _settings->getEntryValue("global/app/startup_action").toInt();
         switch (action)
         {
-            case 1: _mainWindow->openMostRecentProject(); break;
+            case 1:
+            {
+                if (_settings->getQSettings()->contains("lastProject"))
+                {
+                    const QString lastProject = _settings->getQSettings()->value("lastProject").toString();
+                    if (QFileInfo::exists(lastProject))
+                        _mainWindow->loadProject(lastProject);
+                }
+                break;
+            }
             default: break; // 0: empty environment
         }
     }
