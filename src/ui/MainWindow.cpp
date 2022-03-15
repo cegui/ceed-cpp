@@ -1274,11 +1274,14 @@ bool MainWindow::on_actionCloseProject_triggered()
             if (auto editor = getEditorForTab(i))
             {
                 const auto filePath = currProject->getRelativePathOf(QDir::fromNativeSeparators(QDir::cleanPath(editor->getFilePath())));
-                openedTabs.append(filePath);
-                if (editor == currentEditor)
+                if (!filePath.isEmpty())
                 {
-                    settings->setValue(key + "/currentTab", filePath);
-                    currentEditor->saveState(*settings, key);
+                    openedTabs.append(filePath);
+                    if (editor == currentEditor)
+                    {
+                        settings->setValue(key + "/currentTab", filePath);
+                        currentEditor->saveState(*settings, key);
+                    }
                 }
             }
         }
