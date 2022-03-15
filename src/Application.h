@@ -34,7 +34,7 @@ public:
     QString getDocumentationPath() const;
     QString getUpdatePath() const;
 
-    void checkForUpdates();
+    void checkForUpdates(bool manual);
 
 private:
 

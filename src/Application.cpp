@@ -108,7 +108,7 @@ Application::Application(int& argc, char** argv)
     checkUpdateResults();
 
     // TODO: if not disabled in settings / if time has come
-    checkForUpdates();
+    checkForUpdates(false);
 }
 
 Application::~Application()
@@ -205,7 +205,7 @@ QString Application::getUpdatePath() const
     return QDir::temp().absoluteFilePath("CEEDUpdate");
 }
 
-void Application::checkForUpdates()
+void Application::checkForUpdates(bool manual)
 {
     if (!Utils::isInternetConnected())
     {
@@ -213,7 +213,7 @@ void Application::checkForUpdates()
         return;
     }
 
-    QUrl infoUrl = _settings->getQSettings()->value("updateInfoUrl", "https://api.github.com/repos/cegui/ceed-cpp/releases/latest").toUrl();
+    const QUrl infoUrl = _settings->getQSettings()->value("updateInfoUrl", "https://api.github.com/repos/cegui/ceed-cpp/releases/latest").toUrl();
 
     _mainWindow->setStatusMessage("Checking for updates...");
 
@@ -223,7 +223,7 @@ void Application::checkForUpdates()
         onUpdateError(infoReply->url(), infoReply->errorString());
     });
 
-    QObject::connect(infoReply, &QNetworkReply::finished, [this, infoReply]()
+    QObject::connect(infoReply, &QNetworkReply::finished, [this, infoReply, manual]()
     {
         // Already processed by QNetworkReply::errorOccurred handler
         if (infoReply->error() != QNetworkReply::NoError) return;
@@ -246,8 +246,11 @@ void Application::checkForUpdates()
                     auto savedVersion = QVersionNumber::fromString(_settings->getQSettings()->value("update/version").toString());
                     if (latestVersion.normalized() == savedVersion.normalized())
                     {
-                        _mainWindow->setStatusMessage(tr("Auto-update to %1 is blocked because it failed before. "
-                                                         "Use Help->Check For Updates to try again.").arg(latestVersionStr));
+                        const QString msg = tr("Auto-update to %1 is blocked because it failed before. "
+                                               "Use Help->Check For Updates to try again.").arg(latestVersionStr);
+                        _mainWindow->setStatusMessage(msg);
+                        if (manual)
+                            QMessageBox::warning(_mainWindow, tr("Auto-update blocked"), msg);
                         return;
                     }
                     else
@@ -261,6 +264,13 @@ void Application::checkForUpdates()
 
                 UpdateDialog dlg(currentVersion, latestVersion, releaseInfo);
                 dlg.exec();
+            }
+            else
+            {
+                const QString msg = tr("CEED is already at the latest version: %1").arg(applicationVersion());
+                _mainWindow->setStatusMessage("No update found");
+                if (manual)
+                    QMessageBox::information(_mainWindow, tr("Already updated"), msg);
             }
         }
         catch (const std::exception& e)

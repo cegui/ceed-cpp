@@ -26,6 +26,7 @@ mkdir "%InstallPath%"
 (robocopy "%UpdatePath%" "%InstallPath%" *.* /r:5 /w:2 /e /move >nul) & if %errorlevel% lss 8 set errorlevel=0
 if %errorlevel% neq 0 (
     :: Restore backup
+    rmdir /S /Q "%InstallPath%"
     move /y "%PrevVersionBackupPath%" "%InstallPath%"
 	set "ResultCode=20"
 	set "ResultMsg=Failed to move an update to the installation directory"

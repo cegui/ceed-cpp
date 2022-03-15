@@ -1377,7 +1377,7 @@ void MainWindow::on_actionCheckForUpdates_triggered()
     // Forced check for update removes a failed flag which prevents an auto-update
     auto app = qobject_cast<Application*>(qApp);
     app->getSettings()->getQSettings()->remove("update/failed");
-    app->checkForUpdates();
+    app->checkForUpdates(true);
 }
 
 void MainWindow::openNewEditor(EditorFactoryBase* factory)
