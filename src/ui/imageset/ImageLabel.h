@@ -12,6 +12,8 @@ public:
 
     ImageLabel(QGraphicsItem* parent = nullptr);
 
+    void onScaleChanged(qreal scaleX, qreal scaleY);
+
 protected:
 
     virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr) override;

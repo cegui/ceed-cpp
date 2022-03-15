@@ -6,7 +6,6 @@
 ImageLabel::ImageLabel(QGraphicsItem* parent)
     : QGraphicsTextItem(parent)
 {
-    setFlags(ItemIgnoresTransformations);
     setOpacity(0.8);
     setVisible(false);
     setPlainText("Unknown");
@@ -14,6 +13,23 @@ ImageLabel::ImageLabel(QGraphicsItem* parent)
     // We make the label a lot more transparent when mouse is over it to make it easier
     // to work around the top edge of the image
     setAcceptHoverEvents(true);
+
+    setY(-boundingRect().height() - 2.0);
+}
+
+void ImageLabel::onScaleChanged(qreal scaleX, qreal scaleY)
+{
+    auto tfm = transform();
+
+    const qreal counterScaleX = (1.0 / scaleX);
+    const qreal counterScaleY = (1.0 / scaleY);
+
+    tfm = QTransform(counterScaleX, tfm.m12(), tfm.m13(),
+                     tfm.m21(), counterScaleY, tfm.m23(),
+                     tfm.m31(), tfm.m32(), tfm.m33());
+
+    setTransform(tfm);
+    setY((-boundingRect().height() - 2.0) * counterScaleY);
 }
 
 void ImageLabel::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)

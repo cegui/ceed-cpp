@@ -40,7 +40,7 @@ public:
     virtual QSizeF getMinSize() const { return QSizeF(1.0, 1.0); }
     virtual QSizeF getMaxSize() const { return QSizeF(std::numeric_limits<qreal>().max(), std::numeric_limits<qreal>().max()); }
 
-    void onScaleChanged(qreal scaleX, qreal scaleY);
+    virtual void onScaleChanged(qreal scaleX, qreal scaleY);
     void mouseReleaseEventSelected();
 
     virtual void notifyHandleSelected(ResizingHandle* /*handle*/) {}

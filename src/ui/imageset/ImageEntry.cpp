@@ -69,6 +69,12 @@ void ImageEntry::notifyResizeFinished(QPointF newPos, QSizeF newSize)
     resized = true;
 }
 
+void ImageEntry::onScaleChanged(qreal scaleX, qreal scaleY)
+{
+    ResizableRectItem::onScaleChanged(scaleX, scaleY);
+    label->onScaleChanged(scaleX, scaleY);
+}
+
 void ImageEntry::loadFromElement(const QDomElement& xml)
 {
     setName(xml.attribute("name", "Unknown"));
