@@ -916,8 +916,9 @@ void CEGUIManipulator::createPropertySet()
             auto it = subsets.find(category);
             if (it == subsets.end())
             {
-                // Insertion delayed for sorting, see below
-                parentSet = new QtnPropertySet(_propertySet);
+                // Insertion into _propertySet delayed for sorting, see below
+                parentSet = new QtnPropertySet(QtnPropertySet::SortOrder::Ascend);
+                parentSet->setParent(_propertySet);
                 parentSet->setName(category);
                 subsets.emplace(std::move(category), parentSet);
             }
@@ -1168,7 +1169,7 @@ void CEGUIManipulator::createPropertySet()
     }
 
     // We want to see some categories at the beginning of the list
-    const QStringList fixedOrderFirst = { "Element", "NamedElement", "Window" };
+    const QStringList fixedOrderFirst = { "Element", "Window" };
     for (const QString& name : fixedOrderFirst)
     {
         auto itSet = subsets.find(name);
