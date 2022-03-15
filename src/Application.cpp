@@ -308,7 +308,7 @@ void Application::checkUpdateResults()
 
     auto currentVersion = QVersionNumber::fromString(applicationVersion());
     auto savedVersion = QVersionNumber::fromString(_settings->getQSettings()->value("update/version").toString());
-    if (currentVersion.normalized() == savedVersion.normalized())
+    if (currentVersion.normalized() >= savedVersion.normalized())
     {
         // Updated but couldn't remove a tmp folder, let's try again
         if (updateResult == 30)
