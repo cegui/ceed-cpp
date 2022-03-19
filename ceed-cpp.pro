@@ -283,7 +283,7 @@ QMAKE_TARGET_COMPANY = "CEGUI team, Vladimir 'Niello' Orlov"
 QMAKE_TARGET_COPYRIGHT = "(c) 2019-2021, CEGUI team, Vladimir 'Niello' Orlov"
 QMAKE_TARGET_PRODUCT = "CEED"
 QMAKE_TARGET_DESCRIPTION = "CEGUI unified editor (CEED)"
-VERSION = 1.1.1
+VERSION = 1.1.2
 
 DESTDIR = $$OUT_PWD/bin
 
