@@ -24,7 +24,7 @@ QString stringToQString(const CEGUI::String& str)
 
 CEGUI::String qStringToString(const QString& str)
 {
-    return CEGUI::String(str.toLocal8Bit().data());
+    return CEGUI::String(str.toUtf8().data());
 }
 
 // Returns a valid CEGUI widget name out of the supplied name, if possible. Returns empty string if
