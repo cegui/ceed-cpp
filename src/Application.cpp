@@ -55,22 +55,6 @@ Application::Application(int& argc, char** argv)
         processEvents();
     }
 
-    _network = new QNetworkAccessManager(this);
-
-    _mainWindow = new MainWindow();
-
-    ImagesetEditor::createToolbar(*this);
-    LayoutEditor::createToolbar(*this);
-
-    _mainWindow->show();
-    _mainWindow->raise();
-
-    if (splash)
-    {
-        splash->finish(_mainWindow);
-        delete splash;
-    }
-
     _cmdLine = new QCommandLineParser();
     _cmdLine->setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
     _cmdLine->addOptions(
@@ -80,35 +64,59 @@ Application::Application(int& argc, char** argv)
     });
     _cmdLine->process(*this);
 
-    if (_cmdLine->positionalArguments().size() > 0)
+    _network = new QNetworkAccessManager(this);
+
+    _mainWindow = new MainWindow();
+
+    ImagesetEditor::createToolbar(*this);
+    LayoutEditor::createToolbar(*this);
+
+    if (splash)
     {
-        // Load project specified in a command line
-        _mainWindow->loadProject(_cmdLine->positionalArguments().first());
+        splash->finish(_mainWindow);
+        delete splash;
     }
-    else
-    {
-        // Perform a startup action
-        const auto action = _settings->getEntryValue("global/app/startup_action").toInt();
-        switch (action)
-        {
-            case 1:
-            {
-                if (_settings->getQSettings()->contains("lastProject"))
-                {
-                    const QString lastProject = _settings->getQSettings()->value("lastProject").toString();
-                    if (QFileInfo::exists(lastProject))
-                        _mainWindow->loadProject(lastProject);
-                }
-                break;
-            }
-            default: break; // 0: empty environment
-        }
-    }
+
+    // Bring our application to front before we show any message box
+    // TODO: leave only necessary calls
+    _mainWindow->show();
+    _mainWindow->raise();
+    _mainWindow->activateWindow();
+    _mainWindow->setWindowState(_mainWindow->windowState() | Qt::WindowState::WindowActive);
 
     checkUpdateResults();
 
-    // TODO: if not disabled in settings / if time has come
-    checkForUpdates(false);
+    // Checking for updates is async, initialization will continue after it finishes
+    checkForUpdates(false, [this]()
+    {
+        _mainWindow->setStatusMessage("");
+
+        // Now we can load requested project, if any
+        if (_cmdLine->positionalArguments().size() > 0)
+        {
+            // Load project specified in a command line
+            _mainWindow->loadProject(_cmdLine->positionalArguments().first());
+        }
+        else
+        {
+            // Perform a startup action
+            const auto action = _settings->getEntryValue("global/app/startup_action").toInt();
+            switch (action)
+            {
+                case 1:
+                {
+                    if (_settings->getQSettings()->contains("lastProject"))
+                    {
+                        const QString lastProject = _settings->getQSettings()->value("lastProject").toString();
+                        if (QFileInfo::exists(lastProject))
+                            _mainWindow->loadProject(lastProject);
+                    }
+                    break;
+                }
+                default: break; // 0: empty environment
+            }
+        }
+    });
 }
 
 Application::~Application()
@@ -205,28 +213,56 @@ QString Application::getUpdatePath() const
     return QDir::temp().absoluteFilePath("CEEDUpdate");
 }
 
-void Application::checkForUpdates(bool manual)
+void Application::checkForUpdates(bool manual, const std::function<void()>& cb)
 {
     if (!Utils::isInternetConnected())
     {
         qCritical() << "No Internet connection, update check skipped";
+        if (cb) cb();
         return;
     }
 
-    const QUrl infoUrl = _settings->getQSettings()->value("updateInfoUrl", "https://api.github.com/repos/cegui/ceed-cpp/releases/latest").toUrl();
+    const auto currTime = QDateTime::currentSecsSinceEpoch();
+
+    // Automatic update checks should honor their settings
+    if (!manual)
+    {
+        const auto updateCheckFrequencySec = _settings->getEntryValue("global/app/update_check_frequency").toInt();
+        if (updateCheckFrequencySec < 0)
+        {
+            if (cb) cb();
+            return;
+        }
+
+        const auto lastUpdateCheckTime = _settings->getQSettings()->value("update/lastTimestamp", 0).toLongLong();
+        if (currTime - lastUpdateCheckTime < updateCheckFrequencySec)
+        {
+            if (cb) cb();
+            return;
+        }
+    }
+
+    _settings->getQSettings()->setValue("update/lastTimestamp", currTime);
+
+    const QUrl infoUrl = _settings->getQSettings()->value("update/url", "https://api.github.com/repos/cegui/ceed-cpp/releases/latest").toUrl();
 
     _mainWindow->setStatusMessage("Checking for updates...");
 
     QNetworkReply* infoReply = _network->get(QNetworkRequest(infoUrl));
-    QObject::connect(infoReply, &QNetworkReply::errorOccurred, [this, infoReply](QNetworkReply::NetworkError)
+    QObject::connect(infoReply, &QNetworkReply::errorOccurred, [this, cb, infoReply](QNetworkReply::NetworkError)
     {
         onUpdateError(infoReply->url(), infoReply->errorString());
+        if (cb) cb();
     });
 
-    QObject::connect(infoReply, &QNetworkReply::finished, [this, infoReply, manual]()
+    QObject::connect(infoReply, &QNetworkReply::finished, [this, cb, infoReply, manual]()
     {
         // Already processed by QNetworkReply::errorOccurred handler
-        if (infoReply->error() != QNetworkReply::NoError) return;
+        if (infoReply->error() != QNetworkReply::NoError)
+        {
+            if (cb) cb();
+            return;
+        }
 
         try
         {
@@ -251,6 +287,7 @@ void Application::checkForUpdates(bool manual)
                         _mainWindow->setStatusMessage(msg);
                         if (manual)
                             QMessageBox::warning(_mainWindow, tr("Auto-update blocked"), msg);
+                        if (cb) cb();
                         return;
                     }
                     else
@@ -276,10 +313,9 @@ void Application::checkForUpdates(bool manual)
         catch (const std::exception& e)
         {
             onUpdateError(infoReply->url(), e.what());
-            return;
         }
 
-        _mainWindow->setStatusMessage("");
+        if (cb) cb();
     });
 }
 
@@ -295,8 +331,6 @@ void Application::onUpdateError(const QUrl& url, const QString& errorString)
 
     if (response == QMessageBox::Yes)
         QDesktopServices::openUrl(QUrl("https://github.com/cegui/ceed-cpp/releases"));
-
-    _mainWindow->setStatusMessage("");
 }
 
 void Application::checkUpdateResults()
@@ -393,6 +427,12 @@ void Application::createSettingsEntries()
                                 "What to show when an application started",
                                 "combobox", false, 1, { {0, "Empty environment"}, {1, "Most recent project"} }));
     secApp->addEntry(std::move(entry));
+
+    entry.reset(new SettingsEntry(*secApp, "update_check_frequency", 0, "Check for updates",
+                                "How frequently an update should be checked",
+                                "combobox", false, 1, { {7 * 86400, "Once a week"}, {86400, "Once a day"}, {0, "Every launch"}, {-1, "Never"} }));
+    secApp->addEntry(std::move(entry));
+
 
     // By default we limit the undo stack to 500 undo commands, should be enough and should
     // avoid memory drainage. Keep in mind that every tabbed editor has it's own undo stack,

@@ -34,7 +34,7 @@ public:
     QString getDocumentationPath() const;
     QString getUpdatePath() const;
 
-    void checkForUpdates(bool manual);
+    void checkForUpdates(bool manual, const std::function<void()>& cb = nullptr);
 
 private:
 
