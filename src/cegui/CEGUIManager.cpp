@@ -1023,7 +1023,7 @@ const QtnEnumInfo& CEGUIManager::enumHorizontalAlignment()
     {
         QVector<QtnEnumValueInfo> values;
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalAlignment::Left), "Left"});
-        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalAlignment::Centre), "Center"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalAlignment::Centre), "Centre"});
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::HorizontalAlignment::Right), "Right"});
         _enumHorizontalAlignment = new QtnEnumInfo("HorizontalAlignment", values);
     }
@@ -1036,7 +1036,7 @@ const QtnEnumInfo& CEGUIManager::enumVerticalAlignment()
     {
         QVector<QtnEnumValueInfo> values;
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalAlignment::Top), "Top"});
-        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalAlignment::Centre), "Center"});
+        values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalAlignment::Centre), "Centre"});
         values.push_back({static_cast<QtnEnumValueType>(CEGUI::VerticalAlignment::Bottom), "Bottom"});
         _enumVerticalAlignment = new QtnEnumInfo("VerticalAlignment", values);
     }
