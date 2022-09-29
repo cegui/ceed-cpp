@@ -7,7 +7,6 @@
 #include "src/Application.h"
 #include <CEGUI/System.h>
 #include <CEGUI/WindowManager.h>
-#include <CEGUI/InputAggregator.h>
 #include <CEGUI/GUIContext.h>
 #include <qopenglwidget.h>
 #include <qpaintengine.h>
@@ -49,8 +48,6 @@ CEGUIGraphicsView::CEGUIGraphicsView(QWidget *parent) :
 
 CEGUIGraphicsView::~CEGUIGraphicsView()
 {
-    if (ceguiInput) delete ceguiInput;
-
     auto vp = static_cast<QOpenGLWidget*>(viewport());
     vp->makeCurrent();
     delete blitter;
@@ -65,17 +62,7 @@ CEGUIGraphicsView::~CEGUIGraphicsView()
 void CEGUIGraphicsView::injectInput(bool inject)
 {
     assert(scene());
-
     _injectInput = inject;
-
-    if (_injectInput && scene())
-    {
-        if (ceguiInput) delete ceguiInput;
-        auto ctx = static_cast<CEGUIGraphicsScene*>(scene())->getCEGUIContext();
-        ceguiInput = new CEGUI::InputAggregator(ctx);
-        ceguiInput->initialise();
-        ceguiInput->setMouseClickEventGenerationEnabled(true);
-    }
 }
 
 // We override this and draw CEGUI instead of the whole background.
@@ -170,9 +157,10 @@ void CEGUIGraphicsView::wheelEvent(QWheelEvent* event)
 {
     bool handled = false;
 
-    if (_injectInput && ceguiInput)
+    if (_injectInput)
     {
-        handled = ceguiInput->injectMouseWheelChange(static_cast<float>(event->delta()));
+        auto ctx = static_cast<CEGUIGraphicsScene*>(scene())->getCEGUIContext();
+        handled = ctx->injectMouseWheelChange(static_cast<float>(event->angleDelta().y()));
     }
 
     if (!handled) ResizableGraphicsView::wheelEvent(event);
@@ -185,9 +173,10 @@ void CEGUIGraphicsView::mouseMoveEvent(QMouseEvent* event)
     QPointF point = mapToScene(event->pos());
     emit cursorPositionChanged(static_cast<float>(point.x()), static_cast<float>(point.y()));
 
-    if (_injectInput && ceguiInput)
+    if (_injectInput)
     {
-        handled = ceguiInput->injectMousePosition(static_cast<float>(point.x()), static_cast<float>(point.y()));
+        auto ctx = static_cast<CEGUIGraphicsScene*>(scene())->getCEGUIContext();
+        handled = ctx->injectMousePosition(static_cast<float>(point.x()), static_cast<float>(point.y()));
     }
 
     if (!handled) ResizableGraphicsView::mouseMoveEvent(event);
@@ -197,10 +186,11 @@ void CEGUIGraphicsView::mouseMoveEvent(QMouseEvent* event)
 void CEGUIGraphicsView::mousePressEvent(QMouseEvent* event)
 {
     // Process CEGUI input
-    if (_injectInput && ceguiInput)
+    if (_injectInput)
     {
+        auto ctx = static_cast<CEGUIGraphicsScene*>(scene())->getCEGUIContext();
         auto button = CEGUIUtils::qtMouseButtonToMouseButton(event->button());
-        if (ceguiInput->injectMouseButtonDown(button)) return;
+        if (ctx->injectMouseButtonDown(button)) return;
     }
 
     // Process middle button drag-scrolling
@@ -216,10 +206,11 @@ void CEGUIGraphicsView::mousePressEvent(QMouseEvent* event)
 void CEGUIGraphicsView::mouseReleaseEvent(QMouseEvent* event)
 {
     // Process CEGUI input
-    if (_injectInput && ceguiInput)
+    if (_injectInput)
     {
+        auto ctx = static_cast<CEGUIGraphicsScene*>(scene())->getCEGUIContext();
         auto button = CEGUIUtils::qtMouseButtonToMouseButton(event->button());
-        if (ceguiInput->injectMouseButtonUp(button)) return;
+        if (ctx->injectMouseButtonUp(button)) return;
     }
 
     // Process middle button drag-scrolling
@@ -235,17 +226,18 @@ void CEGUIGraphicsView::mouseReleaseEvent(QMouseEvent* event)
 void CEGUIGraphicsView::keyPressEvent(QKeyEvent* event)
 {
     // Process CEGUI input
-    if (_injectInput && ceguiInput)
+    if (_injectInput)
     {
+        auto ctx = static_cast<CEGUIGraphicsScene*>(scene())->getCEGUIContext();
         bool handled = false;
 
         auto key = CEGUIUtils::qtKeyToKey(event->key(), event->modifiers() & Qt::KeypadModifier);
         if (key != CEGUI::Key::Scan::Unknown)
-            handled = ceguiInput->injectKeyDown(key);
+            handled = ctx->injectKeyDown(key);
 
         auto text = event->text();
         if (!text.isEmpty())
-            handled |= ceguiInput->injectChar(text[0].unicode());
+            handled |= ctx->injectChar(text[0].unicode());
 
         if (handled) return;
     }
@@ -256,10 +248,11 @@ void CEGUIGraphicsView::keyPressEvent(QKeyEvent* event)
 void CEGUIGraphicsView::keyReleaseEvent(QKeyEvent* event)
 {
     // Process CEGUI input
-    if (_injectInput && ceguiInput)
+    if (_injectInput)
     {
+        auto ctx = static_cast<CEGUIGraphicsScene*>(scene())->getCEGUIContext();
         auto key = CEGUIUtils::qtKeyToKey(event->key(), event->modifiers() & Qt::KeypadModifier);
-        if (key != CEGUI::Key::Scan::Unknown && ceguiInput->injectKeyUp(key)) return;
+        if (key != CEGUI::Key::Scan::Unknown && ctx->injectKeyUp(key)) return;
     }
 
     ResizableGraphicsView::keyReleaseEvent(event);

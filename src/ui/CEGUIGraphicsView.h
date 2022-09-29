@@ -6,11 +6,6 @@
 // This is a final class, not suitable for subclassing. This views given scene using
 // QOpenGLWidget. It's designed to work with CEGUIGraphicsScene derived classes.
 
-namespace CEGUI
-{
-    class InputAggregator;
-}
-
 class QOpenGLTextureBlitter;
 
 class CEGUIGraphicsView final : public ResizableGraphicsView
@@ -45,7 +40,6 @@ private:
     QOpenGLTextureBlitter* blitter = nullptr;
     QBrush checkerboardBrush;
 
-    CEGUI::InputAggregator* ceguiInput = nullptr;
     bool _injectInput = false;
 
     // if true, we render always (possibly capped to some FPS) - suitable for live preview
